@@ -1,0 +1,173 @@
+{
+  "version": "iwsdk.scene.v1",
+  "units": "meters",
+  "components": {
+    "com.iwsdk.components.DomeGradient": {
+      "sky": [
+        0.02,
+        0.03,
+        0.09,
+        1
+      ],
+      "equator": [
+        0.07,
+        0.05,
+        0.2,
+        1
+      ],
+      "ground": [
+        0.02,
+        0.03,
+        0.07,
+        1
+      ],
+      "dither": true
+    },
+    "com.iwsdk.components.IBLGradient": {
+      "sky": [
+        0.55,
+        0.7,
+        1,
+        1
+      ],
+      "equator": [
+        0.6,
+        0.5,
+        0.9,
+        1
+      ],
+      "ground": [
+        0.2,
+        0.25,
+        0.4,
+        1
+      ],
+      "intensity": 0.35
+    }
+  },
+  "environment": {
+    "toneMapping": "aces",
+    "exposure": 1.2,
+    "shadows": true,
+    "shadowMapType": "pcf"
+  },
+  "resources": {},
+  "nodes": [
+    {
+      "id": "arena-floor",
+      "name": "Arena Floor",
+      "framingRole": "support",
+      "content": {
+        "type": "asset",
+        "asset": "arena-floor",
+        "receiveShadow": true
+      },
+      "components": {
+        "DomeFade": {
+          "start": 3,
+          "end": 6
+        }
+      }
+    },
+    {
+      "id": "welcome-panel",
+      "name": "Welcome Panel",
+      "content": {
+        "type": "asset",
+        "asset": "welcome-panel"
+      },
+      "transform": {
+        "position": [
+          1.25,
+          1.2,
+          -1.5
+        ],
+        "rotationDeg": [
+          0,
+          -38,
+          0
+        ],
+        "scale": 0.3
+      },
+      "components": {
+        "RayInteractable": {}
+      }
+    },
+    {
+      "id": "key-light",
+      "name": "Key Light",
+      "transform": {
+        "position": [
+          -2.3541,
+          11.2763,
+          1.762
+        ],
+        "rotationDeg": [
+          -73.3982,
+          -11.3134,
+          0
+        ]
+      },
+      "components": {
+        "DirectionalLight": {
+          "color": [
+            1,
+            0.945,
+            0.87,
+            1
+          ],
+          "intensity": 1.2,
+          "castShadow": false,
+          "shadowMapSize": "2048",
+          "shadowCameraSize": 8,
+          "shadowCameraNear": 2,
+          "shadowCameraFar": 24,
+          "shadowRadius": 7,
+          "shadowBias": -0.0004,
+          "shadowNormalBias": 0.02
+        }
+      }
+    },
+    {
+      "id": "fill-light",
+      "name": "Fill Light",
+      "components": {
+        "HemisphereLight": {
+          "skyColor": [
+            0.78,
+            0.83,
+            0.96,
+            1
+          ],
+          "groundColor": [
+            0.592,
+            0.608,
+            0.651,
+            1
+          ],
+          "intensity": 0.8
+        }
+      }
+    }
+  ],
+  "authoring": {
+    "views": [
+      {
+        "id": "hero",
+        "role": "hero",
+        "projection": "perspective",
+        "position": [
+          0,
+          1.15,
+          0.3
+        ],
+        "target": [
+          0,
+          1.12,
+          -0.6
+        ],
+        "fov": 70
+      }
+    ]
+  }
+}

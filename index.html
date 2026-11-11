@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Inbox Zero VR</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <main id="launch">
+      <div class="launch-inner">
+        <header>
+          <h1>INBOX ZERO</h1>
+          <p class="tagline">Clear the noise.</p>
+          <p class="lede">
+            A seated VR proof of concept. Slash an email to archive it, or grab it and send it to
+            <b>Keep</b> or <b>Tomorrow</b>. Nothing rushes you, and every action can be undone.
+          </p>
+        </header>
+
+        <section class="actions">
+          <button id="btn-start" class="primary">Start demo</button>
+          <button id="btn-resume" hidden>Resume session</button>
+          <button id="btn-vr" disabled>Enter VR</button>
+          <button id="btn-gmail" disabled title="Not implemented in this build">Connect Gmail (not available)</button>
+        </section>
+        <p id="vr-note" class="note"></p>
+        <p class="note">
+          The demo uses 20 fictional emails stored in your browser. Gmail is not connected in this build, and
+          nothing is ever sent.
+        </p>
+
+        <section class="settings">
+          <h2>Settings</h2>
+          <label>Blade hand
+            <select id="set-hand">
+              <option value="right">Right (sorting hand left)</option>
+              <option value="left">Left (sorting hand right)</option>
+            </select>
+          </label>
+          <label>Effects
+            <select id="set-effects">
+              <option value="full">Full</option>
+              <option value="reduced">Reduced (no trails or bursts, calmer room)</option>
+            </select>
+          </label>
+          <label>Reminder time
+            <select id="set-hour"></select>
+          </label>
+          <label class="check"><input type="checkbox" id="set-sound" /> Sound effects</label>
+          <label class="check"><input type="checkbox" id="set-music" /> Music</label>
+          <p class="note" id="tz-note"></p>
+          <p class="note">In VR, open Menu to recenter the seat. Holding a thumbstick click for one second also recenters.</p>
+        </section>
+
+        <section class="reminders">
+          <h2>Reminders</h2>
+          <ul id="reminder-list"></ul>
+          <p class="note">
+            Reminders appear here when you open this app. They are not background notifications and nothing is
+            scheduled with your mail provider.
+          </p>
+          <button id="btn-reset" class="quiet">Reset demo data</button>
+        </section>
+      </div>
+    </main>
+
+    <div id="hud" hidden>
+      <div class="hud-top">
+        <span id="hud-status"></span>
+        <span class="spacer"></span>
+        <button id="hud-vr" hidden>Enter VR</button>
+        <button id="hud-menu">Menu</button>
+        <button id="hud-exit">Exit</button>
+      </div>
+      <div id="hud-warning" class="hud-warning" hidden></div>
+      <div id="composer" hidden>
+        <label for="composer-text">Draft reply (saved in this app, never sent)</label>
+        <textarea id="composer-text" rows="3" placeholder="Type your reply…"></textarea>
+      </div>
+      <div class="hud-keys" id="hud-keys"></div>
+      <pre id="hud-stats" hidden></pre>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
