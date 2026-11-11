@@ -1,0 +1,23 @@
+{
+  "name": "inboxzero-web",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:https": "HTTPS=1 vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@types/three": "0.187.0",
+    "@vitejs/plugin-basic-ssl": "2.3.0",
+    "iwer": "^2.8.0",
+    "typescript": "7.0.2",
+    "vite": "8.3.7"
+  }
+}

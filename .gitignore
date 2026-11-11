@@ -12,6 +12,9 @@ dist/
 !/unity/Assets/Scripts.meta
 !/unity/Assets/Editor/
 !/unity/Assets/Editor.meta
+# The web build's courtyard is exported from Unity (web/tools/export.sh).
+/web/public/kyoto/
+/web/checks/
 /unity/Backups/
 /unity/Checks/
 /unity/.utmp/

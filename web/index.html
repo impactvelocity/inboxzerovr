@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>Inbox Zero VR · Kyoto</title>
+    <style>
+      html, body { margin: 0; height: 100%; background: #120c24; overflow: hidden; font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; color: #f4e9f1; }
+      #view { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+      #loading { position: fixed; inset: 0; display: grid; place-items: center; background: radial-gradient(120% 90% at 50% 40%, #3a2350 0%, #1a1030 60%, #0d081c 100%); transition: opacity 0.9s ease; z-index: 5; }
+      #loading.done { opacity: 0; pointer-events: none; }
+      #loading .inner { text-align: center; letter-spacing: 0.32em; font-size: 12px; text-transform: uppercase; color: #f1c7d6; }
+      #loading .bar { width: 220px; height: 2px; margin: 18px auto 0; background: rgba(255, 255, 255, 0.14); overflow: hidden; border-radius: 2px; }
+      #loading .bar i { display: block; height: 100%; width: 0%; background: linear-gradient(90deg, #ff8fb8, #ffa860); transition: width 0.25s ease; }
+      #enter-vr { position: fixed; right: 18px; bottom: 18px; z-index: 4; padding: 11px 18px; border-radius: 999px; border: 1px solid rgba(255, 190, 215, 0.55); background: rgba(30, 16, 44, 0.62); color: #ffe6ee; font: 600 13px/1 inherit; letter-spacing: 0.14em; text-transform: uppercase; cursor: pointer; backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+      #enter-vr:hover:not(:disabled) { background: rgba(255, 143, 184, 0.3); }
+      #enter-vr:disabled { opacity: 0.55; cursor: default; border-color: rgba(255, 255, 255, 0.2); }
+      #stats { position: fixed; right: 12px; top: 10px; z-index: 4; margin: 0; padding: 7px 10px; border-radius: 8px; background: rgba(14, 8, 26, 0.55); color: #d9cfe6; font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; pointer-events: none; }
+      #stats[hidden] { display: none; }
+    </style>
+  </head>
+  <body>
+    <canvas id="view"></canvas>
+    <div id="loading"><div class="inner">Kyoto<div class="bar"><i id="progress"></i></div></div></div>
+    <pre id="stats" hidden></pre>
+    <button id="enter-vr" disabled>VR not available</button>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

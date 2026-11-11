@@ -1,6 +1,53 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "inboxzerovr", "runtimeExecutable": "npm", "runtimeArgs": ["run", "dev"], "port": 5173 }
+    {
+      "name": "inboxzerovr",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 5173
+    },
+    {
+      "name": "kyoto-web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "web",
+        "run",
+        "dev"
+      ],
+      "port": 5180
+    },
+    {
+      "name": "vr3-check",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "vr3",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5184"
+      ],
+      "port": 5184
+    },
+    {
+      "name": "vr3-sounds",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "vr3",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5193"
+      ],
+      "port": 5193
+    }
   ]
 }

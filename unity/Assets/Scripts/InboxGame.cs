@@ -82,6 +82,14 @@ namespace InboxZero
         const float CardW = 0.5f, CardH = 0.3125f;
         /// Blade runs from here to here along the saber's +Y.
         public const float SwordBladeStart = 0.11f, SwordBladeEnd = 0.66f;
+        /// The Kyoto katana at rest on a monitor. KatanaRest: where the middle of its grip
+        /// falls in the picture (x, y from the lower left; outside 0..1 is off it) and how far
+        /// out it is held, in metres at a 60 degree lens. KatanaAim: which way the blade
+        /// points as the head sees it (right, up, away). KatanaTurn: its turn about its own
+        /// length, in degrees.
+        public static Vector3 KatanaRest = new Vector3(0.97f, -0.04f, 0.44f);
+        public static Vector3 KatanaAim = new Vector3(-0.12f, 0.66f, 0.74f);
+        public static float KatanaTurn = 110;      // spine toward the player, so the blade curves up toward its tip
         const int Mic = 2; // index into targets; 0 and 1 are the replies
         const int SwordSamples = 6, VoiceBars = 5, Faces = 3;
         const int Ui = RetroFx.UiLayer, World = 0;
@@ -491,7 +499,7 @@ namespace InboxZero
             if (!worlds.TryGetValue(place, out space))
             {
                 float eye = SeatedRig.SeatedEyeHeight;
-                space = level.world == "Kyoto" ? (IWorld)new KyotoWorld(stage, eye, level.scene ?? KyotoWorld.Garden) : new Starfield(stage, eye, level);
+                space = level.world == "Kyoto" ? (IWorld)new KyotoWorld(stage, eye, level.scene ?? KyotoWorld.Garden) { Muted = startMuted } : new Starfield(stage, eye, level);
                 worlds[place] = space;
             }
             space.Show(true);
@@ -1463,12 +1471,16 @@ namespace InboxZero
                     new Vector3(0.05f + Mathf.Sin(clock * 0.9f) * 0.02f, 0.8f, 0.6f).normalized);
                 if (space is KyotoWorld)
                 {
-                    // Frame the guard and wrapped grip with the courtyard lens.
-                    // Tracked hands retain their physical pose in the XR branch.
-                    restPos = head.ViewportToWorldPoint(new Vector3(0.80f, 0.18f, 0.95f));
+                    // Held as a right hand would hold it: the grip comes up out of the
+                    // lower right corner toward the eye, and the blade points up, away and a
+                    // little inward, stopping short of the letter. Set by where it falls in the
+                    // picture, and nearer through a wider lens, so it looks the same in either
+                    // Kyoto scene. Tracked hands retain their physical pose in the XR branch.
+                    float reach = KatanaRest.z * 0.5774f / Mathf.Tan(head.fieldOfView * 0.5f * Mathf.Deg2Rad);
+                    restPos = head.ViewportToWorldPoint(new Vector3(KatanaRest.x, KatanaRest.y, reach));
                     restPos += head.transform.up * Mathf.Sin(clock * 1.3f) * 0.004f;
-                    restRot = head.transform.rotation * Quaternion.FromToRotation(Vector3.up,
-                        new Vector3(0.42f, 0.87f, 0.25f).normalized);
+                    var aim = KatanaAim.normalized + new Vector3(Mathf.Sin(clock * 0.9f) * 0.012f, 0, 0);
+                    restRot = head.transform.rotation * Quaternion.FromToRotation(Vector3.up, aim.normalized) * Quaternion.Euler(0, KatanaTurn, 0);
                 }
                 Vector3 pos = restPos;
                 Quaternion rot = restRot;
@@ -1880,6 +1892,7 @@ namespace InboxZero
                 trail.Clear();
             }
             sfx.Hum(bladeLit && Level.hum, tipSpeed);
+            sfx.Swing(bladeLit && !Level.hum, tipSpeed, dt);   // a blade that does not hum is heard when it is swung
 
             // The world around the seat.
             var mood = session.phase;

@@ -15,8 +15,10 @@ namespace InboxZero.EditorTools
     ///
     /// Old:  the veranda, machiya, walls and shut gate from the Blender courtyard
     ///       (Assets/KyotoV2/Architecture.fbx, written by
-    ///       Blender/kyoto_courtyard/source/export_v2.py), in the same places,
-    ///       and its painted sky and mountains as the backdrop.
+    ///       Blender/kyoto_courtyard/source/export_v2.py), in the same places.
+    /// Sky:  the sunset panorama from ANGRY MESH's Meadow Environment pack, with
+    ///       its mountains, birds, butterflies and a few of its flowers. That
+    ///       pack must have its own "URP Template" applied (see its SRP Templates).
     /// New:  everything that grows or was carved, from Komorebi Nature: the
     ///       cherry tree (the pack's largest), stepping stones, rocks, lanterns,
     ///       pond, the bamboo and bushes that hide the left wall, and petals.
@@ -30,14 +32,19 @@ namespace InboxZero.EditorTools
     public static class KyotoCourtyardBuilder
     {
         const string Pack = "Assets/Raygeas/Komorebi Nature/";
+        const string Meadow = "Assets/ANGRY MESH/Stylized Pack - Meadow Environment/";
         const string Old = "Assets/KyotoV2/";
         const string Made = "Assets/KyotoV2/Generated/";
         const string Out = "Assets/Resources/KyotoV2/";
         const float Seat = 2.2f;                  // the seat sits this far forward of the Blender scene's origin
         public const float Eye = 1.55f;
 
+        /// Light in the air is drawn before the game's own see-through things (the letter, the
+        /// labels, the blade), so it never washes over an email.
+        const int GlowQueue = 2950;
         static Transform root;
         static Material haloMaterial, shaftMaterial;
+        static readonly List<GameObject> dayOnly = new List<GameObject>();
         static readonly List<KyotoCourtyard.Lamp> lamps = new List<KyotoCourtyard.Lamp>();
         static readonly List<KyotoCourtyard.Glow> glows = new List<KyotoCourtyard.Glow>();
         static readonly List<ParticleSystem> petals = new List<ParticleSystem>();
@@ -80,7 +87,9 @@ namespace InboxZero.EditorTools
         // ------------------------------------------------------------ ground
 
         const float TreeX = -5.0f, TreeZ = 8.8f;
-        const float PondX = 2.85f, PondZ = 5.6f, PondRx = 1.0f, PondRz = 2.1f, WaterLevel = -0.13f;
+        // The pond stops short of the machiya (its footing is at x = 3.8): a bank of gravel, stones
+        // and leaves lies between them, as under any eave.
+        const float PondX = 2.45f, PondZ = 5.6f, PondRx = 0.75f, PondRz = 2.1f, WaterLevel = -0.13f;
 
         /// The stepping stones, deck to gate, and on along the lane beyond it.
         static readonly Vector2[] Path =
@@ -104,6 +113,8 @@ namespace InboxZero.EditorTools
             y += 0.32f * Bump(x, z, TreeX, TreeZ, 2.2f);      // the mound the tree stands on
             y += 0.10f * Bump(x, z, -2.9f, 6.3f, 0.9f);       // and the lantern's
             y -= 0.62f * Pond(x, z);
+            if (z > 2.4f && z < 9.8f)                          // the bank at the machiya's foot stands a little proud
+                y += 0.05f * Mathf.Exp(-Mathf.Pow((x - 3.6f) / 0.28f, 2)) * Mathf.Clamp01(Mathf.Min(z - 2.4f, 9.8f - z) * 2);
             float beyond = Mathf.Max(Mathf.Max(-6.8f - x, x - 10.6f), z - 15.2f);
             if (beyond > 0) y += Mathf.Min(beyond * 0.045f, 1.6f);     // the land rises toward the hills
             return y;
@@ -161,12 +172,14 @@ namespace InboxZero.EditorTools
                 {
                     float wx = origin.x + (x + 0.5f) / splats * size.x, wz = origin.z + (z + 0.5f) / splats * size.z;
                     float ragged = (Mathf.PerlinNoise(wx * 1.7f + 5, wz * 1.7f + 9) - 0.5f) * 0.5f;
-                    float earth = 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.7f, 1.3f, PathDistance(wx, wz) + ragged));
+                    float earth = 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.5f, 1.0f, PathDistance(wx, wz) + ragged));
                     float pond = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.05f, 0.32f, Pond(wx, wz)));
                     // a band of gravel under the eaves, where the rain drips
                     bool yard = wx > -6 && wx < 3.9f;
                     float drip = yard ? 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.55f, 0.95f, wz - 2.33f + ragged * 0.5f)) : 0;
-                    float gravel = Mathf.Max(pond, drip);
+                    // ...and along the foot of the machiya, where the pond's bank meets the building
+                    float foot = wz > 2.3f && wz < 9.9f && wx < 4 ? 1 - Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.3f, 0.62f, 3.85f - wx + ragged * 0.35f)) : 0;
+                    float gravel = Mathf.Max(pond, Mathf.Max(drip, foot));
                     earth *= 1 - gravel;
                     map[z, x, 0] = 1 - earth - gravel; map[z, x, 1] = earth; map[z, x, 2] = gravel;
                 }
@@ -349,7 +362,7 @@ namespace InboxZero.EditorTools
             var kinds = new Dictionary<string, Material>
             {
                 ["Wood"] = Surface("Wood", albedo, occlusion, 0.2f),
-                ["Deck"] = Surface("Deck", albedo, occlusion, 0.62f),          // polished boards catch the garden's light
+                ["Deck"] = Surface("Deck", albedo, occlusion, 0.3f),           // worn boards: a soft sheen, not a mirror
                 ["Plaster"] = Surface("Plaster", albedo, occlusion, 0.06f),
                 ["Stone"] = Surface("Stone", albedo, occlusion, 0.2f),
                 ["Tile"] = Surface("Tile", albedo, occlusion, 0.5f),
@@ -402,6 +415,7 @@ namespace InboxZero.EditorTools
             blossom.SetColor("_Height_Gradient_Color", Hex(0xffc6cf));
             blossom.SetColor("_UV_Gradient_Color", Hex(0xffb6aa));
             blossom.SetColor("_SSS_Color", Hex(0xff8fa2));
+            Calm(blossom);
             blossom = Save(blossom, Made + "Blossom.mat");
             foreach (var renderer in tree.GetComponentsInChildren<Renderer>(true))
             {
@@ -422,15 +436,16 @@ namespace InboxZero.EditorTools
             // Stepping stones: single wide slabs, a stride apart, deck to gate.
             for (int i = 0; i < Path.Length; i++)
             {
-                // Each slab about 1.7 m across the path and 1.1 m along it, so there is moss between them.
-                float wide = 1.7f + 0.2f * Mathf.Sin(i * 2.3f), deep = 1.1f + 0.1f * Mathf.Cos(i * 1.7f);
+                // Each slab about 1.35 m across the path and 0.9 m along it, thinned and set down into
+                // the moss so only a few centimetres stand proud of it.
+                float wide = 1.35f + 0.15f * Mathf.Sin(i * 2.3f), deep = 0.9f + 0.08f * Mathf.Cos(i * 1.7f);
                 bool turned = i % 2 == 0;      // StonePath_3 (0.84 x 1.05) is longer front to back: turn it; StonePath_4 is 1.06 x 0.79
-                var stone = P("Environment/StonePath_" + (turned ? 3 : 4), Path[i].x, Path[i].y, 1, 0, 0.035f);
+                var stone = P("Environment/StonePath_" + (turned ? 3 : 4), Path[i].x, Path[i].y, 1, 0, turned ? -0.035f : -0.06f);
                 stone.transform.localRotation = Quaternion.Euler(0, (turned ? 90 : 0) + Rand(-12, 12), 0);
-                stone.transform.localScale = turned ? new Vector3(deep / 0.84f, 1.15f, wide / 1.05f) : new Vector3(wide / 1.06f, 1.15f, deep / 0.79f);
+                stone.transform.localScale = turned ? new Vector3(deep / 0.84f, 0.7f, wide / 1.05f) : new Vector3(wide / 1.06f, 0.7f, deep / 0.79f);
             }
-            var step = P("Environment/StonePath_4", -0.15f, 2.72f, 1, 4, 0.1f);     // the stone you step down onto
-            step.transform.localScale = new Vector3(1.5f, 1.7f, 1.05f);
+            var step = P("Environment/StonePath_4", -0.15f, 2.72f, 1, 4, 0.0f);     // the stone you step down onto
+            step.transform.localScale = new Vector3(1.25f, 1.1f, 0.95f);
 
             // Rocks, mossed over, where the old boulders lay.
             Rock(4, -3.5f, 4.85f, 1.8f, 0.78f, 35);
@@ -445,15 +460,30 @@ namespace InboxZero.EditorTools
             Rock(2, 0.55f, 13.6f, 0.9f, 0.3f, 20);
             // ...and round the pond.
             Rock(7, 1.75f, 3.45f, 1.0f, 0.36f, 30);
-            Rock(1, 3.55f, 3.2f, 0.9f, 0.3f, 250);
+            Rock(1, 3.3f, 3.15f, 0.8f, 0.28f, 250);
             Rock(8, 1.55f, 6.2f, 0.85f, 0.3f, 100);
-            Rock(6, 3.05f, 8.1f, 1.3f, 0.52f, 190);
+            Rock(6, 2.95f, 8.15f, 1.2f, 0.48f, 190);
             Rock(3, 1.45f, 7.75f, 0.7f, 0.22f, 330, false);
+            // The bank between the pond and the machiya: stones along the footing, a rock or two
+            // half in the water, and leaves growing out of the gravel.
+            Rock(3, 3.52f, 4.5f, 0.62f, 0.2f, 70);
+            Rock(7, 3.58f, 6.75f, 0.55f, 0.24f, 210);
+            Rock(1, 3.6f, 9.3f, 0.6f, 0.18f, 130, false);
+            for (int i = 0; i < 11; i++)
+                P("Rocks/SmallStone_" + (i % 6 + 1), 3.66f + Rand(-0.1f, 0.06f), 2.75f + i * 0.66f + Rand(-0.15f, 0.15f), Rand(0.32f, 0.55f), Rand(0, 360), -0.03f, false);
+            P("Nature/Fern_2", 3.5f, 5.55f, 0.3f, 250, 0, false);
+            P("Nature/Farfugium_1", 3.52f, 7.65f, 0.48f, 300, 0, false);
+            P("Nature/Grass_1", 3.6f, 3.6f, 0.55f, 40, 0, false);
+            P("Nature/Grass_1", 3.62f, 6.1f, 0.5f, 170, 0, false);
+            P("Nature/Grass_1_Large", 3.55f, 8.5f, 0.5f, 80, 0, false);
+            P("Nature/Clovers_2", 3.5f, 3.0f, 0.7f, 10, 0, false);
+            P("Nature/Fern_1", 3.45f, 6.4f, 0.26f, 100, 0, false);
+            P("Nature/Grass_1", 3.5f, 4.9f, 0.5f, 300, 0, false);
+            P("Nature/Clovers_1", 3.4f, 7.2f, 0.45f, 200, 0, false);
             for (int i = 0; i < 16; i++)
             {
                 float angle = i / 16f * Mathf.PI * 2 + Rand(-0.12f, 0.12f);
                 float x = PondX + Mathf.Cos(angle) * PondRx * 1.2f, z = PondZ + Mathf.Sin(angle) * PondRz * 1.14f;
-                if (x > 3.72f) continue;                                   // the machiya's footing is the bank there
                 P("Rocks/SmallStone_" + (i % 6 + 1), x, z, Rand(0.45f, 0.8f), Rand(0, 360), -0.05f, false);
             }
             for (int i = 0; i < 9; i++)
@@ -464,7 +494,7 @@ namespace InboxZero.EditorTools
             }
 
             // The pond: water, lilies, petals afloat.
-            var pond = Place("Nature/Water", new Vector3(PondX, WaterLevel, PondZ), new Vector3(0.27f, 1, 0.52f), 0, false);
+            var pond = Place("Nature/Water", new Vector3(PondX, WaterLevel, PondZ), new Vector3(0.2f, 1, 0.52f), 0, false);
             var water = Object.Instantiate(Load<Material>(Pack + "Assets/Materials/Nature/Water_1.mat"));
             water.name = "Pond";
             water.SetColor("_Deep_Color", Hex(0x0b1c36));
@@ -480,9 +510,9 @@ namespace InboxZero.EditorTools
             // makes none (their shaders write runaway values without it), so they go on the Water
             // layer, which it leaves out (see KyotoCourtyard.Mirror).
             var afloat = new List<GameObject> { pond };
-            afloat.Add(Place("Nature/WaterLily_Group_1", new Vector3(2.55f, WaterLevel + 0.01f, 4.75f), Vector3.one * 0.42f, 40, false));
-            afloat.Add(Place("Nature/WaterLily_Group_3", new Vector3(3.2f, WaterLevel + 0.01f, 6.35f), Vector3.one * 0.38f, 200, false));
-            afloat.Add(Place("Nature/WaterLily_Group_4", new Vector3(2.45f, WaterLevel + 0.01f, 7.1f), Vector3.one * 0.4f, 120, false));
+            afloat.Add(Place("Nature/WaterLily_Group_1", new Vector3(2.35f, WaterLevel + 0.01f, 4.75f), Vector3.one * 0.38f, 40, false));
+            afloat.Add(Place("Nature/WaterLily_Group_3", new Vector3(2.7f, WaterLevel + 0.01f, 6.3f), Vector3.one * 0.32f, 200, false));
+            afloat.Add(Place("Nature/WaterLily_Group_4", new Vector3(2.3f, WaterLevel + 0.01f, 7.1f), Vector3.one * 0.36f, 120, false));
             afloat.Add(Place("Nature/Fallen_Leaves_2", new Vector3(2.2f, WaterLevel + 0.012f, 5.6f), Vector3.one * 0.8f, 70, false));
             foreach (var thing in afloat)
                 foreach (var part in thing.GetComponentsInChildren<Transform>(true)) part.gameObject.layer = 4;
@@ -596,6 +626,42 @@ namespace InboxZero.EditorTools
             return go;
         }
 
+        static GameObject PlaceMeadow(string prefab, Vector3 position, float size, float yaw, bool shadows = false)
+        {
+            var go = (GameObject)PrefabUtility.InstantiatePrefab(Load<GameObject>(Meadow + "Prefabs/" + prefab + ".prefab"), root);
+            go.transform.localPosition = position;
+            go.transform.localRotation = Quaternion.Euler(0, yaw, 0);
+            go.transform.localScale = Vector3.one * size;
+            if (!shadows)
+                foreach (var renderer in go.GetComponentsInChildren<Renderer>(true))
+                    renderer.shadowCastingMode = ShadowCastingMode.Off;
+            return go;
+        }
+
+        /// From the Meadow Environment pack, besides its sky: mountains for the skyline, birds
+        /// crossing it, butterflies, and a few of its meadow flowers among the moss.
+        static void BuildMeadow()
+        {
+            // Mountains, scaled down and set a hundred metres off, so the thin mist half hides them.
+            // The tallest stands between the gate and the machiya's roof, under the sun.
+            PlaceMeadow("Background/Background - Autumn/P_Mountain_03_Autumn", new Vector3(32, -3, 105), 0.1f, 30);
+            PlaceMeadow("Background/Background - Autumn/P_Mountain_02_Autumn", new Vector3(-12, -3, 132), 0.07f, 200);
+            PlaceMeadow("Background/Background - Autumn/P_Mountain_04_Autumn", new Vector3(85, -3, 128), 0.06f, 110);
+
+            // A flock crossing the sky from left to right, far off, while there is light.
+            dayOnly.Add(PlaceMeadow("VFX/P_VFX_Bird_01", new Vector3(-105, 25, 92), 1, 0));
+            dayOnly.Add(PlaceMeadow("VFX/P_VFX_Bird_01", new Vector3(-150, 40, 150), 1, 8));
+
+            // A few of its smaller flowers in the moss: daisies, cornflowers and a purple spray, kept
+            // low and sparse (its poppies are too loud for this garden).
+            foreach (var (kind, x, z) in new[] { (5, -1.6f, 3.6f), (3, -1.1f, 4.3f), (5, 1.3f, 11.5f), (3, -1.3f, 11.3f), (10, -2.0f, 10.6f),
+                                                 (5, 1.35f, 8.9f), (3, 3.45f, 9.9f), (10, 3.5f, 11.2f), (5, -0.9f, 6.2f), (3, 1.5f, 3.9f) })
+                PlaceMeadow($"Flowers/P_Flower_{kind:00}_0{1 + random.Next(3)}", new Vector3(x + Rand(-0.1f, 0.1f), Ground(x, z) - 0.02f, z + Rand(-0.1f, 0.1f)), Rand(0.5f, 0.72f), Rand(0, 360));
+            // ...with butterflies over them while the sun is up.
+            dayOnly.Add(PlaceMeadow("VFX/P_VFX_Butterfly_01", new Vector3(-1.4f, 0.5f, 3.9f), 0.55f, 0));
+            dayOnly.Add(PlaceMeadow("VFX/P_VFX_Butterfly_03", new Vector3(1.4f, 0.55f, 11.2f), 0.55f, 120));
+        }
+
         static void BuildVeranda()
         {
             const float deck = 0.35f;
@@ -673,31 +739,42 @@ namespace InboxZero.EditorTools
 
         static void BuildAir(KyotoCourtyard yard)
         {
-            // The grade: filmic, so the shade can be deep and the lamps still glow; warm light
-            // against blue shadow; and a bloom wide enough that every lamp has air round it.
+            // The grade, after the Meadow pack's own autumn look: filmic, the middle tones leaned
+            // toward pink and the shadows toward violet, and a wide bloom that takes the sun in
+            // the sky and the lamps and spreads them over the picture.
             var dusk = Profile("Grade Dusk.asset", profile =>
             {
                 var bloom = profile.Add<Bloom>(true);
-                bloom.intensity.Override(2.1f); bloom.threshold.Override(0.78f); bloom.scatter.Override(0.8f);
-                bloom.tint.Override(new Color(1, 0.84f, 0.8f)); bloom.highQualityFiltering.Override(true);
+                bloom.intensity.Override(0.95f); bloom.threshold.Override(0.9f); bloom.scatter.Override(0.86f);
+                bloom.tint.Override(new Color(1, 0.74f, 0.64f)); bloom.highQualityFiltering.Override(true);
                 profile.Add<Tonemapping>(true).mode.Override(TonemappingMode.ACES);
                 var colour = profile.Add<ColorAdjustments>(true);
-                colour.postExposure.Override(0.75f); colour.contrast.Override(10); colour.saturation.Override(24);
-                var split = profile.Add<SplitToning>(true);
-                split.shadows.Override(Hex(0x4a5cd0)); split.highlights.Override(Hex(0xffba84)); split.balance.Override(-8);
+                colour.postExposure.Override(0.45f); colour.contrast.Override(6); colour.saturation.Override(16);
+                var tones = profile.Add<ShadowsMidtonesHighlights>(true);
+                tones.shadows.Override(new Vector4(0.95f, 0.82f, 1, -0.02f));
+                tones.midtones.Override(new Vector4(1, 1, 1, 0.03f));
+                tones.highlights.Override(new Vector4(1, 0.97f, 0.94f, 0));
+                var curve = profile.Add<LiftGammaGain>(true);
+                curve.lift.Override(new Vector4(1, 1, 1, 0));
+                curve.gamma.Override(new Vector4(1, 0.9f, 0.95f, 0));
+                curve.gain.Override(new Vector4(1, 1, 1, 0));
                 var vignette = profile.Add<Vignette>(true);
-                vignette.intensity.Override(0.33f); vignette.smoothness.Override(0.45f); vignette.color.Override(Hex(0x120a28));
+                vignette.intensity.Override(0.3f); vignette.smoothness.Override(0.4f); vignette.color.Override(Hex(0x241c5c));
             });
             // ...deeper and more electric as night comes on (blended in by KyotoCourtyard).
             var night = Profile("Grade Night.asset", profile =>
             {
                 var bloom = profile.Add<Bloom>(true);
-                bloom.intensity.Override(2.5f); bloom.threshold.Override(0.72f); bloom.scatter.Override(0.82f);
+                bloom.intensity.Override(2.4f); bloom.threshold.Override(0.72f); bloom.scatter.Override(0.82f);
                 bloom.tint.Override(new Color(1, 0.8f, 0.9f));
                 var colour = profile.Add<ColorAdjustments>(true);
-                colour.postExposure.Override(1.05f); colour.contrast.Override(12); colour.saturation.Override(32);
-                var split = profile.Add<SplitToning>(true);
-                split.shadows.Override(Hex(0x3e44d8)); split.highlights.Override(Hex(0xffa690)); split.balance.Override(-16);
+                colour.postExposure.Override(1.05f); colour.contrast.Override(12); colour.saturation.Override(30);
+                var tones = profile.Add<ShadowsMidtonesHighlights>(true);
+                tones.shadows.Override(new Vector4(0.86f, 0.86f, 1, 0));
+                tones.midtones.Override(new Vector4(1, 1, 1, 0));
+                tones.highlights.Override(new Vector4(1, 0.95f, 0.92f, 0));
+                var curve = profile.Add<LiftGammaGain>(true);
+                curve.gamma.Override(new Vector4(1, 0.96f, 1, 0));
                 var vignette = profile.Add<Vignette>(true);
                 vignette.intensity.Override(0.38f); vignette.smoothness.Override(0.45f); vignette.color.Override(Hex(0x0a0620));
             });
@@ -713,35 +790,83 @@ namespace InboxZero.EditorTools
             yard.nightGrade = Grade("Grade · night", night, 1, 0);
 
             // Petals off the tree, and a slower drift right across the garden.
+            // Petals. The pack's are leaf-sized for its giant trees (its mesh is 27 cm across), so
+            // they are scaled to a few centimetres. Two falls under the canopy...
             foreach (var at in new[] { new Vector3(-3.6f, 5.6f, 8.2f), new Vector3(-1.2f, 5.0f, 6.0f) })
             {
                 var fall = Place("Particle Systems/CherryBlossom_Leaffall", at, Vector3.one * 0.6f, 0);
                 foreach (var system in fall.GetComponentsInChildren<ParticleSystem>())
                 {
                     var main = system.main;
-                    main.startSize = new ParticleSystem.MinMaxCurve(0.035f, 0.07f);
+                    main.startSize = new ParticleSystem.MinMaxCurve(0.13f, 0.21f);
+                    main.startLifetime = new ParticleSystem.MinMaxCurve(6, 11);
+                    main.maxParticles = 160;
+                    var rate = system.emission;
+                    rate.rateOverTime = 7;
                     petals.Add(system);
                 }
             }
-            // Shafts of the last light, past the edge of the cherry's canopy and down across the path.
+            // ...and a drift carried on the wind right across the garden, some of it close to the seat.
+            var drift = Place("Particle Systems/CherryBlossom_Leaffall", new Vector3(-4.6f, 3.0f, 7.6f), Vector3.one, 0);
+            drift.name = "Petals on the wind";
+            foreach (var system in drift.GetComponentsInChildren<ParticleSystem>())
+            {
+                var main = system.main;
+                main.startSize = new ParticleSystem.MinMaxCurve(0.12f, 0.2f);
+                main.startLifetime = new ParticleSystem.MinMaxCurve(11, 16);
+                main.gravityModifier = 0.012f;
+                main.maxParticles = 120;
+                var rate = system.emission;
+                rate.rateOverTime = 4.5f;
+                var area = system.shape;
+                area.shapeType = ParticleSystemShapeType.Box;
+                area.rotation = Vector3.zero;
+                area.scale = new Vector3(3, 3.4f, 11);
+                var velocity = system.velocityOverLifetime;
+                velocity.enabled = true;
+                velocity.space = ParticleSystemSimulationSpace.World;
+                velocity.x = new ParticleSystem.MinMaxCurve(0.45f, 1.0f);       // with the wind (see KyotoCourtyard)
+                velocity.y = new ParticleSystem.MinMaxCurve(-0.16f, 0.02f);
+                velocity.z = new ParticleSystem.MinMaxCurve(-0.4f, -0.05f);
+                var tumble = system.noise;
+                tumble.enabled = true; tumble.strength = 0.45f; tumble.frequency = 0.22f; tumble.scrollSpeed = 0.12f;
+            }
+            // Shafts of sunlight over the wall and the gate, coming toward the seat: seen from
+            // there they fan out from the sun.
             foreach (var (top, length, width, strength) in new[]
-                     { (new Vector3(-0.8f, 4.6f, 11.6f), 9.5f, 0.8f, 0.42f), (new Vector3(-1.6f, 4.2f, 10.2f), 8.6f, 0.5f, 0.36f),
-                       (new Vector3(0.2f, 4.9f, 12.4f), 10.5f, 1.0f, 0.3f), (new Vector3(-2.4f, 3.9f, 9.0f), 8.0f, 0.6f, 0.32f),
-                       (new Vector3(0.9f, 5.2f, 13.2f), 11.5f, 0.7f, 0.26f), (new Vector3(-0.2f, 3.8f, 9.4f), 8.0f, 0.4f, 0.38f),
-                       (new Vector3(-3.2f, 4.3f, 8.2f), 8.6f, 0.9f, 0.24f), (new Vector3(1.6f, 4.4f, 11.0f), 9.4f, 0.45f, 0.3f) })
+                     { (new Vector3(-1.0f, 4.6f, 13.6f), 10.0f, 0.9f, 0.3f), (new Vector3(0.8f, 5.0f, 13.8f), 10.5f, 0.6f, 0.26f),
+                       (new Vector3(2.4f, 4.4f, 13.9f), 9.5f, 0.8f, 0.3f), (new Vector3(3.9f, 5.2f, 13.6f), 11.0f, 0.7f, 0.22f),
+                       (new Vector3(-2.6f, 5.4f, 12.8f), 11.5f, 1.0f, 0.2f), (new Vector3(1.6f, 3.9f, 13.2f), 8.5f, 0.45f, 0.3f),
+                       (new Vector3(5.2f, 4.7f, 13.4f), 10.0f, 0.6f, 0.2f), (new Vector3(-0.2f, 4.0f, 12.2f), 8.0f, 0.5f, 0.26f) })
                 Shaft(top, length, width, strength);
+            // The glare itself: a wide sheet of light that KyotoCourtyard keeps in front of the sun.
+            var veil = new Material(Look.Shader("KyotoHalo")) { name = "Sun Veil" };
+            veil.SetFloat("_Core", 1.5f);
+            veil.enableInstancing = false;
+            veil.renderQueue = GlowQueue;
+            veil = Save(veil, Made + "Sun Veil.mat");
+            var sheet = new GameObject("Sun veil");
+            sheet.transform.SetParent(root, false);
+            sheet.transform.localScale = new Vector3(8, 8, 1);
+            sheet.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+            var sheetRenderer = sheet.AddComponent<MeshRenderer>();
+            sheetRenderer.sharedMaterial = veil;
+            sheetRenderer.shadowCastingMode = ShadowCastingMode.Off; sheetRenderer.receiveShadows = false;
+            yard.sunVeil = sheetRenderer;
+            yard.sunVeilColour = Hdr(0xffb89c, 0.2f);
             // Haze in layers, so the garden has depth to look into: low over the moss, before the
             // back wall, over the pond, and blossom-coloured under the tree. (The pack's mist and
             // light-shaft particles do not show in this light; these do, for almost nothing.)
-            Halo("evening haze", new Vector3(0.6f, 1.2f, 12.6f), 12, 3.8f, Hdr(0xff8f84, 0.1f), Hdr(0x7a5cf0, 0.1f));
-            Halo("haze over the moss", new Vector3(-1.2f, 0.6f, 9.2f), 11, 2.2f, Hdr(0xff8a9a, 0.07f), Hdr(0x6a64f0, 0.08f));
-            Halo("haze over the pond", new Vector3(2.7f, 0.3f, 5.9f), 4.5f, 1.3f, Hdr(0xffa070, 0.07f), Hdr(0x6a78ff, 0.08f));
-            Halo("under the blossom", new Vector3(-3.0f, 2.7f, 7.4f), 8, 5, Hdr(0xff6f98, 0.1f), Hdr(0xff6a90, 0.06f));
+            Halo("evening haze", new Vector3(0.6f, 1.3f, 12.6f), 13, 4.4f, Hdr(0xffa08c, 0.16f), Hdr(0x7a5cf0, 0.1f));
+            Halo("haze over the moss", new Vector3(-1.2f, 0.6f, 9.2f), 11, 2.4f, Hdr(0xff94a0, 0.1f), Hdr(0x6a64f0, 0.08f));
+            Halo("haze over the pond", new Vector3(2.7f, 0.3f, 5.9f), 4.5f, 1.3f, Hdr(0xffa878, 0.09f), Hdr(0x6a78ff, 0.08f));
+            Halo("under the blossom", new Vector3(-3.0f, 2.7f, 7.4f), 8, 5, Hdr(0xff7aa0, 0.12f), Hdr(0xff6a90, 0.06f));
 
             // Fireflies, a few at dusk and more with the dark.
             var firefly = new Material(Look.Shader("KyotoHalo")) { name = "Firefly" };
             firefly.SetColor("_Color", new Color(1.7f, 2.0f, 0.55f, 1));     // bright enough to bloom, not to become a lamp
             firefly.SetFloat("_Core", 9);
+            firefly.renderQueue = GlowQueue;
             firefly = Save(firefly, Made + "Firefly.mat");
             var go = new GameObject("Fireflies");
             go.transform.SetParent(root, false);
@@ -769,6 +894,9 @@ namespace InboxZero.EditorTools
             draw.sharedMaterial = firefly; draw.renderMode = ParticleSystemRenderMode.Billboard;
             draw.shadowCastingMode = ShadowCastingMode.Off; draw.receiveShadows = false;
             yard.fireflies = flies;
+            // In the sun they are motes of gold; with the dark, fireflies.
+            glows.Add(new KyotoCourtyard.Glow { renderer = draw, slot = -1, property = "_Color",
+                dusk = new Color(2.0f, 1.5f, 1.0f, 1), night = new Color(1.7f, 2.0f, 0.55f, 1) });
         }
 
         /// Deeper greens and wet stone: the pack's grass and bamboo are a midday yellow-green and
@@ -794,7 +922,9 @@ namespace InboxZero.EditorTools
                 var c = bamboo.GetColor(colour);
                 bamboo.SetColor(colour, new Color(c.r * 0.6f, c.g * 0.74f, c.b * 0.78f, c.a));      // deeper, and a little toward blue
             }
+            Calm(bamboo);
             bamboo = Save(bamboo, Made + "Bamboo Deep.mat");
+            var calmed = new Dictionary<Material, Material>();
             foreach (var renderer in root.GetComponentsInChildren<Renderer>(true))
             {
                 var materials = renderer.sharedMaterials;
@@ -805,9 +935,52 @@ namespace InboxZero.EditorTools
                     if (materials[i].name == "Grass_1") { materials[i] = grass; changed = true; }
                     else if (materials[i].name == "StonePath") { materials[i] = stone; changed = true; }
                     else if (materials[i].name == "Bamboo_Leaves_1") { materials[i] = bamboo; changed = true; }
+                    else if (materials[i].shader.name.EndsWith("Tree_Foliage") && AssetDatabase.GetAssetPath(materials[i]).StartsWith(Pack))
+                    {
+                        // every other leaf of the pack (bushes, the pine): the same leaf, without the jitter
+                        if (!calmed.TryGetValue(materials[i], out var calm))
+                        {
+                            calm = Object.Instantiate(materials[i]);
+                            calm.name = "Calm " + materials[i].name;
+                            Calm(calm);
+                            calm = Save(calm, Made + calm.name + ".mat");
+                            calmed[materials[i]] = calm;
+                        }
+                        materials[i] = calm; changed = true;
+                    }
+                    else if (materials[i].HasProperty("_Wind_Force_Multiplier") && materials[i].GetFloat("_Wind_Force_Multiplier") > MostBend
+                             && AssetDatabase.GetAssetPath(materials[i]).StartsWith(Pack))
+                    {
+                        // the branches under those leaves must bend exactly as far as they do
+                        if (!calmed.TryGetValue(materials[i], out var calm))
+                        {
+                            calm = Object.Instantiate(materials[i]);
+                            calm.name = "Calm " + materials[i].name;
+                            calm.SetFloat("_Wind_Force_Multiplier", MostBend);
+                            calm = Save(calm, Made + calm.name + ".mat");
+                            calmed[materials[i]] = calm;
+                        }
+                        materials[i] = calm; changed = true;
+                    }
                 }
                 if (changed) renderer.sharedMaterials = materials;
             }
+        }
+
+        /// The pack's leaves shiver quickly in place (a shake at 5 to 10 a second and a wobble of
+        /// the leaf texture), which reads as a nervous back-and-forth. Slow both right down and
+        /// leave the motion to the wind itself, which KyotoCourtyard lets swell and fall.
+        /// The wind here is stronger than the pack's bushes were made for (they bend three times
+        /// as far as a tree): nothing bends more than this multiple.
+        const float MostBend = 1.6f;
+
+        static void Calm(Material leaves)
+        {
+            leaves.SetFloat("_Vertex_Shake", 0.85f);
+            leaves.SetFloat("_Vertex_Shake_Speed", 1.6f);
+            leaves.SetFloat("_UV_Shake_Speed", 1.7f);
+            leaves.SetFloat("_UV_Shake_Force", Mathf.Min(leaves.GetFloat("_UV_Shake_Force"), 0.12f));
+            leaves.SetFloat("_Wind_Force_Multiplier", Mathf.Min(leaves.GetFloat("_Wind_Force_Multiplier"), MostBend));
         }
 
         /// Kyoto v2's own renderer, second in the shared pipeline's list: the garden's, plus
@@ -866,7 +1039,7 @@ namespace InboxZero.EditorTools
             AssetDatabase.Refresh();
             ImportOld();
             random = new System.Random(2718);
-            lamps.Clear(); glows.Clear(); petals.Clear();
+            lamps.Clear(); glows.Clear(); petals.Clear(); dayOnly.Clear();
 
             // Kyoto v2 has more lamps than the garden: let a surface take light from eight of them.
             var pipeline = Load<UniversalRenderPipelineAsset>("Assets/Resources/Komorebi/RenderPipeline.asset");
@@ -877,15 +1050,16 @@ namespace InboxZero.EditorTools
             var halo = new Material(Look.Shader("KyotoHalo")) { name = "Halo" };
             halo.SetFloat("_Core", 2.6f);
             halo.enableInstancing = false;
+            halo.renderQueue = GlowQueue;
             haloMaterial = Save(halo, Made + "Halo.mat");
             var shaft = new Material(Look.Shader("KyotoHalo")) { name = "Shaft" };
             shaft.SetFloat("_Core", 2.2f);
             shaft.enableInstancing = false;
+            shaft.renderQueue = GlowQueue;
             shaftMaterial = Save(shaft, Made + "Shaft.mat");
-            // The painted sky and mountains of the first courtyard are the backdrop here too.
+            // The sky is the Meadow pack's sunset panorama (see KyotoDuskSky.shader).
             var skyMaterial = new Material(Look.Shader("KyotoDuskSky")) { name = "Sky" };
-            skyMaterial.SetTexture("_Dusk", Load<Texture2D>("Assets/Resources/Kyoto/Backdrop_Dusk.png"));
-            skyMaterial.SetTexture("_Night", Load<Texture2D>("Assets/Resources/Kyoto/Backdrop_Night.png"));
+            skyMaterial.SetTexture("_Sky", Load<Texture>(Meadow + "Sources/Textures/Skybox/T_Skybox_Summer_01.HDR"));
             skyMaterial = Save(skyMaterial, Made + "Sky.mat");
 
             var scene = EditorSceneManager.NewPreviewScene();
@@ -898,18 +1072,23 @@ namespace InboxZero.EditorTools
                 yard.enabled = false;             // nothing takes over the editor's renderer while it is being built
                 yard.pipeline = pipeline;
                 yard.rendererIndex = BuildRenderer(pipeline);
+                // A round runs from just after sundown to blue hour: darker than the sun-in-view
+                // start of the day, never as dark as night. (0 and 1 are those two ends.)
+                yard.startAt = 0.28f; yard.endAt = 0.5f;
                 yard.skySource = skyMaterial;
                 BuildGround();
                 BuildOld();
                 BuildGarden();
                 BuildBeyond();
                 BuildVeranda();
+                BuildMeadow();
                 Enrich();
                 BuildLights(yard);
                 BuildAir(yard);
                 yard.lamps = lamps.ToArray();
                 yard.glows = glows.ToArray();
                 yard.petals = petals.ToArray();
+                yard.dayOnly = dayOnly.ToArray();
                 yard.enabled = true;
                 PrefabUtility.SaveAsPrefabAsset(courtyard, Out + "Courtyard.prefab");
                 Debug.Log($"[Kyoto v2] Built the courtyard: {lamps.Count} lamps, {glows.Count} glows, {courtyard.GetComponentsInChildren<Renderer>(true).Length} renderers.");
@@ -929,6 +1108,7 @@ namespace InboxZero.EditorTools
         {
             ("dusk", 0, 0, 0, 56), ("dusk-wide", 0, 0, 4, 96), ("dusk-left", 0, -42, 0, 56), ("dusk-right", 0, 42, 2, 56),
             ("dusk-up", 0, -20, -38, 70), ("dusk-pond", 0, 30, 20, 50), ("blue-hour", 0.5f, 0, 0, 56), ("sinking", 0.3f, 0, 0, 56),
+            ("round-start", 0.28f, 0, 0, 56), ("round-start-wide", 0.28f, 0, 4, 96), ("round-end", 0.5f, 0, 0, 56),
             ("night", 1, 0, 0, 56), ("night-wide", 1, 0, 4, 96), ("night-left", 1, -42, 0, 56), ("night-right", 1, 42, 2, 56),
             ("night-behind", 1, 180, 0, 80),
         };
@@ -954,7 +1134,7 @@ namespace InboxZero.EditorTools
             camera.aspect = target.width / (float)target.height;
             foreach (var shot in Shots)
             {
-                for (int i = 0; i < 8; i++) yard.Step(0.1f, shot.night);        // let the lamps and the reflection settle
+                for (int i = 0; i < 8; i++) yard.StepAt(0.1f, shot.night);      // let the lamps and the reflection settle
                 camera.transform.rotation = Quaternion.Euler(shot.pitch, shot.yaw, 0);
                 camera.fieldOfView = shot.field;
                 for (int pass = 0; pass < 2; pass++)
@@ -984,11 +1164,58 @@ namespace InboxZero.EditorTools
             Debug.Log("[Kyoto v2] Review captured.");
         }
 
+        /// Six seconds from the seat at dusk, as frames in Checks/v2-motion: for judging the wind,
+        /// the petals and the shafts of light, which a still cannot show.
+        [MenuItem("Inbox Zero/Kyoto v2/Capture Motion")]
+        public static void Motion()
+        {
+            bool async = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            if (Directory.Exists("Checks/v2-motion")) Directory.Delete("Checks/v2-motion", true);
+            Directory.CreateDirectory("Checks/v2-motion");
+            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            var go = Object.Instantiate(Resources.Load<GameObject>("KyotoV2/Courtyard"));
+            var yard = go.GetComponent<KyotoCourtyard>();
+            yard.Activate();
+            var camera = new GameObject("Motion camera").AddComponent<Camera>();
+            camera.transform.position = new Vector3(0, Eye, 0);
+            camera.transform.rotation = Quaternion.Euler(-4, -12, 0);
+            camera.nearClipPlane = 0.05f; camera.enabled = false; camera.fieldOfView = 60;
+            yard.ConfigureCamera(camera);
+            var systems = go.GetComponentsInChildren<ParticleSystem>();
+            foreach (var system in systems) system.Simulate(14, false, true, true);
+            var target = new RenderTexture(960, 540, 24, RenderTextureFormat.ARGB32, RenderTextureReadWrite.sRGB);
+            var image = new Texture2D(target.width, target.height, TextureFormat.RGB24, false);
+            camera.aspect = target.width / (float)target.height;
+            const float step = 1 / 12f;
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            for (int frame = 0; frame < 72; frame++)
+            {
+                // the pack's wind runs on the shader clock, which follows real time in the editor
+                while (clock.Elapsed.TotalSeconds < frame * step) System.Threading.Thread.Sleep(2);
+                yard.Step(step, 0);                                              // as a round begins
+                foreach (var system in systems) system.Simulate(step, false, false, true);
+                RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = target });
+                RenderTexture.active = target;
+                image.ReadPixels(new Rect(0, 0, target.width, target.height), 0, 0);
+                image.Apply();
+                RenderTexture.active = null;
+                File.WriteAllBytes($"Checks/v2-motion/{frame:000}.png", image.EncodeToPNG());
+            }
+            Object.DestroyImmediate(image);
+            target.Release(); Object.DestroyImmediate(target);
+            Object.DestroyImmediate(go);
+            Object.DestroyImmediate(camera.gameObject);
+            ShaderUtil.allowAsyncCompilation = async;
+            Debug.Log("[Kyoto v2] Motion captured.");
+        }
+
         /// For a terminal: Unity -batchmode -projectPath . -executeMethod InboxZero.EditorTools.KyotoCourtyardBuilder.BuildAndReview -quit
         public static void BuildAndReview()
         {
             Build();
             Review();
+            Motion();
         }
     }
 }

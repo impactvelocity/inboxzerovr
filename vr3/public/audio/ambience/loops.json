@@ -1,0 +1,32 @@
+{
+ "wind": {
+  "seconds": 27.0,
+  "lead": 0.5,
+  "channels": 2
+ },
+ "leaves": {
+  "seconds": 21.5,
+  "lead": 0.5,
+  "channels": 1
+ },
+ "bamboo": {
+  "seconds": 24.5,
+  "lead": 0.5,
+  "channels": 1
+ },
+ "water": {
+  "seconds": 18.0,
+  "lead": 0.5,
+  "channels": 1
+ },
+ "birds": {
+  "seconds": 27.4,
+  "lead": 0.5,
+  "channels": 1
+ },
+ "crickets": {
+  "seconds": 19.5,
+  "lead": 0.5,
+  "channels": 2
+ }
+}

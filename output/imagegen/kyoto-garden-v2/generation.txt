@@ -1,0 +1,7 @@
+Generated with the built-in image_gen tool. Source reference: ../kyoto-garden-v1/dusk.png.
+
+Dusk generation direction: A continuous 3:1 panorama for a 270-degree seated WebVR environment. Redesign the courtyard to fit into the middle third, with the center gate, complete cherry tree, lantern and right shoji building small and distant together. View from well back inside a broad covered veranda with generous deck foreground. Side thirds continue the timber veranda, roof, columns, shoji walls and warm lanterns. Level horizon, painterly low-poly style, early dusk peach/lavender sky. No people, player, hands, weapons, text, UI, particles, panels or vignettes.
+
+Twilight edit direction: Relight the generated dusk panorama only. Preserve exact dimensions, projection, framing and all geometry for a crossfade. Indigo violet sky, muted magenta horizon, cool lavender garden and blossom light, deep purple-blue veranda shadows, warm amber windows and lanterns. No added moon, objects, particles, borders or composition changes.
+
+Implementation uses the matching generated originals as dusk-v2.webp and twilight-v2.webp at quality 94. Original v1 assets are retained for comparison.

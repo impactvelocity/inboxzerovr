@@ -56,6 +56,8 @@ namespace InboxZero.EditorTools
                 Debug.Log("[InboxZero] Input handling set to the Input System package (takes effect after a restart).");
             }
 
+            UseUrpOnlyOnAndroid();
+
             // XR Plug-in Management: start OpenXR on Android.
             if (!EditorBuildSettings.TryGetConfigObject(LoaderKey, out XRGeneralSettingsPerBuildTarget perTarget) || perTarget == null)
             {
@@ -101,6 +103,48 @@ namespace InboxZero.EditorTools
             foreach (var feature in openxr.GetFeatures())
                 if (feature.enabled) Debug.Log("[InboxZero] OpenXR feature on: " + feature.name);
             Debug.Log($"[InboxZero] Quest configured. Loader assigned: {XRPackageMetadataStore.IsLoaderAssigned(OpenXRLoaderType, android)}");
+        }
+
+        /// Unity refuses to build when one platform's quality levels mix render
+        /// pipelines. The desktop starts on the built-in renderer and swaps to URP
+        /// for Kyoto; on Android only the URP level (Komorebi) is kept, so the
+        /// headset runs URP throughout. The game's own shaders are plain
+        /// vertex/fragment shaders that draw the same under either.
+        static void UseUrpOnlyOnAndroid()
+        {
+            var quality = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/QualitySettings.asset")[0]);
+            var levels = quality.FindProperty("m_QualitySettings");
+            int urpLevel = -1;
+            for (int i = 0; i < levels.arraySize; i++)
+            {
+                var level = levels.GetArrayElementAtIndex(i);
+                bool urp = level.FindPropertyRelative("customRenderPipeline").objectReferenceValue != null;
+                if (urp && urpLevel < 0) urpLevel = i;
+                var excluded = level.FindPropertyRelative("excludedTargetPlatforms");
+                int at = -1;
+                for (int j = 0; j < excluded.arraySize; j++)
+                    if (excluded.GetArrayElementAtIndex(j).stringValue == "Android") at = j;
+                if (urp && at >= 0) excluded.DeleteArrayElementAtIndex(at);
+                if (!urp && at < 0)
+                {
+                    excluded.InsertArrayElementAtIndex(excluded.arraySize);
+                    excluded.GetArrayElementAtIndex(excluded.arraySize - 1).stringValue = "Android";
+                }
+            }
+            if (urpLevel < 0)
+            {
+                Debug.LogError("[InboxZero] No quality level uses URP; run Inbox Zero > Komorebi > Rebuild Garden first.");
+                return;
+            }
+            var defaults = quality.FindProperty("m_PerPlatformDefaultQuality");
+            for (int i = 0; i < defaults.arraySize; i++)
+            {
+                var entry = defaults.GetArrayElementAtIndex(i);
+                if (entry.FindPropertyRelative("first").stringValue == "Android")
+                    entry.FindPropertyRelative("second").intValue = urpLevel;
+            }
+            quality.ApplyModifiedPropertiesWithoutUndo();
+            Debug.Log($"[InboxZero] Android uses quality level {urpLevel} (URP) only.");
         }
 
         [MenuItem("Inbox Zero/Build Quest APK")]

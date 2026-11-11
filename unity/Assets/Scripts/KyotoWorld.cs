@@ -16,6 +16,8 @@ namespace InboxZero
         public float Night { get; private set; }
         public float? NightOverride;
         public float DesktopFieldOfView => garden.DesktopFieldOfView;
+        /// A game started muted has no ambience either (the v2 courtyard has one; the garden has none).
+        public bool Muted { set { if (garden is KyotoCourtyard yard) yard.quiet = value; } }
         /// What the dev view calls the two ends of this scene's fade.
         public string EarlyName => garden.EarlyName;
         public string LateName => garden.LateName;
@@ -60,24 +62,26 @@ namespace InboxZero
                 material.renderQueue = queue;
                 return material;
             }
-            // Painted steel: flat tones, a little lighter along the cutting bevel.
-            var steel = Part(new Material(Shader.Find("Universal Render Pipeline/Lit")));
-            steel.color = new Color(0.66f,0.69f,0.74f); steel.SetFloat("_Metallic",0.85f); steel.SetFloat("_Smoothness",0.75f);
+            // Painted steel, not polished: flat brushed tones, a little lighter along the
+            // cutting bevel, no mirror (see KyotoBlade.shader).
+            var brush = Resources.Load<Texture2D>("Kyoto/Brush");
+            var steel = Part(new Material(Look.Shader("KyotoBlade")));
+            steel.SetTexture("_BrushTex", brush);
             var bevel = Part(new Material(steel));
             bevel.color = new Color(1.16f, 1.15f, 1.18f);
-            // The fittings are lit by the scene around the seat (see KyotoProp).
-            Material Fitting(int colour, float metal)
+            // The fittings are painted too, each one flat colour (see KyotoGrip.shader): lacquered
+            // iron, worn brass, dark cord with its cream diamonds, and a band of red.
+            Material Fitting(int colour)
             {
-                var material = new Material(Shader.Find("Universal Render Pipeline/Lit")) { color = Look.Hex(colour) };
-                material.SetFloat("_Metallic", metal);
-                material.SetFloat("_Smoothness", 0.35f);
+                var material = new Material(Look.Shader("KyotoGrip")) { color = Look.Hex(colour) };
+                material.SetTexture("_BrushTex", brush);
                 return Part(material);
             }
-            var iron = Fitting(0x59452f, 0.15f);
-            var brass = Fitting(0x94703c, 0.25f);
-            var wrap = Fitting(0x1c1b28, 0.05f);
-            var cream = Fitting(0xe2d2a4, 0);
-            var red = Fitting(0x9d3424, 0.05f);
+            var iron = Fitting(0x4a3a30);
+            var brass = Fitting(0xb08a50);
+            var wrap = Fitting(0x2e2b3c);
+            var cream = Fitting(0xe6d6aa);
+            var red = Fitting(0xb03a2c);
             foreach (var renderer in model.GetComponentsInChildren<MeshRenderer>())
             {
                 renderer.shadowCastingMode = ShadowCastingMode.Off;

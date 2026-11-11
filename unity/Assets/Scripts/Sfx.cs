@@ -11,6 +11,10 @@ namespace InboxZero
     /// are files in Assets/Resources/Audio. The blade's hum and the ping that
     /// climbs with a combo are synthesised here. Any file that is missing falls
     /// back to a synthesised sound.
+    ///
+    /// A blade that does not hum (the katana) has swing sounds instead: swing1
+    /// (a light flick) to swing6 (a long sweep), ElevenLabs sound effects cut
+    /// by web/tools/ambience.py. A missing one is simply not played.
     public class Sfx
     {
         const int Rate = 44100;
@@ -25,7 +29,15 @@ namespace InboxZero
         List<float> mix;
 
         const float MusicVolume = 0.42f;
-        static readonly string[] Files = { "slash1", "slash2", "wrong", "sort", "arrive", "blip", "done" };
+        static readonly string[] Files = { "slash1", "slash2", "wrong", "sort", "arrive", "blip", "done",
+                                           "swing1", "swing2", "swing3", "swing4", "swing5", "swing6" };
+        /// Blade-tip speeds, m/s: a swing starts above SwingStart, is at full strength by
+        /// SwingFull, and the next one waits until the blade is slower than SwingRearm.
+        const float SwingStart = 2.8f, SwingFull = 9, SwingRearm = 1.8f;
+        const int Swings = 6;
+        bool swingArmed = true;
+        float swingRise = -1, swingPeak, swingWait;
+        int lastSwing = -1;
         readonly Dictionary<string, AudioClip> files = new Dictionary<string, AudioClip>();
         readonly List<AudioSource> voices = new List<AudioSource>(); // for sounds that change pitch
         readonly float[] spectrum = new float[256];
@@ -101,6 +113,37 @@ namespace InboxZero
             humLevel = on ? 0.1f + 0.5f * swing : 0;
             hum.pitch = Mathf.Lerp(hum.pitch, 1 + 0.5f * swing, 0.35f);
             if (on && !hum.isPlaying) hum.Play();
+        }
+
+        /// The katana through the air. Call every frame with the blade tip's speed;
+        /// each swing gets one whoosh, picked to suit how hard it is (light takes
+        /// for a flick, the long sweeps for a full cut) and never the same take
+        /// twice running.
+        public void Swing(bool on, float speed, float dt)
+        {
+            swingWait = Mathf.Max(0, swingWait - dt);
+            if (!on) { swingRise = -1; return; }
+            if (!swingArmed) { if (speed < SwingRearm && swingWait <= 0) swingArmed = true; return; }
+            if (swingRise < 0) { if (speed > SwingStart) { swingRise = 0; swingPeak = speed; } return; }
+            // a few hundredths of a second to see how hard the swing is, then its sound
+            swingRise += dt;
+            bool slowing = speed < swingPeak * 0.97f;
+            swingPeak = Mathf.Max(swingPeak, speed);
+            if (!slowing && swingRise < 0.06f) return;
+            float strength = Mathf.Clamp01((swingPeak - SwingStart) / (SwingFull - SwingStart));
+            swingArmed = false; swingRise = -1; swingWait = 0.2f;
+
+            float Weight(int i) => i == lastSwing || !files.ContainsKey("swing" + (i + 1)) ? 0
+                : Mathf.Exp(-Mathf.Pow(i / (Swings - 1f) - strength, 2) / 0.09f);
+            float total = 0;
+            for (int i = 0; i < Swings; i++) total += Weight(i);
+            if (total <= 0) return;
+            float roll = UnityEngine.Random.value * total;
+            int pick = -1;
+            for (int i = 0; i < Swings && pick < 0; i++) { roll -= Weight(i); if (roll <= 0) pick = i; }
+            if (pick < 0) return;
+            lastSwing = pick;
+            PlayFile("swing" + (pick + 1), 0.93f + 0.17f * strength + UnityEngine.Random.Range(-0.05f, 0.05f), 0.3f + 0.5f * strength);
         }
 
         /// Two seconds of electric hum that loops without a seam: a low buzz

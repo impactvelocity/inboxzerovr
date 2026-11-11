@@ -17,8 +17,8 @@ and press Play.
 
 In the dev view the game stands still while the world keeps moving: hold
 Space and move the mouse to look around (the arrow keys turn too), N switches
-a Kyoto level between the two ends of its day (midday and twilight in the
-garden, dusk and night in the v2 courtyard), H hides the hint line and F1
+a Kyoto level between the two ends of its round (midday and twilight in the
+garden, sundown and blue hour in the v2 courtyard), H hides the hint line and F1
 goes back. Pick the level on the home screen first.
 
 The mouse clicks the home screen buttons. The keys for the current screen are
@@ -114,28 +114,48 @@ the level picker.
 
 - **Old:** the veranda, machiya, walls and shut gate from the Blender scene
   (`Assets/KyotoV2/Architecture.fbx` with a colour atlas and an occlusion
-  map), and its painted sky and mountains as the backdrop
-  (`Assets/Resources/Kyoto/Backdrop_Dusk.png` and `Backdrop_Night.png`, drawn
-  by `KyotoDuskSky.shader`). The katana and the paper letters are the same.
+  map). The katana and the paper letters are the same. The katana is painted,
+  not polished or lit by the scene (`KyotoBlade.shader`, `KyotoGrip.shader`),
+  and on a monitor it is held as a right hand would hold it: the grip comes
+  up out of the lower right corner and the blade points up and away
+  (`InboxGame.KatanaRest`, `KatanaAim`, `KatanaTurn`).
+- **Sky, from Meadow Environment (ANGRY MESH):** its sunset panorama
+  (`T_Skybox_Summer_01.HDR`), drawn by `KyotoDuskSky.shader` and turned so
+  its sun stands low over the gate. Also from that pack: three mountains on
+  the skyline, a flock of birds crossing it, butterflies, and a few small
+  flowers in the moss. The pack's own **URP Template 17.3.0** has been
+  applied to it (its shaders, materials and demo scenes are the URP
+  versions); reimporting the pack from the Asset Store undoes that.
 - **New, from Komorebi Nature:** the largest cherry tree, wide stepping
   stones, mossy rocks, the stone lanterns, a lily pond beside the machiya, a
   hanging lantern by the gate, and bamboo, bushes, ferns and flowers along
   the left so that wall hardly shows. Little stands beyond the walls: the
   painting is the background.
-- **Light and time:** deep dusk, then a 70-second fade to night during a
-  round (`KyotoCourtyard.cs`). Little light comes from the sky and it is
-  cool, so the shade under the tree is blue and deep. The last sun comes low
-  past the cherry tree, lights its blossom from behind, warms the machiya
-  and sinks; the moon takes over from the same side; the painting fades to
-  its night; the lamps and paper windows come up and flicker; fireflies
-  gather. `KyotoCourtyard.night` previews it from 0 to 1.
-- **Bloom and air:** a filmic (ACES) grade with wide bloom, warm highlights
-  against blue shadow, deepening at night
+- **Light and time:** `KyotoCourtyard.cs` holds a whole evening, from the sun
+  in view low over the gate (0) to full night (1): the sun sinks behind the
+  wall (the sky panorama is turned a little further every frame), the sky
+  reddens and fades into a night made from the same clouds, with stars; the
+  moon takes over; lamps and paper windows come up; motes in the sunlight
+  become fireflies. A round plays only the middle of it, from just after
+  sundown (`startAt`, 0.28) to blue hour (`endAt`, 0.5): darker than the
+  sunlit start, never as dark as night. `KyotoCourtyard.night` previews any
+  point from 0 to 1.
+- **Bloom and air:** a grade after the pack's own autumn look: filmic (ACES),
+  middle tones leaned toward pink, shadows toward violet, and a wide bloom
+  that spreads the sun and the lamps over the picture
   (`Assets/KyotoV2/Generated/Grade Dusk.asset` and `Grade Night.asset`).
-  Shafts of light come down past the canopy while the sun or moon is up,
-  haze lies in layers over the moss, the pond and the back wall, and every
-  lamp has a soft halo (all `KyotoHalo.shader`). Petals fall. A small live
-  reflection of the courtyard serves the pond, the wet stones and the deck.
+  Shafts of light fan out from the sun, a soft sheet of glare stays in front
+  of it, haze lies in layers, and every lamp has a halo (all
+  `KyotoHalo.shader`, drawn before the game's own see-through things so they
+  never wash over an email). A small live reflection of the courtyard serves
+  the pond, the wet stones and the deck.
+- **Wind and petals:** the Komorebi wind is a pattern of gusts sliding along
+  one fixed line. `KyotoCourtyard` lets its strength swell and fall slowly so
+  no two moments match, and the builder gives every leaf material a calmed
+  copy without the pack's fast shiver (and bushes that bend no further than
+  trees). Petals fall under the canopy and a thinner drift crosses the whole
+  garden. **Inbox Zero > Kyoto v2 > Capture Motion** saves six seconds of
+  frames to `Checks/v2-motion`.
 - **Contact shadows:** on a monitor the level draws through its own renderer
   (`Assets/KyotoV2/Generated/Renderer.asset`, second in the shared
   pipeline's list), which adds URP's screen-space ambient occlusion. A

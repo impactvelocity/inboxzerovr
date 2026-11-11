@@ -20,10 +20,10 @@ namespace InboxZero
     }
 
     /// Kyoto v2: the old courtyard, replanted with the Komorebi pack and lit
-    /// live under the painted sky and mountains. This owns everything that
-    /// changes as dusk turns to night: the last light sinking and the moon
-    /// taking over, the painting fading to its night, the mist, the lamps
-    /// coming up, the grade and the bloom. The prefab is put together by
+    /// live under the Meadow pack's sunset sky. This owns everything that
+    /// changes as the sun goes down: the sun sinking behind the gate and the
+    /// moon taking over, the sky turning to night, the mist, the lamps coming
+    /// up, the wind, the grade and the bloom. The prefab is put together by
     /// KyotoCourtyardBuilder (Inbox Zero > Kyoto v2 > Rebuild Courtyard).
     [ExecuteAlways]
     public sealed class KyotoCourtyard : MonoBehaviour, IKyotoScene
@@ -58,15 +58,23 @@ namespace InboxZero
         public Glow[] glows;
         public ParticleSystem[] petals;
         public ParticleSystem fireflies;
+        /// Birds and butterflies: gone once the light has.
+        public GameObject[] dayOnly;
         public ReflectionProbe mirror;
+        /// A wide soft sheet of light hung in front of the sun: the glare that washes over
+        /// whatever stands against it.
+        public Renderer sunVeil;
+        [ColorUsage(true, true)] public Color sunVeilColour = Color.white;
         [Range(0, 1)] public float night;
+        /// The part of the day a round runs through: from `startAt` when it begins to `endAt`.
+        [Range(0, 1)] public float startAt, endAt = 1;
         public float desktopFieldOfView = 56;
         /// Which of the pipeline's renderers draws this scene on a monitor: the one with contact shadows.
         public int rendererIndex;
 
         public float DesktopFieldOfView => desktopFieldOfView;
-        public string EarlyName => "dusk";
-        public string LateName => "night";
+        public string EarlyName => "sundown";
+        public string LateName => "blue hour";
 
         Material sky;
         MaterialPropertyBlock block;
@@ -77,6 +85,11 @@ namespace InboxZero
         bool mirrorFailed;
         float clock, gust, cloudShift;
         bool active;
+        /// The garden's sound (wind, leaves, water, birds, crickets), made the first time the game steps the scene.
+        KyotoAmbience ambience;
+        float windSwell, windForce = 0.85f;
+        /// No ambience, for a game started muted.
+        [System.NonSerialized] public bool quiet;
 
         RenderPipelineAsset previousPipeline, previousQuality;
         Material previousSky;
@@ -94,7 +107,7 @@ namespace InboxZero
         static Color Mix(Color a, Color b, Color c, float t) => t < 0.5f ? Color.Lerp(a, b, t * 2) : Color.Lerp(b, c, t * 2 - 1);
         static float Mix(float a, float b, float c, float t) => t < 0.5f ? Mathf.Lerp(a, b, t * 2) : Mathf.Lerp(b, c, t * 2 - 1);
 
-        void OnEnable() { Activate(); }
+        void OnEnable() { Activate(); ambience?.Reset(); }
         void Update() { if (!Application.isPlaying) Apply(night); }
 
         public void Activate()
@@ -120,13 +133,19 @@ namespace InboxZero
             Apply(night);
         }
 
-        public void Step(float dt, float fade)
+        public void Step(float dt, float fade) => StepAt(dt, Mathf.Lerp(startAt, endAt, fade));
+
+        /// As Step, but at a point on the whole day (0 the sun up, 1 full night).
+        public void StepAt(float dt, float fade)
         {
             clock += dt;
             cloudShift += dt * 0.0016f;
             gust = Mathf.MoveTowards(gust, 0, dt * 0.7f);
             Apply(fade);
             Mirror();
+            if (!Application.isPlaying) return;
+            if (ambience == null) ambience = new KyotoAmbience(transform);
+            ambience.Step(dt, Mathf.SmoothStep(0, 1, night), windSwell, windForce, clock, quiet);
         }
 
         /// A cut stirs the tree: a gust through the leaves and a few petals shaken loose.
@@ -145,18 +164,22 @@ namespace InboxZero
             float t = Mathf.SmoothStep(0, 1, night);
             float dark = Mathf.InverseLerp(0.45f, 1, t);          // how far the night proper has come on
 
-            // ---- the last light, then the moon: one lamp, handed over while it is at its dimmest.
-            // Both come low over the back wall, past the cherry tree: the blossom is lit from
-            // behind, the machiya and the path catch the light, and under the tree the shade is deep.
-            float lastLight = t < 0.5f ? 1 - t * 2 * (t * 2) : 0, moonLight = t < 0.5f ? 0 : Mathf.Sqrt(t * 2 - 1);
+            // ---- the sun, then the moon: one lamp, handed over while it is at its dimmest.
+            // The sun stands low over the gate, in view, and goes down behind it as the round
+            // goes on; everything is lit from behind and throws its shadow toward the seat.
+            float sink = Mathf.Clamp01(t * 2);
+            float sunHeight = Mathf.Lerp(SunHeight, -9, sink);                      // degrees above the horizon, as seen
+            float sunUp = Mathf.SmoothStep(0, 1, Mathf.InverseLerp(-5, 7, sunHeight));
+            float lastLight = (1 - sink * sink) * Mathf.Lerp(0.35f, 1, sunUp), moonLight = t < 0.5f ? 0 : Mathf.Sqrt(t * 2 - 1);
+            var sunDirection = Quaternion.Euler(-sunHeight, SunAzimuth, 0) * Vector3.forward;
             if (sun != null)
             {
                 if (t < 0.5f)
                 {
-                    float sink = t * 2;
-                    sun.color = Color.Lerp(C(0xffb488), C(0xff7a5c), sink);
-                    sun.intensity = 2.3f * lastLight;
-                    sun.transform.localRotation = Quaternion.Euler(Mathf.Lerp(SunLight.x, 7, sink), Mathf.Lerp(SunLight.y, SunLight.y + 5, sink), 0);
+                    sun.color = Color.Lerp(C(0xffc890), C(0xff7a58), sink);
+                    sun.intensity = 2.5f * lastLight;
+                    // the light comes from a little higher than the sun stands, so it clears the wall for longer
+                    sun.transform.localRotation = Quaternion.Euler(Mathf.Lerp(SunLight.x, 5, sink), SunLight.y, 0);
                 }
                 else
                 {
@@ -167,28 +190,41 @@ namespace InboxZero
                 RenderSettings.sun = sun;
             }
 
-            // ---- the painted sky and mountains, dusk fading to night
+            // ---- the sky: the Meadow pack's sunset panorama, turned so its sun is ours
             if (sky != null)
             {
-                sky.SetFloat("_Fade", t);
-                sky.SetFloat("_Gain", Mix(1.15f, 1.1f, 1.4f, t));
-                sky.SetFloat("_Saturation", Mix(1.4f, 1.35f, 1.25f, t));
-                sky.SetFloat("_Glow", Mix(2.6f, 1.8f, 1.3f, t));
-                sky.SetColor("_Top", Mix(new Color(0.42f, 0.42f, 0.8f), new Color(0.6f, 0.6f, 0.9f), Color.white, t));
+                var turn = Quaternion.LookRotation(sunDirection) * Quaternion.Inverse(Quaternion.LookRotation(PanoramaSun));
+                sky.SetMatrix("_Turn", Matrix4x4.Rotate(Quaternion.Inverse(turn)));
+                sky.SetVector("_SunDir", sunDirection);
+                sky.SetFloat("_Exposure", Mathf.Lerp(0.92f, 0.75f, sink));
+                sky.SetColor("_Tint", Color.Lerp(new Color(1, 0.86f, 0.98f), new Color(1, 0.66f, 0.78f), sink));       // toward pink as it sets
+                sky.SetColor("_SunGlow", Color.Lerp(new Color(1.2f, 0.7f, 0.56f), new Color(1.4f, 0.4f, 0.4f), sink) * sunUp);
+                sky.SetFloat("_Fade", Mathf.SmoothStep(0, 1, Mathf.InverseLerp(0.3f, 0.85f, t)));
+                sky.SetColor("_NightTint", new Color(0.26f, 0.26f, 0.95f) * 0.5f);
+                sky.SetColor("_Afterglow", new Color(1.0f, 0.16f, 0.36f));
                 sky.SetFloat("_Stars", dark);
                 RenderSettings.skybox = sky;
             }
+            if (sunVeil != null && block != null)
+            {
+                var eye = transform.TransformPoint(0, 1.55f, 0);
+                var veilAt = eye + transform.TransformDirection(sunDirection) * 4.6f;
+                sunVeil.transform.SetPositionAndRotation(veilAt, Quaternion.LookRotation(veilAt - eye));
+                sunVeil.GetPropertyBlock(block);
+                block.SetColor("_Color", sunVeilColour * ((1 - sink) * sunUp));
+                sunVeil.SetPropertyBlock(block);
+            }
 
-            // ---- the air. Little light comes from the sky, and it is cool, so whatever the
-            // sun and the lamps do not reach falls away into blue; the mist takes the warm side.
+            // ---- the air. The shade is lavender, not black: the sky still fills it. The mist
+            // is thin and takes the colour of the light, so the far hills melt into the sky.
             RenderSettings.ambientMode = AmbientMode.Trilight;
-            RenderSettings.ambientSkyColor = Mix(C(0x4a5cae), C(0x3c44a0), C(0x34369a), t);
-            RenderSettings.ambientEquatorColor = Mix(C(0x6e4c88), C(0x523e86), C(0x46307e), t);
-            RenderSettings.ambientGroundColor = Mix(C(0x221c3a), C(0x1c1a38), C(0x161434), t);
+            RenderSettings.ambientSkyColor = Mix(C(0x7d78d2), C(0x4a4cae), C(0x34369a), t);
+            RenderSettings.ambientEquatorColor = Mix(C(0xa870a6), C(0x62458e), C(0x46307e), t);
+            RenderSettings.ambientGroundColor = Mix(C(0x3e3060), C(0x24204a), C(0x161434), t);
             RenderSettings.fog = true;
             RenderSettings.fogMode = FogMode.ExponentialSquared;
-            RenderSettings.fogColor = Mix(C(0xc47a98), C(0x6c5aac), C(0x35287a), t);
-            RenderSettings.fogDensity = Mix(0.024f, 0.026f, 0.027f, t);
+            RenderSettings.fogColor = Mix(C(0xf2a8b4), C(0x8468b8), C(0x35287a), t);
+            RenderSettings.fogDensity = Mix(0.0085f, 0.011f, 0.013f, t);
 
             // ---- lamps and everything that glows
             if (lamps != null)
@@ -223,23 +259,55 @@ namespace InboxZero
             if (fireflies != null)
             {
                 var emission = fireflies.emission;
-                emission.rateOverTime = Mathf.Lerp(1.2f, 9, t);
+                emission.rateOverTime = Mathf.Lerp(5, 9, t);       // motes in the sunlight, then fireflies
             }
             if (nightGrade != null) nightGrade.weight = t;
+            if (dayOnly != null)
+                foreach (var creature in dayOnly)
+                    if (creature != null && creature.activeSelf != t < 0.42f) creature.SetActive(t < 0.42f);
 
             Shader.SetGlobalFloat("_KyotoNight", t);
-            Shader.SetGlobalFloat("RaygeasTreeWindForce", 0.26f + gust);
-            Shader.SetGlobalFloat("RaygeasTreeWindSpeed", 3.2f);
-            Shader.SetGlobalFloat("RaygeasTreeWindWavesScale", 0.6f);
-            Shader.SetGlobalFloat("RaygeasTreeWindFlowDensity", 0.4f);
-            Shader.SetGlobalFloat("RaygeasGrassWindForce", 0.22f + gust * 0.6f);
-            Shader.SetGlobalFloat("RaygeasGrassWindSpeed", 1.2f);
+            // ---- the wind. In the pack's shaders a pattern of gusts slides along one fixed line
+            // and bends whatever it passes over. Its speed, scale and line must not change (the
+            // pattern would jump), so the life comes from its strength: a slow swell and lull with
+            // a quicker breath on top, never the same twice, and broad slow gusts that reach one
+            // part of the tree before another.
+            float swell = Mathf.PerlinNoise(clock * 0.09f, 3.7f), breath = Mathf.PerlinNoise(clock * 0.31f, 8.2f);
+            float wind = 0.85f + 1.5f * swell * swell + 0.45f * breath + gust * 1.6f;
+            windSwell = swell; windForce = wind;      // the ambience is as loud as the trees are moved
+            Shader.SetGlobalFloat("RaygeasTreeWindForce", wind);
+            Shader.SetGlobalFloat("RaygeasTreeWindSpeed", 1.3f);
+            Shader.SetGlobalFloat("RaygeasTreeWindWavesScale", 1.7f);
+            Shader.SetGlobalFloat("RaygeasTreeWindFlowDensity", 0.22f + 0.3f * Mathf.PerlinNoise(clock * 0.06f, 1.3f));
+            Shader.SetGlobalFloat("RaygeasGrassWindForce", 0.2f + 0.3f * swell + 0.1f * breath + gust * 0.6f);
+            Shader.SetGlobalFloat("RaygeasGrassWindSpeed", 0.8f);
             Shader.SetGlobalVector("RaygeasWindDirection", new Vector3(0.8f, 0, -0.3f));
+            // The Meadow pack's flowers, birds and butterflies listen to their own wind.
+            Shader.SetGlobalVector("ASPW_WindDirection", new Vector3(0.8f, 0, -0.3f).normalized);
+            Shader.SetGlobalFloat("ASPW_WindToggle", 1);
+            Shader.SetGlobalFloat("ASPW_WindTreeAmplitude", 0.6f + 0.5f * swell);
+            Shader.SetGlobalFloat("ASPW_WindTreeSpeed", 0.7f);
+            Shader.SetGlobalFloat("ASPW_WindTreeFlexibility", 1);
+            Shader.SetGlobalFloat("ASPW_WindTreeLeafAmplitude", 0.8f);
+            Shader.SetGlobalFloat("ASPW_WindTreeLeafSpeed", 0.7f);
+            Shader.SetGlobalFloat("ASPW_WindTreeLeafTurbulence", 0.8f);
+            Shader.SetGlobalFloat("ASPW_WindTreeLeafOffset", 1);
+            Shader.SetGlobalFloat("ASPW_WindGrassAmplitude", 0.6f + 0.6f * swell);
+            Shader.SetGlobalFloat("ASPW_WindGrassSpeed", 0.7f);
+            Shader.SetGlobalFloat("ASPW_WindGrassTurbulence", 0.6f);
+            Shader.SetGlobalFloat("ASPW_WindGrassFlexibility", 1);
+            Shader.SetGlobalFloat("ASPW_WindGrassWavesAmplitude", 0.5f);
+            Shader.SetGlobalFloat("ASPW_WindGrassWavesSpeed", 0.5f);
+            Shader.SetGlobalFloat("ASPW_WindGrassWavesScale", 1);
         }
 
-        /// Pitch and yaw of the last sunlight (the builder lays its shafts of light along this), and the moon's.
-        public static readonly Vector2 SunLight = new Vector2(27, 155);
+        /// Where the sun stands at the start: a little right of straight ahead, low over the gate.
+        public const float SunAzimuth = 8, SunHeight = 15;
+        /// Pitch and yaw of its light (the builder lays its shafts of light along this), and the moon's.
+        public static readonly Vector2 SunLight = new Vector2(22, 180 + SunAzimuth);
         static readonly Quaternion MoonLight = Quaternion.Euler(34, 152, 0);
+        /// Where the sun is in the Meadow panorama (azimuth -68.55, 36.56 degrees up), found by its brightest texel.
+        static readonly Vector3 PanoramaSun = Quaternion.Euler(-36.56f, -68.55f, 0) * Vector3.forward;
 
         float Flicker(int seed, float amount)
         {
@@ -315,7 +383,7 @@ namespace InboxZero
         {
             camera.clearFlags = CameraClearFlags.Skybox;
             camera.allowHDR = true;
-            camera.farClipPlane = Mathf.Max(camera.farClipPlane, 250);
+            camera.farClipPlane = Mathf.Max(camera.farClipPlane, 400);      // the hills stand a hundred metres off
             var data = camera.GetUniversalAdditionalCameraData();
             data.renderPostProcessing = true;
             data.requiresDepthTexture = true;       // the pond's shader reads both
