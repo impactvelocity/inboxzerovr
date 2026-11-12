@@ -1,0 +1,38 @@
+{
+ "loops": {
+  "room": {
+   "seconds": 20.0,
+   "lead": 0.5,
+   "channels": 2
+  },
+  "typing": {
+   "seconds": 18.8,
+   "lead": 0.5,
+   "channels": 1
+  },
+  "voices": {
+   "seconds": 24.0,
+   "lead": 0.5,
+   "channels": 2
+  }
+ },
+ "shots": [
+  "fax",
+  "printer",
+  "phone",
+  "arrive",
+  "slash1",
+  "slash2",
+  "arm",
+  "crton",
+  "crtoff",
+  "glass",
+  "zap"
+ ],
+ "occasional": [
+  "fax",
+  "printer",
+  "phone"
+ ],
+ "hum": null
+}

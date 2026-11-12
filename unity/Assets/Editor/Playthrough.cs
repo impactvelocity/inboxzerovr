@@ -254,15 +254,14 @@ namespace InboxZero.EditorTools
             game.ShootingStar();
             Advance(0.62f);
             Shot("1b-shooting-star");
-            game.Click(head.ViewportPointToRay(new Vector3(0.9f, 0.1f, 0))); // nothing there
-            Expect(game.Phase == Phase.Home, "a click on empty space does nothing");
+            Expect(game.Level.name == "KYOTO V2", "the game opens on Kyoto v2");
             var eye = head.transform.position;
             game.Click(new Ray(eye, game.LevelTileAt(Levels.All.Length - 1) - eye));
-            Expect(game.Phase == Phase.Home && game.Level.ready && game.Level.name == "RETRO SABER", "a locked level cannot be picked");
+            Expect(game.Phase == Phase.Home && game.Level.name == "KYOTO V2", "a locked level cannot be picked");
             game.Click(new Ray(eye, game.LevelTileAt(0) - eye));
-            Expect(game.Level.name == "RETRO SABER", "the first level is picked");
-            game.Click(new Ray(eye, game.StartAt - eye));
-            Expect(game.Phase == Phase.Intro1, "clicking START opens the round 1 intro");
+            Expect(game.Phase == Phase.Home && game.Level.name == "RETRO SABER", "the first level is picked");
+            game.Click(head.ViewportPointToRay(new Vector3(0.9f, 0.1f, 0))); // nothing there
+            Expect(game.Phase == Phase.Intro1, "a click on empty space opens the round 1 intro");
 
             // Round 1 intro counts down into the review.
             Advance(1.5f);

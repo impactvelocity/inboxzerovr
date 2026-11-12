@@ -198,8 +198,11 @@ controller profiles, and hand tracking from the XR Hands package). Menu
 
 (`adb` ships with Unity under `PlaybackEngines/AndroidPlayer/SDK/platform-tools`.)
 
-In the headset: poke the home buttons with a fingertip, or point a controller
-and pull the trigger. Round 1: the weapon is in your right hand; pinch or make
+The game opens on Kyoto v2 (`startLevel` on the `Game` object's tuning). In the
+headset: poke the home buttons with a fingertip, or point a controller's ray
+and pull the trigger. The trigger anywhere off the buttons, or A / X, starts
+the round in the level picked; on a monitor, a click off the buttons does the
+same. Round 1: the weapon is in your right hand; pinch or make
 a fist with the left to grab an email and throw it aside. Round 2: grab with
 either hand. Controllers work too (grip or trigger closes the hand).
 

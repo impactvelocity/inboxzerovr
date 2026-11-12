@@ -16,12 +16,34 @@ function canvasTexture(kind: 'cloth'|'ivory'|'steel') {
 // How the katana sits in the hand. The model is built handle-centred with the blade along +Y and
 // the cutting edge on -X. WebXR's grip space has -Z running through the closed fist from little
 // finger to thumb and -Y towards the knuckles, so the blade is laid along -Z with the edge leading.
-const HOLD_BELOW_GUARD=.065; // metres from the guard down to the middle of the fist
-const HOLD_FORWARD_TILT=18*Math.PI/180; // blade leans towards the knuckles, as a handle sits across a palm
-const GUARD_Y=.137;
-const hold=new Matrix4().makeRotationX(-HOLD_FORWARD_TILT)
-  .multiply(new Matrix4().makeBasis(new Vector3(0,1,0),new Vector3(0,0,-1),new Vector3(-1,0,0)))
-  .multiply(new Matrix4().makeTranslation(0,HOLD_BELOW_GUARD-GUARD_Y,0));
+// Seated play: the fist sits right under the guard, so the sword turns about the hand like a real one,
+// and the reach comes from a longer blade rather than from a gap between hand and hilt.
+// Set from the Sword controls (remembered on this device) or the address bar: ?reach=0.045&tilt=24&blade=1.25.
+// reach: metres from the middle of the fist to the guard; .045 puts the index finger against it.
+// tilt: degrees the blade leans from the fist's axis towards the knuckles.
+// blade: blade length as a multiple of the modelled .72 m.
+// turn: degrees the blade is angled across the body, to the left, rather than straight ahead of the fist.
+// (2026-11-11, on the headset with controllers: 3 cm, a 58 cm blade and a 28 degree lean felt good, with the blade angled a bit to the left.)
+// (2026-11-11, later: "make the kyoto sword a bit more like the position of the haunted sword": upright, lean -15 and turn 8, as the knight's.)
+export const SWORD_HOLD_DEFAULT={reach:.03,tilt:-15,turn:8,blade:.8};
+export type SwordHold=typeof SWORD_HOLD_DEFAULT;
+const HOLD_KEYS=['reach','tilt','turn','blade'] as const;
+// (saved under a new name since the upright default, so a lean saved before it does not hide it)
+const remembered=(key:string)=>{try{return localStorage.getItem('vr3.hold2.'+key);}catch{return null;}};
+const tune=(key:keyof SwordHold)=>{for(const raw of [new URLSearchParams(location.search).get(key),remembered(key)]){const v=parseFloat(raw??'');if(Number.isFinite(v))return v;}return SWORD_HOLD_DEFAULT[key];};
+export const swordHold:SwordHold={reach:tune('reach'),tilt:tune('tilt'),turn:tune('turn'),blade:tune('blade')};
+const GUARD_Y=.137,BLADE_BASE_Y=.15;
+// Which way round the model's X axis carries the blade to the player's left in the right hand.
+const TURN_SIGN=1;
+export const BLADE_LENGTH=.72;
+const hold=new Matrix4(),holdBasis=new Matrix4().makeBasis(new Vector3(0,1,0),new Vector3(0,0,-1),new Vector3(-1,0,0)),holdShift=new Matrix4(),holdTurn=new Matrix4();
+export function setSwordHold(next:Partial<SwordHold>,remember=true){
+  Object.assign(swordHold,next);
+  // The turn is about the blade's own edge-to-spine line, at the fist: it tips the blade sideways without changing the lean.
+  hold.makeRotationX(-swordHold.tilt*Math.PI/180).multiply(holdBasis).multiply(holdTurn.makeRotationX(TURN_SIGN*swordHold.turn*Math.PI/180)).multiply(holdShift.makeTranslation(0,swordHold.reach-GUARD_Y,0));
+  if(remember)try{for(const key of HOLD_KEYS)localStorage.setItem('vr3.hold2.'+key,String(swordHold[key]));}catch{/* private window: keep it for this visit only */}
+}
+setSwordHold({},false);
 
 export function createSword(world:World) {
   const root=new Group();root.name='Sakura katana — right grip';
@@ -67,9 +89,10 @@ export function createSword(world:World) {
   const blade=new Mesh(geometry,[steel,edge]);blade.name='Curved beveled satin blade';model.add(blade);
   function cylinder(radius:number,length:number,y:number,mat:MeshStandardMaterial,flatten=1){const mesh=new Mesh(new CylinderGeometry(radius,radius,length,16),mat);mesh.position.y=y;mesh.scale.z=flatten;model.add(mesh);return mesh;}
   cylinder(.019,.235,0,ivory,.78);
-  cylinder(.023,.018,-.124,brass,.82);cylinder(.022,.024,.113,dark,.82);
+  // (the collar at the top of the handle runs right up under the guard: it stopped 8 mm short, which showed as a gap in VR)
+  cylinder(.023,.018,-.124,brass,.82);cylinder(.022,.034,.117,dark,.82);
   cylinder(.049,.008,.137,brass,.80);cylinder(.043,.009,.137,dark,.80);
-  cylinder(.021,.025,.154,brass,.35);
+  cylinder(.021,.027,.1525,brass,.35);
   // Two continuous crossed ribbons, actual geometry over the textured rayskin.
   const wrapPos:number[]=[],wrapUV:number[]=[];
   // Subdivide across the ribbons so they hug the oval grip instead of sinking into it.
@@ -93,18 +116,28 @@ export function createSword(world:World) {
   const trail=new Mesh(trailGeo,trailMat);trail.name='Velocity-driven sakura swing ribbon';trail.frustumCulled=false;
   world.createTransformEntity(root);world.createTransformEntity(trail);
   const currentBase=new Vector3(),currentTip=new Vector3(),lastTip=new Vector3();
-  const trailStart=new Vector3(...point(.15,0)),bladeTip=new Vector3(...point(1,2));
+  const trailStartModel=new Vector3(...point(.15,0)),bladeTipModel=new Vector3(...point(1,2)),trailStart=new Vector3(),bladeTip=new Vector3();
+  let bladeScale=0;
+  // Stretch the blade from its base at the guard; the trail's two ends follow.
+  function fitBlade(){
+    if(bladeScale===swordHold.blade)return;bladeScale=swordHold.blade;
+    blade.scale.y=bladeScale;blade.position.y=BLADE_BASE_Y*(1-bladeScale);
+    for(const [from,to] of [[trailStartModel,trailStart],[bladeTipModel,bladeTip]])to.copy(from).setY(BLADE_BASE_Y+(from.y-BLADE_BASE_Y)*bladeScale);
+  }
+  fitBlade();
   let clock=0,tracked=false,swingTime=-1,activeSamples=0;
   function clearTrail(){births.fill(-10);strengths.fill(0);tracked=false;activeSamples=0;trail.visible=false;}
   function previewSwing(){if(!world.renderer.xr.isPresenting)swingTime=0;}
   function update(dt:number,frame:XRFrame|undefined,motion:boolean,night:number){
-    clock+=dt;let valid=false;
+    clock+=dt;let valid=false;fitBlade();
     if(world.renderer.xr.isPresenting){
       const session=world.renderer.xr.getSession(),space=world.renderer.xr.getReferenceSpace();
       if(frame&&space&&session)for(const source of session.inputSources){if(source.handedness==='right'&&source.gripSpace){const pose=frame.getPose(source.gripSpace,space);if(pose){root.matrixAutoUpdate=false;root.matrix.fromArray(pose.transform.matrix).multiply(hold);root.matrix.premultiply(world.player.matrixWorld);root.matrixWorldNeedsUpdate=true;valid=true;}break;}}
     }else{
       root.matrixAutoUpdate=true;world.camera.getWorldPosition(root.position);root.position.add(currentBase.set(.32,-.30,-.65).applyQuaternion(world.camera.quaternion));root.quaternion.copy(world.camera.quaternion);root.rotateX(-.35);root.rotateZ(-.22);
       if(swingTime>=0){swingTime+=dt;const phase=Math.min(swingTime/.65,1);root.rotateZ(Math.sin(phase*Math.PI)*1.9);root.rotateX(-Math.sin(phase*Math.PI)*.45);if(phase===1)swingTime=-1;}
+      // The desktop pose is staged, not a tracked hand; show the Sword controls as a shift from the default.
+      root.rotateX(-(swordHold.tilt-SWORD_HOLD_DEFAULT.tilt)*Math.PI/180);root.translateY(swordHold.reach-SWORD_HOLD_DEFAULT.reach);
       valid=true;
     }
     root.visible=valid;if(!valid){clearTrail();return;}

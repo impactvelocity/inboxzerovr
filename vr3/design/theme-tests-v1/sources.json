@@ -1,0 +1,26 @@
+{
+  "chemical": {
+    "start": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-3c756c82-5a62-4b64-8c35-40d6cce0ad85.png",
+    "end": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-c41b9dde-1ec9-46aa-82fd-705ca9ae3f1c.png",
+    "weapon-hero": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-ad51235f-d67d-4997-8f45-cee8fc760378.png",
+    "weapon-angles": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-77133a24-2e5d-4fbf-a37f-479b3b910139.png"
+  },
+  "crt-office": {
+    "start": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-8ac4ef57-4223-49e8-83ba-459aebd9a10f.png",
+    "end": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-f03cdf8b-a87b-4b20-91d3-bead74afc60a.png",
+    "weapon-hero": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-63a661f5-6cca-44f9-82c8-5a9e9a25d303.png",
+    "weapon-angles": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-1d48bf16-4702-4d67-80b7-1b92315cf6b0.png"
+  },
+  "boxing": {
+    "start": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-91adf0ff-5547-4629-a0e3-6a859efb9c6f.png",
+    "end": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-78af1513-d1e4-4895-b9b1-c1b68fd11461.png",
+    "weapon-hero": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-66f4c60f-f0cd-4b18-9ef7-a05c0b97be60.png",
+    "weapon-angles": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-4ea62d73-9bd9-4114-94ea-e2d053d3e4cf.png"
+  },
+  "castle": {
+    "start": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-1223b9c6-e5ce-4604-9c2b-103cc1749503.png",
+    "end": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-83665164-ee31-4ee8-8d91-366183a65460.png",
+    "weapon-hero": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-5db800c8-ebc4-4628-b5d3-0e9b6638e2cd.png",
+    "weapon-angles": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-0188ab20-77de-4b6e-9e8b-5d4310c2cbb6.png"
+  }
+}

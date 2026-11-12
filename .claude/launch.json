@@ -48,6 +48,32 @@
         "5193"
       ],
       "port": 5193
+    },
+    {
+      "name": "vr3-https",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "vr3",
+        "run",
+        "dev:https",
+        "--",
+        "--port",
+        "5185"
+      ],
+      "port": 5185,
+      "url": "https://localhost:5185"
+    },
+    {
+      "name": "vr3-headset",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "vr3",
+        "run",
+        "dev"
+      ],
+      "port": 5183
     }
   ]
 }

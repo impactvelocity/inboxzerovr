@@ -1,0 +1,33 @@
+{
+ "loops": {
+  "vent": {
+   "seconds": 21.0,
+   "lead": 0.5,
+   "channels": 2
+  },
+  "bubbles": {
+   "seconds": 17.5,
+   "lead": 0.5,
+   "channels": 1
+  },
+  "geiger": {
+   "seconds": 15.4,
+   "lead": 0.5,
+   "channels": 1
+  }
+ },
+ "shots": [
+  "alarm",
+  "arrive",
+  "melt1",
+  "melt2",
+  "arm"
+ ],
+ "occasional": [
+  "alarm"
+ ],
+ "hum": {
+  "seconds": 3.8,
+  "lead": 0.5
+ }
+}

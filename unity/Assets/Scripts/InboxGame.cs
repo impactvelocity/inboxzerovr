@@ -22,6 +22,7 @@ namespace InboxZero
         public float pinchOff = 0.045f;     // and the distance that opens it again
         public float fistCurl = 0.09f;      // middle fingertip this close to the wrist is a fist
         public float pokeDepth = 0.025f;    // a fingertip this close to a button presses it
+        public int startLevel = 2;          // the level picked when the game opens (2: Kyoto v2)
         public float swipeSpeed = 0.9f;     // m/s throw that sends a held card without letting go
         public float swipeTravel = 0.07f;   // the card must also have moved this far
         public float dropTravel = 0.13f;    // or: carry it this far and let go
@@ -119,7 +120,10 @@ namespace InboxZero
             public float width, height;
         }
 
-        class HomeButton { public Label label; public string action; }
+        class HomeButton { public Label label; public string action; public float lift; }
+
+        static readonly InputFeatureUsage<Vector3> PointerPosition = new InputFeatureUsage<Vector3>("PointerPosition");
+        static readonly InputFeatureUsage<Quaternion> PointerRotation = new InputFeatureUsage<Quaternion>("PointerRotation");
 
         // Joints are stored in XR Hands order (XRHandJointID.ToIndex()).
         const int JointCount = 26;
@@ -129,7 +133,7 @@ namespace InboxZero
         class Hand
         {
             public Side side;
-            public bool tracked, closed, trigger, triggerWas, poking;
+            public bool tracked, closed, trigger, triggerWas, primary, primaryWas, poking;
             /// Finger joints in world space, when the bare hand is tracked.
             public bool hasJoints;
             public readonly Vector3[] joints = new Vector3[JointCount];
@@ -137,6 +141,12 @@ namespace InboxZero
             // What the player sees of this hand.
             public GameObject visual, marker;
             public Transform[] dots, bones;
+            // On the home screen: a pointer ray from a controller, and the button
+            // this hand is aiming at or about to poke.
+            public Transform ray, rayDot;
+            public HomeButton aimed;
+            public Vector3 aimFrom;
+            public Quaternion aimTurn = Quaternion.identity;
             public bool mustOpen;    // after a card leaves, the hand must open before it grabs again
             public Vector3 palm, prev, velocity;
             public Quaternion turn = Quaternion.identity;
@@ -412,21 +422,33 @@ namespace InboxZero
         }
 
         /// A pointer (mouse, or a controller's trigger) pressed along this ray.
+        /// A click on a button presses it; anywhere else starts the round in the
+        /// level picked.
         public void Click(Ray ray)
         {
             if (session.phase != Phase.Home) return;
+            var button = HitButton(ray, out _);
+            PressHome(button != null ? button.action : "start");
+        }
+
+        /// The nearest home button along this ray, if any.
+        HomeButton HitButton(Ray ray, out float distance)
+        {
+            HomeButton hit = null;
+            distance = float.MaxValue;
             foreach (var button in buttons)
             {
                 var t = button.label.t;
                 var plane = new Plane(-t.forward, t.position);
-                if (!plane.Raycast(ray, out float distance)) continue;
-                var local = t.InverseTransformPoint(ray.GetPoint(distance));
+                if (!plane.Raycast(ray, out float d) || d >= distance) continue;
+                var local = t.InverseTransformPoint(ray.GetPoint(d));
                 if (Mathf.Abs(local.x) < button.label.width / 2 && Mathf.Abs(local.y) < button.label.height / 2)
                 {
-                    PressHome(button.action);
-                    return;
+                    hit = button;
+                    distance = d;
                 }
             }
+            return hit;
         }
 
         // ------------------------------------------------------------- build
@@ -473,6 +495,8 @@ namespace InboxZero
             }
             BuildCard();
             BuildFeedback();
+            levelIndex = Mathf.Clamp(tuning.startLevel, 0, Levels.All.Length - 1);
+            if (!Levels.All[levelIndex].ready) levelIndex = 0;
             BuildHome();
             BuildWork();
             BuildHints();
@@ -668,6 +692,11 @@ namespace InboxZero
             logo.position = new Vector3(0, logoY, homeZ);
             homeParts.Add(logo.gameObject);
 
+            var heading = MakeLabel("Home-heading", 0.2f, 0.024f, 800, 96);
+            CardArt.Label(painter, heading.rt, "CHOOSE A LEVEL", Look.Dim);
+            heading.t.position = new Vector3(0, eye + 0.097f, homeZ);
+            homeParts.Add(heading.go);
+
             // One chip per level. Only the ready ones can be picked.
             for (int i = 0; i < Levels.All.Length; i++)
             {
@@ -825,6 +854,14 @@ namespace InboxZero
             hand.marker = Spawn(hand.side + "Controller", ball, skin).gameObject;
             hand.marker.transform.localScale = Vector3.one * 0.035f;
             hand.marker.SetActive(false);
+
+            // Pointer for the home screen: a thin glowing line, one metre long
+            // before scaling, and a dot where it meets a button.
+            hand.ray = Spawn(hand.side + "Ray", Look.NeonLine(1, 0.0035f, Color.white), Look.Neon(new Color(1, 1, 1, 0.7f)));
+            hand.ray.gameObject.SetActive(false);
+            hand.rayDot = Spawn(hand.side + "RayDot", ball, Look.Glow(Color.white));
+            hand.rayDot.localScale = Vector3.one * 0.012f;
+            hand.rayDot.gameObject.SetActive(false);
         }
 
         /// The joint each joint hangs from: fingers chain back to the wrist.
@@ -1287,9 +1324,9 @@ namespace InboxZero
         /// Where one hand is, how fast it is moving and whether it is closed.
         void ReadHand(Hand hand, float dt)
         {
-            bool found = false, closed = false, trigger = false, joints = false;
-            Vector3 at = default;
-            Quaternion turn = Quaternion.identity;
+            bool found = false, closed = false, trigger = false, primary = false, joints = false, aim = false;
+            Vector3 at = default, aimFrom = default;
+            Quaternion turn = Quaternion.identity, aimTurn = Quaternion.identity;
             if (hand.fake)
             {
                 found = true;
@@ -1322,7 +1359,17 @@ namespace InboxZero
                         found = true;
                         at = rig ? rig.TransformPoint(local) : local;
                         turn = rig ? rig.rotation * localTurn : localTurn;
+                        // Point along the controller's aim pose, as the system menus do;
+                        // the grip pose tilts up.
+                        if (device.TryGetFeatureValue(PointerPosition, out Vector3 aimLocal) &&
+                            device.TryGetFeatureValue(PointerRotation, out Quaternion aimLocalTurn))
+                        {
+                            aim = true;
+                            aimFrom = rig ? rig.TransformPoint(aimLocal) : aimLocal;
+                            aimTurn = rig ? rig.rotation * aimLocalTurn : aimLocalTurn;
+                        }
                         device.TryGetFeatureValue(CommonUsages.gripButton, out bool grip);
+                        device.TryGetFeatureValue(CommonUsages.primaryButton, out primary);
                         device.TryGetFeatureValue(CommonUsages.triggerButton, out trigger);
                         closed = grip || trigger;
                     }
@@ -1330,6 +1377,10 @@ namespace InboxZero
             }
             hand.triggerWas = hand.trigger;
             hand.trigger = trigger;
+            hand.primaryWas = hand.primary;
+            hand.primary = primary;
+            hand.aimFrom = aim ? aimFrom : at;
+            hand.aimTurn = aim ? aimTurn : turn;
             hand.hasJoints = found && joints;
             if (!found)
             {
@@ -1358,7 +1409,9 @@ namespace InboxZero
 
             // Home screen buttons: poke one with a fingertip (or the controller),
             // or point a controller at it and pull the trigger.
-            if (hand.trigger && !hand.triggerWas) Click(new Ray(hand.palm, hand.turn * Vector3.forward));
+            // The trigger anywhere else, or A / X, starts the round.
+            if (hand.trigger && !hand.triggerWas) Click(new Ray(hand.aimFrom, hand.aimTurn * Vector3.forward));
+            if (hand.primary && !hand.primaryWas) PressHome("start");
             bool poking = false;
             if (session.phase == Phase.Home)
             {
@@ -1374,6 +1427,40 @@ namespace InboxZero
                 }
             }
             hand.poking = poking;
+        }
+
+        /// On the home screen a controller shows a pointer ray, and the button it
+        /// (or a fingertip about to poke) is on lifts, with a tick.
+        void AimHome(Hand hand)
+        {
+            bool home = session.phase == Phase.Home && hand.tracked;
+            bool pointer = home && !hand.hasJoints;
+            HomeButton aimed = null;
+            float reach = 1.2f;
+            if (pointer)
+            {
+                aimed = HitButton(new Ray(hand.aimFrom, hand.aimTurn * Vector3.forward), out float d);
+                if (aimed != null) reach = d;
+            }
+            else if (home)
+            {
+                var tip = hand.joints[IndexTip];
+                foreach (var button in buttons)
+                {
+                    var p = button.label.t.InverseTransformPoint(tip);
+                    if (Mathf.Abs(p.x) < button.label.width / 2 && Mathf.Abs(p.y) < button.label.height / 2 &&
+                        p.z > -0.12f && p.z < tuning.pokeDepth) { aimed = button; break; }
+                }
+            }
+            if (aimed != null && aimed != hand.aimed && aimed != (hand == left ? right : left).aimed) sfx.Blip(1.6f);
+            hand.aimed = aimed;
+
+            hand.ray.gameObject.SetActive(pointer);
+            hand.rayDot.gameObject.SetActive(pointer && aimed != null);
+            if (!pointer) return;
+            hand.ray.SetPositionAndRotation(hand.aimFrom, hand.aimTurn);
+            hand.ray.localScale = new Vector3(1, 1, reach);
+            hand.rayDot.position = hand.aimFrom + hand.aimTurn * Vector3.forward * (reach - 0.003f);
         }
 
         /// Is this world point inside the card's hit volume?
@@ -1624,6 +1711,8 @@ namespace InboxZero
             ReadHand(right, dt);
             DrawHand(left);
             DrawHand(right);
+            AimHome(left);
+            AimHome(right);
             var phase = session.phase;
             var hand = holder;
 
@@ -1949,7 +2038,14 @@ namespace InboxZero
             if (session.phase == Phase.Home)
             {
                 logo.position = new Vector3(0, logoY + Mathf.Sin(clock * 1.2f) * 0.004f, homeZ);
-                startButton.label.t.localScale = Vector3.one * (1 + 0.02f * Mathf.Sin(clock * 3.2f) + 0.02f * beat);
+                foreach (var button in buttons)
+                {
+                    bool on = left.aimed == button || right.aimed == button;
+                    button.lift = Mathf.MoveTowards(button.lift, on ? 1 : 0, dt / 0.08f);
+                    if (button != startButton) button.label.t.localScale = Vector3.one * (1 + 0.1f * Ease(button.lift));
+                }
+                startButton.label.t.localScale = Vector3.one * (1 + 0.02f * Mathf.Sin(clock * 3.2f) + 0.02f * beat +
+                                                                0.08f * Ease(startButton.lift));
             }
         }
     }

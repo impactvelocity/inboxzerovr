@@ -1,0 +1,36 @@
+{
+ "loops": {
+  "hall": {
+   "seconds": 22.0,
+   "lead": 0.5,
+   "channels": 2
+  },
+  "torches": {
+   "seconds": 16.5,
+   "lead": 0.5,
+   "channels": 1
+  },
+  "ghosts": {
+   "seconds": 24.5,
+   "lead": 0.5,
+   "channels": 2
+  }
+ },
+ "shots": [
+  "doorslam",
+  "witches",
+  "organ",
+  "creak",
+  "arrive",
+  "slash1",
+  "slash2",
+  "arm"
+ ],
+ "occasional": [
+  "creak"
+ ],
+ "hum": {
+  "seconds": 4.4,
+  "lead": 0.5
+ }
+}

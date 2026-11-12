@@ -1,0 +1,32 @@
+{
+  "boxing": {
+    "reference": "/Users/dylanjones/Downloads/Perimeter-lit midnight boxing ring.png",
+    "start": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-5cf9735f-517e-43c1-865b-24561efc61b8.png",
+    "weapon-hero": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-b5310377-7eda-417a-b5bd-10970c30fb9a.png",
+    "end": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-aa3f5907-0984-477b-ac29-302b0923187a.png",
+    "weapon-angles": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-e35f03e1-f220-4e2b-b605-f843f4be9be2.png"
+  },
+  "castle": {
+    "reference": "/Users/dylanjones/Downloads/Floating Royal Dispatch in a Haunted Hallway.png",
+    "start": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-fb99eb27-d8b9-4f0d-b2b9-0df552e331f7.png",
+    "weapon-hero": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-af099c88-2c42-401f-bb3b-7f89dd132d79.png",
+    "end": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-14d1d794-dd7c-41a6-8393-3dff847ac595.png",
+    "weapon-angles": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-b06d95d3-a57b-4f2e-9ef2-9ddc8e95ef1a.png",
+    "spooky": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-3270d447-b9d1-4754-8bfe-4469831aa0cb.png"
+  },
+  "crt-office": {
+    "reference": "/Users/dylanjones/Downloads/Liminal Office With Beige CRT.png",
+    "start": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-869af27c-b4f0-4d13-b23b-e4671d40404c.png",
+    "weapon-hero": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-e6304e40-9eb5-46b3-84de-45240adbc244.png",
+    "end": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-a748d6c7-fa75-421a-831e-448f02edacaf.png",
+    "weapon-angles": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-63e88767-e6b0-46a6-b022-531157f22686.png",
+    "twilight": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-2485785d-09c8-48f5-93d3-bd986e22fc1d.png"
+  },
+  "chemical": {
+    "reference": "/Users/dylanjones/Downloads/Floating contaminated email over paper stack.png",
+    "start": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-adf967e6-ea14-4281-8b80-c288bd6e8f86.png",
+    "weapon-hero": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-b0d9e9c2-2eca-4cb0-b711-d3217000e2d3.png",
+    "end": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-e1224c25-6f5c-44b9-a005-140cc27fbf41.png",
+    "weapon-angles": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-88630d49-abc4-489c-9922-f1c345f39858.png"
+  }
+}

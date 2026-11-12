@@ -57,6 +57,7 @@ namespace InboxZero.EditorTools
             }
 
             UseUrpOnlyOnAndroid();
+            FillDefaultVolumeProfile();
 
             // XR Plug-in Management: start OpenXR on Android.
             if (!EditorBuildSettings.TryGetConfigObject(LoaderKey, out XRGeneralSettingsPerBuildTarget perTarget) || perTarget == null)
@@ -145,6 +146,39 @@ namespace InboxZero.EditorTools
             }
             quality.ApplyModifiedPropertiesWithoutUndo();
             Debug.Log($"[InboxZero] Android uses quality level {urpLevel} (URP) only.");
+        }
+
+        /// A player build takes its list of post-processing effects from URP's default
+        /// volume profile; the editor finds them by reflection instead. With the profile
+        /// empty, the first camera that turns post-processing on (Kyoto v2's) throws in
+        /// URP every frame and the headset never gets past the splash. Every effect is
+        /// added at its default value, which is what the editor already uses, so nothing
+        /// changes on a monitor.
+        static void FillDefaultVolumeProfile()
+        {
+            // Ask for URP's settings by name: the plain lookup answers for the active pipeline,
+            // which is the built-in one while the editor builds.
+            UnityEditor.Rendering.EditorGraphicsSettings.TryGetRenderPipelineSettingsForPipeline<UnityEngine.Rendering.Universal.URPDefaultVolumeProfileSettings,
+                UnityEngine.Rendering.Universal.UniversalRenderPipeline>(out var settings);
+            var profile = settings?.volumeProfile;
+            if (profile == null)
+            {
+                Debug.LogError("[InboxZero] URP has no default volume profile; post-processing will throw in the headset.");
+                return;
+            }
+            int before = profile.components.Count;
+            // The public overload asks the active pipeline for its type, which is the built-in
+            // renderer while the desktop quality level is current; name URP outright.
+            var ensure = typeof(UnityEditor.Rendering.VolumeProfileUtils).GetMethod("EnsureAllOverridesForDefaultProfile",
+                System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic, null,
+                new[] { typeof(VolumeProfile), typeof(System.Type), typeof(VolumeProfile) }, null);
+            if (ensure != null)
+                ensure.Invoke(null, new object[] { profile, typeof(UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset), null });
+            else
+                UnityEditor.Rendering.VolumeProfileUtils.EnsureAllOverridesForDefaultProfile(profile);
+            EditorUtility.SetDirty(profile);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[InboxZero] Default volume profile has {profile.components.Count} effects (was {before}).");
         }
 
         [MenuItem("Inbox Zero/Build Quest APK")]

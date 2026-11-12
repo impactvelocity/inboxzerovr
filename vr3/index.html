@@ -1,16 +1,25 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17151e"><title>Kyoto · VR3</title></head>
-<body>
-<div id="scene" aria-label="Immersive Kyoto garden. Drag or use arrow keys to look around." tabindex="0"></div>
-<header id="heading"><span class="eyebrow">VR3 / AN ATMOSPHERE STUDY</span><h1>After the rain.</h1><p>Kyoto garden <span>·</span> Stay a little longer.</p></header>
-<div id="loading" role="status">Opening the garden…</div>
-<aside id="controls" aria-label="Garden controls">
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17151e"><title>Inbox Zero · VR3</title></head>
+<body class="at-home">
+<div id="scene" aria-label="The level. Drag or use arrow keys to look around." tabindex="0"></div>
+<div id="loading" role="status">Loading…</div>
+<section id="home" aria-label="Inbox Zero">
+ <div class="home-head"><span class="eyebrow">A VR GAME ABOUT YOUR INBOX</span><h1><canvas id="logo" width="1400" height="210" role="img" aria-label="Inbox Zero"></canvas></h1><p class="tagline">Cut the junk. Keep what matters.</p></div>
+ <div id="levels" role="radiogroup" aria-label="Choose a level"></div>
+ <div class="home-actions"><button id="start" disabled>Checking VR…</button><button id="start-here" class="quiet" hidden>Play on this screen</button><button id="open-settings" class="quiet">Settings</button></div>
+ <p id="xr-status" role="status"></p>
+</section>
+<header id="hud"><span id="hud-level"></span><button id="menu" class="quiet">Menu</button><button id="hud-settings" class="quiet">Settings</button></header>
+<p id="hint">Drag to look around · X or Space: use your weapon · C: keep · round two: 1 and 2 reply, M mic · Esc: menu</p>
+<aside id="controls" aria-label="Settings">
  <div class="time-label"><span id="phase">Dusk</span><span id="progress">00:00 / 00:20</span></div>
- <label class="sr-only" for="mood">Time of evening</label><input id="mood" type="range" min="0" max="1" step="0.001" value="0">
- <div class="range-labels"><span>DUSK</span><span>TWILIGHT</span></div>
- <div class="actions"><button id="play" aria-pressed="true">Pause transition</button><button id="restart" aria-label="Restart evening transition">↺</button><button id="vr" disabled>Checking VR…</button></div>
+ <label class="sr-only" for="mood">Time of day</label><input id="mood" type="range" min="0" max="1" step="0.001" value="0">
+ <div class="range-labels"><span id="end-a">DUSK</span><span id="end-b">TWILIGHT</span></div>
+ <div class="actions"><button id="play" aria-pressed="true">Pause transition</button><button id="restart" aria-label="Restart the lighting transition">↺</button><button id="close-settings">Close</button></div>
  <button id="swing">Preview sword swing</button>
- <details><summary>Atmosphere</summary><div class="settings"><label for="music">Music</label><input id="music" type="checkbox" checked><label for="volume">Volume</label><input id="volume" type="range" min="0" max="1" step="0.01" value="0.5"><label for="sounds">Sounds</label><input id="sounds" type="checkbox" checked><label for="sounds-volume">Sound vol.</label><input id="sounds-volume" type="range" min="0" max="1" step="0.01" value="0.7"><label for="pace">Transition</label><select id="pace"><option value="20" selected>Demo · 20 seconds</option><option value="60">One minute</option><option value="180">Relaxed · 3 minutes</option></select><label for="depth">Depth</label><input id="depth" type="range" min="0" max="1" step="0.01" value="0.6"><label for="wind">Breeze</label><input id="wind" type="range" min="0" max="1" step="0.01" value="0.35"><label for="motion">Motion</label><input id="motion" type="checkbox" checked><label for="quality">Detail</label><select id="quality"><option value="low">Light</option><option value="high" selected>Full</option></select></div></details>
- <p id="audio-status" role="status">Music starts in VR</p><p id="hint">Drag to look around · H to hide controls</p><p id="xr-status" role="status"></p>
-</aside><button id="show-ui" aria-label="Show garden controls">Show controls</button>
+ <details><summary>Atmosphere</summary><div class="settings"><label for="music">Music</label><input id="music" type="checkbox" checked><label for="volume">Music vol.</label><input id="volume" type="range" min="0" max="1" step="0.01" value="0.95"><label for="sounds">Sounds</label><input id="sounds" type="checkbox" checked><label for="sounds-volume">Background</label><input id="sounds-volume" type="range" min="0" max="1" step="0.01" value="0.3"><label for="effects-volume">Game sounds</label><input id="effects-volume" type="range" min="0" max="1" step="0.01" value="1"><label for="pace">Transition</label><select id="pace"><option value="20">Demo · 20 seconds</option><option value="60">One minute</option><option value="180" selected>Relaxed · 3 minutes</option></select><label for="depth">Depth</label><input id="depth" type="range" min="0" max="1" step="0.01" value="0.6"><label for="wind">Breeze</label><input id="wind" type="range" min="0" max="1" step="0.01" value="0.35"><label for="motion">Motion</label><input id="motion" type="checkbox" checked><label for="quality">Detail</label><select id="quality"><option value="low">Light</option><option value="high" selected>Full</option></select></div></details>
+ <details><summary>Katana (Kyoto) and hands</summary><div class="settings sword"><label for="reach">Hand gap</label><input id="reach" type="range" min="0" max="0.4" step="0.005" value="0.03"><output id="reach-value" for="reach">3.0 cm</output><label for="lean">Lean</label><input id="lean" type="range" min="-45" max="45" step="1" value="-15"><output id="lean-value" for="lean">-15°</output><label for="turn">Turn left</label><input id="turn" type="range" min="-30" max="45" step="1" value="8"><output id="turn-value" for="turn">8°</output><label for="blade">Blade</label><input id="blade" type="range" min="0.6" max="1.6" step="0.05" value="0.8"><output id="blade-value" for="blade">58 cm</output><label for="hands">Hands</label><input id="hands" type="checkbox" checked><span></span><label for="trigger-cut">Trigger cuts</label><input id="trigger-cut" type="checkbox" checked><span></span><button id="sword-reset">Reset sword</button></div></details>
+ <details id="weapon-settings" hidden><summary>This level's weapon</summary><div class="settings sword"><label for="weapon-lean">Lean</label><input id="weapon-lean" type="range" min="-45" max="45" step="1" value="0"><output id="weapon-lean-value" for="weapon-lean">0°</output><label for="weapon-turn">Turn left</label><input id="weapon-turn" type="range" min="-30" max="45" step="1" value="0"><output id="weapon-turn-value" for="weapon-turn">0°</output><button id="weapon-reset">Reset</button></div></details>
+ <p id="audio-status" role="status">Music starts in VR</p>
+</aside>
 <script type="module" src="/src/main.ts"></script></body></html>
