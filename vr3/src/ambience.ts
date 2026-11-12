@@ -33,7 +33,7 @@ const BASE = `${import.meta.env.BASE_URL}audio/`;
 const SWINGS = 6;                   // swing1.wav (a light flick) .. swing6.wav (a long sweep)
 /** The letters' own sounds (letters.ts), from the Unity game: one arriving, cut, kept, taken hold of. */
 // ('sort', the Unity game's chime, is no longer loaded: the user disliked it, 2026-11-11, "remove it from everywhere")
-const SHOTS = ['arrive', 'slash1', 'slash2', 'blip', 'arm', 'swoosh1', 'swoosh2', 'swoosh3', 'throw', 'round2', 'count5', 'fight'];      // count5: the user's five-second countdown (2026-11-12)      // throw: the user's own, for a letter thrown away (2026-11-11)      // swoosh: a letter thrown to keep it (tools/swooshes.py)        // 'arm': the sword made ready (tools/swordsounds.py)
+const SHOTS = ['arrive', 'slash1', 'slash2', 'blip', 'arm', 'swoosh1', 'swoosh2', 'swoosh3', 'throw', 'round2', 'count5', 'fight', 'reply'];      // count5: the user's five-second countdown (2026-11-12)      // throw: the user's own, for a letter thrown away (2026-11-11)      // swoosh: a letter thrown to keep it (tools/swooshes.py)        // 'arm': the sword made ready (tools/swordsounds.py)
 /** Blade-tip speeds, m/s: a swing starts above START, is at full strength by FULL, and the next one waits for REARM. */
 const START = 2.8, FULL = 10, REARM = 1.8;
 const SWING_LEVEL = 0.9;

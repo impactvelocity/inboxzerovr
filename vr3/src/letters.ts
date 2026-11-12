@@ -637,6 +637,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    */
   const LOGO_FILE: Record<string, string> = { kyoto: 'kyoto', office: 'office', office2: 'office', castle: 'castle', lab: 'lab' };
   const LOGO_WIDTH = 0.85;      // (a bit smaller since 2026-11-12)
+  const LOGO_HITS = 4;          // hits it takes: the last of them breaks it up
   const logoSheets = new Map<string, Promise<Sheet>>();
   function logoSheet(file: string) {
     let made = logoSheets.get(file);
@@ -706,6 +707,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     settle?: boolean;
     /** The menu: chosen by the left hand, not cut (the levels, EXIT); and how far the hand is on it, 0 to 1. */
     pointed?: boolean; hover?: number;
+    /** The end's logo, taking hits: how many, how big it was, where what is left sits on the whole (metres, its own x, y), and how hard it is shaking. */
+    hits?: number; area0?: number; shiftX?: number; shiftY?: number; shake?: number;
   }
   const shows: Show[] = [];
   /** The cards' own sheets, made for one end and let go at the next (their pieces may still be burning). */
@@ -837,6 +840,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     body.mesh.position.copy(show.anchor); body.mesh.position.y += Math.sin(t * 1.3) * 0.035;
     look3.position.copy(body.mesh.position); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z);
     body.mesh.quaternion.copy(look3.quaternion).multiply(q1.setFromAxisAngle(v1.set(0, 1, 0), Math.sin(t * 0.9) * 0.1)).multiply(new Quaternion().setFromAxisAngle(v2.set(0, 0, 1), Math.sin(t * 1.2) * 0.045));
+    // what is left of it sits where it was on the whole; a hit sets it shaking
+    if (show.shiftX !== undefined) body.mesh.position.add(v1.set(show.shiftX, show.shiftY ?? 0, 0).multiplyScalar(body.mesh.scale.x).applyQuaternion(body.mesh.quaternion));
+    if (show.shake) { body.mesh.position.add(v1.set(rand(0.03), rand(0.03), rand(0.015)).multiplyScalar(show.shake)); show.shake *= Math.exp(-dt * 7); if (show.shake < 0.01) show.shake = 0; }
     u.flash.value *= Math.exp(-dt * 3);      // (the arrival's flash only: one on every beat washed it out)
     // a glint every few seconds
     const cycle = (t + 1.2) % 3.2; u.shine.value = cycle < 1 ? -0.3 + cycle * 1.9 : -1;
@@ -1187,15 +1193,32 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    * blade was moving, m/s. False if the line misses it.
    */
   function slice(body: Body, x: number, y: number, dx: number, dy: number, push: Vector3, strength: number): boolean {
-    const halves = cut(body.soup.data, x, y, 0, -dy, dx, 0);
+    // (the logo's chip moves the line before it is cut: below; so the halves are cut there)
+    let halves = cut(body.soup.data, x, y, 0, -dy, dx, 0);
     if (halves[0].length < STRIDE * 3 || halves[1].length < STRIDE * 3) return false;
     const sheet = body.sheet, mesh = body.mesh;
     mesh.updateMatrixWorld(true);
     const along = v1.set(dx, dy, 0).applyQuaternion(mesh.quaternion), across = v2.set(-dy, dx, 0).applyQuaternion(mesh.quaternion);
     const shownOn = docked(body), outward = new Vector3(0, 0, 1).applyQuaternion(mesh.quaternion);
     // Each half, broken again by a hard swing: lines through it at random, near where the blade went in.
-    const isLogo = shows.some(x => x.kind === 'logo' && x.body === body);       // (the end's logo: into lots of pieces, 2026-11-12)
-    const breaks = isLogo ? 3 : loose.length >= shatter.most ? 0 : strength > shatter.twice ? 2 : strength > shatter.once ? 1 : 0;
+    // The end's logo takes a few hits (2026-11-12: "harder to break apart ... you really gotta whack a few
+    // times"): each of the first LOGO_HITS - 1 chips a piece off the side that was hit, about 30% across, and the
+    // rest stays where it is, shaking; the last (or once little is left) breaks it into lots of pieces.
+    const logoShow = shows.find(x => x.kind === 'logo' && x.body === body), isLogo = !!logoShow;
+    let final = false;
+    if (logoShow) {
+      logoShow.hits = (logoShow.hits ?? 0) + 1; logoShow.area0 ??= body.soup.area;
+      final = logoShow.hits >= LOGO_HITS || body.soup.area < logoShow.area0 * 0.3;
+      if (!final) {
+        // move the line along its normal, to 30% in from the edge on the side that was struck
+        const nx = -dy, ny = dx, d = body.soup.data; let lo = Infinity, hi = -Infinity;
+        for (let i = 0; i < d.length; i += STRIDE) { const proj = d[i] * nx + d[i + 1] * ny; lo = Math.min(lo, proj); hi = Math.max(hi, proj); }
+        const at = x * nx + y * ny, want = at > (lo + hi) / 2 ? hi - 0.3 * (hi - lo) : lo + 0.3 * (hi - lo);
+        x += (want - at) * nx; y += (want - at) * ny;
+      }
+    }
+    const breaks = isLogo ? (final ? 3 : 0) : loose.length >= shatter.most ? 0 : strength > shatter.twice ? 2 : strength > shatter.once ? 1 : 0;
+    if (isLogo && !final) { const again = cut(body.soup.data, x, y, 0, -dy, dx, 0); if (again[0].length >= STRIDE * 3 && again[1].length >= STRIDE * 3) halves = again; }
     const struck = new Vector3(x, y, 0); mesh.localToWorld(struck);
     const pieces: [Float32Array, number][] = [];
     halves.forEach((data, i) => {
@@ -1214,7 +1237,11 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       for (const part of parts) pieces.push([part, i === 0 ? 1 : -1]);
     });
     const kick = 1 + 0.9 * strength;               // hard cuts throw harder
+    // the logo keeps its biggest piece (all but the last hit)
+    const keepAt = isLogo && !final ? pieces.reduce((best, p, i, all) => (measure(p[0]).area > measure(all[best][0]).area ? i : best), 0) : -1;
+    let index = -1;
     for (const [data, side] of pieces) {
+      index++;
       const soup = measure(data);
       const middle = v3.set(soup.centre[0], soup.centre[1], soup.centre[2]);
       const offset: [number, number] = [body.offset[0] + middle.x, body.offset[1] + middle.y];
@@ -1229,13 +1256,21 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (breaks > 0) { const out = new Vector3().subVectors(middle, struck); const reach = out.length(); if (reach > 1e-4) piece.vel.addScaledVector(out, shatter.burst * strength * (0.6 + 0.6 * Math.random()) / reach); }
       if (shownOn) piece.vel.addScaledVector(outward, shownOn.out * (0.8 + 0.4 * Math.random()));      // knocked out of the screen, towards the player
       piece.spin.copy(along).multiplyScalar(side * (1.5 + 2.6 * strength) * kick).add(v4.set(rand(1.6 * kick), rand(1.6 * kick), rand(1.6 * kick)));
+      if (index === keepAt && logoShow) {
+        // what is left of the logo: still the logo, in its place, with its glow, shaking from the hit
+        piece.mode = 'show'; piece.age = body.age; piece.life = Infinity; piece.vel.set(0, 0, 0); loose.push(piece);
+        logoShow.body = piece; logoShow.shiftX = offset[0]; logoShow.shiftY = offset[1]; logoShow.shake = 1;
+        for (const child of [...mesh.children]) if ((child as Mesh).material === logoGlow) { piece.mesh.add(child); child.position.set(-offset[0], -offset[1], -0.04); }
+        piece.sheet.material.uniforms.flash.value = 0.55;
+        continue;
+      }
       release(piece, 'cut', 9);
     }
     // the cut itself, on the paper: glowing where it was made
     const k = sheet.cuts++ % 3, u = sheet.material.uniforms;
     (u.cuts.value as Vector4[])[k].set(x + body.offset[0], y + body.offset[1], dx, dy);
     (u.heat.value as Vector3).setComponent(k, 1);
-    sheet.cutAt = clock;                    // it burns once the next letter is in place (see update)
+    sheet.cutAt = isLogo && !final ? Infinity : clock;                    // it burns once the next letter is in place (see update); (a logo only chipped: not yet)
     // and in the air: a streak of light, sparks and petals along it, shreds of paper
     const at = v3.set(x, y, 0); mesh.localToWorld(at);
     const streak = streaks[nextStreak]; nextStreak = (nextStreak + 1) % STREAKS;
@@ -1397,7 +1432,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
         for (let k = 0; k < 5 && !body.whole && !covers(body.soup.data, px, py); k++) { px *= 0.5; py *= 0.5; }
         // A piece too small to cut again, or one hit while the air is already full of pieces, bursts
         // instead; so does one the cut's line happens to miss. Every hit on a piece does something.
-        if (!body.whole && (crowded || body.soup.area < 0.003)) { burst(body, bladeVel); return true; }
+        if (!body.whole && (crowded || body.soup.area < 0.003) && !shows.some(x => x.kind === 'logo' && x.body === body)) { burst(body, bladeVel); return true; }
         if (slice(body, body.whole ? x : px, body.whole ? y : py, dx, dy, bladeVel, clamp01((bladeVel.length() - tune.cutSpeed) / 7))) return true;
         if (!body.whole) { burst(body, bladeVel); return true; }
         return false;
@@ -1951,8 +1986,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           game.left = left; buzz('left', 0.15, 15); buzz('right', 0.15, 15);
         }
       } else if (t >= ready && game.left !== 0) {
-        game.left = 0; game.beat = 4; ui.go();
-        sounds.play('fight', 1, 1);      // FIGHT! as it says GO (the user's, 2026-11-12)
+        // FIGHT! to start round one, REPLY! to start round two: the word and the user's voice saying it (2026-11-12)
+        game.left = 0; game.beat = 4; ui.go(game.round === 2 ? 'REPLY!' : 'FIGHT!');
+        sounds.play(game.round === 2 ? 'reply' : 'fight', 1, 1);
         buzz('left', 0.5, 50); buzz('right', 0.5, 50);
       }
       if (t >= ready + 0.5) { game.phase = 'play'; ui.hideIntro(); nextIn = 0; }

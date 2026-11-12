@@ -628,7 +628,7 @@ export function createRoundUi(world: World) {
       if (count.mesh.userData.text !== text) { count.mesh.userData.text = text; drawCount(text); show.countPop = 1; show.tick = 0; }
     },
     /** The ring is full: GO. */
-    go() { show.fill = 1; show.goAt = 0; count.mesh.userData.text = 'FIGHT!'; drawCount('FIGHT!'); show.countPop = 1; },      // (FIGHT! with the voice, street-fighter style: 2026-11-12; it said GO)
+    go(word = 'FIGHT!') { show.fill = 1; show.goAt = 0; count.mesh.userData.text = word; drawCount(word); show.countPop = 1; },      // (FIGHT! or REPLY!, with the voice: 2026-11-12; it said GO)
     hideIntro() { if (show.titleAt >= 0 && show.outAt < 0) show.outAt = 0; },
     /** The end of a game, once it has been seen full: the bar goes, up and away. */
     dismissBar() { if (bar.mesh.visible) barLeave = 0; },
