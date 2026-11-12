@@ -50,7 +50,7 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
     card.style.setProperty('--accent', level.accent);
     card.innerHTML = `<span class="art" style="background-image:url('${base}${level.art[0]}')"></span><span class="art end" style="background-image:url('${base}${level.art[1]}')"></span>`
       + `<span class="shade"></span><span class="pick" aria-hidden="true"><canvas class="check"></canvas></span><canvas class="name" width="560" height="120" aria-hidden="true"></canvas>`;
-    card.addEventListener('click', () => { announce(level); options.pick(level); });
+    card.addEventListener('click', () => options.pick(level));      // (its sting plays as it is chosen: main.ts)
     drawCheck(card.querySelector<HTMLCanvasElement>('canvas.check')!);
     list.append(card); cards.set(level.id, card);
   }
@@ -73,7 +73,7 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
     event.preventDefault(); event.stopPropagation();
     const at = options.levels.findIndex(level => cards.get(level.id)!.getAttribute('aria-checked') === 'true');
     const next = options.levels[(at + step + options.levels.length) % options.levels.length];
-    announce(next); options.pick(next); cards.get(next.id)!.focus();
+    options.pick(next); cards.get(next.id)!.focus();
   });
 
   // ---------------------------------------------------------------- the logo

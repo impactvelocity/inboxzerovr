@@ -33,7 +33,7 @@ const BASE = `${import.meta.env.BASE_URL}audio/`;
 const SWINGS = 6;                   // swing1.wav (a light flick) .. swing6.wav (a long sweep)
 /** The letters' own sounds (letters.ts), from the Unity game: one arriving, cut, kept, taken hold of. */
 // ('sort', the Unity game's chime, is no longer loaded: the user disliked it, 2026-11-11, "remove it from everywhere")
-const SHOTS = ['arrive', 'slash1', 'slash2', 'blip', 'arm', 'swoosh1', 'swoosh2', 'swoosh3', 'throw'];      // throw: the user's own, for a letter thrown away (2026-11-11)      // swoosh: a letter thrown to keep it (tools/swooshes.py)        // 'arm': the sword made ready (tools/swordsounds.py)
+const SHOTS = ['arrive', 'slash1', 'slash2', 'blip', 'arm', 'swoosh1', 'swoosh2', 'swoosh3', 'throw', 'round2', 'count5', 'fight'];      // count5: the user's five-second countdown (2026-11-12)      // throw: the user's own, for a letter thrown away (2026-11-11)      // swoosh: a letter thrown to keep it (tools/swooshes.py)        // 'arm': the sword made ready (tools/swordsounds.py)
 /** Blade-tip speeds, m/s: a swing starts above START, is at full strength by FULL, and the next one waits for REARM. */
 const START = 2.8, FULL = 10, REARM = 1.8;
 const SWING_LEVEL = 0.9;
@@ -166,10 +166,11 @@ export class GardenSounds {
     const ended = progress.phase === 'intro' && progress.round === this.lastRound + 1 && this.lastPhase === 'play';
     const began = progress.phase === 'intro' && (this.lastPhase !== 'intro' || this.lastRound !== progress.round);
     this.lastRound = progress.round; this.lastPhase = progress.phase;
-    // Kyoto: a short energetic stinger as each round's intro begins (the user's, 2026-11-11); the music dips under it.
-    if (began && this.level === 'kyoto' && this.shots.has(`kyoto/stinger${progress.round}`)) {
-      this.play(`stinger${progress.round}`, 1, 0.9);
-      this.onStinger?.(this.shots.get(`kyoto/stinger${progress.round}`)!.duration);
+    // As round two's intro begins, in every level: a voice announcing it (the user's, 2026-11-12, round2.wav), the
+    // music dipping under it. (Kyoto had a short stinger for each round here before: kyoto/stinger1 and 2, unused now.)
+    if (began && progress.round === 2 && this.shots.has('round2')) {
+      this.play('round2', 1, 1);
+      this.onStinger?.(this.shots.get('round2')!.duration);
     }
     if (!ended) return;
     const moment = this.sets.get(this.level)?.def.afterRound?.find(m => m.round === progress.round - 1);

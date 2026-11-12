@@ -66,6 +66,8 @@ export class GardenMusic {
   private anthemUrl = '';
   private anthemGain = 0;
   private anthemWant = 0;
+  /** It could not play (not allowed, or music is off): nothing to wait for. */
+  private anthemFailed = false;
   /** How much of the song is let through: 1, or down to 0 under the anthem. */
   private songShare = 1;
   celebrate(url: string) {
@@ -73,10 +75,31 @@ export class GardenMusic {
     this.stopAnthem();
     const anthem = new Audio(`${import.meta.env.BASE_URL}${url}`);
     anthem.preload = 'auto'; anthem.loop = false; anthem.volume = 0;
-    this.anthem = anthem; this.anthemUrl = url; this.anthemGain = 0; this.anthemWant = 1;
-    if (this.enabled) void anthem.play().catch(() => undefined);
+    this.anthem = anthem; this.anthemUrl = url; this.anthemGain = 0; this.anthemWant = 1; this.pulseOf(url);
+    this.anthemFailed = !this.enabled;
+    if (this.enabled) void anthem.play().catch(() => { if (this.anthem === anthem) this.anthemFailed = true; });
   }
   endCelebration() { if (this.anthem) this.anthemWant = 0; }
+  /** Is a celebration song playing (not yet over)? */
+  celebrating() { return !!this.anthem && this.anthemWant > 0 && !this.anthem.ended && !this.anthemFailed && this.enabled; }
+  /**
+   * The beat of what is playing now, 0 to 1 (from <song>-pulse.json beside it, made by tools/pulse.py),
+   * or -1 if there is none to go by. For things that pulse with the music.
+   */
+  private pulses = new Map<string, number[] | null>();
+  private pulseOf(url: string) {
+    if (!this.pulses.has(url)) {
+      this.pulses.set(url, null);
+      void fetch(`${import.meta.env.BASE_URL}${url.replace(/\.\w+$/, '-pulse.json')}`).then(r => (r.ok ? r.json() : null)).then((d: { pulse?: number[] } | null) => { if (d?.pulse) this.pulses.set(url, d.pulse); }).catch(() => undefined);
+    }
+    return this.pulses.get(url) ?? null;
+  }
+  pulse() {
+    const anthem = this.anthem && this.anthemWant > 0 ? this.anthem : null, element = anthem ?? this.track;
+    if (element.paused) return -1;
+    const env = this.pulseOf(anthem ? this.anthemUrl : this.url);
+    return env ? env[Math.floor(element.currentTime / 0.05)] ?? 0 : -1;
+  }
   private stopAnthem() {
     if (this.anthem) { this.anthem.pause(); this.anthem.removeAttribute('src'); this.anthem.load(); }
     this.anthem = null; this.anthemUrl = ''; this.anthemGain = 0; this.anthemWant = 0; this.songShare = 1;
@@ -111,9 +134,12 @@ export class GardenMusic {
     if (this.disposed || !this.active || !this.enabled || this.requesting || !this.track.paused || this.ducked > 0) return;
     this.requesting = true;
     this.status('Starting music…');
+    this.gain = this.volume * this.soft * this.songShare; this.track.volume = Math.max(0, Math.min(1, this.gain));
     void this.track.play().then(() => {
       // A load can finish after leaving VR or disabling the track.
       if (!this.active || !this.enabled || this.disposed) { this.track.pause(); return; }
+      // in at full volume at once, no fade up (2026-11-12)
+      this.gain = this.volume * this.soft * this.songShare; this.track.volume = Math.max(0, Math.min(1, this.gain));
       this.status('Music playing');
     }).catch((error: unknown) => {
       if (!this.active || !this.enabled || this.disposed) return;

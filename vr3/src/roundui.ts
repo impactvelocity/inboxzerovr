@@ -120,7 +120,7 @@ export function createRoundUi(world: World) {
   }
   // The intro, in parts that move on their own: title, the line under it, the ring and what is in it.
   const intro = new THREE.Group(); intro.name = 'Round intro'; intro.visible = false; root.add(intro);
-  const title = card('Round title', 1024, 230, 0.64), subtitle = card('Round subtitle', 1280, 168, 0.86), count = card('Ready count', 256, 256, 0.2);
+  const title = card('Round title', 1024, 230, 0.64), subtitle = card('Round subtitle', 1280, 168, 0.86), count = card('Ready count', 512, 256, 0.4);      // (wide enough for FIGHT!; a number is the size it was)
   for (const part of [title, subtitle, count]) { root.remove(part.mesh); intro.add(part.mesh); part.mesh.renderOrder = 8; }
   title.mesh.position.y = 0.235; subtitle.mesh.position.y = 0.065; count.mesh.position.set(0, -0.11, 0.002);      // (nearer the line above it, now there is no ring)
   const ringMaterial = new THREE.ShaderMaterial({
@@ -316,7 +316,7 @@ export function createRoundUi(world: World) {
   function drawCount(text: string) {
     const { g, w, h } = count;
     g.clearRect(0, 0, w, h);
-    const cell = Math.max(4, Math.min(24, Math.floor(200 / Math.max(1, PixelFont.widthCells(text.toUpperCase())))));
+    const cell = Math.max(4, Math.min(24, Math.floor(440 / Math.max(1, PixelFont.widthCells(text.toUpperCase())))));
     // a block of the level's colour round each lit cell, then the number in white over it: chunky, arcade-like
     const upper = text.toUpperCase(), wide = PixelFont.width(upper, cell);
     const left = Math.round(w / 2 - wide / 2), top = Math.round(h / 2 - PixelFont.Rows * cell / 2), edge = Math.max(3, Math.round(cell * 0.35));
@@ -325,7 +325,7 @@ export function createRoundUi(world: World) {
     g.fillStyle = 'rgba(0,0,0,.8)'; PixelFont.cells(upper, left + drop, top + drop, cell, (x, y, cw, ch) => g.fillRect(x - edge, y - edge, cw + 2 * edge, ch + 2 * edge));
     const sweep = g.createLinearGradient(0, top - edge, 0, top + PixelFont.Rows * cell + edge); sweep.addColorStop(0, barColours[0]); sweep.addColorStop(1, barColours[1]);
     g.fillStyle = sweep; PixelFont.cells(upper, left, top, cell, (x, y, cw, ch) => g.fillRect(x - edge, y - edge, cw + 2 * edge, ch + 2 * edge));
-    g.fillStyle = text === 'GO' ? '#ffffff' : '#ffffff'; PixelFont.cells(upper, left, top, cell, (x, y, cw, ch) => g.fillRect(x, y, cw, ch));
+    g.fillStyle = '#ffffff'; PixelFont.cells(upper, left, top, cell, (x, y, cw, ch) => g.fillRect(x, y, cw, ch));
     count.texture.needsUpdate = true;
   }
   /** A colour mixed towards another: `t` of the way. */
@@ -342,6 +342,8 @@ export function createRoundUi(world: World) {
   /** A pixel panel: an outline the shape of the box, a dark face one step in, a light line along its top and a dark one along its foot. */
   function panel(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, s: number, edge: string, face: string) {
     stepped(g, x, y, w, h, s); g.fillStyle = edge; g.fill();
+    // (the inside cut out first, so a see-through face shows what is behind it, not the outline's colour)
+    g.save(); g.globalCompositeOperation = 'destination-out'; stepped(g, x + s, y + s, w - 2 * s, h - 2 * s, s); g.fill(); g.restore();
     stepped(g, x + s, y + s, w - 2 * s, h - 2 * s, s); g.fillStyle = face; g.fill();
     g.fillStyle = 'rgba(255,255,255,.14)'; g.fillRect(x + 3 * s, y + s, w - 6 * s, s);
     g.fillStyle = 'rgba(0,0,0,.35)'; g.fillRect(x + 3 * s, y + h - 2 * s, w - 6 * s, s);
@@ -369,7 +371,7 @@ export function createRoundUi(world: World) {
     const edge = kind === 'redo' ? mixColour(accent, '#ffffff', 0.55) : left ? barColours[0] : barColours[1];
     g.clearRect(0, 0, w, h);
     const x = 12, y = 34, bw = w - 24, bh = h - 46, s = 8;
-    panel(g, x, y, bw, bh, s, edge, faceColour());
+    panel(g, x, y, bw, bh, s, edge, 'rgba(6,5,12,.62)');      // (dark and a little see-through: 2026-11-11)
     if (kind === 'reply') {
       // the tag on its top corner, the side away from the middle
       const tag = left ? 'REPLY A' : 'REPLY B';
@@ -385,7 +387,7 @@ export function createRoundUi(world: World) {
     } else {
       // just the word, big, in the middle of a plain panel (2026-11-11: "just a simple area")
       const word = kind === 'send' ? 'SEND IT' : 'REDO';
-      pixel(g, word, w / 2, y + bh / 2, Math.min(13, Math.floor((bw - 90) / PixelFont.widthCells(word))), edge);
+      pixel(g, word, w / 2, y + bh / 2, Math.min(13, Math.floor((bw - 90) / PixelFont.widthCells(word))), '#ffffff');      // (white, as the replies' words are)
     }
     chips[which].texture.needsUpdate = true;
     rings[which].material.uniforms.colour.value.set(edge); glows[which].material.uniforms.colour.value.set(edge);
@@ -399,7 +401,7 @@ export function createRoundUi(world: World) {
   function drawMic(on: boolean) {
     const { g, w, h } = mic, cx = w / 2, cy = 200, cell = 10, R = 11.5;
     g.clearRect(0, 0, w, h);
-    const edge = accent, face = faceColour();
+    const edge = barColours[0], face = faceColour();      // (the level's stronger colour, not its pale accent: more vibrant, 2026-11-11)
     if (on) {
       // the meter: sixteen spokes of blocks
       for (let i = 0; i < 16; i++) {
@@ -425,7 +427,7 @@ export function createRoundUi(world: World) {
     g.fillStyle = on ? '#ffffff' : edge;
     MIC_ART.forEach((row, y) => [...row].forEach((c, x) => { if (c === '#') g.fillRect(left + x * mc, top + y * mc - bump, mc, mc); }));
     if (on && Math.sin(clock * 6) > -0.3) { g.fillStyle = '#ff3b55'; g.fillRect(cx + 62, cy - 92, 20, 20); }
-    pixel(g, on ? 'RECORDING' : 'SAY IT', cx, h - 34, 5, on ? '#ffffff' : edge);
+    // (no words under it any more: 2026-11-11)
     mic.texture.needsUpdate = true;
     rings[2].material.uniforms.colour.value.set(edge); glows[2].material.uniforms.colour.value.set(edge);
   }
@@ -433,7 +435,7 @@ export function createRoundUi(world: World) {
   function drawDictation() {
     const { g, w, h } = dictation, recording = stage === 'recording';
     g.clearRect(0, 0, w, h);
-    panel(g, 8, 8, w - 16, h - 16, 8, accent, faceColour());
+    panel(g, 8, 8, w - 16, h - 16, 8, accent, 'rgba(6,5,12,.62)');      // (dark and a little see-through, as the replies are)
     if (recording && Math.sin(clock * 6) > -0.3) { g.fillStyle = '#ff3b55'; g.fillRect(46, 44, 22, 22); }
     pixel(g, recording ? 'LISTENING' : 'YOUR REPLY', recording ? 84 : 46, 56, 4, accent, 'left', null);
     const said = heardText.split(' ').slice(0, heardWords).join(' ');
@@ -473,7 +475,7 @@ export function createRoundUi(world: World) {
   function place(head: THREE.Vector3, introAt?: { up: number; nearer: number; size: number }) {
     seat.copy(head);
     const x = head.x * 0.7;
-    face(bar, x, head.y + 0.55, head.z - 2.35);
+    face(bar, x, head.y + 0.55, head.z - 2.35); barHome.copy(bar.mesh.position); barLeave = -1;
     // (a level with something standing where the intro would be moves it: up, nearer, and smaller)
     face(intro, x, head.y - 0.14 + (introAt?.up ?? 0), head.z - 1.6 + (introAt?.nearer ?? 0)); introSize = introAt?.size ?? 1;
     // (round two's replies a little nearer than they were, so a letter held out can be taken to them;
@@ -487,7 +489,8 @@ export function createRoundUi(world: World) {
     targets[0].copy(chips[0].mesh.position); targets[1].copy(chips[1].mesh.position);
     targets[2].copy(v0.set(0, micUp, 0).applyQuaternion(mic.mesh.quaternion).add(mic.mesh.position));
   }
-  const v0 = new THREE.Vector3();
+  const v0 = new THREE.Vector3(), touchTurn = new THREE.Quaternion(), barHome = new THREE.Vector3();
+  let barLeave = -1;
 
   // ---------------------------------------------------------------- every frame
 
@@ -496,6 +499,14 @@ export function createRoundUi(world: World) {
     const ease = 1 - Math.exp(-dt * 9);
     bar.shown += (bar.want - bar.shown) * ease; bar.pop *= Math.exp(-dt * 7);
     bar.mesh.visible = bar.shown > 0.01; bar.material.opacity = bar.shown; bar.mesh.scale.setScalar(1 + bar.pop * 0.06);
+    // done with (the end of a game): a little swell, then up and away, fading
+    if (barLeave >= 0) {
+      const t = (barLeave += dt) / 0.9, out = clamp01((t - 0.25) / 0.75), e = out * out;
+      bar.mesh.position.copy(barHome); bar.mesh.position.y += 0.35 * e;
+      bar.mesh.scale.setScalar((1 + 0.12 * Math.sin(Math.min(1, t / 0.25) * Math.PI)) * (1 - 0.5 * e));
+      bar.material.opacity = bar.shown * (1 - e); bar.mesh.visible = bar.material.opacity > 0.01;
+      if (t >= 1) { barLeave = -1; bar.want = 0; bar.shown = 0; bar.mesh.visible = false; bar.mesh.position.copy(barHome); }
+    }
     // Round two's targets. Held at, one swells a little and glows, and its ring runs round; sent, it
     // pops, then flies up and away and is gone.
     [chips[0], chips[1], mic].forEach((c, k) => {
@@ -617,8 +628,10 @@ export function createRoundUi(world: World) {
       if (count.mesh.userData.text !== text) { count.mesh.userData.text = text; drawCount(text); show.countPop = 1; show.tick = 0; }
     },
     /** The ring is full: GO. */
-    go() { show.fill = 1; show.goAt = 0; count.mesh.userData.text = 'GO'; drawCount('GO'); show.countPop = 1; },
+    go() { show.fill = 1; show.goAt = 0; count.mesh.userData.text = 'FIGHT!'; drawCount('FIGHT!'); show.countPop = 1; },      // (FIGHT! with the voice, street-fighter style: 2026-11-12; it said GO)
     hideIntro() { if (show.titleAt >= 0 && show.outAt < 0) show.outAt = 0; },
+    /** The end of a game, once it has been seen full: the bar goes, up and away. */
+    dismissBar() { if (bar.mesh.visible) barLeave = 0; },
     /** The end of a game: the bar full, every band lit, and nothing either side of it. */
     complete(total: number) { drawBar(Array.from({ length: total }, () => 'cut'), total, true); bar.want = 1; bar.pop = 0.6; celebrate(Math.floor(total / 2), total); },
     /**
@@ -648,6 +661,16 @@ export function createRoundUi(world: World) {
       chips[0].want = chips[1].want = mic.want = on ? 1 : 0;
       if (dictLeave < 0) dictation.want = 0;
       aimAt = -1; aimFill = 0;
+    },
+    /**
+     * Is a letter at `at`, half `halfW` by `halfH` metres, touching target k (a reply, KEEP or REDO, the mic)?
+     * Its outline over the target's, in the target's own plane, by `extra` metres or more.
+     */
+    touching(k: number, at: THREE.Vector3, halfW: number, halfH: number, extra = 0) {
+      const local = v0.copy(at).sub(k === 2 ? targets[2] : base[k].at).applyQuaternion(touchTurn.copy(base[k].turn).invert());
+      if (Math.abs(local.z) > 0.3) return false;
+      if (k === 2) return Math.hypot(local.x, local.y) < 0.09 + Math.max(halfW, halfH) * 0.8 + extra;
+      return Math.abs(local.x) < chipW / 2 + halfW + extra && Math.abs(local.y) < chipH / 2 + halfH + extra;
     },
     /** Which target the letter is being held at (-1: none), and how far round its ring has got (0 to 1). */
     aim(which: number, fill: number) { aimAt = which; aimFill = clamp01(fill); },
@@ -684,7 +707,7 @@ export function createRoundUi(world: World) {
       show.titleAt = -1; show.readyAt = -1; show.goAt = -1; show.outAt = -1; intro.visible = false;
       for (const c of [bar, chips[0], chips[1], mic, dictation]) { c.want = 0; c.shown = 0; c.mesh.visible = false; }
       toastAge = 9; toast.mesh.visible = false;
-      stage = 'off'; aimAt = -1; aimFill = 0; leave.fill(-1); dictLeave = -1; ringFill.fill(0); hoverAmount.fill(0); drawMic(false);
+      stage = 'off'; aimAt = -1; aimFill = 0; leave.fill(-1); dictLeave = -1; ringFill.fill(0); hoverAmount.fill(0); drawMic(false); barLeave = -1;
     },
     diagnostics: () => ({ bar: +bar.shown.toFixed(2), intro: intro.visible ? 1 : 0, ring: +show.fill.toFixed(2), replies: +chips[0].shown.toFixed(2), stage, aimAt, aimFill: +aimFill.toFixed(2), heardWords }),
     dispose() {

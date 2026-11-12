@@ -17,6 +17,7 @@ import './style.css';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const query = new URLSearchParams(location.search);
+const STINGER_SECONDS = 5;      // (every level's sting is this long: tools/stingers.py cuts them to it)
 const remembered = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
 const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* private window */ } };
 const mood = $<HTMLInputElement>('mood');
@@ -200,6 +201,8 @@ async function main() {
   let lightFrom = 0, lightPhase = '', lightRound = 0;
   function lightFromRounds() {
     const p = letters.progress as typeof letters.progress & { timer: number };
+    // Day to night over the game (2026-11-11): the start lighting as round one begins; halfway to night by the
+    // end of round one, a little more with each email dealt with; the other half through round two's intro.
     const want = p.round >= 2 ? 1 : 0;
     if (p.phase === 'intro' && (lightPhase !== 'intro' || lightRound !== p.round)) lightFrom = settings.blend;
     lightPhase = p.phase; lightRound = p.round;
@@ -207,22 +210,42 @@ async function main() {
     if (p.phase === 'intro') {
       const t = Math.min(1, Math.max(0, p.timer / (1 + letters.tune.readySeconds)));      // the intro's lead-in, then the ring
       blend = lightFrom + (want - lightFrom) * t * t * (3 - 2 * t);
+    } else if (p.phase === 'play' && p.round === 1) {
+      const done = p.total > 0 ? Math.min(1, p.marks.length / p.total) : 0;
+      blend += (0.5 * done - blend) * 0.02;            // (eased, so each email's step is a slow slide, not a jump)
     } else if (p.phase === 'play' || p.phase === 'summary') blend = want;
     settings.blend = blend; settings.elapsed = blend * settings.duration; settings.playing = false;
   }
+  /**
+   * A level's sting, as it is chosen (on the home screen, or in the menu in VR): about five seconds of fun
+   * music ending on a hit, one per level (2026-11-12; its name is said as a game begins). At the music's
+   * volume; in a game (the menu in VR) the song waits under it.
+   */
+  const stinger = new Audio(); stinger.preload = 'auto';
+  function playStinger(url: string | undefined) {
+    stopStinger();
+    if (!url || !$<HTMLInputElement>('music').checked) return;
+    stinger.src = `${import.meta.env.BASE_URL}${url}`; stinger.volume = Math.min(1, Number($<HTMLInputElement>('volume').value));
+    void stinger.play().catch(() => undefined);
+    if (playing) music.duck(STINGER_SECONDS - 0.4);
+  }
+  function stopStinger() { stinger.pause(); }
   /** At the home screen nothing arrives and nothing is heard; playing, the level's title letter comes. */
   function setPlaying(on: boolean) {
     playing = on;
     document.body.classList.toggle('at-home', !on); document.body.classList.toggle('playing', on);
     if (on) { toggleSettings(false); settings.elapsed = 0; settings.blend = 0; settings.playing = true; }
     // A level starts its song from the top, at full volume, as round one's countdown begins (the 'ready' moment and the intro's lead-in first)
-    if (on) { music.restart(); music.duck(0.8 + 1.0); }
+    // (a game begins with its level's name said; its sting plays as it is chosen: 2026-11-12)
+    // (the song from the first moment, at full volume, with the name said over it: 2026-11-12; it waited for the countdown before)
+    if (on) { stopStinger(); music.restart(); home.announce(now.level.id); }
+    else stopStinger();
     letters.setActive(on);
     syncSound(); refresh();
   }
   const home = createHome({
     levels: LEVELS,
-    pick: level => { void choose(level); },
+    pick: level => { playStinger(level.stinger); void choose(level); },
     start: where => { sounds.unlock(); if (where === 'vr') world.launchXR(); else { setPlaying(true); $('scene').focus(); } },
     settings: () => toggleSettings(),
   });
@@ -237,7 +260,7 @@ async function main() {
     if (kind === 'home') { if (world.renderer.xr.isPresenting) void letters.showMenu(menuLevels(), now.level.id); else setPlaying(false); return; }
     // in the menu: a level's card cut (its name said, then once the view is black the level changes and the
     // menu comes again), START cut (a game begins), EXIT cut (out of VR, to the home screen)
-    if (kind === 'pick') { const level = levelById(id ?? null); if (level) { home.announce(level.id); void choose(level).then(() => { if (world.renderer.xr.isPresenting) void letters.showMenu(menuLevels(), now.level.id); }); } return; }
+    if (kind === 'pick') { const level = levelById(id ?? null); if (level) { playStinger(level.stinger); void choose(level).then(() => { if (world.renderer.xr.isPresenting) void letters.showMenu(menuLevels(), now.level.id, true); }); } return; }
     if (kind === 'start') { setPlaying(true); return; }
     if (kind === 'exit') { void world.renderer.xr.getSession()?.end(); return; } if (kind === 'arrive') now.place.pulse?.(1); else if (kind === 'melt') now.place.pulse?.(0.9); else if (kind === 'cut') now.place.pulse?.(0.3); now.place.onLetter?.(kind, at); };
 
@@ -252,6 +275,8 @@ async function main() {
       world.camera.getWorldPosition(eye); garden.viewPosition.copy(eye);
       const pixelRatio = world.renderer.getPixelRatio();
       now.place.update(dt,eye,pixelRatio,blade);
+      letters.setBeat(music.pulse());      // the end of a game moves to the music
+      letters.setEndSong(music.celebrating());      // and waits for its song to end
       music.setSoft(letters.progress.recording ? 0.3 : 1);      // round two's dictation: the song goes soft while it records
       // the end of a game: a level with a celebration song crossfades into it as the last email is dealt with
       { const p = letters.progress, lastDone = p.phase === 'play' && p.round === 2 && p.total > 0 && p.marks.length >= p.total;
