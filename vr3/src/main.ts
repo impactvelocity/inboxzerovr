@@ -229,7 +229,17 @@ async function main() {
   $('menu').addEventListener('click', () => setPlaying(false));
   const useWeapon = () => { sounds.unlock(); if (now.weapon) now.weapon.previewSwing(); else sword.previewSwing(); };
   $('swing').addEventListener('click', useWeapon);
-  letters.events.on = (kind, at) => { if (kind === 'arrive') now.place.pulse?.(1); else if (kind === 'melt') now.place.pulse?.(0.9); else if (kind === 'cut') now.place.pulse?.(0.3); now.place.onLetter?.(kind, at); };
+  // The menu in VR (letters.showMenu): every level as a card, each with its home-screen picture.
+  const menuLevels = () => LEVELS.map(l => ({ id: l.id, name: l.name, accent: l.accent, picture: `home/${l.id === 'office2' ? 'office' : l.id}.webp` }));
+  letters.events.on = (kind, at, id) => {
+    // the game is over (it has faded to black): in a headset, the menu in VR, to choose and play again
+    // without taking it off; on a screen, the home screen
+    if (kind === 'home') { if (world.renderer.xr.isPresenting) void letters.showMenu(menuLevels(), now.level.id); else setPlaying(false); return; }
+    // in the menu: a level's card cut (its name said, then once the view is black the level changes and the
+    // menu comes again), START cut (a game begins), EXIT cut (out of VR, to the home screen)
+    if (kind === 'pick') { const level = levelById(id ?? null); if (level) { home.announce(level.id); void choose(level).then(() => { if (world.renderer.xr.isPresenting) void letters.showMenu(menuLevels(), now.level.id); }); } return; }
+    if (kind === 'start') { setPlaying(true); return; }
+    if (kind === 'exit') { void world.renderer.xr.getSession()?.end(); return; } if (kind === 'arrive') now.place.pulse?.(1); else if (kind === 'melt') now.place.pulse?.(0.9); else if (kind === 'cut') now.place.pulse?.(0.3); now.place.onLetter?.(kind, at); };
 
   // The sprayer's nozzle and trigger, for the letters and the mist.
   const tool: SprayTool = { origin: new Vector3(), direction: new Vector3(0, 0, -1), on: 0, valid: false };
@@ -243,6 +253,9 @@ async function main() {
       const pixelRatio = world.renderer.getPixelRatio();
       now.place.update(dt,eye,pixelRatio,blade);
       music.setSoft(letters.progress.recording ? 0.3 : 1);      // round two's dictation: the song goes soft while it records
+      // the end of a game: a level with a celebration song crossfades into it as the last email is dealt with
+      { const p = letters.progress, lastDone = p.phase === 'play' && p.round === 2 && p.total > 0 && p.marks.length >= p.total;
+        if (playing && (p.phase === 'summary' || lastDone) && now.level.anthem) music.celebrate(now.level.anthem); else music.endCelebration(); }
       music.update(dt);
       if (now.weapon) now.weapon.update(dt,this.xrFrame,settings.motion,settings.blend); else sword.update(dt,this.xrFrame,settings.motion,settings.blend);
       blade.update(dt,world.scene);
@@ -262,7 +275,7 @@ async function main() {
         tool.on = pull;
       }
       letters.update(dt,this.xrFrame,blade,eye,settings.blend,aim?tool:undefined);
-      now.place.setGame?.(letters.progress);
+      now.place.setGame?.(letters.progress as RoundProgress);      // (its 'menu' phase, the in-VR menu, is none of a level's business: it compares only the others)
       sounds.watchRound(letters.progress);      // a level's sounds for the end of a round (the castle's door slam and witches)
       const live=letters.live();
       now.weapon?.setLive(live);liveBlade.update(dt,now.weapon?0:live,blade);sounds.live(live,blade.speed);
@@ -318,7 +331,7 @@ async function main() {
   // Native Quest deep links may grant the session during World.create().
   if(world.renderer.xr.isPresenting) startSession();
   else if(query.get('play')==='1') setPlaying(true);            // straight in, for checks
-  $('loading').remove();refresh();
+  { const loading=$('loading'); loading.classList.add('gone'); setTimeout(()=>loading.remove(),700); } refresh();      // (the loading screen fades out)
   // Read-only diagnostics for verification and tuning, no per-frame DOM work.
   if (import.meta.env.DEV) Object.assign(window,{__vr3:{world,garden,blade,letters,liveBlade,sounds,made,choose:(id:string)=>choose(levelById(id)??LEVELS[0]),setPlaying,get now(){return now;},
     // run the game forward by hand, for checks where the page gets few animation frames (a hidden or background pane)
@@ -326,4 +339,4 @@ async function main() {
   Object.assign(window,{gardenDiagnostics:()=>({level:now.level.id,playing,blend:settings.blend,elapsed:settings.elapsed,duration:settings.duration,depth:settings.depth,motion:settings.motion,quality:settings.quality,calls:world.renderer.info.render.calls,triangles:world.renderer.info.render.triangles,textures:world.renderer.info.memory.textures,xr:world.renderer.xr.isPresenting,music:music.diagnostics(),sounds:sounds.diagnostics(),swingFx:swingFx.diagnostics(),letters:letters.diagnostics(),sword:now.weapon?now.weapon.diagnostics():sword.diagnostics(),mist:mist.diagnostics()})});
   import.meta.hot?.dispose(()=>{session?.removeEventListener('select',music.resume);session?.removeEventListener('visibilitychange',syncSound);music.dispose();sounds.dispose();swingFx.dispose();letters.dispose();liveBlade.dispose();mist.dispose();for(const one of made.values())one.weapon?.dispose();sword.dispose();world.destroy();});
 }
-main().catch(error=>{console.error(error);$('loading').textContent='It could not load. Please refresh to try again.';});
+main().catch(error=>{console.error(error);const text=document.querySelector('#loading .load-text');if(text){text.textContent='It could not load. Please refresh to try again.';text.classList.add('failed');}document.querySelector('#loading .load-bar')?.remove();});

@@ -25,11 +25,12 @@ function canvasTexture(kind: 'cloth'|'ivory'|'steel') {
 // turn: degrees the blade is angled across the body, to the left, rather than straight ahead of the fist.
 // (2026-11-11, on the headset with controllers: 3 cm, a 58 cm blade and a 28 degree lean felt good, with the blade angled a bit to the left.)
 // (2026-11-11, later: "make the kyoto sword a bit more like the position of the haunted sword": upright, lean -15 and turn 8, as the knight's.)
-export const SWORD_HOLD_DEFAULT={reach:.03,tilt:-15,turn:8,blade:.8};
+// (2026-11-11, later still: the hand sat a little on the guard; the sword moved up off the hand, 3 cm to 5 cm.)
+export const SWORD_HOLD_DEFAULT={reach:.05,tilt:-15,turn:8,blade:.8};
 export type SwordHold=typeof SWORD_HOLD_DEFAULT;
 const HOLD_KEYS=['reach','tilt','turn','blade'] as const;
-// (saved under a new name since the upright default, so a lean saved before it does not hide it)
-const remembered=(key:string)=>{try{return localStorage.getItem('vr3.hold2.'+key);}catch{return null;}};
+// (saved under a new name each time the default moves, so a value saved before it does not hide it: hold3 since the 5 cm gap)
+const remembered=(key:string)=>{try{return localStorage.getItem('vr3.hold3.'+key);}catch{return null;}};
 const tune=(key:keyof SwordHold)=>{for(const raw of [new URLSearchParams(location.search).get(key),remembered(key)]){const v=parseFloat(raw??'');if(Number.isFinite(v))return v;}return SWORD_HOLD_DEFAULT[key];};
 export const swordHold:SwordHold={reach:tune('reach'),tilt:tune('tilt'),turn:tune('turn'),blade:tune('blade')};
 const GUARD_Y=.137,BLADE_BASE_Y=.15;
@@ -41,7 +42,7 @@ export function setSwordHold(next:Partial<SwordHold>,remember=true){
   Object.assign(swordHold,next);
   // The turn is about the blade's own edge-to-spine line, at the fist: it tips the blade sideways without changing the lean.
   hold.makeRotationX(-swordHold.tilt*Math.PI/180).multiply(holdBasis).multiply(holdTurn.makeRotationX(TURN_SIGN*swordHold.turn*Math.PI/180)).multiply(holdShift.makeTranslation(0,swordHold.reach-GUARD_Y,0));
-  if(remember)try{for(const key of HOLD_KEYS)localStorage.setItem('vr3.hold2.'+key,String(swordHold[key]));}catch{/* private window: keep it for this visit only */}
+  if(remember)try{for(const key of HOLD_KEYS)localStorage.setItem('vr3.hold3.'+key,String(swordHold[key]));}catch{/* private window: keep it for this visit only */}
 }
 setSwordHold({},false);
 

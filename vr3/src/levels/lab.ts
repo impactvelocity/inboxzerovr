@@ -110,7 +110,7 @@ export const labStage: StageDef = {
 };
 
 export const labLetters: LetterTheme = {
-  id: 'lab', face: 'paint', paint: labCard, mechanic: 'spray', title: 'The Lab', accent: '#8dff6a', bar: ['#b6ff2e', '#21ffa0'],
+  id: 'lab', face: 'paint', paint: labCard, mechanic: 'spray', title: 'Toxic Danger', accent: '#8dff6a', bar: ['#b6ff2e', '#21ffa0'],
   look: { sheet: '#f0e7d0', ink: '#15140f', back: '#e6dcc2', selfLit: 0.08, night: '#a9d2cc',
     hover: '#d6ffe0', cutWide: '#8dff9a', cutHot: '#f2fff2', mark: '#ffe27a', flash: '#f6ffd9', gold: '#fff0a8',
     burn: '#9dff5a', burnStyle: 2, streak: ['#9dffb0', '#ffffff'], thread: ['#9dffb0', '#f2fff2'], aura: ['#6dff2a', '#eaff5a'], spell: { wisps: 0.8, sparkles: 16, trail: false } },

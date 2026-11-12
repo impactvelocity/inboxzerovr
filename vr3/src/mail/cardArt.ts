@@ -147,7 +147,7 @@ export function emailCard(p: Painter, surface: Surface, email: Email): void {
   p.end();
 }
 
-/** From a person: the subject first, then who it is from, then the first three lines of the message. */
+/** From a person: the subject first, then who it is from, then as much of the message as fits. */
 function personCard(p: Painter, e: Email): void {
   const w = p.width;
   tag(p, e.category, M, 66, false);
@@ -162,7 +162,9 @@ function personCard(p: Painter, e: Email): void {
   p.text(e.from.substring(0, 1).toUpperCase(), M + 26, cy + 2, 30, true, Ink, 'center', 'middle');
   p.text(e.from, M + 68, cy + 1, 38, true, Soft, 'left', 'middle');
   let by = cy + 76;
-  for (const line of p.wrap(e.body ?? e.snippet ?? '', 36, false, w - 2 * M, 3)) {
+  // as many lines of the message as there is room for (a paragraph fills the card; it was three lines)
+  const room = Math.max(1, Math.floor((p.height - 40 - by) / 48) + 1);
+  for (const line of p.wrap(e.body ?? e.snippet ?? '', 36, false, w - 2 * M, room)) {
     p.text(line, M, by, 36, false, Look.Dim);
     by += 48;
   }

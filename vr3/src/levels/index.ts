@@ -32,20 +32,22 @@ export interface Level {
   sound: LevelSound | null;
   /** Its music, a path under public/ (user-supplied tracks, kept out of git), or null for none. */
   music: string | null;
+  /** A celebration song for the end of a game, crossfaded in as the last email is dealt with (the user's own: Kyoto's anthem). */
+  anthem?: string;
   /** Kyoto has neither: its backdrop and katana are its own files. */
   stage: StageDef | null;
   held: ((renderer: WebGLRenderer) => HeldSpec) | null;
 }
 
 export const LEVELS: Level[] = [
-  { id: 'kyoto', number: '01', name: 'Kyoto', weapon: 'Katana', line: 'After the rain', art: ['garden/dusk-v2.webp', 'garden/twilight-v2.webp'], accent: '#f6b3cc', ground: '#17151e',
-    phases: ['Dusk', 'Blue hour', 'Twilight'], ends: ['DUSK', 'TWILIGHT'], letters: KYOTO_LETTERS, fx: KYOTO_FX, sound: null, music: 'audio/kyoto/music.m4a',     // 竹林の冒険, the user's track (2026-11-11; it replaced 京都の静けさ, still at audio/kyoto-serenity-aac.m4a)
+  { id: 'kyoto', number: '01', name: 'Kyoto Nights', weapon: 'Katana', line: 'After the rain', art: ['garden/dusk-v2.webp', 'garden/twilight-v2.webp'], accent: '#f6b3cc', ground: '#17151e',
+    phases: ['Dusk', 'Blue hour', 'Twilight'], ends: ['DUSK', 'TWILIGHT'], letters: KYOTO_LETTERS, fx: KYOTO_FX, sound: null, music: 'audio/kyoto/music.m4a', anthem: 'audio/kyoto/anthem.m4a',     // 忍道の鼓動, the user's track (late 2026-11-11; before it 竹林の冒険, and before that 京都の静けさ, still at audio/kyoto-serenity-aac.m4a); its end anthem, theirs too
     stage: null, held: null },
-  { id: 'office', number: '02', name: 'The Office', weapon: 'Keyboard', line: 'You have mail', art: officeStage.art, accent: '#7dffc9', ground: '#1a2a47',
+  { id: 'office', number: '02', name: 'The Corner Desk', weapon: 'Keyboard', line: 'You have mail', art: officeStage.art, accent: '#7dffc9', ground: '#1a2a47',
     phases: ['Office hours', 'Closing time', 'After hours'], ends: ['OFFICE HOURS', 'AFTER HOURS'], letters: officeLetters, fx: officeFx, sound: officeSound, music: null, stage: officeStage, held: buildKeyboard },
   { id: 'castle', number: '03', name: 'The Haunted Hall', weapon: 'Sword', line: 'Royal dispatches', art: castleStage.art, accent: '#b79cff', ground: '#120d1c',
     phases: ['Candlelight', 'Witching hour', 'Haunted'], ends: ['CANDLELIGHT', 'HAUNTED'], letters: castleLetters, fx: castleFx, sound: castleSound, music: 'audio/castle/music.m4a', stage: castleStage, held: buildKnightSword },
-  { id: 'lab', number: '04', name: 'The Lab', weapon: 'Sprayer', line: 'Contaminated mail', art: labStage.art, accent: '#8dff6a', ground: '#0c1f2a',
+  { id: 'lab', number: '04', name: 'Toxic Danger', weapon: 'Sprayer', line: 'Contaminated mail', art: labStage.art, accent: '#8dff6a', ground: '#0c1f2a',
     phases: ['Lights on', 'Lockdown', 'Blackout'], ends: ['LIGHTS ON', 'BLACKOUT'], letters: labLetters, fx: labFx, sound: labSound, music: null, stage: labStage, held: buildSprayer },
   // The office again, the monitor and what is on the desk real (asked for on 2026-11-11): the emails are on its screen, and it is what gets hit.
   { id: 'office2', number: '05', name: 'The Office v2', weapon: 'Keyboard', line: 'Smash the monitor', art: office2Stage.art, accent: '#7dffc9', ground: '#1a2a47',

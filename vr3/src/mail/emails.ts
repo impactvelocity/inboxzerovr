@@ -186,6 +186,17 @@ export const Emails: readonly Email[] = [
   parcel(J, 'ParcelPost', 'Your package was delivered', 3, false, 'Left at the front door'),
 
   // ---------------------------------------------------------------- real
+  // Three with a whole paragraph, and replies as long as the round-two cards take (four lines), to see how
+  // long mail and long answers look (asked for on 2026-11-11).
+  person(R, 'Work', 'Maya (design lead)', 'Feedback on the new onboarding flow',
+    "I went through the whole flow on my phone last night. The first two screens feel great, but the permissions step still loses people: it asks for three things at once and the copy reads like a legal notice. Could we split it up and soften the wording before Thursday's review? I sketched a version, it's in the shared folder.",
+    'Love the sketch! Splitting it up makes total sense. Let us pair on the copy tomorrow morning', 'Thanks for testing it. Thursday is tight, can we ship the split now and fix the copy next week?'),
+  person(R, 'Personal', 'Aunt Rosa', 'Family reunion at the lake this July',
+    "We finally booked the cabins by the lake for the last weekend of July! Everyone is coming, even Uncle Teo from Lisbon. There's room for you and anyone you'd like to bring. We'll do the big barbecue on Saturday and the boat race on Sunday morning. Let me know by the end of the month so I can sort out the beds.",
+    'We would love to come! Count us in for the whole weekend, and I will bring the lemon cake', 'Sounds wonderful, but July is packed for us. Could we join just for the Saturday barbecue?'),
+  person(R, 'Work', 'Chris from Finance', 'Q3 budget needs your sign-off by Friday',
+    "Attached is the Q3 budget for your team. Travel is up about 12% on last quarter, mostly the two conference trips, and software is down now that we cancelled the old analytics tool. If the numbers look right, just reply to approve. If anything looks off, let me know and we can go through it line by line before Friday.",
+    'Looks right to me, approved. Thanks for pulling it together so quickly, Chris', 'Travel looks high. Can we go through the conference costs together on Thursday?'),
   person(R, 'Personal', 'Mom', 'Dinner on Sunday?',
     "Dad is making the lasagna again. Can you bring a salad? Your sister says she'll be late, as usual. Love you!",
     'Yes! I will bring the salad, and something for dessert', "Can't make it this week, sorry. Save me some lasagna?"),
@@ -239,6 +250,9 @@ export const Emails: readonly Email[] = [
  * word by word as if it were being heard. One per real email, and a polite no for the rest.
  */
 const Dictated: Record<string, string> = {
+  'Feedback on the new onboarding flow': 'Thanks Maya, this is really useful. Splitting the permissions step is a great call. Let us go through your sketch first thing tomorrow.',
+  'Family reunion at the lake this July': 'Aunt Rosa, we would not miss it! Put us down for the whole weekend. I will bring the lemon cake and the kids want in on the boat race.',
+  'Q3 budget needs your sign-off by Friday': 'Thanks Chris, the numbers look right to me. The travel bump is the two conferences, so I am happy to approve it as it is.',
   'Dinner on Sunday?': 'Sounds perfect, I will bring a big salad and the good bread. Tell Dad no burnt edges this time!',
   'Your test results are ready': 'That is great news, thank you so much for letting me know so quickly.',
   'Are we still on for Saturday?': 'Still on! Ten o clock, good racket, and the coffee after is my treat.',

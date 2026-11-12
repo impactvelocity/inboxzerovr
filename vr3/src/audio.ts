@@ -55,7 +55,32 @@ export class GardenMusic {
   private ducked = 0;
   duck(seconds: number) { this.ducked = Math.max(this.ducked, seconds); if (!this.track.paused) this.track.pause(); this.gain = 0; this.track.volume = 0; }
   /** Every track back to its beginning: a level starts its song from the top. */
-  restart() { this.positions.clear(); try { this.track.currentTime = 0; } catch { /* not loaded yet: it starts at 0 anyway */ } }
+  restart() { this.stopAnthem(); this.positions.clear(); try { this.track.currentTime = 0; } catch { /* not loaded yet: it starts at 0 anyway */ } }
+
+  /**
+   * A level's celebration (Kyoto's end anthem, 2026-11-11): the song fades out and this comes in over it,
+   * once, at the song's volume. Asking again while it plays does nothing; `endCelebration()` fades it away
+   * and lets the song back.
+   */
+  private anthem: HTMLAudioElement | null = null;
+  private anthemUrl = '';
+  private anthemGain = 0;
+  private anthemWant = 0;
+  /** How much of the song is let through: 1, or down to 0 under the anthem. */
+  private songShare = 1;
+  celebrate(url: string) {
+    if (this.disposed || (this.anthem && this.anthemUrl === url && this.anthemWant > 0)) return;
+    this.stopAnthem();
+    const anthem = new Audio(`${import.meta.env.BASE_URL}${url}`);
+    anthem.preload = 'auto'; anthem.loop = false; anthem.volume = 0;
+    this.anthem = anthem; this.anthemUrl = url; this.anthemGain = 0; this.anthemWant = 1;
+    if (this.enabled) void anthem.play().catch(() => undefined);
+  }
+  endCelebration() { if (this.anthem) this.anthemWant = 0; }
+  private stopAnthem() {
+    if (this.anthem) { this.anthem.pause(); this.anthem.removeAttribute('src'); this.anthem.load(); }
+    this.anthem = null; this.anthemUrl = ''; this.anthemGain = 0; this.anthemWant = 0; this.songShare = 1;
+  }
 
   /** Play this track (a path under public/) from now on, from where it was last left. */
   setTrack(url: string) {
@@ -71,6 +96,7 @@ export class GardenMusic {
 
   setActive(active: boolean) {
     this.active = active;
+    if (!active) this.endCelebration();      // (back to the home screen: the anthem fades away there)
     if (active) this.resume();
     else {
       this.track.pause();
@@ -99,6 +125,14 @@ export class GardenMusic {
   };
 
   update(dt: number) {
+    // the anthem: in over about a second and a half while the song goes out; away over about a second
+    if (this.anthem) {
+      const want = this.anthemWant * this.volume * (this.enabled ? 1 : 0);
+      this.anthemGain += (want - this.anthemGain) * (1 - Math.exp(-dt * (want > this.anthemGain ? 2.2 : 3)));
+      this.anthem.volume = Math.max(0, Math.min(1, this.anthemGain));
+      this.songShare += ((this.anthemWant > 0 ? 0 : 1) - this.songShare) * (1 - Math.exp(-dt * 2.4));
+      if (this.anthemWant === 0 && this.anthemGain < 0.01) this.stopAnthem();
+    }
     if (this.ducked > 0) {
       // waiting to start: when the wait is over, in at full volume at once
       this.ducked = Math.max(0, this.ducked - dt);
@@ -107,17 +141,19 @@ export class GardenMusic {
     }
     if (!this.active || !this.enabled || this.track.paused) return;
     // Smooth gain changes and a gentle approximately two-second entrance.
-    this.gain += (this.volume*this.soft-this.gain)*(1-Math.exp(-dt*2.5));
+    this.gain += (this.volume*this.soft*this.songShare-this.gain)*(1-Math.exp(-dt*2.5));
     if (Math.abs(this.track.volume-this.gain) > .001) this.track.volume = this.gain;
   }
 
   diagnostics() {
     return { active: this.active, enabled: this.enabled, paused: this.track.paused,
       track: this.url, time: this.track.currentTime, duration: this.track.duration, volume: this.track.volume,
-      loop: this.track.loop, readyState: this.track.readyState, status: this.state };
+      loop: this.track.loop, readyState: this.track.readyState, status: this.state,
+      anthem: this.anthem ? { url: this.anthemUrl, volume: +this.anthem.volume.toFixed(2), paused: this.anthem.paused, time: +this.anthem.currentTime.toFixed(1) } : null, songShare: +this.songShare.toFixed(2) };
   }
 
   dispose() {
+    this.stopAnthem();
     this.disposed = true;
     this.track.pause();
     this.track.removeEventListener('error', this.onError);

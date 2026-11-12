@@ -1,10 +1,13 @@
-import { AdditiveBlending, BufferGeometry, Color, CylinderGeometry, DoubleSide, FrontSide, InterleavedBuffer, InterleavedBufferAttribute, Matrix4, Mesh, Object3D, PlaneGeometry, Points, Quaternion, ShaderMaterial, SRGBColorSpace, TextureLoader, Vector3, Vector4, type Texture, type World } from '@iwsdk/core';
+import { AdditiveBlending, BackSide, BufferGeometry, CanvasTexture, Color, CylinderGeometry, DoubleSide, FrontSide, InterleavedBuffer, InterleavedBufferAttribute, Matrix4, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, Points, Quaternion, ShaderMaterial, SphereGeometry, SRGBColorSpace, TextureLoader, Vector2, Vector3, Vector4, type Texture, type World } from '@iwsdk/core';
 import type { BladeTracker } from './blade';
 import { covers, cut, measure, recentre, STRIDE, type Soup } from './cut';
 import { emailCard, scrollContent, scrolls, ScrollHeight, ScrollWindow } from './mail/cardArt';
 import { dictation, Emails, type Email } from './mail/emails';
 import { makeSurface, Painter, type Surface } from './mail/painter';
-import { createRoundUi } from './roundui';
+import * as PixelFont from './mail/pixelFont';
+import { createRoundUi, MARKS } from './roundui';
+/** The word for one left for later in round two. */
+const LATER = '#ffb347';
 
 /**
  * The game, as far as it goes: emails arrive one at a time as paper letters. Each comes out of the
@@ -69,6 +72,7 @@ const tune = {
   shoulder: [-0.17, -0.2, 0.02] as [number, number, number],   // the left shoulder, from the head (seated, facing the garden)
   holdDistance: 0.45,   // a letter taken from afar flies in to this far from the hand, not into it
   workHold: 0.6,        // round two: it is held out this far (further than in round one), out where the replies are
+  dockShrink: 0.15,     // round two: held at a target, it is this much smaller (only a bit: 40% was too much, 2026-11-11)
   replyHold: 4,         // round two: seconds held at a reply before it is sent (the ring goes round slow, then fast)
   micHold: 2,           // and at the mic before it starts recording
   chooseHold: 1.5,      // and at KEEP or REDO, after dictating
@@ -197,7 +201,7 @@ interface Body {
   /** Where this piece's middle was on the whole letter (x, y in metres from its centre). */
   offset: [number, number];
   vel: Vector3; spin: Vector3; age: number; seed: number;
-  mode: 'held' | 'cut' | 'kept' | 'sent'; life: number;
+  mode: 'held' | 'cut' | 'kept' | 'sent' | 'show'; life: number;      // (show: the level's logo at the end of a game, floating until it is cut)
   /** The email it is (null: the title letter), which band of the progress bar is its, and in round two where it has been sent (0, 1 the replies, 2 the mic). */
   email: Email | null; mark: number; target: number;
   /** Its size (a held letter is smaller), and for a thrown one, how far it has gone towards being kept: -1 not yet, then 0 to 1. */
@@ -218,6 +222,8 @@ interface Current {
   startScale: number; forced: boolean;
   /** Taken hold of: how big it looked from the head at that moment (size over distance), and the size it is held at. */
   seen: number; holdSize: number;
+  /** Round two, held: where the hand would have it (before it is drawn to a target), how far it is drawn to one (0 to 1), and which. */
+  free: Vector3; docked: number; dockedAt: number;
   /** Its arrival: how long, how it slows, how much it rocks. */
   arriveSeconds: number; arriveEase: number; sway: number;
 }
@@ -245,6 +251,7 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
       selfLit: { value: 0 }, burnStyle: { value: 0 }, time: { value: 0 },
       night: { value: 0 }, hover: { value: 0 }, burn: { value: 0 }, gold: { value: 0 }, mark: { value: 0 }, flash: { value: 0 },
       wet: { value: 0 }, hazard: { value: 0 }, splats: { value: [new Vector3(), new Vector3(), new Vector3()] },
+      cutout: { value: 0 }, span: { value: new Vector2(W, H) }, shine: { value: -1 },
       cuts: { value: [new Vector4(), new Vector4(), new Vector4()] }, heat: { value: new Vector3() },
     },
     vertexShader: /* glsl */ `
@@ -265,14 +272,16 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
       }`,
     fragmentShader: /* glsl */ `
       uniform sampler2D face,paperMap; uniform vec3 sheet,inkColor,backColor,nightTint,hoverColor,cutWide,cutHot,markColor,flashColor,goldColor,burnColor,heat;
-      uniform float paint,selfLit,burnStyle,time,night,hover,burn,gold,mark,flash,wet,hazard; uniform vec4 cuts[3]; uniform vec3 splats[3];
+      uniform float paint,selfLit,burnStyle,time,night,hover,burn,gold,mark,flash,wet,hazard,cutout,shine; uniform vec2 span; uniform vec4 cuts[3]; uniform vec3 splats[3];
       varying vec2 vUv; varying vec3 vNormalW; varying vec3 vWorld; varying float vFront;
       float grain(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
         float a=fract(sin(dot(i,vec2(12.9898,78.233)))*43758.5453), b=fract(sin(dot(i+vec2(1.,0.),vec2(12.9898,78.233)))*43758.5453);
         float c=fract(sin(dot(i+vec2(0.,1.),vec2(12.9898,78.233)))*43758.5453), d=fract(sin(dot(i+vec2(1.,1.),vec2(12.9898,78.233)))*43758.5453);
         return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
       void main(){
-        vec3 t=texture2D(face,vUv).rgb;
+        vec4 tex=texture2D(face,vUv); vec3 t=tex.rgb;
+        // (a picture with see-through parts, the end-of-game logo: only where it is drawn is there anything)
+        if(cutout>.5&&tex.a<.45) discard;
         vec2 rim=min(vUv,1.-vUv);
         float edge=min(rim.x,rim.y*1.6);
         // shaded a little by its curl, cooler and dimmer as the room's light goes
@@ -286,7 +295,9 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
           float front=gl_FrontFacing?vFront:0.;       // (seen from inside, through a cut: bare)
           vec3 lit=mix(vec3(shade)*dim,vec3(1.),selfLit);
           c=mix(backColor*shade*dim,t*lit,front);
-          c*=1.+selfLit*front*(.025*sin(time*40.)+.05*sin(vUv.y*9.-time*2.3));
+          c*=1.+selfLit*front*(.025*sin(time*40.)+.05*sin(vUv.y*9.-time*2.3))*(1.-cutout);
+          // a glint across it now and then, as on a title screen
+          c+=vec3(1.)*exp(-pow((vUv.x+vUv.y*.35-shine)*12.,2.))*.55*front*step(-.5,shine);
         } else {
           // The email is drawn as light writing on dark glass (the Unity game's cards); here the
           // brighter the drawing, the darker the ink. Coloured labels keep a trace of their hue.
@@ -297,7 +308,7 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
           c=sheet*texture2D(paperMap,vUv).rgb/.94*shade*dim;
           c=mix(c,inkColour,ink);
         }
-        vec2 at=(vUv-.5)*vec2(${W},${H});
+        vec2 at=(vUv-.5)*span;
         // Sprayed: froth gathers where the mist lands and spreads as the sheet soaks.
         if(wet>0.){
           float foam=0.;
@@ -427,7 +438,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   const shapes = new Map<string, { soup: Soup; geometry: BufferGeometry }>([['paper', { soup: paperSoup, geometry: geometryOf(paperSoup) }]]);
   let wholeSoup = paperSoup, wholeGeometry = shapes.get('paper')!.geometry;
   let theme: LetterTheme = KYOTO_LETTERS, active = true;
-  const events: { on: ((kind: 'arrive' | 'cut' | 'melt' | 'thrown' | 'kept' | 'missed', at: Vector3) => void) | null } = { on: null };
+  const events: { on: ((kind: 'arrive' | 'cut' | 'melt' | 'thrown' | 'kept' | 'missed' | 'home' | 'pick' | 'start' | 'exit', at: Vector3, id?: string) => void) | null } = { on: null };      // (home: the game is over, back to the home screen)
 
   const root = new Object3D(); root.name = 'Letters';
   world.createTransformEntity(root);
@@ -492,8 +503,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   // The rounds. It begins on the title letter; dealing with that starts round one's intro. Round one
   // is tune.roundEmails emails to cut or keep; round two brings the kept ones back to be answered.
   const ui = createRoundUi(world);
-  const game = { phase: 'ready' as 'ready' | 'intro' | 'play' | 'summary', round: 1, timer: 0, beat: -1, total: 0, dealt: 0,
-    deck: [] as Email[], kept: [] as Email[], marks: [] as string[], cutInRoundOne: 0, left: 0, tally: { cut: 0, replied: 0, tomorrow: 0 },
+  const game = { phase: 'ready' as 'ready' | 'intro' | 'play' | 'summary' | 'menu', round: 1, timer: 0, beat: -1, total: 0, dealt: 0,
+    deck: [] as Email[], kept: [] as Email[], marks: [] as string[], cutInRoundOne: 0, left: 0, tally: { cut: 0, replied: 0, tomorrow: 0 }, dayTotal: 0,
     /** Round two, for the letter of the moment: picking a reply, recording one, or keeping or redoing what was recorded. */
     stage: 'pick' as 'pick' | 'recording' | 'choose', recording: false, heardFor: 0, heard: '',
     /** Which target it is being held at (-1: none), for how long, and on a monitor which one a key is holding it at. */
@@ -601,7 +612,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       const glow = new Mesh(auraGeometry, aura); glow.name = 'aura'; glow.frustumCulled = false; glow.renderOrder = 2; body.mesh.add(glow);
       if (theme.look.spell && theme.look.spell.sparkles > 0) { const motes = new Points(sparkleGeometry, sparkle); motes.name = 'spell'; motes.frustumCulled = false; motes.renderOrder = 3; body.mesh.add(motes); }
     }
-    current = { body, email, state: 'arriving', t: 0, from, via, home, near, past, face, start, grip: new Matrix4(), grabbedAt: new Vector3(), heldFor: 0, flick: -1, startScale: begin.scale, forced: false, seen: 1, holdSize: 1,
+    current = { body, email, state: 'arriving', t: 0, from, via, home, near, past, face, start, grip: new Matrix4(), grabbedAt: new Vector3(), heldFor: 0, flick: -1, startScale: begin.scale, forced: false, seen: 1, holdSize: 1, free: new Vector3(), docked: 0, dockedAt: -1,
       arriveSeconds: dock ? 0.34 : begin.seconds ?? tune.arriveSeconds, arriveEase: begin.ease ?? 3, sway: begin.sway ?? 0 };
     sounds.play('arrive', 0.92 + Math.random() * 0.16, 0.5, from);
     events.on?.('arrive', from);
@@ -614,6 +625,307 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function release(body: Body, mode: Body['mode'], life: number) {
     body.mode = mode; body.age = 0; body.life = life; loose.push(body);
   }
+
+  // ---------------------------------------------------------------- the end of a game
+
+  /**
+   * When the day's mail is done the level fades darker and its own logo comes in, big, with a burst in
+   * the level's colours, a rising chime, a glow behind it and a glint across it now and then; and it can
+   * be cut up (or in the lab, sprayed away) like any letter (asked for on 2026-11-11). It is a flat slab
+   * the logo's shape, painted with the logo and see-through where the picture is.
+   */
+  const LOGO_FILE: Record<string, string> = { kyoto: 'kyoto', office: 'office', office2: 'office', castle: 'castle', lab: 'lab' };
+  const LOGO_WIDTH = 1.05;
+  const logoSheets = new Map<string, Promise<Sheet>>();
+  function logoSheet(file: string) {
+    let made = logoSheets.get(file);
+    if (!made) {
+      made = new Promise<Sheet>((done, fail) => {
+        const image = new Image(); image.decoding = 'async';
+        image.onload = () => {
+          const canvas = document.createElement('canvas'); canvas.width = 2048; canvas.height = Math.round(2048 * image.naturalHeight / image.naturalWidth);
+          const g = canvas.getContext('2d')!; g.drawImage(image, 0, 0, canvas.width, canvas.height);
+          done(canvasSheet(canvas));
+        };
+        image.onerror = () => { logoSheets.delete(file); fail(new Error(`no logo for ${file}`)); };
+        image.src = `${import.meta.env.BASE_URL}logos/${file}.webp`;
+      });
+      logoSheets.set(file, made);
+    }
+    return made;
+  }
+  /** A sheet for a picture with see-through parts (the logo, the end's cards): only where it is drawn is there anything to cut. */
+  function canvasSheet(canvas: HTMLCanvasElement): Sheet {
+    const texture = new CanvasTexture(canvas); texture.colorSpace = SRGBColorSpace; texture.anisotropy = 4;
+    const material = paperMaterial(washi, texture, true); material.uniforms.cutout.value = 1;
+    const surface: Surface = { canvas, g: canvas.getContext('2d')!, width: canvas.width, height: canvas.height, scale: 1, ink: false, texture };
+    return { surface, material, users: 0, cuts: 0, cutAt: Infinity, burnAt: Infinity, burn: 0, reserved: false, splats: 0 };
+  }
+  /** A flat slab w by h (a face and a back), in a grid of quads so it cuts cleanly; uv across the whole of it. */
+  function slabSoup(w: number, h: number): Float32Array {
+    const out: number[] = [], columns = 16, rows = 4, f = 0.006, b = -0.006;
+    const put = (p: number[], n: number[]) => out.push(p[0], p[1], p[2], n[0], n[1], n[2], p[0] / w + 0.5, p[1] / h + 0.5);
+    const quad = (a: number[], c1: number[], c2: number[], d: number[], n: number[]) => { for (const p of [a, c1, c2, a, c2, d]) put(p, n); };
+    for (let i = 0; i < columns; i++) for (let j = 0; j < rows; j++) {
+      const x0 = -w / 2 + w * i / columns, x1 = -w / 2 + w * (i + 1) / columns, y0 = -h / 2 + h * j / rows, y1 = -h / 2 + h * (j + 1) / rows;
+      quad([x0, y0, f], [x1, y0, f], [x1, y1, f], [x0, y1, f], [0, 0, 1]);
+    }
+    const X0 = -w / 2, X1 = w / 2, Y0 = -h / 2, Y1 = h / 2;
+    // the back, the logo's shape too; no edges (they would smear the picture's border along them)
+    quad([X1, Y0, b], [X0, Y0, b], [X0, Y1, b], [X1, Y1, b], [0, 0, -1]);
+    return new Float32Array(out);
+  }
+  /** A soft light behind the logo in the level's two colours, breathing. */
+  const logoGlow = new ShaderMaterial({
+    transparent: true, depthWrite: false, blending: AdditiveBlending, side: DoubleSide,
+    uniforms: { a: { value: new Color() }, b: { value: new Color() }, strength: { value: 0 }, time: { value: 0 } },
+    vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
+    fragmentShader: /* glsl */ `
+      uniform vec3 a,b; uniform float strength,time; varying vec2 vUv;
+      void main(){
+        vec2 p=(vUv-.5)*2.; float d=length(p*vec2(1.,1.15));
+        // soft all the way to nothing well inside its plane
+        float g=(exp(-d*d*4.)*(.8+.2*sin(time*2.2))+exp(-d*d*12.)*.3)*(1.-smoothstep(.55,.95,d));
+        gl_FragColor=vec4(mix(a,b,vUv.x)*g*strength,1.);
+        #include <colorspace_fragment>
+      }`,
+  });
+  /**
+   * What is out to be cut at the end: the logo, the line under it (CLEARED 10 EMAILS) and the progress
+   * bar, full (the line and the bar handed over from roundui.ts, the same pictures in the same places).
+   * Each floats until it is cut (or melted), then it is gone.
+   */
+  interface Show { body: Body; sheet: Sheet; kind: 'logo' | 'line' | 'bar' | 'card' | 'start' | 'exit'; home: Vector3; face: Quaternion; gone: number; id?: string; delay?: number }
+  const shows: Show[] = [];
+  /** The cards' own sheets, made for one end and let go at the next (their pieces may still be burning). */
+  let oldSheets: Sheet[] = [], endSheets: Sheet[] = [];
+  const logo = { started: false, wanted: false, cutAt: -1, sparkle: 0, chime: -1, home: new Vector3(), outro: -1, homed: false };
+  /** Colour a sheet for the end, from the level's look. */
+  function dress(sheet: Sheet, w: number, h: number) {
+    const u = sheet.material.uniforms, look = theme.look, bar = theme.bar ?? [theme.accent ?? '#f6b3cc', theme.accent ?? '#f6b3cc'];
+    u.backColor.value.set(bar[0]).multiplyScalar(0.07); u.nightTint.value.set('#ffffff');      // (a dark back in the level's colour: linear, so a little is a lot) u.hoverColor.value.set(look.hover);
+    u.cutWide.value.set(look.cutWide); u.cutHot.value.set(look.cutHot); u.markColor.value.set(look.mark); u.flashColor.value.set(look.flash);
+    u.goldColor.value.set(look.gold); u.burnColor.value.set(look.burn); u.selfLit.value = 1; u.burnStyle.value = look.burnStyle;
+    u.burn.value = 0; u.wet.value = 0; u.flash.value = 0; u.gold.value = 0; u.mark.value = 0; u.shine.value = -1; (u.heat.value as Vector3).set(0, 0, 0);
+    u.span.value.set(w, h);
+    sheet.burn = 0; sheet.cutAt = Infinity; sheet.burnAt = Infinity; sheet.cuts = 0;
+  }
+  /** Put something out to be cut, w by h metres, at `at` turned `turn`. */
+  function putOut(sheet: Sheet, w: number, h: number, kind: Show['kind'], at: Vector3, turn: Quaternion) {
+    dress(sheet, w, h);
+    const body = add(sheet, measure(slabSoup(w, h)), false);
+    body.mode = 'show'; body.age = 0; body.life = Infinity; loose.push(body);
+    body.mesh.position.copy(at); body.mesh.quaternion.copy(turn); body.mesh.scale.setScalar(kind === 'logo' ? 0.001 : 1);
+    const show: Show = { body, sheet, kind, home: at.clone(), face: turn.clone(), gone: -1 };
+    shows.push(show);
+    return show;
+  }
+  /** The end comes in: the line and the bar change to things that can be cut, and the logo arrives. */
+  async function showLogo() {
+    logo.wanted = true;
+    // the line and the bar: the same pictures, in the same places, from now on cuttable
+    for (const sheet of oldSheets) { sheet.material.dispose(); sheet.surface.texture?.dispose(); }
+    oldSheets = endSheets; endSheets = [];
+    for (const which of ['line', 'bar'] as const) {
+      const card = ui.handOver(which);
+      if (!card) continue;
+      const sheet = canvasSheet(card.canvas); endSheets.push(sheet);
+      putOut(sheet, card.width, card.height, which, card.at, card.turn);
+    }
+    let sheet: Sheet;
+    try { sheet = await logoSheet(LOGO_FILE[theme.id] ?? 'kyoto'); } catch { return; }
+    if (!logo.wanted || game.phase !== 'summary' || shows.some(x => x.kind === 'logo')) return;
+    const h = LOGO_WIDTH * sheet.surface.height / sheet.surface.width, bar = theme.bar ?? [theme.accent ?? '#f6b3cc', theme.accent ?? '#f6b3cc'];
+    logo.home.set(seat.x * 0.7, seat.y + 0.17, seat.z - 1.55);
+    look3.position.copy(logo.home); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z);
+    const show = putOut(sheet, LOGO_WIDTH, h, 'logo', logo.home, look3.quaternion);
+    sheet.material.uniforms.flash.value = 1;
+    logoGlow.uniforms.a.value.set(bar[0]); logoGlow.uniforms.b.value.set(bar[1]);
+    const glow = new Mesh(new PlaneGeometry(LOGO_WIDTH * 1.7, h * 4), logoGlow); glow.position.z = -0.04; glow.renderOrder = 1; glow.frustumCulled = false; show.body.mesh.add(glow);
+    logo.cutAt = -1; logo.sparkle = 0; logo.chime = 0;
+    // in it comes: a burst of the level's colours right across it, and a stinger in Kyoto
+    celebrate(show.body, 1.4);      // (Kyoto's stinger played here until its end anthem came: that is the celebration now, src/audio.ts)
+  }
+  /** Bursts of the level's petals, sparks and bits, across the logo and up out of it. */
+  function celebrate(body: Body, strength: number) {
+    body.mesh.updateMatrixWorld(true);
+    for (let k = 0; k < 3; k++) {
+      const a = v3.set(-LOGO_WIDTH / 2 + k * LOGO_WIDTH / 3, rand(0.05), 0.02); body.mesh.localToWorld(a);
+      const b = v4.set(-LOGO_WIDTH / 2 + (k + 1) * LOGO_WIDTH / 3, rand(0.05), 0.02); body.mesh.localToWorld(b);
+      fx.spray(a, b, v1.set(rand(0.4), 1.1 + Math.random() * 0.6, 0.5), Math.round(8 * strength), Math.round(30 * strength), Math.random() < 0.5, 1.4);
+    }
+  }
+  /** Every frame, each thing out to be cut: the logo pops in, bobs and turns a little, glows, glints and sparkles; the line and the bar just hang, breathing. */
+  function floatShow(show: Show, dt: number) {
+    const body = show.body, t = body.age, u = body.sheet.material.uniforms;
+    u.time.value = clock;
+    if (show.kind !== 'logo') {
+      body.mesh.position.copy(show.home); body.mesh.position.y += Math.sin(t * 1.1 + (show.kind === 'bar' ? 1 : (show.delay ?? 0) * 9)) * 0.006;
+      // the menu's cards pop in one after another
+      if (show.delay !== undefined) { const p = clamp01((t - show.delay) / 0.45), e = 1 + 2.2 * Math.pow(p - 1, 3) + 1.2 * Math.pow(p - 1, 2); body.mesh.scale.setScalar(Math.max(0.001, p <= 0 ? 0.001 : e)); }
+      return;
+    }
+    const pop = Math.min(1, t / 0.8), back = 1 + 2.4 * Math.pow(pop - 1, 3) + 1.4 * Math.pow(pop - 1, 2);     // overshoots, settles
+    body.mesh.scale.setScalar(Math.max(0.001, back));
+    body.mesh.position.copy(show.home); body.mesh.position.y += Math.sin(t * 1.3) * 0.025;
+    body.mesh.quaternion.copy(show.face).multiply(q1.setFromAxisAngle(v1.set(0, 1, 0), Math.sin(t * 0.7) * 0.06)).multiply(new Quaternion().setFromAxisAngle(v2.set(0, 0, 1), Math.sin(t * 0.9) * 0.025));
+    u.flash.value *= Math.exp(-dt * 3);
+    // a glint every few seconds
+    const cycle = (t + 1.2) % 3.2; u.shine.value = cycle < 1 ? -0.3 + cycle * 1.9 : -1;
+    logoGlow.uniforms.strength.value = Math.min(1, t / 0.6) * 0.45; logoGlow.uniforms.time.value = clock;
+    // the chime: up the scale, one note at a time
+    if (logo.chime >= 0) {
+      const before = logo.chime; logo.chime += dt;
+      [0, 0.1, 0.2, 0.3, 0.45].forEach((at, i) => { if (before < at && logo.chime >= at) sounds.play('blip', [1, 1.26, 1.5, 2, 2.52][i], 0.5, show.home); });
+      if (logo.chime > 0.5) logo.chime = -1;
+    }
+    // more bursts for a few seconds, then a twinkle now and then
+    if ((logo.sparkle -= dt) <= 0) {
+      logo.sparkle = t < 3 ? 0.45 : 1.1;
+      body.mesh.updateMatrixWorld(true);
+      const at = v3.set(rand(LOGO_WIDTH / 2), rand(0.08), 0.02); body.mesh.localToWorld(at);
+      fx.spray(at, at, v1.set(0, t < 3 ? 0.9 : 0.4, 0.3), t < 3 ? 5 : 1, t < 3 ? 18 : 8, false, 0.9);
+    }
+  }
+  // ---------------------------------------------------------------- the menu, in VR
+
+  /**
+   * Choosing a level without leaving the headset (asked for on 2026-11-11: "cut to select"): the levels as
+   * cards in an arc at arm's reach, CLEAN YOUR INBOX under them, EXIT VR off to the right, and the chosen
+   * level's logo floating above with a line saying what to do. Every card is cut like a letter: a level's
+   * shatters and the view goes to black while main.ts changes level (then the menu comes again); START's
+   * begins a game; EXIT's leaves VR. It is where a game ends, in VR.
+   */
+  interface MenuLevel { id: string; name: string; accent: string; picture: string }
+  const menu = { levels: [] as MenuLevel[], chosen: '', age: 0, pending: null as { kind: 'pick' | 'start' | 'exit'; id?: string; at: number } | null, planes: [] as Mesh[], sheets: [] as Sheet[] };
+  const pictures = new Map<string, Promise<HTMLImageElement | null>>();
+  function picture(url: string) {
+    let got = pictures.get(url);
+    if (!got) {
+      got = new Promise(done => { const image = new Image(); image.decoding = 'async'; image.onload = () => done(image); image.onerror = () => done(null); image.src = `${import.meta.env.BASE_URL}${url}`; });
+      pictures.set(url, got);
+    }
+    return got;
+  }
+  /** Pixel words on a canvas, centred on (x, y): a dark drop under them. */
+  function pixelWords(g: CanvasRenderingContext2D, text: string, x: number, y: number, cell: number, colour: string, drop = true) {
+    const upper = text.toUpperCase(), left = Math.round(x - PixelFont.width(upper, cell) / 2), top = Math.round(y - PixelFont.Rows * cell / 2);
+    if (drop) { g.fillStyle = 'rgba(0,0,0,.75)'; PixelFont.cells(upper, left + Math.round(cell * 0.5), top + Math.round(cell * 0.5), cell, (cx, cy, cw, ch) => g.fillRect(cx, cy, cw, ch)); }
+    g.fillStyle = colour; PixelFont.cells(upper, left, top, cell, (cx, cy, cw, ch) => g.fillRect(cx, cy, cw, ch));
+  }
+  /** A box with its corners stepped off twice by s, filled. */
+  function steppedBox(g: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, s: number, fill: string | CanvasGradient) {
+    g.fillStyle = fill;
+    g.fillRect(x + 2 * s, y, w - 4 * s, h); g.fillRect(x + s, y + s, w - 2 * s, h - 2 * s); g.fillRect(x, y + 2 * s, w, h - 4 * s);
+  }
+  function levelCard(level: MenuLevel, image: HTMLImageElement | null, chosen: boolean) {
+    const canvas = document.createElement('canvas'); canvas.width = 640; canvas.height = 400;
+    const g = canvas.getContext('2d')!, w = 640, h = 400, edge = chosen ? 18 : 9, s = 12;
+    steppedBox(g, 0, 0, w, h, s, chosen ? level.accent : 'rgba(255,255,255,.7)');
+    g.save(); g.beginPath(); g.rect(edge, edge, w - 2 * edge, h - 2 * edge); g.clip();
+    if (image) { const scale = Math.max((w - 2 * edge) / image.width, (h - 2 * edge) / image.height), iw = image.width * scale, ih = image.height * scale; g.drawImage(image, (w - iw) / 2, (h - ih) / 2, iw, ih); }
+    else { g.fillStyle = '#17141f'; g.fillRect(0, 0, w, h); }
+    const shade = g.createLinearGradient(0, h * 0.45, 0, h); shade.addColorStop(0, 'rgba(6,5,12,0)'); shade.addColorStop(1, 'rgba(6,5,12,.88)');
+    g.fillStyle = shade; g.fillRect(0, 0, w, h);
+    g.restore();
+    const name = level.name.toUpperCase(), cell = Math.max(4, Math.min(8, Math.floor((w - 80) / PixelFont.widthCells(name))));
+    pixelWords(g, name, w / 2, h - 52, cell, '#ffffff');
+    if (chosen) { steppedBox(g, w - 92, 26, 62, 56, 6, level.accent); pixelWords(g, 'OK', w - 61, 54, 5, '#14121a', false); }
+    return canvas;
+  }
+  function wordCard(text: string, under: string, w: number, h: number, fill: string, ink: string) {
+    const canvas = document.createElement('canvas'); canvas.width = w; canvas.height = h;
+    const g = canvas.getContext('2d')!, s = Math.round(h / 16);
+    steppedBox(g, 0, 0, w, h, s, '#0b0912'); steppedBox(g, s, s, w - 2 * s, h - 2 * s, s, fill);
+    g.fillStyle = 'rgba(255,255,255,.28)'; g.fillRect(3 * s, s, w - 6 * s, Math.round(s * 0.8));
+    const cell = Math.max(3, Math.min(Math.floor(h / 13), Math.floor((w - 8 * s) / PixelFont.widthCells(text.toUpperCase()))));
+    pixelWords(g, text, w / 2, under ? h * 0.44 : h / 2, cell, ink, false);
+    if (under) pixelWords(g, under, w / 2, h * 0.76, Math.max(2, Math.round(cell * 0.4)), ink, false);
+    return canvas;
+  }
+  /** A flat picture that is only to be looked at (the logo, the hint), facing the seat. */
+  function plane(canvasOrImage: HTMLCanvasElement | HTMLImageElement, width: number, at: Vector3) {
+    let canvas = canvasOrImage as HTMLCanvasElement;
+    if (!(canvasOrImage instanceof HTMLCanvasElement)) { canvas = document.createElement('canvas'); canvas.width = canvasOrImage.naturalWidth; canvas.height = canvasOrImage.naturalHeight; canvas.getContext('2d')!.drawImage(canvasOrImage, 0, 0); }
+    const texture = new CanvasTexture(canvas);
+    texture.colorSpace = SRGBColorSpace; texture.needsUpdate = true;
+    const h = width * (canvas.height / canvas.width);
+    const mesh = new Mesh(new PlaneGeometry(width, h), new MeshBasicMaterial({ map: texture, transparent: true, depthWrite: false, toneMapped: false }));
+    mesh.position.copy(at); look3.position.copy(at); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z); mesh.quaternion.copy(look3.quaternion);
+    mesh.renderOrder = 6; mesh.frustumCulled = false; root.add(mesh); menu.planes.push(mesh);
+    return mesh;
+  }
+  /** Where something sits in the arc: `angle` degrees round from straight ahead, `r` metres out, `drop` under the eyes. */
+  function arc(angle: number, r: number, drop: number) {
+    const a = angle * Math.PI / 180;
+    return new Vector3(seat.x + Math.sin(a) * r, seat.y - drop, seat.z - Math.cos(a) * r);
+  }
+  function facing(at: Vector3) { look3.position.copy(at); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z); return look3.quaternion.clone(); }
+  /** Put the menu out, with `chosen` as the level picked. */
+  async function showMenu(levels: MenuLevel[], chosen: string) {
+    clear();
+    game.phase = 'menu'; menu.levels = levels; menu.chosen = chosen; menu.age = 0; menu.pending = null;
+    const ticket = ++menuTicket;
+    const images = await Promise.all(levels.map(l => picture(l.picture)));
+    const logoImage = await picture(`logos/${LOGO_FILE[chosen] ?? 'kyoto'}.webp`);
+    if (ticket !== menuTicket || game.phase !== 'menu') return;
+    const level = levels.find(l => l.id === chosen) ?? levels[0];
+    const step = 21, first = -step * (levels.length - 1) / 2, cardW = 0.34, cardH = cardW * 400 / 640;
+    levels.forEach((l, i) => {
+      const at = arc(first + i * step, 1.2, 0.12), sheet = canvasSheet(levelCard(l, images[i], l.id === chosen)); menu.sheets.push(sheet);
+      const show = putOut(sheet, cardW, cardH, 'card', at, facing(at)); show.id = l.id; show.delay = 0.15 + i * 0.07; show.body.mesh.scale.setScalar(0.001);
+    });
+    { const at = arc(0, 1.0, 0.42), sheet = canvasSheet(wordCard('Clean your inbox', 'cut to start', 900, 220, level.accent, '#14121a')); menu.sheets.push(sheet);
+      const show = putOut(sheet, 0.5, 0.5 * 220 / 900, 'start', at, facing(at)); show.delay = 0.55; show.body.mesh.scale.setScalar(0.001); }
+    { const at = arc(50, 1.0, 0.44), sheet = canvasSheet(wordCard('Exit VR', '', 420, 150, '#2a2638', '#ffffff')); menu.sheets.push(sheet);
+      const show = putOut(sheet, 0.2, 0.2 * 150 / 420, 'exit', at, facing(at)); show.delay = 0.7; show.body.mesh.scale.setScalar(0.001); }
+    if (logoImage) plane(logoImage, 0.9, arc(0, 1.7, -0.27));
+    { const canvas = document.createElement('canvas'); canvas.width = 1400; canvas.height = 70; pixelWords(canvas.getContext('2d')!, 'Cut a level to choose  ·  cut start to play', 700, 35, 5, '#ffffff');
+      plane(canvas, 0.95, arc(0, 1.65, -0.07)); }
+  }
+  let menuTicket = 0;
+  /** The menu goes (a game begins, or VR is left). */
+  function leaveMenu() {
+    menuTicket++;
+    for (const mesh of menu.planes) { root.remove(mesh); mesh.geometry.dispose(); const m = mesh.material as MeshBasicMaterial; m.map?.dispose(); m.dispose(); }
+    menu.planes = []; menu.pending = null;
+    for (const show of shows) if (loose.includes(show.body) && show.body.mode === 'show') remove(show.body);
+    shows.length = 0;
+    if (game.phase === 'menu') game.phase = 'ready';
+  }
+  /** Every frame in the menu: a card cut is a choice, acted on once its burst has had a moment (a new level: once it is black). */
+  function updateMenu(dt: number, head: Vector3) {
+    menu.age += dt;
+    for (const show of shows) {
+      if (show.gone >= 0 || (show.body.mode === 'show' && loose.includes(show.body))) continue;
+      show.gone = menu.age;
+      if (show.sheet.burnAt === Infinity && show.sheet.cutAt < Infinity) show.sheet.burnAt = clock + 1.5;
+      const at = show.body.mesh.position;
+      fx.spray(at, at, v1.set(0, 1, 0.4), 10, 40, true, 1.4); sounds.play('blip', 1.8, 0.6, at); buzz('right', 0.8, 70);
+      if (!menu.pending) menu.pending = { kind: show.kind === 'card' ? 'pick' : show.kind === 'start' ? 'start' : 'exit', id: show.id, at: menu.age };
+    }
+    const p = menu.pending;
+    if (p && menu.age - p.at > (p.kind === 'pick' ? 0.45 : 0.55) && !('sent' in p)) {
+      (p as typeof p & { sent: boolean }).sent = true;
+      if (p.kind === 'start') leaveMenu();
+      events.on?.(p.kind, head, p.id);
+    }
+  }
+  /** How black the view is for the menu: in from black as it opens, and to black for a change of level. */
+  function menuBlack() {
+    if (game.phase !== 'menu') return 0;
+    const fadeIn = 1 - clamp01(menu.age / 0.8);
+    const p = menu.pending, fadeOut = p && p.kind === 'pick' ? clamp01((menu.age - p.at) / 0.4) : 0;
+    return Math.max(fadeIn, fadeOut);
+  }
+
+  /** The level, dimmed for the end: a dark shell round the player, nearer than the painting and further than the logo. */
+  const dimmer = new Mesh(new SphereGeometry(2.7, 32, 16), new MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, side: BackSide, depthWrite: false }));
+  dimmer.name = 'End of game: the level dimmed'; dimmer.renderOrder = -1; dimmer.frustumCulled = false; dimmer.visible = false; root.add(dimmer);
+  const look3 = new Object3D();
+  /** And at the very end, black: a small shell round the head over everything, hands and all, before the home screen. */
+  const blackout = new Mesh(new SphereGeometry(0.4, 24, 12), new MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0, side: BackSide, depthWrite: false, depthTest: false }));
+  blackout.name = 'End of game: fade to black'; blackout.renderOrder = 1000; blackout.frustumCulled = false; blackout.visible = false; root.add(blackout);
 
   /**
    * Cut a body along the line through (x, y) in its own space, heading (dx, dy). `push` is how the
@@ -946,6 +1258,14 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   /** On a monitor: cut the letter in front of you as a swing would. */
   function keyCut() {
     const letter = current;
+    // at the end of a game: the logo, cut (or in the lab, sprayed) across somewhere near its middle
+    const next = !letter && ['logo', 'line', 'bar', 'start'].map(kind => shows.find(x => x.kind === kind && x.gone < 0 && x.body.mode === 'show' && loose.includes(x.body) && x.body.age > 0.3)).find(Boolean);
+    if (next) {
+      if (theme.mechanic === 'spray') { soak(next.body, rand(0.2), rand(0.02)); return; }
+      const angle = rand(0.5);
+      slice(next.body, rand(next.kind === 'logo' ? 0.25 : 0.15), rand(0.02), Math.cos(angle), Math.sin(angle), v1.set(Math.cos(angle) * 6, Math.sin(angle) * 6, -1), 0.9);
+      return;
+    }
     if (!letter) return;
     if (theme.mechanic === 'spray') { if (letter.state !== 'arriving' || letter.t > 0.5) letter.forced = true; return; }
     if (docked(letter.body)) { if (letter.state !== 'waiting') return; letter.body.mesh.scale.setScalar(letter.body.size); }
@@ -974,9 +1294,53 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   };
   window.addEventListener('keydown', onKey);
 
+  /** The left hand takes hold of it (or takes it back, falling away). */
+  function take(letter: Current, head: Vector3) {
+    const body = letter.body, mesh = body.mesh;
+    hand.used = true;
+    letter.state = 'held'; letter.heldFor = 0; letter.flick = -1; letter.grabbedAt.copy(hand.pos);
+    letter.seen = body.size / Math.max(0.3, head.distanceTo(mesh.position)); letter.holdSize = body.size;
+    letter.grip.copy(hand.matrix).invert().multiply(m1.compose(mesh.position, mesh.quaternion, v1.set(1, 1, 1)));      // (where it is and how it is turned, not its size)
+    letter.free.copy(mesh.position); letter.docked = 0; letter.dockedAt = -1;
+    sounds.play('blip', 1.25, 0.45, hand.pos); buzz('left', 0.4, 25);
+  }
+  /**
+   * Round two: a letter thrown away (or let go of away from the targets) is not left for tomorrow
+   * until it has gone: while it is still falling away, uncut, the hand can take it back.
+   */
+  let away: Current | null = null;
+  function goneAway() {
+    const letter = away;
+    if (!letter) return;
+    away = null;
+    settle(letter.body, 'tomorrow');
+    game.stage = 'pick'; game.recording = false; game.aim = -1; game.keyAim = -1; ui.replies(null, null);
+    nextIn = tune.nextAfterKeep;
+  }
+  /** Every frame in round two: has the one falling away gone (or been cut), or has the hand taken it back? */
+  function watchAway(dt: number, head: Vector3) {
+    const letter = away;
+    if (!letter) return;
+    const body = letter.body, u = body.sheet.material.uniforms;
+    if (body.mode !== 'kept' || !loose.includes(body) || game.phase !== 'play') { goneAway(); return; }
+    let can = false;
+    if (hand.valid && body.going < 0.5) { body.mesh.updateMatrixWorld(true); can = lineTo(body) <= tune.reachRadius || reachTo(body, hand.pos) <= 0; }
+    u.hover.value += ((can ? 1 : 0) - u.hover.value) * Math.min(1, dt * 10);
+    if (can && hand.pressed && !hand.used && hand.pressAge < 0.6) {
+      // taken back: out of the air and in the hand again, as it was
+      loose.splice(loose.indexOf(body), 1);
+      body.mode = 'held'; body.going = -1; u.gold.value = 0; u.flash.value = 0; u.mark.value = 0;
+      body.mesh.scale.setScalar(body.size);
+      away = null; current = letter;
+      take(letter, head);
+      ui.say('BACK!', MARKS.reply, body.mesh.position, 0.5);
+    }
+  }
+
   /** The letter leaves the hand (or the key was pressed): it is kept. */
   function letGo(letter: Current) {
     const body = letter.body, speed = body.vel.length();
+    if (letter.state === 'held') body.size = body.mesh.scale.x;          // (as it looks now: smaller, if it was at a target)
     if (letter.email && game.phase === 'play' && game.round === 2) {
       // Round two: a reply is sent by holding the letter at it, not by throwing. Let go of gently at a
       // target, or while dictating, it floats back to wait (and what was said is kept); thrown, or let go
@@ -998,11 +1362,20 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     // (Kyoto: a little koto-and-taiko flourish instead, one of three, never the same twice running)
     // A video-game swoosh as it goes, in every level, one of three and never the same twice running
     // (asked for on 2026-11-11, in place of Kyoto's coin chimes and the old chime elsewhere)
-    { let take = lastKeep; while (take === lastKeep) take = 1 + Math.floor(Math.random() * 3); lastKeep = take; sounds.play(`swoosh${take}`, 0.95 + Math.random() * 0.1, 0.75, body.mesh.position); }
+    // the user's own throw sound (2026-11-11), a touch higher or lower each time so it never quite repeats
+    sounds.play('throw', 0.95 + Math.random() * 0.1, 0.5, body.mesh.position);      // (quieter than the other effects: asked for on 2026-11-11)
     sounds.swing(clamp01(speed / 6), body.mesh.position);
     buzz('left', 0.55, 40);
-    settle(body, game.round === 2 ? 'tomorrow' : 'kept');
-    counts.thrown++; current = null; nextIn = tune.nextAfterKeep;
+    // a word floats up from where it was thrown: SAVED, or in round two LATER (asked for on 2026-11-11)
+    const playing = !!letter.email && game.phase === 'play';
+    if (playing && game.round === 2) {
+      ui.say('LATER', LATER, body.mesh.position, 0.55);
+      away = letter; nextIn = Infinity;              // (settled once it has gone: until then it can be taken back)
+    } else {
+      if (playing) ui.say('SAVED', MARKS.kept, body.mesh.position, 0.55);
+      settle(body, 'kept'); nextIn = tune.nextAfterKeep;
+    }
+    counts.thrown++; current = null;
     events.on?.('thrown', body.mesh.position);
   }
 
@@ -1012,6 +1385,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (!active) return;
     clock += dt;
     readHand(dt, frame, head);
+    if (away) watchAway(dt, head);
     for (const sheet of sheets) { sheet.material.uniforms.night.value = night; sheet.material.uniforms.time.value = clock; }
     aura.uniforms.time.value = clock; aura.uniforms.level.value = 1;
     sparkle.uniforms.time.value = clock; sparkle.uniforms.pixelRatio.value = world.renderer.getPixelRatio();
@@ -1095,12 +1469,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
         hand.onLetter = can;
         // (the grip has to close for this letter: one still closed from the last throw does not take the next)
         if (can && hand.pressed && !hand.used && hand.pressAge < 0.6) {
-          // taken
-          hand.used = true;
-          letter.state = 'held'; letter.heldFor = 0; letter.grabbedAt.copy(hand.pos);
-          letter.seen = body.size / Math.max(0.3, head.distanceTo(mesh.position)); letter.holdSize = body.size;
-          letter.grip.copy(hand.matrix).invert().multiply(m1.compose(mesh.position, mesh.quaternion, v1.set(1, 1, 1)));      // (where it is and how it is turned, not its size)
-          sounds.play('blip', 1.25, 0.45, hand.pos); buzz('left', 0.4, 25);
+          take(letter, head);
         }
       }
       if (current === letter && letter.state === 'held') {
@@ -1118,12 +1487,23 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           } else if (out > tune.holdDistance) letter.grip.setPosition(v2.multiplyScalar(Math.max(tune.holdDistance / out, Math.exp(-dt * 9))));
           m1.copy(hand.matrix).multiply(letter.grip);
           v1.setFromMatrixPosition(m1); q1.setFromRotationMatrix(m1);
+          letter.free.copy(v1);
+          if (game.round === 2 && game.phase === 'play') {
+            // Near a reply (or KEEP, REDO, the mic) it gets a little smaller so the reply still shows; it is
+            // not pulled anywhere: it stays where the hand has it (asked for on 2026-11-11, after a version
+            // that drew it into the target's plane).
+            const at = targetNear(v1, letter.dockedAt, true);
+            if (at >= 0) letter.dockedAt = at;
+            letter.docked += ((at >= 0 ? 1 : 0) - letter.docked) * (1 - Math.exp(-dt * 10));
+            if (letter.docked < 0.01 && at < 0) letter.dockedAt = -1;
+          }
           const ease = 1 - Math.exp(-dt * 28);
           mesh.position.lerp(v1, ease); mesh.quaternion.slerp(q1, ease);
           // It keeps the size it had to the eye where it was taken, and just a bit more: so nearer the
           // head it is made smaller by as much as it has come closer. Settled once it has come in.
           if (letter.heldFor < 0.45) letter.holdSize = Math.max(0.25, Math.min(1, letter.seen * tune.holdGrow * head.distanceTo(mesh.position)));
-          body.size += (letter.holdSize - body.size) * (1 - Math.exp(-dt * 12)); mesh.scale.setScalar(body.size);
+          body.size += (letter.holdSize - body.size) * (1 - Math.exp(-dt * 12));
+          mesh.scale.setScalar(body.size * (1 - tune.dockShrink * letter.docked));      // (smaller at a target, so the reply still shows)
           body.sheet.material.uniforms.hover.value = 1;
           body.vel.copy(hand.best).multiplyScalar(tune.throwBoost);
           // Swept fast enough, it leaves the hand by itself: once the sweep has passed its fastest, so none of the throw is lost.
@@ -1182,7 +1562,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (armed && tool) {
         const now = current;
         if (now && (now.state !== 'arriving' || now.t > 0.6)) reached = mist(now.body, tool);
-        for (let i = loose.length - 1; i >= 0; i--) if (loose[i].mode === 'kept') reached = mist(loose[i], tool) || reached;
+        for (let i = loose.length - 1; i >= 0; i--) if (loose[i].mode === 'kept' || loose[i].mode === 'show') reached = mist(loose[i], tool) || reached;
       }
       const forced = current;
       if (forced?.forced) { soak(forced.body, rand(0.12), rand(0.07)); reached = true; }
@@ -1226,6 +1606,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       const body = loose[i];
       body.age += flightDt;
       if (body.spreading) spread(body, flightDt);
+      if (body.mode === 'show') { const show = shows.find(x => x.body === body); if (show) floatShow(show, flightDt); continue; }
       if (body.mode === 'sent') {
         // On its way to a reply or the mic: in an arc, shrinking, and there it is taken.
         const t = Math.min(1, body.age / body.life), e = t * t * (3 - 2 * t), to = ui.targets[body.target];
@@ -1267,7 +1648,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
         if (body.age > body.life) remove(body);
       }
     }
-    for (const sheet of sheets) {
+    for (const sheet of shows.length || endSheets.length || oldSheets.length ? [...sheets, ...new Set([...shows.map(x => x.sheet), ...endSheets, ...oldSheets])] : sheets) {
       const u = sheet.material.uniforms;
       (u.heat.value as Vector3).multiplyScalar(Math.exp(-flightDt * 2.6));
       // (and if no next letter ever comes into focus, it still goes in the end)
@@ -1316,7 +1697,29 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (t >= ready + 0.5) { game.phase = 'play'; ui.hideIntro(); nextIn = 0; }
     } else if (game.phase === 'summary') {
       game.timer += dt;
-      if (game.timer > 7) { game.phase = 'ready'; game.round = 1; game.timer = 0; ui.clear(); }       // and another day begins
+      // the end comes in once the line under the title has settled
+      if (!logo.started && game.timer > 0.9) { logo.started = true; void showLogo(); }
+      // one of them is cut (or melted): a burst (the logo's the biggest), and its pieces burn away a few seconds later
+      for (const show of shows) {
+        if (show.gone >= 0 || (show.body.mode === 'show' && loose.includes(show.body))) continue;      // (cut: gone from the air; sprayed: melting)
+        show.gone = game.timer;
+        if (show.sheet.burnAt === Infinity && show.sheet.cutAt < Infinity) show.sheet.burnAt = clock + 3;
+        const at = show.body.mesh.position, big = show.kind === 'logo';
+        fx.spray(at, at, v1.set(0, 1.2, 0.4), big ? 16 : 8, big ? 60 : 30, true, big ? 2 : 1.2);
+        sounds.play('blip', big ? 2 : 1.7, 0.6, at); if (big) sounds.play('blip', 2.52, 0.5, at);
+        if (big) { logo.cutAt = game.timer; logoGlow.uniforms.strength.value = 0; }
+        buzz('right', big ? 0.9 : 0.6, big ? 90 : 50); buzz('left', 0.5, 60);
+      }
+      // The game is over a moment after all of it is cut (or ten seconds after the logo, if the rest is left;
+      // or half a minute if nothing is touched; soon if the end never came). Then the level dims further,
+      // fades to black, and it is back to the home screen (asked for on 2026-11-11; a new day began here before).
+      const left = shows.filter(x => x.gone < 0).length, last = Math.max(-1, ...shows.map(x => x.gone));
+      const over = shows.length && !left ? game.timer - last > 1.2 : logo.cutAt >= 0 ? game.timer - logo.cutAt > 10 : shows.length ? game.timer > 30 : game.timer > 9;
+      if (over && logo.outro < 0) logo.outro = 0;
+      if (logo.outro >= 0) {
+        logo.outro += dt;
+        if (logo.outro > 3.1 && !logo.homed) { logo.homed = true; endLogo(); events.on?.('home', head); }
+      }
     } else if (game.phase === 'play' && !current && game.dealt >= game.total && game.marks.length >= game.total) {
       // the round is done once its last letter has been dealt with
       // (a level that shows its letters on something gives that thing its moment first: the monitor switching off;
@@ -1325,6 +1728,16 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if ((game.timer += dt) > (theme.dock?.pause ?? 1.1)) { if (game.round === 1) beginIntro(2); else beginSummary(); }
     }
     if (game.phase === 'play' && game.round === 2) answer(dt);
+    {
+      if (game.phase === 'menu') updateMenu(dt, head);
+      const m = dimmer.material as MeshBasicMaterial, want = game.phase === 'summary' ? (logo.outro >= 0 ? 0.9 : 0.62) : game.phase === 'menu' ? 0.55 : 0;
+      m.opacity += (want - m.opacity) * (1 - Math.exp(-dt * (want > m.opacity ? 1.4 : 2.5)));
+      dimmer.visible = m.opacity > 0.005; dimmer.position.copy(head);
+      // black: from a second into the outro, over a second and a half, and it holds
+      const b = blackout.material as MeshBasicMaterial;
+      b.opacity = game.phase === 'summary' && logo.outro >= 0 ? clamp01((logo.outro - 1) / 1.5) : menuBlack();
+      blackout.visible = b.opacity > 0.005; blackout.position.copy(head);
+    }
     ui.update(dt);
     if (!current && (more() || (prepared && game.phase === 'play'))) {
       nextIn -= dt;
@@ -1338,7 +1751,11 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function settle(body: Body, what: string) {
     if (!body.email || game.phase !== 'play') return;
     // (round two: cut, thrown, or left, it is all tomorrow, and the word comes up under the bar)
-    if (game.round === 2 && what !== 'reply' && what !== 'mic') { what = 'tomorrow'; if (game.marks[body.mark] !== 'tomorrow') ui.later(); }
+    if (game.round === 2 && what !== 'reply' && what !== 'mic') {
+      // (cut in round two: LATER floats up from it too; one thrown away already said so)
+      if (what === 'cut' && body.mark < 0 && !(away && away.body === body)) ui.say('LATER', LATER, body.mesh.position, 0.55);
+      what = 'tomorrow';
+    }
     if (what === 'tomorrow' && current && current.body === body) { game.stage = 'pick'; game.recording = false; game.aim = -1; game.keyAim = -1; ui.replies(null, null); }
     if (body.mark < 0) { body.mark = game.marks.length; game.marks.push(what); } else game.marks[body.mark] = what;
     if (game.round === 1) {
@@ -1353,7 +1770,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function beginIntro(round: number) {
     if (round === 2) game.cutInRoundOne = game.marks.filter(m => m === 'cut').length;
     if (round === 1) {
-      game.deck = shuffled().slice(0, tune.roundEmails); game.kept = [];
+      game.deck = shuffled().slice(0, tune.roundEmails); game.kept = []; game.dayTotal = game.deck.length;
     } else {
       // The ones that were kept come back to be answered. For now there are always a few, kept or not.
       const work = [...game.kept];
@@ -1373,12 +1790,28 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     game.tally.replied = count('reply') + count('mic'); game.tally.tomorrow = count('tomorrow'); game.tally.cut = game.cutInRoundOne + count('cut');
     game.phase = 'summary'; game.timer = 0;
     ui.replies(null, null);
-    ui.intro('Inbox zero!', `${game.tally.cut} Cut  ${game.tally.replied} Sent  ${game.tally.tomorrow} Later`);
+    // under where the logo comes in, how many were cleared today; the bar full, with nothing either side of it
+    // (the logo itself says Inbox Zero; the tally of cut, sent and later was here before, 2026-11-11)
+    ui.intro('', `Cleared ${game.dayTotal} Email${game.dayTotal === 1 ? '' : 's'}`);
+    ui.complete(game.total);
+    logo.started = false;
+  }
+  /** The end of a game is over: the logo goes if it is still there. */
+  function endLogo() {
+    logo.wanted = false; logo.started = false;
+    for (const show of shows) if (loose.includes(show.body) && show.body.mode === 'show') remove(show.body);
+    shows.length = 0;
+    logo.cutAt = -1; logo.chime = -1;
   }
   /** Round two: which target a letter is at (carried there), or -1. */
-  function nearTarget(at: Vector3) {
-    if (game.stage === 'recording') return -1;
-    for (let i = 0; i < (game.stage === 'choose' ? 2 : 3); i++) if (at.distanceTo(ui.targets[i]) < ui.radius[i] + 0.08) return i;
+  function nearTarget(at: Vector3) { return targetNear(at, -1, false); }
+  /**
+   * Round two: which target is near (-1: none), of those showing. The one it is already at holds it
+   * from a little further. `recording`: the mic counts while it records (for the letter resting on it).
+   */
+  function targetNear(at: Vector3, already: number, recording: boolean) {
+    if (game.stage === 'recording') return recording && at.distanceTo(ui.targets[2]) < ui.radius[2] + (already === 2 ? 0.16 : 0.08) ? 2 : -1;
+    for (let i = 0; i < (game.stage === 'choose' ? 2 : 3); i++) if (at.distanceTo(ui.targets[i]) < ui.radius[i] + (i === already ? 0.16 : 0.08)) return i;
     return -1;
   }
   /**
@@ -1396,7 +1829,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (game.heardFor > words * tune.wordSeconds + 0.7) { game.stage = 'choose'; game.recording = false; ui.choose(); sounds.play('blip', 1.2, 0.45, ui.targets[2]); buzz('left', 0.3, 25); }
       return;
     }
-    let at = letter.state === 'held' ? nearTarget(letter.body.mesh.position) : letter.state === 'waiting' ? game.keyAim : -1;
+    let at = letter.state === 'held' ? targetNear(letter.free, game.aim, false) : letter.state === 'waiting' ? game.keyAim : -1;
     if (game.stage === 'choose' && at === 2) at = -1;
     if (at !== game.aim) {
       game.aim = at; game.aimFor = 0;
@@ -1423,7 +1856,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function sendTo(letter: Current, to: number, what: 'reply' | 'mic') {
     const body = letter.body;
     body.target = to; body.from.copy(body.mesh.position); body.sheet.material.uniforms.hover.value = 0;
-    if (letter.state === 'held') body.size = letter.holdSize;
+    if (letter.state === 'held') body.size = body.mesh.scale.x;
     settle(body, what);
     game.stage = 'pick'; game.recording = false;
     release(body, 'sent', 0.42);
@@ -1447,6 +1880,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function clear() {
     for (let i = loose.length - 1; i >= 0; i--) remove(loose[i]);
     if (current) { remove(current.body); current = null; }
+    away = null; logo.wanted = false; logo.started = false; shows.length = 0; logo.cutAt = -1; logo.outro = -1; logo.homed = false;
+    menuTicket++; for (const mesh of menu.planes) { root.remove(mesh); mesh.geometry.dispose(); const m = mesh.material as MeshBasicMaterial; m.map?.dispose(); m.dispose(); } menu.planes = []; menu.pending = null;
     prepared = null; preparedEmail = null;
     for (const set of [sheetSets.ink, sheetSets.paint]) for (const s of set ?? []) { s.users = 0; s.reserved = false; s.cutAt = Infinity; s.burnAt = Infinity; s.burn = 0; }
     for (const streak of streaks) streak.mesh.visible = false;
@@ -1482,12 +1917,12 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function setActive(on: boolean) { if (on === active) return; active = on; root.visible = on; clear(); }
 
   return {
-    update, tune, spray, setTheme, setActive, events,
+    update, tune, spray, setTheme, setActive, events, showMenu, leaveMenu,
     /** How much dangerous mail is in front of the player just now: 0 none, 1 a radioactive letter not yet melted. */
     hazard: () => (current && current.body.hazard && !current.body.melting ? 1 : 0),
     theme: () => theme,
     /** Where the rounds have got to, for a level that shows it (the second office's monitor). Read only. */
-    progress: game as { readonly phase: 'ready' | 'intro' | 'play' | 'summary'; readonly round: number; readonly total: number; readonly beat: number; readonly marks: readonly string[]; readonly recording: boolean },
+    progress: game as { readonly phase: 'ready' | 'intro' | 'play' | 'summary' | 'menu'; readonly round: number; readonly total: number; readonly beat: number; readonly marks: readonly string[]; readonly recording: boolean },
     /** Is the blade cutting just now? (Always, unless the trigger has to be held and is not.) */
     armed: () => armed,
     /** 1 while the trigger is making the blade live, for its glow and hum; 0 otherwise (and always 0 where no trigger is needed). */
@@ -1496,7 +1931,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       inTheAir: loose.length, sheetsInUse: sheets.filter(s => s.users > 0 || s.reserved).length, handValid: hand.valid, handPressed: hand.pressed,
       reachOnLetter: hand.onLetter, triggerToCut: tune.triggerToCut, armed }),
     /** For checks and the console: act on the letter in front of you without a controller. */
-    debug: { cut: keyCut, keep: keyKeep, hold: keySend, round: (n: number) => beginIntro(n), current: () => current, loose },
+    debug: { cut: keyCut, keep: keyKeep, hold: keySend, round: (n: number) => beginIntro(n), end: () => { game.phase = 'play'; beginSummary(); },
+      /** Cut a menu card, as a sword would: 'start', 'exit', or a level's id. */
+      cutCard: (id: string) => { const show = shows.find(x => x.gone < 0 && (x.kind === id || x.id === id)); if (show) slice(show.body, rand(0.05), rand(0.02), 1, rand(0.3), v1.set(6, 0, -1), 0.8); }, current: () => current, loose },
     dispose: () => { ui.dispose(); window.removeEventListener('keydown', onKey); threadGeometry.dispose(); threadMaterial.dispose(); for (const set of [sheetSets.ink, sheetSets.paint]) for (const s of set ?? []) { s.material.dispose(); s.surface.texture?.dispose(); } for (const shape of shapes.values()) shape.geometry.dispose(); streakGeometry.dispose(); aura.dispose(); auraGeometry.dispose(); sparkle.dispose(); sparkleGeometry.dispose(); },
   };
 }

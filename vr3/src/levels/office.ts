@@ -89,7 +89,7 @@ export const officeStage: StageDef = {
 };
 
 export const officeLetters: LetterTheme = {
-  id: 'office', face: 'paint', paint: officeCard, shape: paneSoup, mechanic: 'cut', title: 'The Office', accent: '#7dffc9', bar: ['#2bffb0', '#2fb8ff'],
+  id: 'office', face: 'paint', paint: officeCard, shape: paneSoup, mechanic: 'cut', title: 'The Corner Desk', accent: '#7dffc9', bar: ['#2bffb0', '#2fb8ff'],
   look: { sheet: '#a9f9d8', ink: '#0a3a2b', back: '#4fbf98', selfLit: 1, night: '#ffffff',
     hover: '#e4fff4', cutWide: '#7dffc9', cutHot: '#f4fffa', mark: '#ffe9a0', flash: '#f6fff0', gold: '#fff3b8',
     burn: '#6dffb8', burnStyle: 1, streak: ['#8dffd0', '#ffffff'], thread: ['#8dffd0', '#f0fff8'], aura: ['#27c98e', '#a8ffe0'], spell: { wisps: 0.12, sparkles: 0, trail: false, glow: 0.8 } },
