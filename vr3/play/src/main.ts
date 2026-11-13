@@ -1,4 +1,5 @@
 import { Color, NoToneMapping, SessionMode, Vector3, World, createSystem } from '@iwsdk/core';
+import { tweaks, announce } from './tweak';
 import { createGarden, settings } from './garden';
 import { BLADE_LENGTH, createSword, setSwordHold, swordHold, SWORD_HOLD_DEFAULT } from './sword';
 import { GardenMusic } from './audio';
@@ -128,6 +129,13 @@ async function main() {
   // ---------------------------------------------------------------- levels
   // Kyoto is made at the start. Each other level is made the first time it is chosen and kept;
   // changing level shows one and hides the rest, and tells the letters, the effects and the sound.
+  // Weapon tuning (development only, src/tweak.ts and tune.html): this page says now and then which level it is on
+  // and whether it is in VR, so the tuning page can show the headset is listening.
+  if (import.meta.hot) {
+    const pageId = Math.random().toString(36).slice(2, 10), headset = /OculusBrowser|Quest|Pacific|Pico|Wolvic/i.test(navigator.userAgent);
+    const hello = () => announce({ id: pageId, kind: 'game', level: tweaks.level, vr: world.renderer.xr.isPresenting, headset });
+    hello(); setInterval(hello, 3000);
+  }
   const made = new Map<string, Played>([['kyoto', { level: LEVELS[0], place: garden, weapon: null }]]);
   let now = made.get('kyoto')!, choosing = 0, playing = false;
   let session: XRSession | null = null;
@@ -142,6 +150,7 @@ async function main() {
       now = next; now.place.group.visible = true; now.place.recenterDepth();
     }
     const level = shown = now.level;
+    tweaks.level = level.id;      // (weapon tuning, development only: src/tweak.ts)
     letters.setTheme(level.letters); swingFx.setStyle(level.fx); sounds.setLevel(level.sound);
     if (level.music) music.setTrack(level.music);
     if (level.anthem) music.prepare(level.anthem);      // (its end song, held in memory from now: see audio.ts)

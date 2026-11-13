@@ -81,7 +81,7 @@ const tune = {
   micRest: 0.2,         // and the last quarter, snapping shut: recording at 1.1 s (2026-11-12: "a bit faster, so slow to start ( ring) then be quick"; it was 2 s)
   chooseHold: 1.5,      // and at KEEP or REDO, after dictating
   wordSeconds: 0.24,    // the mock dictation: a word every this long
-  holdGrow: 1.15,       // held, it looks this much bigger than it did where it was taken from: its size as seen, and just a bit
+  holdGrow: 1.25,       // held, it looks this much bigger than it did where it was taken from: its size as seen, and just a bit (1.15 until 2026-11-12, then 1.21: "lets try 5% larger", then "try 1.25")
   // The rounds. One is so many emails; round two brings back the ones that were kept.
   // Round one's emails. 10 for demos for now (asked for on 2026-11-11); it will vary from day to day later, never more than 20.
   roundEmails: 10,
@@ -1062,6 +1062,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     return sheet;
   }
   /** Is the left hand's reach on this (0 or less: it is)? Its reach line, or where it points, near enough the thing's middle. */
+  const threadAt = new Vector3();      // (where the end's thread goes: reachShow uses v1 and v2)
   function reachShow(show: Show) {
     const p = show.body.mesh.position, r = show.body.soup.radius * show.body.mesh.scale.x * 0.65;
     let best = Infinity;
@@ -1970,6 +1971,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   };
   window.addEventListener('keydown', onKey);
 
+  const GRAB_SETTLE = 0.45;      // seconds a taken letter takes to come to its held size
+  const smooth01 = (t: number) => { const x = clamp01(t); return x * x * (3 - 2 * x); };
   /** The left hand takes hold of it (or takes it back, falling away). */
   function take(letter: Current, head: Vector3) {
     const body = letter.body, mesh = body.mesh;
@@ -2177,8 +2180,14 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           mesh.position.lerp(v1, ease); mesh.quaternion.slerp(q1, ease);
           // It keeps the size it had to the eye where it was taken, and just a bit more: so nearer the
           // head it is made smaller by as much as it has come closer. Settled once it has come in.
-          if (letter.heldFor < 0.45) letter.holdSize = Math.max(0.25, Math.min(1, letter.seen * tune.holdGrow * head.distanceTo(mesh.position)));
-          body.size += (letter.holdSize - body.size) * (1 - Math.exp(-dt * 12));
+          // (2026-11-12: "it zooms up then back down when grabbing": the extra size was there from the first frame,
+          // while it was still far off, and the size lagged behind it coming in. Now the extra comes in with it, and
+          // the size follows the distance exactly until it has settled, so it only ever grows, smoothly.)
+          if (letter.heldFor < GRAB_SETTLE) {
+            const grow = 1 + (tune.holdGrow - 1) * smooth01(letter.heldFor / GRAB_SETTLE);
+            letter.holdSize = Math.max(0.25, Math.min(1, letter.seen * grow * head.distanceTo(mesh.position)));
+            body.size = letter.holdSize;
+          } else body.size += (letter.holdSize - body.size) * (1 - Math.exp(-dt * 12));
           mesh.scale.setScalar(body.size * (1 - tune.dockShrink * letter.docked));      // (smaller at a target, so the reply still shows)
           body.sheet.material.uniforms.hover.value = 1;
           body.vel.copy(hand.best).multiplyScalar(tune.throwBoost);
@@ -2199,6 +2208,20 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (now && hand.valid) {
         if (now.state === 'held') { to = now.body.mesh.position; want = clamp01((to.distanceTo(hand.pos) - 0.12) * 4) * 0.6; }
         else if (hand.onLetter) { to = now.body.mesh.position; want = 0.75; }      // to the letter itself: the reach is generous, the thread says what it has found
+      }
+      // the end of a game: the same thread to what the left hand has, or would take (the logo, the bar, the line, an
+      // email), as the emails have it (2026-11-12: "make the line for grabbing show on end scene like when grabbing email")
+      if (!to && hand.valid && game.phase === 'summary') {
+        const held = shows.find(x => x.held);
+        if (held) { to = threadAt.copy(held.body.mesh.position); want = clamp01((to.distanceTo(hand.pos) - 0.12) * 4) * 0.6; }
+        else {
+          let best: Show | null = null, bestGap = 0;
+          for (const show of shows) {
+            if (show.gone >= 0 || show.body.mode !== 'show' || !loose.includes(show.body) || show.body.age < 0.5) continue;
+            const gap = reachShow(show); if (gap <= bestGap) { bestGap = gap; best = show; }
+          }
+          if (best) { to = threadAt.copy(best.body.mesh.position); want = 0.75; }
+        }
       }
       threadFade += ((to ? want : 0) - threadFade) * Math.min(1, dt * 14);
       if (to && threadFade > 0.01) {

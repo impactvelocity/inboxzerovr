@@ -1,3 +1,4 @@
+import { tweaks } from './tweak';
 import { AdditiveBlending, BufferAttribute, BufferGeometry, CanvasTexture, CylinderGeometry, DoubleSide, DynamicDrawUsage, EquirectangularReflectionMapping, Float32BufferAttribute, Group, InstancedMesh, Matrix4, Mesh, MeshStandardMaterial, Object3D, PMREMGenerator, RepeatWrapping, ShaderMaterial, SphereGeometry, SRGBColorSpace, Vector3, type World } from '@iwsdk/core';
 
 function canvasTexture(kind: 'cloth'|'ivory'|'steel') {
@@ -22,26 +23,39 @@ function canvasTexture(kind: 'cloth'|'ivory'|'steel') {
 // reach: metres from the middle of the fist to the guard; .045 puts the index finger against it.
 // tilt: degrees the blade leans from the fist's axis towards the knuckles.
 // blade: blade length as a multiple of the modelled .72 m.
+// tipForward: degrees more lean towards the knuckles, for the blade only (the drawn hand turns by tilt alone).
+// side: metres it is moved across the fist to the player's right, so it sits in the drawn hand.
+// twist: degrees the blade is turned about its own length, its edge towards the player's left (the model's -X edge goes towards +Z, grip space's -X).
 // turn: degrees the blade is angled across the body, to the left, rather than straight ahead of the fist.
 // (2026-11-11, on the headset with controllers: 3 cm, a 58 cm blade and a 28 degree lean felt good, with the blade angled a bit to the left.)
 // (2026-11-11, later: "make the kyoto sword a bit more like the position of the haunted sword": upright, lean -15 and turn 8, as the knight's.)
 // (2026-11-11, later still: the hand sat a little on the guard; the sword moved up off the hand, 3 cm to 5 cm.)
-export const SWORD_HOLD_DEFAULT={reach:.05,tilt:-15,turn:8,blade:.8};
+// (2026-11-12: "make it lean more to the right so it feels more placed in the hand": turn 8 to -4 for a while)
+// (later the same day: turn -12 and a 12 degree twist of the blade, then "move kyoto blade back to what it was before, but
+// just move to the right a bit, so its more in the hand vr overlay": back to turn 8 and no twist, moved 1.2 cm to the
+// player's right across the fist, as Haunted Halls' sword is)
+// (and from the tuning page, tune.html: "Kyoto Nights weapon tweak: { tipForward: 4 }": the blade tipped 4 degrees further
+// towards the knuckles, the drawn hand left as it was)
+export const SWORD_HOLD_DEFAULT={reach:.05,tilt:-15,turn:8,blade:.8,twist:0,side:.012,tipForward:4};
 export type SwordHold=typeof SWORD_HOLD_DEFAULT;
-const HOLD_KEYS=['reach','tilt','turn','blade'] as const;
+const HOLD_KEYS=['reach','tilt','turn','blade','twist','side','tipForward'] as const;
 // (saved under a new name each time the default moves, so a value saved before it does not hide it: hold3 since the 5 cm gap)
 const remembered=(key:string)=>{try{return localStorage.getItem('vr3.hold3.'+key);}catch{return null;}};
 const tune=(key:keyof SwordHold)=>{for(const raw of [new URLSearchParams(location.search).get(key),remembered(key)]){const v=parseFloat(raw??'');if(Number.isFinite(v))return v;}return SWORD_HOLD_DEFAULT[key];};
-export const swordHold:SwordHold={reach:tune('reach'),tilt:tune('tilt'),turn:tune('turn'),blade:tune('blade')};
+export const swordHold:SwordHold={reach:tune('reach'),tilt:tune('tilt'),turn:tune('turn'),blade:tune('blade'),twist:tune('twist'),side:tune('side'),tipForward:tune('tipForward')};
 const GUARD_Y=.137,BLADE_BASE_Y=.15;
 // Which way round the model's X axis carries the blade to the player's left in the right hand.
 const TURN_SIGN=1;
 export const BLADE_LENGTH=.72;
-const hold=new Matrix4(),holdBasis=new Matrix4().makeBasis(new Vector3(0,1,0),new Vector3(0,0,-1),new Vector3(-1,0,0)),holdShift=new Matrix4(),holdTurn=new Matrix4();
+const hold=new Matrix4(),holdBasis=new Matrix4().makeBasis(new Vector3(0,1,0),new Vector3(0,0,-1),new Vector3(-1,0,0)),holdShift=new Matrix4(),holdTurn=new Matrix4(),holdTwist=new Matrix4(),holdLean=new Matrix4();
+// Grip space's +X is the player's right for the right hand (weapons/held.ts, measured in the emulator).
+const SIDE_RIGHT=1;
+/** The katana's hold as a matrix: from grip space to the model (for the tuning page's preview). */
+export const swordHoldMatrix=()=>hold;
 export function setSwordHold(next:Partial<SwordHold>,remember=true){
   Object.assign(swordHold,next);
   // The turn is about the blade's own edge-to-spine line, at the fist: it tips the blade sideways without changing the lean.
-  hold.makeRotationX(-swordHold.tilt*Math.PI/180).multiply(holdBasis).multiply(holdTurn.makeRotationX(TURN_SIGN*swordHold.turn*Math.PI/180)).multiply(holdShift.makeTranslation(0,swordHold.reach-GUARD_Y,0));
+  hold.makeTranslation(swordHold.side*SIDE_RIGHT,0,0).multiply(holdLean.makeRotationX(-(swordHold.tilt+swordHold.tipForward)*Math.PI/180)).multiply(holdBasis).multiply(holdTurn.makeRotationX(TURN_SIGN*swordHold.turn*Math.PI/180)).multiply(holdShift.makeTranslation(0,swordHold.reach-GUARD_Y,0)).multiply(holdTwist.makeRotationY(swordHold.twist*Math.PI/180));
   if(remember)try{for(const key of HOLD_KEYS)localStorage.setItem('vr3.hold3.'+key,String(swordHold[key]));}catch{/* private window: keep it for this visit only */}
 }
 setSwordHold({},false);
@@ -133,7 +147,7 @@ export function createSword(world:World) {
     clock+=dt;let valid=false;fitBlade();
     if(world.renderer.xr.isPresenting){
       const session=world.renderer.xr.getSession(),space=world.renderer.xr.getReferenceSpace();
-      if(frame&&space&&session)for(const source of session.inputSources){if(source.handedness==='right'&&source.gripSpace){const pose=frame.getPose(source.gripSpace,space);if(pose){root.matrixAutoUpdate=false;root.matrix.fromArray(pose.transform.matrix).multiply(hold);root.matrix.premultiply(world.player.matrixWorld);root.matrixWorldNeedsUpdate=true;valid=true;}break;}}
+      if(frame&&space&&session)for(const source of session.inputSources){if(source.handedness==='right'&&source.gripSpace){const pose=frame.getPose(source.gripSpace,space);if(pose){root.matrixAutoUpdate=false;root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix()).multiply(hold);root.matrix.premultiply(world.player.matrixWorld);root.matrixWorldNeedsUpdate=true;valid=true;}break;}}
     }else{
       root.matrixAutoUpdate=true;world.camera.getWorldPosition(root.position);root.position.add(currentBase.set(.32,-.30,-.65).applyQuaternion(world.camera.quaternion));root.quaternion.copy(world.camera.quaternion);root.rotateX(-.35);root.rotateZ(-.22);
       if(swingTime>=0){swingTime+=dt;const phase=Math.min(swingTime/.65,1);root.rotateZ(Math.sin(phase*Math.PI)*1.9);root.rotateX(-Math.sin(phase*Math.PI)*.45);if(phase===1)swingTime=-1;}

@@ -1,0 +1,15 @@
+{
+  "tool": "built-in imagegen",
+  "images": [
+    {
+      "name": "light",
+      "prompt": "Use case: stylized-concept. Create a simplified 16:9 landscape level-selector thumbnail of the Lumberjack farm level based on this reference. Same softly faceted stylized 3D cozy game art. Compose for strong readability at 640x360. A central red timber barn with cream wooden X-braced doors and a central open mail hatch holding two visible cream envelopes, small glowing lantern above hatch. Barn is prominent, framed by one autumn orange maple on left, simple dark green pines and distant hills. Small neatly stacked cut logs left, a few hay bales and rustic wagon on right. Low sturdy honey-brown timber workbench in foreground, visible front and legs, empty center, one short log at left and folded work gloves right. Reduce tiny leaves and clutter, broad clean shapes, no axe or weapon. LIGHT state: beautiful golden afternoon sun, warm orange foliage, red barn, soft blue sky, friendly autumn countryside. No people, lettering, logo, UI, border or montage. Single full-bleed 16:9 image.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-5f157e87-1c10-43a2-b8fd-43dd20406446.png"
+    },
+    {
+      "name": "dark",
+      "prompt": "Use case: lighting-weather. Create DARK hover-state of this exact Lumberjack farm thumbnail by changing ONLY lighting and time of day. Strictly identical 16:9 framing, camera, geometry, positions and silhouettes of barn, two envelopes in mail hatch, lamp, upper window, tree and every branch, pine trees, clouds, hills, logs, hay bales, wagon and foreground workbench with log and gloves. Golden afternoon becomes deep blue-violet night, soft cool moonlight from offscreen provides readable blue rim lighting on roof, tree leaves and bench. The existing lamp above mail hatch glows amber and warmly illuminates central envelopes and barn doors; upper barn window glows softly warm from inside. Dark cool countryside with cozy warm center, rich burgundy barn, muted autumn copper foliage, readable foreground rather than pitch black. Preserve stylized softly faceted 3D game art. No added moon, stars, particles, characters, objects, axe, text, UI or borders. Single full-bleed image suitable for crossfade with original.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-28b8dd45-5bd5-41db-8e09-61a4e6a2b60c.png"
+    }
+  ]
+}

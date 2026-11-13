@@ -1,0 +1,15 @@
+{
+  "tool": "built-in imagegen",
+  "images": [
+    {
+      "name": "light",
+      "prompt": "Use case: stylized-concept. Create a simplified 16:9 landscape level-selector thumbnail for the Inferno / burn-after-reading game level, based on the supplied furnace room reference. Preserve its softly faceted stylized 3D game art, warm red brick, charcoal iron, copper pipes, brass rivets and amber lighting. Compact readable composition at 640x360: central large angular mail processing chute with a hopper holding a few clearly recognizable cream envelopes, flanked by two round-topped heavy CLOSED iron furnace doors with bright orange glowing seams. A few chunky copper pipes connect machinery, one simple pressure gauge, two warm hanging industrial lamps. Low metal workbench set slightly ahead of camera with visible front and legs, empty middle, a small red valve at left and tongs on right. Simplify away tiny clutter and storage bins. Central chute and envelope hopper form strong thumbnail focal point. LIGHT state: bright warm amber room illumination, readable copper and brick surfaces, cozy fiery workshop palette, orange furnace glow. No people, weapon, logo, text, UI, border or montage. One full-bleed 16:9 image.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-33d94ec8-e08c-4e8d-91d6-e1c77ca5e58b.png"
+    },
+    {
+      "name": "dark",
+      "prompt": "Use case: lighting-weather. Make the DARK hover-state version of this exact Inferno furnace room thumbnail. Change ONLY illumination: overhead lamps now dim low amber, room's overall ambient brightness strongly reduced into deep charcoal and burgundy shadows with subtle cool plum fill. Closed furnace door seams and the central chute's orange grate burn brilliant orange-gold, dominating the light and casting warm reflections across the metal bench and floor. Atmospheric dramatic after-hours inferno, readable silhouettes at thumbnail size. Keep EXACT 16:9 crop, camera, geometry, every object position and silhouette: both closed arched furnace doors, three cream envelopes in hopper, copper pipe layout, gauge, lamps, central chute, front bench, valve and tongs. Do not open doors or add flames, particles, smoke, objects, text, people, weapons or UI. Preserve soft faceted 3D game art and crisp readable composition. Single full-bleed image for a smooth crossfade with original.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-27b3cb9c-4680-4ae4-89a1-ff73da0d4d5b.png"
+    }
+  ]
+}

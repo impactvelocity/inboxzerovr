@@ -1,0 +1,15 @@
+{
+  "tool": "built-in imagegen",
+  "images": [
+    {
+      "name": "dusk",
+      "prompt": "Use case: stylized-concept. Create a simplified 16:9 landscape level-selector thumbnail based on the supplied office scene reference. Same softly faceted stylized 3D game aesthetic and beige CRT, green phosphor screen, honey wood desk, liminal spacious office, blue-gray carpet, white columns, grid ceiling and long windows left. Compose for readability at 640x360: central CRT hero, comfortably below seated eye level, full monitor and small beige tower right on desk in lower half; fewer background columns and ceiling panels, broad clean shapes, modest mug left, a few papers and small charcoal stapler along desk edges. Screen has ONLY a large simple dark envelope icon on mint green, no tiny UI text. Remove hand, weapon and upright keyboard completely. Warm late-afternoon/dusk daylight through left windows with soft peach-lavender sky, muted cyan ceiling lighting, inviting slightly surreal mood. No logo, text, border or UI overlay. This is one full-bleed image, not a comparison sheet. Preserve office identity but simplify detail and clutter.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-7151c393-9736-42b4-a8b8-bf676e8f0544.png"
+    },
+    {
+      "name": "night",
+      "prompt": "Use case: lighting-weather. Edit this exact office selector thumbnail into its NIGHT hover state. Strictly keep identical 16:9 crop, camera, perspective, every silhouette, CRT and envelope icon size and position, desk, mug, stapler, papers, tower, ceiling lights, columns, windows and skyline. Change ONLY lighting and time of day. Outside windows now deep indigo and violet evening sky with subdued skyline; no sunset orange daylight. Ceiling lights dim to very low cool blue-teal glow, room falls into atmospheric blue-purple shadows while remaining readable. CRT green phosphor screen becomes the main light source casting soft mint green illumination on monitor bezel and nearby wood desk and papers. Cozy eerie late-night overtime mood, gentle ambient violet-blue window light defines silhouettes. Preserve softly faceted 3D game art, simple readable thumbnail. No new props, text, ghosts, people, borders, UI or layout changes. Single full-bleed night image.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-622e4e36-ab4e-4a6b-afcf-6a1866587d7b.png"
+    }
+  ]
+}

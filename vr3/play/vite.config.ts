@@ -1,5 +1,55 @@
 import { defineConfig, loadEnv } from 'vite';
 import basicSsl from '@vitejs/plugin-basic-ssl';
+import { readFileSync, writeFileSync } from 'node:fs';
+import type { Plugin } from 'vite';
+
+/**
+ * Weapon tuning (src/tweak.ts, tune.html): the dev server keeps every level's weapon tweak in
+ * tools/weapon-tweaks.json and passes each change straight on to every open page (the headset's game too),
+ * over the dev server's own socket. It also keeps a list of the pages that have said hello, for tune.html.
+ */
+function weaponTweaks(): Plugin {
+  const file = new URL('./tools/weapon-tweaks.json', import.meta.url);
+  let state: Record<string, unknown> = {};
+  try { state = JSON.parse(readFileSync(file, 'utf8')); } catch { state = {}; }
+  const pages = new Map<string, Record<string, unknown> & { seen: number }>();
+  return {
+    name: 'vr3-weapon-tweaks', apply: 'serve',
+    configureServer(server) {
+      const pageList = () => { const now = Date.now(); for (const [id, p] of pages) if (now - p.seen > 12000) pages.delete(id); return [...pages.values()]; };
+      server.ws.on('vr3:tweak:get', (_data, client) => { client.send('vr3:tweak:all', state); client.send('vr3:tweak:pages', pageList()); });
+      server.ws.on('vr3:tweak:set', (data: { level: string; tweak: unknown }) => {
+        if (!data || typeof data.level !== 'string') return;
+        state = { ...state, [data.level]: data.tweak };
+        try { writeFileSync(file, `${JSON.stringify(state, null, 2)}\n`); } catch { /* read-only: kept in memory */ }
+        server.ws.send('vr3:tweak:all', state);
+      });
+      // "Save as default" on tune.html: the live tweak is added to src/weapon-holds.json (part of the game, builds too)
+      // and set back to zero, so it is not applied twice. The JSON changing reloads every open game page.
+      const holdsFile = new URL('./src/weapon-holds.json', import.meta.url);
+      const readHolds = (): Record<string, unknown[]> => { try { return JSON.parse(readFileSync(holdsFile, 'utf8')); } catch { return {}; } };
+      const saveState = () => { try { writeFileSync(file, `${JSON.stringify(state, null, 2)}\n`); } catch { /* kept in memory */ } };
+      server.ws.on('vr3:tweak:save', (data: { level: string }) => {
+        const live = data && (state[data.level] as Record<string, number> | undefined);
+        if (!live || !Object.values(live).some(v => v !== 0)) return;
+        const holds = readHolds(); holds[data.level] = [...(holds[data.level] ?? []), live];
+        writeFileSync(holdsFile, `${JSON.stringify(holds, null, 2)}\n`);
+        state = { ...state, [data.level]: Object.fromEntries(Object.keys(live).map(k => [k, 0])) }; saveState();
+        server.ws.send('vr3:tweak:all', state);
+      });
+      server.ws.on('vr3:tweak:clear-saved', (data: { level: string }) => {
+        if (!data || typeof data.level !== 'string') return;
+        const holds = readHolds(); if (!holds[data.level]) return;
+        delete holds[data.level]; writeFileSync(holdsFile, `${JSON.stringify(holds, null, 2)}\n`);
+      });
+      server.ws.on('vr3:tweak:hello', (data: Record<string, unknown>) => {
+        if (!data || typeof data.id !== 'string') return;
+        pages.set(data.id, { ...data, seen: Date.now() });
+        server.ws.send('vr3:tweak:pages', pageList());
+      });
+    },
+  };
+}
 
 /**
  * The game. Since 2026-11-12 it lives in vr3/play and the site and API (Next.js) in vr3 above it.
@@ -16,7 +66,7 @@ export default defineConfig(({ mode }) => {
   const api = env.API_ORIGIN || process.env.API_ORIGIN || 'http://localhost:3000';
   return {
     base: './',
-    plugins: process.env.HTTPS === '1' ? [basicSsl()] : [],
+    plugins: [weaponTweaks(), ...(process.env.HTTPS === '1' ? [basicSsl()] : [])],
     server: { port: 5183, strictPort: true, proxy: { '/api': { target: api, changeOrigin: false, xfwd: true } } },
     preview: { port: 4183, strictPort: true, proxy: { '/api': { target: api, changeOrigin: false, xfwd: true } } },
     resolve: { dedupe: ['three', '@pmndrs/uikit'] },

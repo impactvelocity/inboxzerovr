@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { tweaks } from '../tweak';
 import type { World } from '@iwsdk/core';
 
 /**
@@ -205,7 +206,7 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
         const pose = frame.getPose(source.gripSpace, space);
         if (pose) {
           root.matrixAutoUpdate = false;
-          root.matrix.fromArray(pose.transform.matrix).multiply(spec.hold).premultiply(world.player.matrixWorld);
+          root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix()).multiply(spec.hold).premultiply(world.player.matrixWorld);      // (tweaks: weapon tuning, development only: src/tweak.ts)
           root.matrixWorldNeedsUpdate = true; valid = true;
         }
         break;

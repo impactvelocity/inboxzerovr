@@ -1,0 +1,15 @@
+{
+  "tool": "built-in imagegen",
+  "images": [
+    {
+      "name": "light",
+      "prompt": "Use case: stylized-concept. Design a simplified 16:9 landscape chemical lab level-selector thumbnail using the supplied scene as visual reference. Same softly faceted stylized 3D game art. Make central cream and teal contaminated-mail processing machine the strong focal point, larger and easier to read at 640x360. Its top glass cylindrical tank contains glowing lime green liquid and a few simple envelope shapes; below is a yellow biohazard emblem and dark rectangular mail outlet, small amber status lights. Compact readable lab composition: white tiled walls, teal structural frame and pipes, one pair of green specimen tanks on left, a simplified fume hood on right. Small lab benches frame left and right with very few recognizable flask/test tube props; subtle low foreground workbench with empty middle and props only at edges. Reduce clutter, tiny fixtures and ceiling repetitions. Bright LIGHT state with soft cyan overhead illumination, cream surfaces and cheerful lime green accents, amber task lights. No people, weapons, text, logo, overlay, border. Single full-bleed image, no split screen. Clearly recognizable as the same chemical level but composed specifically as a simple thumbnail.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-400e3597-c6ce-4edf-9e99-f489dbcf9cc5.png"
+    },
+    {
+      "name": "dark",
+      "prompt": "Use case: lighting-weather. Edit the provided chemical lab thumbnail into its DARK hover state. Preserve exact 16:9 framing, camera, all geometry, silhouettes and every object position: central cream teal mail machine, green envelope tank, biohazard emblem, outlet, side tanks, pipes, fume hood, foreground bench, test tubes and flask. Change ONLY lighting. Dim the ceiling cyan lamp to a faint teal glow, darken room to rich midnight teal and blue-green shadows. Glowing radioactive lime-green tanks and mail envelopes become dominant light sources, spilling green on machine, worktops and reflective tiles. Small amber beacons, wall lamps and warm fume hood illumination remain glowing secondary accents. Eerie fun after-hours laboratory mood, still clearly readable at small thumbnail size, no crushing foreground to black. Same softly faceted stylized 3D finish. No added objects, smoke, characters, text, overlays or borders. Single full-bleed night-state image for crossfading against original.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-72cac1ac-a8d0-413a-979b-aad8ccb79950.png"
+    }
+  ]
+}
