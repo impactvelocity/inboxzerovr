@@ -102,10 +102,11 @@ export const labStage: StageDef = {
   motes: [
     { name: 'Spores', count: 80, box: [8, 2.4, 7], centre: [0, 1.4, -3.8], size: 18, colour: ['#d2ffe2', '#6dff7a'], opacity: [0.28, 0.6], rise: 0.05, sway: 0.2, twinkle: 0.55, additive: true },
     { name: 'Dust under the lights', count: 140, box: [9, 2.6, 8], centre: [0, 1.6, -4], size: 13, colour: ['#ffffff', '#9fe8dc'], opacity: [0.2, 0.22], rise: -0.008, sway: 0.25, twinkle: 0.3, additive: false },
-    { name: 'Vapour off the machine', count: 26, box: [1.6, 1.6, 1.2], centre: [0, 1.9, -4.2], size: 70, colour: ['#b6ffcc', '#5dff8a'], opacity: [0.05, 0.16], rise: 0.12, sway: 0.25, twinkle: 0.2, additive: true },
+    { name: 'Vapour off the machine', count: 16, box: [1.6, 1.6, 1.2], centre: [0, 1.9, -4.2], size: 70, colour: ['#b6ffcc', '#5dff8a'], opacity: [0.025, 0.07], rise: 0.12, sway: 0.25, twinkle: 0.2, additive: true },
   ],
   // A thin chemical haze lying low across the room, greener as the lights go.
-  fog: { cards: 5, from: 2.6, to: 7.5, width: 8, height: 1, colour: ['#c4ece4', '#2fd88c'], opacity: [0.08, 0.22] },
+  // (fainter since 2026-11-12, "less fog / atmosphere, the dust and lights are good": it was 5 sheets at 0.08 to 0.22)
+  fog: { cards: 4, from: 2.8, to: 7.5, width: 8, height: 1, colour: ['#c4ece4', '#2fd88c'], opacity: [0.035, 0.09] },
   flicker: (time, blend) => 0.55 + 0.45 * Math.pow(0.5 + 0.5 * Math.sin(time * 1.7), 2) * (0.4 + 0.6 * blend),
 };
 

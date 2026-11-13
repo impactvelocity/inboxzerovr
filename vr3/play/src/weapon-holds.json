@@ -18,5 +18,35 @@
       "up": 0,
       "forward": 0
     }
+  ],
+  "lab": [
+    {
+      "tipForward": -15,
+      "tipRight": 0,
+      "spin": -10,
+      "right": 1,
+      "up": -1,
+      "forward": 0
+    }
+  ],
+  "inferno": [
+    {
+      "tipForward": -10,
+      "tipRight": 6,
+      "spin": -15,
+      "right": 1,
+      "up": -1,
+      "forward": 0
+    }
+  ],
+  "lumber": [
+    {
+      "tipForward": 11,
+      "tipRight": 5,
+      "spin": -10,
+      "right": 1.5,
+      "up": -4,
+      "forward": 0.5
+    }
   ]
 }
