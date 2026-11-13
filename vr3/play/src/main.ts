@@ -303,7 +303,8 @@ async function main() {
       music.setSoft(letters.progress.recording ? (dictate.live ? 0.12 : 0.3) : 1);      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
       // the end of a game: a level with a celebration song crossfades into it as the last email is dealt with
       { const p = letters.progress, lastDone = p.phase === 'play' && p.round === 2 && p.total > 0 && p.marks.length >= p.total;
-        if (playing && (p.phase === 'summary' || lastDone) && now.level.anthem) music.celebrate(now.level.anthem); else music.endCelebration(); }
+        if (playing && (p.phase === 'summary' || lastDone) && now.level.anthem) music.celebrate(now.level.anthem); else music.endCelebration();
+        sounds.setEndSoft(playing && music.celebrating() ? 1 : 0); }      // (the end song is the main thing: the background and game sounds step back under it)
       music.update(dt);
       if (now.weapon) now.weapon.update(dt,this.xrFrame,settings.motion,settings.blend); else sword.update(dt,this.xrFrame,settings.motion,settings.blend);
       blade.update(dt,world.scene);

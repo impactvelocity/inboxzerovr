@@ -48,6 +48,9 @@ const smoothstep = (a: number, b: number, v: number) => { const t = clamp01((v -
 const drift = (t: number, seed: number) =>
   clamp01(0.5 + 0.28 * Math.sin(t * 0.37 + seed) + 0.17 * Math.sin(t * 0.83 + seed * 2.3) + 0.11 * Math.sin(t * 1.71 + seed * 4.1));
 
+/** While the end song plays: the level's background at this share of its volume, and the game's sounds at this. */
+const END_BACKGROUND = 0.25, END_EFFECTS = 0.45;
+
 export class GardenSounds {
   private ctx: AudioContext | null = null;
   private nature: GainNode | null = null;
@@ -198,6 +201,12 @@ export class GardenSounds {
   setEnabled(enabled: boolean) { this.enabled = enabled; }
   setVolume(volume: number) { this.volume = clamp01(volume); }
   setEffectsVolume(volume: number) { this.effectsVolume = clamp01(volume); }
+  /**
+   * The end of a game, while its end song plays: the level's background and the game's sounds step back, so the song
+   * is the main thing (2026-11-12). 1 is all the way back: background to END_BACKGROUND, game sounds to END_EFFECTS.
+   */
+  private endSoft = 0;
+  setEndSoft(amount: number) { this.endSoft = clamp01(amount); }
 
   /** The garden is heard while a VR session is showing. */
   setActive(active: boolean) {
@@ -326,8 +335,9 @@ export class GardenSounds {
       ears.setPosition(m[12], m[13], m[14]);
       ears.setOrientation(-m[8], -m[9], -m[10], m[4], m[5], m[6]);
     }
-    this.nature.gain.setTargetAtTime(this.active && this.enabled ? this.volume : 0, now, this.active ? 0.9 : 0.15);
-    if (this.effects) this.effects.gain.setTargetAtTime(this.enabled ? this.effectsVolume : 0, now, 0.05);
+    const backSoft = 1 - (1 - END_BACKGROUND) * this.endSoft, gameSoft = 1 - (1 - END_EFFECTS) * this.endSoft;
+    this.nature.gain.setTargetAtTime(this.active && this.enabled ? this.volume * backSoft : 0, now, this.active ? (this.endSoft > 0 ? 0.6 : 0.9) : 0.15);
+    if (this.effects) this.effects.gain.setTargetAtTime(this.enabled ? this.effectsVolume * gameSoft : 0, now, this.endSoft > 0 ? 0.4 : 0.05);
 
     // The wind comes and goes on its own, and the leaves answer it a moment later.
     const t = this.clock, swell = drift(t * 0.35, 1.7), gust = drift((t - 1.2) * 0.35, 1.7);

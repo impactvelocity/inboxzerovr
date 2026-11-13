@@ -84,7 +84,7 @@ export const castleLetters: LetterTheme = {
     const up = (FAR.v - 0.48) * 1.57079633;
     from.set(home.x, head.y + Math.sin(up) * FAR.metres, head.z - Math.cos(up) * FAR.metres);
     via.lerpVectors(from, home, 0.6); via.y += 0.22;
-    return { scale: 1, pose: 'face' as const, seconds: 1.8, ease: 2, sway: 0.16 };      // (1.8 s up the hall since 2026-11-12, "a bit faster into view"; it was 2.6)
+    return { scale: 1, pose: 'face' as const, seconds: 1.15, ease: 3, sway: 0.16 };      // (as Kyoto's: 1.15 s, quick then slowing, since 2026-11-12, "make it feel the same"; it was 2.6 s, then 1.8, both a steady glide)
   },
 };
 

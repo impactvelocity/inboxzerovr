@@ -8,5 +8,15 @@
       "up": 0,
       "forward": 1
     }
+  ],
+  "castle": [
+    {
+      "tipForward": 4,
+      "tipRight": 0,
+      "spin": 3,
+      "right": 0,
+      "up": 0,
+      "forward": 0
+    }
   ]
 }

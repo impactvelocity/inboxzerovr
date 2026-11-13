@@ -705,9 +705,17 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    */
   const LOGO_FILE: Record<string, string> = { lumber: 'lumber', knockout: 'knockout', kyoto: 'kyoto', office: 'office', office2: 'office', castle: 'castle', lab: 'lab', space: 'space', inferno: 'inferno' };
   const LOGO_WIDTH = 0.66;      // (a bit smaller since 2026-11-12; smaller again as it came nearer, so it looks a little bigger than it did)
+  // The end, tried as pure hitting (2026-11-12: "try end with no grab, but its same position now, but make the weapon hit
+  // even if its further way, so its just hitting and slashing a fun mayhem"): nothing there can be taken hold of, and
+  // a swing reaches the logo, bar and line from much further off. (The grab and its thread are kept, off.)
+  const END_GRAB = false;
+  /** The progress bar and the CLEARED line at the end, as things to cut too: off since 2026-11-12, "drop the end subtitle and progress bar, just logo" (the bar swells and floats away instead). */
+  const END_PARTS = false;
+  /** How far past the weapon's tip a swing reaches the end's pieces, how much wider it gets per metre out, and how fast the tip must move. */
+  const END_REACH = { metres: 2.6, widen: 0.4, speed: 1.2 };
   const GRAB_LOOKS = 1.2;      // the end's pieces, held: how much bigger they look than where they floated, at most
   const END_DARKEN_SECONDS = 20;      // the end of a game: how long the level takes to go dark behind the logo
-  const LOGO_DISTANCE = 1.2;    // how far in front of the seat it floats (2026-11-12: "make the logo a closer, it feels far away to smash"; it was 1.45 m. Then 1.0, and later that day 1.2: "a bit further from the player")
+  const LOGO_DISTANCE = 0.95;   // how far in front of the seat it floats (2026-11-12: "make the logo a closer, it feels far away to smash"; it was 1.45 m. Then 1.0, then 1.2: "a bit further from the player", then 0.95: "make end logo and parts closer to player")
   const LOGO_SPREAD = LOGO_DISTANCE / 1.0;      // the bar above it and the line below it, spaced to stay at the same angles as at 1 m
   const SMASHED_TO_HOME = 2.5;  // seconds after the logo is smashed before the game fades out to the home screen (2026-11-12)
   // hits it takes: the last of them breaks it up. A boss to beat (2026-11-12: "many more cuts to beat, more like a boss
@@ -847,9 +855,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     // line of how many were cleared is no more; two and a half seconds on, everything bursts out of it)
     logo.exploded = false;
     let sheet: Sheet;
-    try { sheet = await logoSheet(LOGO_FILE[theme.id] ?? 'kyoto'); } catch { if (game.phase === 'summary') endLine.introAt = clock; return; }
+    try { sheet = await logoSheet(LOGO_FILE[theme.id] ?? 'kyoto'); } catch { if (END_PARTS && game.phase === 'summary') endLine.introAt = clock; return; }
     if (!logo.wanted || game.phase !== 'summary' || shows.some(x => x.kind === 'logo')) return;
-    endLine.introAt = clock + LINE_AFTER_LOGO;      // (the line under it, once it is in: it pops in over 0.8 s)
+    if (END_PARTS) endLine.introAt = clock + LINE_AFTER_LOGO;      // (the line under it, once it is in: it pops in over 0.8 s)
     const h = LOGO_WIDTH * sheet.surface.height / sheet.surface.width, bar = theme.bar ?? [theme.accent ?? '#f6b3cc', theme.accent ?? '#f6b3cc'];
     logo.home.set(seat.x * 0.7, seat.y - 0.06 * LOGO_SPREAD, seat.z - LOGO_DISTANCE);      // (a little lower too, in the swing)
     look3.position.copy(logo.home); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z);
@@ -1533,7 +1541,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    * Does the blade's sweep since last frame pass through this body? If so, cut it. With `reach`
    * the blade counts on past its tip as a line (tune.swordReach), its hit box widening as it goes.
    */
-  function tryBlade(body: Body, blade: BladeTracker, dt: number, reach: boolean, dock?: LetterTheme['dock'], crowded = false): boolean {
+  function tryBlade(body: Body, blade: BladeTracker, dt: number, reach: boolean, dock?: LetterTheme['dock'], crowded = false, far = false): boolean {
     const mesh = body.mesh;
     mesh.updateMatrixWorld(true);
     m1.copy(mesh.matrixWorld).invert();
@@ -1542,10 +1550,11 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     // (shown on something: the whole of that thing can be hit, behind the letter and round it)
     const back = dock ? dock.behind / body.size : depth, margin = tune.hitMargin + (dock ? dock.margin / body.size : 0);
     const length = blade.tip.distanceTo(blade.base);
-    const span = reach && length > 0.05 && blade.speed >= tune.swordReachSpeed ? 1 + tune.swordReach / length : 1;
+    // (far: the end's logo, bar and line, hit from a long way off: END_REACH)
+    const span = reach && length > 0.05 && blade.speed >= (far ? END_REACH.speed : tune.swordReachSpeed) ? 1 + (far ? END_REACH.metres : tune.swordReach) / length : 1;
     for (let s = Math.ceil(8 * span); s >= 1; s--) {
       // f runs along the blade: 1 is its tip, more than 1 is out on the line past it
-      const f = s / 8, wide = tune.swordWiden * Math.max(0, f - 1) * length;
+      const f = s / 8, wide = (far ? END_REACH.widen : tune.swordWiden) * Math.max(0, f - 1) * length;
       was.lerpVectors(lastBase, lastTip, f); now.lerpVectors(blade.base, blade.tip, f);
       bladeVel.copy(now).sub(was).divideScalar(dt);
       if (bladeVel.length() < tune.cutSpeed) continue;
@@ -1921,7 +1930,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     mesh.updateMatrixWorld(true);
     const at = v2.copy(tool.origin).addScaledVector(tool.direction, along).applyMatrix4(m1.copy(mesh.matrixWorld).invert());
     // (the end's logo takes its hits from the spray too, like a blade's: one at a time, LOGO_HITS to break it)
-    if (shows.some(x => x.kind === 'logo' && x.body === body)) { const turn = Math.random() * Math.PI; slice(body, at.x, at.y, Math.cos(turn), Math.sin(turn), v1.copy(tool.direction).multiplyScalar(3), 0.6); return true; }
+    // (the bar and the line too, so a sprayer can beat them all: 2026-11-12)
+    if (shows.some(x => (x.kind === 'logo' || x.kind === 'bar' || x.kind === 'line') && x.body === body)) { const turn = Math.random() * Math.PI; slice(body, at.x, at.y, Math.cos(turn), Math.sin(turn), v1.copy(tool.direction).multiplyScalar(3), 0.6); return true; }
     soak(body, Math.max(-W / 2 + 0.03, Math.min(W / 2 - 0.03, at.x)), Math.max(-H / 2 + 0.03, Math.min(H / 2 - 0.03, at.y)));
     return true;
   }
@@ -2230,7 +2240,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       }
       // the end of a game: the same thread to what the left hand has, or would take (the logo, the bar, the line, an
       // email), as the emails have it (2026-11-12: "make the line for grabbing show on end scene like when grabbing email")
-      if (!to && hand.valid && game.phase === 'summary') {
+      if (END_GRAB && !to && hand.valid && game.phase === 'summary') {
         const held = shows.find(x => x.held);
         if (held) { to = threadAt.copy(held.body.mesh.position); want = clamp01((to.distanceTo(hand.pos) - 0.12) * 4) * 0.6; }
         else {
@@ -2305,7 +2315,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           // of them a hit bursts the piece rather than splitting it (tryBlade).
           if (body.age < 0.06 || body.mode === 'sent' || body.melting || body.sheet.burn > 0.93 || noCut.has(body)) continue;
           const kept = body.mode === 'kept';
-          if (!tryBlade(body, blade, dt, true, undefined, loose.length >= MAX_LOOSE)) continue;
+          const endPiece = game.phase === 'summary' && shows.some(x => x.body === body && (x.kind === 'logo' || x.kind === 'bar' || x.kind === 'line'));
+          if (!tryBlade(body, blade, dt, true, undefined, loose.length >= MAX_LOOSE, endPiece)) continue;
           if (kept) {
             // cut out of the air: what falls is only paper. Saved in round one, it stays saved (2026-11-12: "when an
             // email is thrown and its marked as saved, make it so you can still cut it, but its still saved");
@@ -2429,7 +2440,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     } else if (game.phase === 'summary') {
       game.timer += dt;
       // the end comes in once the line under the title has settled
-      if (!logo.started && game.timer > 0.9) { logo.started = true; handBar(['bar']); void showLogo(); }
+      if (!logo.started && game.timer > 0.9) { logo.started = true; if (END_PARTS) handBar(['bar']); else ui.dismissBar(); void showLogo(); }
       // The line under it (CLEARED 10 EMAILS) only once the logo is in (2026-11-12: "load in the logo first and then after
       // thats in, load the subtitle badge after"): it pops in as a title's line does, then becomes something to cut.
       if (endLine.introAt >= 0 && clock >= endLine.introAt) { endLine.introAt = -1; ui.intro('', endLine.text); endLine.handAt = clock + 0.75; }
@@ -2445,7 +2456,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
         fx.spray(at, at, v1.set(rand(0.25), 0.15 + Math.random() * 0.25, rand(0.2)), Math.random() < 0.6 ? 1 : 0, 2, false, 0.4);
       }
       // the left hand takes hold of the logo, the bar or the line, and throws them (back on 2026-11-12, as asked)
-      grabShows(dt, head);
+      if (END_GRAB) grabShows(dt, head);
       // one of them is cut (or melted): a burst (the logo's the biggest), and its pieces burn away a few seconds later
       for (const show of shows) {
         if (show.gone >= 0 || (show.body.mode === 'show' && loose.includes(show.body))) continue;      // (cut: gone from the air; sprayed: melting)
