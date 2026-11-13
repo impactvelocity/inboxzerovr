@@ -100,7 +100,7 @@ async function main() {
   const inputs = new Map<keyof Tweak, { range: HTMLInputElement; number: HTMLInputElement }>();
   for (const key of TWEAK_KEYS) {
     const s = SLIDERS[key], row = document.createElement('div'); row.className = 'row';
-    row.innerHTML = `<div class="top"><b>${s.label}</b><span>${s.hint}</span></div><div class="ctl"><button type="button" data-d="-1">−</button><input type="range" min="${s.min}" max="${s.max}" step="${s.step}"><button type="button" data-d="1">+</button><input type="number" step="${s.step}"></div>`;
+    row.innerHTML = `<div class="top"><b>${s.label}</b><span>${s.hint}</span></div><div class="ctl"><button type="button" data-d="-1">−</button><input type="range" min="${s.min}" max="${s.max}" step="${s.step}"><button type="button" data-d="1">+</button><input type="number" step="${s.step}"><span class="set"><b></b><i></i></span></div>`;
     document.getElementById(['right', 'up', 'forward'].includes(key) ? 'moves' : 'turns')!.append(row);
     const range = row.querySelector('input[type=range]') as HTMLInputElement, number = row.querySelector('input[type=number]') as HTMLInputElement;
     inputs.set(key, { range, number });
@@ -111,6 +111,16 @@ async function main() {
   }
   function fill() {
     const t = tweaks.get(level);
+    // to the right of each input, where the weapon is set now: its saved default plus the slider (2026-11-13: "show the
+    // numbers set for each weapon so can see angle, etc to the right of input")
+    const keptSet = tweaks.savedTotal(level);
+    for (const key of TWEAK_KEYS) {
+      const set = inputs.get(key)!.range.closest('.row')!.querySelector('.set') as HTMLElement, unit = ['right', 'up', 'forward'].includes(key) ? ' cm' : '°';
+      const total = +(keptSet[key] + t[key]).toFixed(2), fmt = (v: number) => `${v > 0 ? '+' : ''}${v}${unit}`;
+      set.querySelector('b')!.textContent = fmt(total);
+      set.querySelector('i')!.textContent = keptSet[key] !== 0 ? `saved ${fmt(keptSet[key])}` : 'saved 0';
+      set.classList.toggle('zero', total === 0);
+    }
     for (const [key, { range, number }] of inputs) { range.value = String(t[key]); if (document.activeElement !== number) number.value = String(t[key]); }
     const changed = TWEAK_KEYS.filter(k => t[k] !== 0).map(k => `${k}: ${t[k]}`).join(', ');
     const kept = tweaks.savedCount(level), keptLine = kept ? ` · ${kept} change${kept === 1 ? '' : 's'} saved as its default` : '';

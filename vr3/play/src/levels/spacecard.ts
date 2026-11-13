@@ -1,7 +1,7 @@
 import type { Email } from '../mail/emails';
 import { Categories } from '../mail/emails';
 import * as PixelFont from '../mail/pixelFont';
-import { H, W, type CardPainter } from './cards';
+import { H, W, plainLetter, type CardPainter } from './cards';
 
 /**
  * What an email looks like in Super Space: a pale data slate, its kind of mail in the bar across its
@@ -86,17 +86,8 @@ export const spaceCard: CardPainter = (g, email) => {
   // what sort of mail it is: the bar's own words, in the middle of it
   pixel(g, Categories.label(email.category), W / 2, 51, 5, IVORY, 'center');
 
-  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-  const left = 76, wide = W - 2 * left;
-  g.fillStyle = MAGENTA; g.fillRect(left, 132, 10, 50);
-  g.fillStyle = INK; g.font = `800 56px ${SANS}`; g.fillText(fit(g, email.from, wide - 34), left + 30, 178);
-  g.font = `800 52px ${SANS}`;
-  const subject = wrap(g, email.subject, wide, 2);
-  subject.forEach((text, i) => g.fillText(text, left, 268 + i * 62));
-  const top = 268 + subject.length * 62;
-  g.fillStyle = line; g.globalAlpha = 0.75; g.fillRect(left, top - 34, wide, 5); g.globalAlpha = 1;
-  g.fillStyle = SOFT; g.font = `400 38px ${SANS}`;
-  wrap(g, gist(email), wide, Math.max(1, Math.floor((H - 76 - top) / 50))).forEach((text, i) => g.fillText(text, left, top + 26 + i * 50));
+  // (the words plain in the middle since 2026-11-13, as Kyoto's and the Haunted Halls' are: subject, sender, message; no magenta tick)
+  plainLetter(g, email, 70, BAR + 6, W - 140, H - BAR - 70, { family: SANS, subject: INK, from: PLUM, words: SOFT });
   // along the foot: the signal it came in on, a row of pixels different for every email
   for (let i = 0; i < 34; i++) { const tall = 6 + Math.floor(random() * 4) * 6; g.fillStyle = i % 9 === 4 ? MAGENTA : 'rgba(74,28,94,.42)'; g.fillRect(W / 2 - 204 + i * 12, H - EDGE - 20 - tall, 8, tall); }
 };

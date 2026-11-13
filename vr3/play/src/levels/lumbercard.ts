@@ -1,7 +1,7 @@
 import type { Email } from '../mail/emails';
 import { Categories } from '../mail/emails';
 import * as PixelFont from '../mail/pixelFont';
-import { H, W, type CardPainter } from './cards';
+import { H, W, plainLetter, type CardPainter } from './cards';
 
 /**
  * What an email looks like in LumberHack: TIMBER POST, a sheet of cream paper tacked to a board
@@ -100,7 +100,7 @@ export const lumberCard: CardPainter = (g, email) => {
   g.fillStyle = BARN_DARK; g.fillRect(x0, y0 + BAR - 10, pw, 4);
   g.fillStyle = GOLD; g.fillRect(x0, y0 + BAR - 6, pw, 6);
   maple(g, x0 + 54, y0 + 40, 25, -0.25, GOLD);
-  pixel(g, 'TIMBER POST', x0 + 100, y0 + 40, 6, CREAM);
+  if (!email) pixel(g, 'TIMBER POST', x0 + 100, y0 + 40, 6, CREAM);
   // four nails
   for (const [nx, ny] of [[x0 + 16, y0 + 16], [x0 + pw - 16, y0 + 16], [x0 + 16, y0 + ph - 16], [x0 + pw - 16, y0 + ph - 16]]) nail(g, nx, ny, 8);
 
@@ -112,25 +112,11 @@ export const lumberCard: CardPainter = (g, email) => {
     g.font = `600 38px ${SANS}`; g.fillStyle = SOFT; g.fillText('chop this one to begin', W / 2, 458);
     return;
   }
-  // what sort of mail it is, as a tag in the band
-  const label = Categories.label(email.category), tab = PixelFont.width(label, 4) + 40;
-  g.fillStyle = 'rgba(60,14,10,.45)'; g.fillRect(x0 + pw - 44 - tab, y0 + 17, tab, 46);
-  g.strokeStyle = GOLD; g.lineWidth = 3; g.strokeRect(x0 + pw - 44 - tab, y0 + 17, tab, 46);
-  pixel(g, label, x0 + pw - 44 - tab / 2, y0 + 40, 4, '#ffe2a0', 'center');
-
-  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-  const left = x0 + 44, wide = pw - 88;
-  g.fillStyle = BARN; g.fillRect(left, y0 + BAR + 30, 10, 50);
-  g.fillStyle = INK; g.font = `800 54px ${SANS}`; g.fillText(fit(g, email.from, wide - 34), left + 30, y0 + BAR + 75);
-  g.font = `800 50px ${SANS}`;
-  const subject = wrap(g, email.subject, wide, 2);
-  subject.forEach((text, i) => g.fillText(text, left, y0 + BAR + 158 + i * 60));
-  const top = y0 + BAR + 158 + subject.length * 60;
-  // a saw-cut rule: a line with teeth along it
-  g.fillStyle = 'rgba(181,53,42,.8)'; g.fillRect(left, top - 36, wide, 4);
-  for (let x = left; x < left + wide - 10; x += 20) { g.beginPath(); g.moveTo(x, top - 32); g.lineTo(x + 10, top - 24); g.lineTo(x + 20, top - 32); g.fill(); }
-  g.fillStyle = SOFT; g.font = `400 37px ${SANS}`;
-  wrap(g, gist(email), wide - 96, Math.max(1, Math.floor((y0 + ph - 30 - top) / 48))).forEach((text, i) => g.fillText(text, left, top + 24 + i * 48));
+  // what sort of mail it is: the band's own words, in the middle of it, as Super Space's bar has
+  // (TIMBER POST and a tag to the right until 2026-11-13; then the words plain in the middle, as Kyoto's
+  // and the Haunted Halls' are, kept narrow enough to clear the postmark)
+  pixel(g, Categories.label(email.category), W / 2, y0 + 38, 5, CREAM, 'center');
+  plainLetter(g, email, x0 + 140, y0 + BAR + 4, pw - 280, ph - BAR - 24, { family: SANS, subject: INK, from: BARN_DARK, words: SOFT });
   // the postmark, bottom right: a ring of ink with a leaf in it, turned a little differently on every one
   const px = x0 + pw - 82, py = y0 + ph - 80, turn = random() * 0.8 - 0.4;
   g.save(); g.translate(px, py); g.rotate(turn); g.globalAlpha = 0.6;

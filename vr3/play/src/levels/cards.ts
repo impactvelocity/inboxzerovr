@@ -65,6 +65,36 @@ function gist(email: Email) {
   if (!parts.length && email.items?.length) parts.push(email.items.slice(0, 3).join(' · '));
   return parts.join('. ') || 'No preview.';
 }
+/** How `plainLetter` sets the words: one family, and three inks (subject, sender, message). */
+export interface PlainLook { family: string; subject: string; from: string; words: string; clear?: number }
+/**
+ * The words of an email set plainly, as Kyoto's and the Haunted Halls' are: no heading, the subject
+ * first and largest, who it is from under it, then as much of the message as fits. All of it in the
+ * middle of the box (x, y, w, h), left to right and top to bottom, lines balanced so none is left
+ * with one word. `clear` narrows the subject (an icon in a top corner); the message is at most four lines.
+ * (Toxic, Super Space, Inferno and LumberHack since 2026-11-13: "make simpler text like kyoto + haunted,
+ * so its easier to read". Each had its own heading, a "Subject:" label or a sender off to one side.)
+ */
+export function plainLetter(g: CanvasRenderingContext2D, email: Email, x: number, y: number, w: number, h: number, look: PlainLook) {
+  const SUBJECT = `800 56px ${look.family}`, FROM = `600 38px ${look.family}`, WORDS = `400 37px ${look.family}`;
+  const LINE = 66, TO_FROM = 74, TO_WORDS = 64, STEP = 50;
+  g.font = SUBJECT;
+  const subject = balance(g, email.subject, w - (look.clear ?? 0), 2);
+  const room = h - 70 - (subject.length - 1) * LINE - TO_FROM - TO_WORDS;
+  g.font = WORDS;
+  const words = balance(g, gist(email), w, Math.min(4, Math.max(1, Math.floor(room / STEP) + 1)));
+  const tall = (subject.length - 1) * LINE + TO_FROM + TO_WORDS + (words.length - 1) * STEP;
+  const cx = x + w / 2;
+  let at = y + h / 2 - tall / 2;
+  g.textAlign = 'center'; g.textBaseline = 'middle';
+  g.font = SUBJECT; g.fillStyle = look.subject;
+  subject.forEach((line, i) => g.fillText(line, cx, at + i * LINE));
+  at += (subject.length - 1) * LINE + TO_FROM;
+  g.font = FROM; g.fillStyle = look.from; g.fillText(fit(g, email.from, w), cx, at);
+  at += TO_WORDS;
+  g.font = WORDS; g.fillStyle = look.words;
+  words.forEach((line, i) => g.fillText(line, cx, at + i * STEP));
+}
 function pixel(g: CanvasRenderingContext2D, text: string, left: number, yMid: number, cell: number, colour: string, align: 'left' | 'center' | 'right' = 'left') {
   const upper = text.toUpperCase(), wide = PixelFont.width(upper, cell);
   const x = Math.round(align === 'center' ? left - wide / 2 : align === 'right' ? left - wide : left);
@@ -252,28 +282,21 @@ export const labCard: CardPainter = (g, email, hazard) => {
   const blobs: [number, number, number][] = [[24, 150, 30], [8, 196, 20], [36, 214, 13], [14, 330, 24], [40, 352, 11], [20, 470, 30], [50, 505, 14], [96, H - 16, 34], [150, H - 8, 20], [190, H - 22, 12], [W - 26, 420, 26], [W - 12, 470, 16], [W - 44, H - 20, 30], [150, 18, 22], [196, 8, 13], [W / 2 + 120, H - 10, 18]];
   for (const [x, y, r] of blobs) slime(g, x + (random() - 0.5) * 16, y + (random() - 0.5) * 16, r * (0.8 + random() * 0.5));
   const ink = '#15140f', grey = '#5f5c50', top = hazard ? 56 : 30;
+  if (email) {
+    // (just the mark, small in its corner, and the words plain in the middle since 2026-11-13: no CONTAMINATED MAIL heading)
+    if (hazard) trefoil(g, 100, top + 56, 40); else biohazard(g, 100, top + 56, 50, ink, paper);
+    plainLetter(g, email, 70, top + 6, W - 140, H - top - (hazard ? 46 : 26), { family: SANS, subject: ink, from: '#3d3a30', words: grey, clear: 220 });
+    return;
+  }
   g.textAlign = 'left'; g.textBaseline = 'middle';
   if (hazard) trefoil(g, 122, top + 78, 60); else biohazard(g, 122, top + 78, 74, ink, paper);
   g.fillStyle = ink; g.font = `800 62px ${SANS}`;
   g.fillText(hazard ? 'RADIOACTIVE MAIL' : 'CONTAMINATED MAIL', 214, top + 80);
   g.fillStyle = grey; g.fillRect(84, top + 160, W - 168, 4);
-  if (!email) {
-    g.textAlign = 'center'; g.fillStyle = ink;
-    g.font = `800 70px ${SANS}`; g.fillText('INBOX ZERO', W / 2, top + 236);
-    g.font = `600 42px ${SANS}`; g.fillStyle = grey; g.fillText('The Lab', W / 2, top + 300);
-    g.fillStyle = grey; g.fillRect(84, top + 344, W - 168, 4);
-    g.fillStyle = ink; g.font = `700 44px ${SANS}`; g.fillText('spray this one to begin', W / 2, top + 404);
-    g.font = `400 30px ${SANS}`; g.fillStyle = grey; g.fillText('hold the trigger · left hand: take one and throw it, to keep it', W / 2, top + 462);
-    return;
-  }
-  envelope(g, 92, top + 196, 70, 50, ink, 6);
-  g.fillStyle = grey; g.font = `600 34px ${SANS}`; g.fillText('Subject:', 192, top + 204);
-  g.font = `400 30px ${SANS}`; g.textAlign = 'right'; g.fillText(fit(g, `from ${email.from}`, 440), W - 96, top + 204); g.textAlign = 'left';
-  g.fillStyle = ink; g.font = `800 58px ${SANS}`;
-  const subject = wrap(g, email.subject, W - 290, 2);
-  subject.forEach((line, i) => g.fillText(line, 192, top + 262 + i * 64));
-  const y = top + 262 + subject.length * 64 - 10;
-  g.fillStyle = grey; g.fillRect(84, y, W - 168, 4);
-  g.font = `400 40px ${SANS}`;
-  wrap(g, gist(email), W - 190, Math.max(1, Math.floor((H - (hazard ? 60 : 30) - y - 30) / 50))).forEach((line, i) => g.fillText(line, 92, y + 46 + i * 50));
+  g.textAlign = 'center'; g.fillStyle = ink;
+  g.font = `800 70px ${SANS}`; g.fillText('INBOX ZERO', W / 2, top + 236);
+  g.font = `600 42px ${SANS}`; g.fillStyle = grey; g.fillText('The Lab', W / 2, top + 300);
+  g.fillStyle = grey; g.fillRect(84, top + 344, W - 168, 4);
+  g.fillStyle = ink; g.font = `700 44px ${SANS}`; g.fillText('spray this one to begin', W / 2, top + 404);
+  g.font = `400 30px ${SANS}`; g.fillStyle = grey; g.fillText('hold the trigger · left hand: take one and throw it, to keep it', W / 2, top + 462);
 };

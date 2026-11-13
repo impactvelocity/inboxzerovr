@@ -34,6 +34,9 @@ pre{background:#0005;border-radius:8px;padding:9px;font-size:16px;white-space:pr
 @media(max-width:825px){body{grid-template-columns:1fr;grid-template-rows:42vh auto;height:auto}#view{height:42vh}aside{border-left:0;border-top:2px solid var(--line)}}
 #toast{position:fixed;left:50%;top:20px;transform:translate(-50%,-140%);z-index:9;background:#123b2e;color:var(--accent);border:2px solid var(--accent);border-radius:12px;padding:14px 22px;font-size:22px;font-weight:700;box-shadow:0 10px 40px #000a;transition:transform .35s cubic-bezier(.2,1.4,.4,1);pointer-events:none;max-width:90vw;text-align:center}
 #toast.on{transform:translate(-50%,0)}
+.row .set{display:flex;flex-direction:column;align-items:flex-end;min-width:86px;line-height:1.15;text-align:right}
+.row .set b{font-size:20px;color:var(--accent)}.row .set.zero b{color:var(--dim)}
+.row .set i{font-style:normal;font-size:13px;color:var(--dim)}
 </style></head>
 <body>
 <div id="toast" role="status" aria-live="polite"></div>

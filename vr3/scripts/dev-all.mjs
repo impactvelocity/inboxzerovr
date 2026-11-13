@@ -12,5 +12,13 @@ const run = (name, args, cwd) => {
   return child;
 };
 const kids = [run('site', ['run', 'dev'], root), run('game', ['run', 'dev', ...process.argv.slice(2)], `${root}play`)];
+// and the Quest's USB tunnel to the game, put back whenever the headset's USB link resets (scripts/quest-tunnel.mjs).
+// Not one of the servers: if it stops, they keep running.
+{
+  const tunnel = spawn(process.execPath, [fileURLToPath(new URL('./quest-tunnel.mjs', import.meta.url))], { stdio: ['ignore', 'pipe', 'pipe'] });
+  const tag = (data) => String(data).split('\n').filter(Boolean).forEach(line => console.log(`[quest] ${line}`));
+  tunnel.stdout.on('data', tag); tunnel.stderr.on('data', tag);
+  kids.push(tunnel);
+}
 const stop = () => { for (const k of kids) k.kill('SIGTERM'); };
 process.on('SIGINT', stop); process.on('SIGTERM', stop);

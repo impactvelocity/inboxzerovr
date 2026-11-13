@@ -67,6 +67,13 @@ export const tweaks = {
   },
   /** How many tweaks have been saved as this level's default (src/weapon-holds.json). */
   savedCount(level: string): number { return saved[level]?.length ?? 0; },
+  /** What has been saved as this level's default, each number added up (exact for one save; near enough for a few small ones). */
+  savedTotal(level: string): Tweak {
+    const total = { ...ZERO };
+    for (const t of saved[level] ?? []) for (const k of TWEAK_KEYS) total[k] += t[k] ?? 0;
+    for (const k of TWEAK_KEYS) total[k] = +total[k].toFixed(2);
+    return total;
+  },
   /** Make this level's live tweak part of its default (written into src/weapon-holds.json by the dev server), and zero it. */
   saveAsDefault(level: string) { import.meta.hot?.send('vr3:tweak:save', { level }); },
   /** Forget every tweak saved as this level's default. */

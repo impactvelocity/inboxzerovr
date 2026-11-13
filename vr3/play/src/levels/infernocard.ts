@@ -1,5 +1,5 @@
 import type { Email } from '../mail/emails';
-import { H, W, type CardPainter } from './cards';
+import { H, W, plainLetter, type CardPainter } from './cards';
 
 /**
  * What an email looks like in Inferno: BURN AFTER READING on cream paper, singed all round its
@@ -89,28 +89,22 @@ export const infernoCard: CardPainter = (g, email, hazard) => {
   }
   for (const [x, y] of [[0, 0], [W, 0], [0, H], [W, H]]) scorch(g, x, y, 70 + random() * 50, hazard);
   const top = hazard ? 56 : 30;
+  if (email) {
+    // (just a small flame in its corner, and the words plain in the middle since 2026-11-13: no BURN AFTER READING heading, no "Subject:")
+    flame(g, 100, top + 58, 40, hazard ? '#e2371c' : BRICK, hazard ? '#ffc23d' : paper);
+    plainLetter(g, email, 76, top + 6, W - 152, H - top - (hazard ? 50 : 30), { family: SANS, subject: INK, from: hazard ? '#a82a17' : '#4a3a2e', words: SOFT, clear: 220 });
+    return;
+  }
+  // the title card (not shown since 2026-11-11)
   g.textAlign = 'left'; g.textBaseline = 'middle';
   flame(g, 122, top + 76, 54, hazard ? '#e2371c' : BRICK, hazard ? '#ffc23d' : paper);
   g.fillStyle = hazard ? '#c1260f' : BRICK; g.font = `800 60px ${SANS}`;
-  g.fillText(hazard ? 'HIGHLY FLAMMABLE' : 'BURN AFTER READING', 200, top + 80);
+  g.fillText('BURN AFTER READING', 200, top + 80);
   g.fillStyle = SOFT; g.fillRect(84, top + 160, W - 168, 4);
-  if (!email) {
-    g.textAlign = 'center'; g.fillStyle = INK;
-    g.font = `800 70px ${SANS}`; g.fillText('INBOX ZERO', W / 2, top + 236);
-    g.font = `600 42px ${SANS}`; g.fillStyle = SOFT; g.fillText('Inferno', W / 2, top + 300);
-    g.fillStyle = SOFT; g.fillRect(84, top + 344, W - 168, 4);
-    g.fillStyle = INK; g.font = `700 44px ${SANS}`; g.fillText('burn this one to begin', W / 2, top + 404);
-    g.font = `400 30px ${SANS}`; g.fillStyle = SOFT; g.fillText('hold the trigger · left hand: take one and throw it, to keep it', W / 2, top + 462);
-    return;
-  }
-  envelope(g, 92, top + 196, 70, 50, INK, 6);
-  g.fillStyle = SOFT; g.font = `600 34px ${SANS}`; g.fillText('Subject:', 192, top + 204);
-  g.font = `400 30px ${SANS}`; g.textAlign = 'right'; g.fillText(fit(g, `from ${email.from}`, 440), W - 96, top + 204); g.textAlign = 'left';
-  g.fillStyle = INK; g.font = `800 58px ${SANS}`;
-  const subject = wrap(g, email.subject, W - 290, 2);
-  subject.forEach((line, i) => g.fillText(line, 192, top + 262 + i * 64));
-  const y = top + 262 + subject.length * 64 - 10;
-  g.fillStyle = SOFT; g.fillRect(84, y, W - 168, 4);
-  g.fillStyle = INK; g.font = `400 40px ${SANS}`;
-  wrap(g, gist(email), W - 190, Math.max(1, Math.floor((H - (hazard ? 60 : 30) - y - 30) / 50))).forEach((line, i) => g.fillText(line, 92, y + 46 + i * 50));
+  g.textAlign = 'center'; g.fillStyle = INK;
+  g.font = `800 70px ${SANS}`; g.fillText('INBOX ZERO', W / 2, top + 236);
+  g.font = `600 42px ${SANS}`; g.fillStyle = SOFT; g.fillText('Inferno', W / 2, top + 300);
+  g.fillStyle = SOFT; g.fillRect(84, top + 344, W - 168, 4);
+  g.fillStyle = INK; g.font = `700 44px ${SANS}`; g.fillText('burn this one to begin', W / 2, top + 404);
+  g.font = `400 30px ${SANS}`; g.fillStyle = SOFT; g.fillText('hold the trigger · left hand: take one and throw it, to keep it', W / 2, top + 462);
 };

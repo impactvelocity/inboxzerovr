@@ -8,12 +8,12 @@
     "forward": 0
   },
   "space": {
-    "tipForward": 0,
-    "tipRight": 0,
+    "tipForward": 5,
+    "tipRight": 9,
     "spin": 0,
-    "right": 0,
-    "up": 0,
-    "forward": 0
+    "right": 1,
+    "up": -9,
+    "forward": 3
   },
   "castle": {
     "tipForward": 0,
@@ -40,6 +40,14 @@
     "forward": 0
   },
   "lumber": {
+    "tipForward": 0,
+    "tipRight": 0,
+    "spin": 0,
+    "right": 0,
+    "up": 0,
+    "forward": 0
+  },
+  "office2": {
     "tipForward": 0,
     "tipRight": 0,
     "spin": 0,
