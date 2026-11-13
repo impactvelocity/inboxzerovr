@@ -502,7 +502,7 @@ export function createRoundUi(world: World) {
     look.position.set(x, y, z); look.lookAt(seat.x, seat.y - 0.04, seat.z);
     object.position.copy(look.position); object.quaternion.copy(look.quaternion);       // (lookAt turns an object's +z, where a plane's picture is, to the player)
   }
-  const REPLY_SIDE = 0.52, REPLY_AHEAD = 1.22, MIC_DOWN = 0.46, MIC_AHEAD = 0.9;      // round two's targets, from the head (metres)
+  const REPLY_SIDE = 0.52, REPLY_AHEAD = 1.1, MIC_DOWN = 0.46, MIC_AHEAD = 0.9;      // round two's targets, from the head (metres; the replies 1.1 ahead since 2026-11-12, "just a bit closer ... less leaning forward": they were 1.22)
   /** Set everything out from where the player's head is now. Called as each round begins. */
   function place(head: THREE.Vector3, introAt?: { up: number; nearer: number; size: number }) {
     seat.copy(head);

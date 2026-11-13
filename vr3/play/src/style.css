@@ -22,7 +22,7 @@ body:not(.at-home) #home{opacity:0;visibility:hidden;pointer-events:none}
 .home-bg canvas.scene-air{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}      /* the level's air, over the shade */
 .home-bg::after{content:'';position:absolute;inset:0;z-index:1;background:radial-gradient(ellipse 75% 70% at 50% 45%,#07061a33 0%,#07061a80 70%,#07061acc 100%),linear-gradient(180deg,#07061a59 0%,#07061a1f 35%,#07061a8c 100%)}
 @keyframes home-drift{from{transform:scale(1)}to{transform:scale(1.06)}}
-.home-head{position:relative;top:-15px;display:flex;flex-direction:column;align-items:center;gap:clamp(6px,1.4vh,14px);text-align:center;text-shadow:0 2px 24px #000}
+.home-head{position:relative;top:0;margin-bottom:calc(-1 * clamp(6px,1.8vh,20px));display:flex;flex-direction:column;align-items:center;gap:clamp(6px,1.4vh,14px);text-align:center;text-shadow:0 2px 24px #000}      /* (nearer the levels since 2026-11-12, so the whole home sits in the middle of the Quest browser: it was lifted 15px clear of them) */
 #home h1{margin:0;line-height:0}
 /* the chosen level's own logo: it floats, things of its level come off it, and a glint crosses it now and then */
 #logo-stage{position:relative;display:block;width:min(62vw,440px,62vh);aspect-ratio:1889/428}      /* (by height too: the Quest's browser window is short) */
@@ -170,4 +170,5 @@ summary{font-size:10px;opacity:.65;cursor:pointer;padding:6px 0}
 .mail-count select{padding:6px 10px;border:1px solid #ffffff2a;border-radius:8px;background:#0d0b12;color:inherit;font:inherit}
 .mail-state{margin:10px 0 0 !important;min-height:1.5em;font-size:12px;color:var(--accent,#f6b3cc)}
 #mail-status{margin:0;min-height:1.4em;font-size:12px;letter-spacing:.04em;opacity:.8;text-align:center;color:var(--accent,#f6b3cc)}
+#mail-status:empty{display:none}      /* (an empty line under everything pushed the home up from the middle: 2026-11-12) */
 #home .dialog-actions .pix[hidden]{display:none}

@@ -81,7 +81,7 @@ const tune = {
   micRest: 0.2,         // and the last quarter, snapping shut: recording at 1.1 s (2026-11-12: "a bit faster, so slow to start ( ring) then be quick"; it was 2 s)
   chooseHold: 1.5,      // and at KEEP or REDO, after dictating
   wordSeconds: 0.24,    // the mock dictation: a word every this long
-  holdGrow: 1.25,       // held, it looks this much bigger than it did where it was taken from: its size as seen, and just a bit (1.15 until 2026-11-12, then 1.21: "lets try 5% larger", then "try 1.25")
+  holdGrow: 1.35,       // held, it looks this much bigger than it did where it was taken from: its size as seen, and a good bit more (1.15 until 2026-11-12, then 1.21, 1.25, 1.8 to test, 1.5, then "make 1.35 for email")
   // The rounds. One is so many emails; round two brings back the ones that were kept.
   // Round one's emails. 10 for demos for now (asked for on 2026-11-11); it will vary from day to day later, never more than 20.
   roundEmails: 10,
@@ -710,8 +710,12 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   const LOGO_DISTANCE = 1.2;    // how far in front of the seat it floats (2026-11-12: "make the logo a closer, it feels far away to smash"; it was 1.45 m. Then 1.0, and later that day 1.2: "a bit further from the player")
   const LOGO_SPREAD = LOGO_DISTANCE / 1.0;      // the bar above it and the line below it, spaced to stay at the same angles as at 1 m
   const SMASHED_TO_HOME = 2.5;  // seconds after the logo is smashed before the game fades out to the home screen (2026-11-12)
-  const LOGO_HITS = 4;          // hits it takes: the last of them breaks it up
-  const STRIP_HITS = 3;         // and the progress bar and the line under the logo, the same way (2026-11-12: "also need a few cuts to be done, so its more fun")
+  // hits it takes: the last of them breaks it up. A boss to beat (2026-11-12: "many more cuts to beat, more like a boss
+  // battle"): 12 for the logo and 8 for the bar and the line, then "make less hits for ending": 7 and 5, then "a bit less hits": 5 and 4. They were 4 and 3.
+  const LOGO_HITS = 5;
+  const STRIP_HITS = 4;         // (the progress bar and the line under the logo, the same way: 2026-11-12, "also need a few cuts to be done, so its more fun")
+  /** Each hit before the last chips off this much of what is left, so a third of it is left for the last: smaller chips the more hits it takes. */
+  const chipFor = (hits: number) => 1 - Math.pow(0.35, 1 / Math.max(1, hits - 1));
   const LOGO_RECOVER = 0.45;    // seconds after a hit before it can be hit again (one swing, one hit)
   const logoSheets = new Map<string, Promise<Sheet>>();
   function logoSheet(file: string) {
@@ -786,8 +790,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     hits?: number; area0?: number; shiftX?: number; shiftY?: number; shake?: number; hitAt?: number;
     /** The bar and the line: how far from the seat each was handed over; it shrinks as it comes nearer, keeping its size to the eye (a little bigger at the end), and that size now. */
     reach?: number; keep?: number;
-    /** Held: how much smaller it is drawn, for being nearer the eye (1 where it floated). */
-    grabSize?: number;
+    /** Held: its size now (1 where it floated), and its size, distance from the seat and the clock when it was taken. */
+    grabSize?: number; grabFrom?: number; grabAway?: number; grabbedAt?: number;
   }
   const shows: Show[] = [];
   /** The cards' own sheets, made for one end and let go at the next (their pieces may still be burning). */
@@ -819,8 +823,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    * grab the logo and progress bar at end and the subtitle to end ( also grab )"). Each glides in from where it
    * was, the bar to just above the logo and the line to just under it, in reach, keeping its size to the eye.
    */
-  function handBar() {
-    for (const which of ['bar', 'line'] as const) {
+  function handBar(parts: readonly ('bar' | 'line')[] = ['bar', 'line']) {
+    for (const which of parts) {
       const handed = ui.handOver(which);
       if (!handed) continue;
       const sheet = canvasSheet(handed.canvas); endSheets.push(sheet);
@@ -830,6 +834,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       else show.home.set(seat.x * 0.7, seat.y - 0.36 * LOGO_SPREAD, seat.z - LOGO_DISTANCE + 0.05);
     }
   }
+  /** The line under the logo at the end: what it says, when it pops in (clock; -1 not yet) and when it becomes cuttable. */
+  const endLine = { text: '', introAt: -1, handAt: -1 };
+  const LINE_AFTER_LOGO = 0.9;      // seconds after the logo appears that its line follows
   /** The end comes in: the line and the bar change to things that can be cut, and the logo arrives. */
   async function showLogo() {
     logo.wanted = true;
@@ -840,8 +847,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     // line of how many were cleared is no more; two and a half seconds on, everything bursts out of it)
     logo.exploded = false;
     let sheet: Sheet;
-    try { sheet = await logoSheet(LOGO_FILE[theme.id] ?? 'kyoto'); } catch { return; }
+    try { sheet = await logoSheet(LOGO_FILE[theme.id] ?? 'kyoto'); } catch { if (game.phase === 'summary') endLine.introAt = clock; return; }
     if (!logo.wanted || game.phase !== 'summary' || shows.some(x => x.kind === 'logo')) return;
+    endLine.introAt = clock + LINE_AFTER_LOGO;      // (the line under it, once it is in: it pops in over 0.8 s)
     const h = LOGO_WIDTH * sheet.surface.height / sheet.surface.width, bar = theme.bar ?? [theme.accent ?? '#f6b3cc', theme.accent ?? '#f6b3cc'];
     logo.home.set(seat.x * 0.7, seat.y - 0.06 * LOGO_SPREAD, seat.z - LOGO_DISTANCE);      // (a little lower too, in the swing)
     look3.position.copy(logo.home); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z);
@@ -887,8 +895,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       const turn = show.spin.length();
       if (turn > 1e-3) body.mesh.quaternion.premultiply(q1.setFromAxisAngle(v2.copy(show.spin).divideScalar(turn), turn * dt));
       show.spin.multiplyScalar(Math.exp(-dt * 0.5));
-      if (show.grabSize !== undefined) show.grabSize += (1 - show.grabSize) * (1 - Math.exp(-dt * 3));      // (let go of: back to its own size, easily)
-      body.mesh.scale.setScalar(swell * (show.kind === 'mail' ? MAIL_SIZE : show.keep ?? 1) * (show.grabSize ?? 1) * Math.min(1, 0.2 + t * 2.5));
+      // (let go of: from the size it was in the hand back to its own, easily, with no jump)
+      const own = show.kind === 'mail' ? 1 : show.keep ?? 1;
+      if (show.grabSize !== undefined) show.grabSize += (own - show.grabSize) * (1 - Math.exp(-dt * 3));
+      body.mesh.scale.setScalar(swell * (show.kind === 'mail' ? MAIL_SIZE : 1) * (show.grabSize ?? own) * Math.min(1, 0.2 + t * 2.5));
       // burst out: once it has slowed, it joins the swirl round in front from where it is
       if (show.settle && t > 0.9 && show.vel.length() < 0.8) {
         const off2 = v1.copy(body.mesh.position).sub(seat), speed = (0.35 + Math.random() * 0.4) * (Math.random() < 0.5 ? -1 : 1);
@@ -1091,10 +1101,16 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       const ease = 1 - Math.exp(-dt * 25);
       body.mesh.position.lerp(v1, ease); body.mesh.quaternion.slerp(q1, ease);
       // held, it shrinks as it comes nearer, so it looks only a little bigger than where it floated (2026-11-12: "the zoom
-      // scale when grabbing the logo, progress, is too large": it kept its size and filled the view)
-      const homeAway = held.home.distanceTo(seat), nowAway = body.mesh.position.distanceTo(seat);
-      const near = (held.kind === 'logo' || held.kind === 'bar' || held.kind === 'line') && homeAway > 0.05 ? Math.min(1, Math.max(0.3, GRAB_LOOKS * nowAway / homeAway)) : 1;      // (the logo, bar and line only: the day's emails keep their size, as they did)
-      held.grabSize = (held.grabSize ?? 1) + (near - (held.grabSize ?? 1)) * (1 - Math.exp(-dt * 10));
+      // scale when grabbing the logo, progress, is too large": it kept its size and filled the view). Then, "the
+      // grabbing is a bit weird": it jumped to full size as it was taken and shrank back, and jumped again when let
+      // go. Now it starts at the size it was, the extra comes in over a moment, and the size follows the distance
+      // exactly, as a grabbed email's does. (The day's emails keep their size, as they did.)
+      const from = held.grabFrom ?? 1;
+      if (held.kind === 'logo' || held.kind === 'bar' || held.kind === 'line') {
+        const away = Math.max(0.05, held.grabAway ?? held.home.distanceTo(seat)), nowAway = body.mesh.position.distanceTo(seat);
+        const ramp = clamp01((clock - (held.grabbedAt ?? clock)) / 0.45), grow = 1 + (GRAB_LOOKS - 1) * ramp * ramp * (3 - 2 * ramp);
+        held.grabSize = Math.min(from * 1.2, Math.max(from * 0.25, from * grow * nowAway / away));
+      } else held.grabSize = from;
       body.mesh.scale.setScalar((1 + 0.05 * beatNow) * (held.kind === 'mail' ? MAIL_SIZE : 1) * held.grabSize);
       if (held.kind === 'logo') logoFloat(held, dt, body.age);
       return;
@@ -1108,6 +1124,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     }
     if (!best) return;
     hand.used = true; best.held = true; best.free = false; best.orbit = undefined;
+    // (taken at the size it is now, from where it is now: see above)
+    best.grabFrom = best.body.mesh.scale.x / (best.kind === 'mail' ? MAIL_SIZE : 1) / (1 + (best.kind === 'logo' ? 0.08 : best.kind === 'mail' ? 0.06 : 0.05) * beatNow);
+    best.grabAway = best.body.mesh.position.distanceTo(seat); best.grabbedAt = clock; best.grabSize = best.grabFrom;
     best.grip.copy(hand.matrix).invert().multiply(m1.compose(best.body.mesh.position, best.body.mesh.quaternion, v1.set(1, 1, 1)));
     sounds.play('blip', 1.25, 0.45, hand.pos); buzz('left', 0.4, 25);
     void head;
@@ -1313,20 +1332,20 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const shownOn = docked(body), outward = new Vector3(0, 0, 1).applyQuaternion(mesh.quaternion);
     // Each half, broken again by a hard swing: lines through it at random, near where the blade went in.
     // The end's logo takes a few hits (2026-11-12: "harder to break apart ... you really gotta whack a few
-    // times"): each of the first LOGO_HITS - 1 chips a piece off the side that was hit, about 30% across, and the
+    // times"): each of the first LOGO_HITS - 1 chips a piece off the side that was hit (about 30% across when it took 4; smaller now it takes more: chipFor), and the
     // rest stays where it is, shaking; the last (or once little is left) breaks it into lots of pieces.
     let final = false;
     // (a swing goes through it over several frames: each would count as a hit, and it broke in one swing. So
     // after a hit it shrugs off more for a moment: one swing, one hit.)
     if (logoShow && clock - (logoShow.hitAt ?? -9) < LOGO_RECOVER) return true;
     if (logoShow) {
-      const hits = (logoShow.hits ?? 0) + 1; logoShow.area0 ??= body.soup.area;
-      final = hits >= (logoShow.kind === 'logo' ? LOGO_HITS : STRIP_HITS) || body.soup.area < logoShow.area0 * 0.3;
+      const hits = (logoShow.hits ?? 0) + 1, needed = logoShow.kind === 'logo' ? LOGO_HITS : STRIP_HITS, chip = chipFor(needed); logoShow.area0 ??= body.soup.area;
+      final = hits >= needed || body.soup.area < logoShow.area0 * 0.2;
       if (!final) {
         // move the line along its normal, to 30% in from the edge on the side that was struck
         const nx = -dy, ny = dx, d = body.soup.data; let lo = Infinity, hi = -Infinity;
         for (let i = 0; i < d.length; i += STRIDE) { const proj = d[i] * nx + d[i + 1] * ny; lo = Math.min(lo, proj); hi = Math.max(hi, proj); }
-        const at = x * nx + y * ny, want = at > (lo + hi) / 2 ? hi - 0.3 * (hi - lo) : lo + 0.3 * (hi - lo);
+        const at = x * nx + y * ny, want = at > (lo + hi) / 2 ? hi - chip * (hi - lo) : lo + chip * (hi - lo);
         x += (want - at) * nx; y += (want - at) * ny;
         halves = cut(body.soup.data, x, y, 0, -dy, dx, 0);
       } else if (missed(halves)) {
@@ -1901,7 +1920,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (off > reach) return false;
     mesh.updateMatrixWorld(true);
     const at = v2.copy(tool.origin).addScaledVector(tool.direction, along).applyMatrix4(m1.copy(mesh.matrixWorld).invert());
-    // (the end's logo takes its hits from the spray too, like a blade's: one at a time, four to break it)
+    // (the end's logo takes its hits from the spray too, like a blade's: one at a time, LOGO_HITS to break it)
     if (shows.some(x => x.kind === 'logo' && x.body === body)) { const turn = Math.random() * Math.PI; slice(body, at.x, at.y, Math.cos(turn), Math.sin(turn), v1.copy(tool.direction).multiplyScalar(3), 0.6); return true; }
     soak(body, Math.max(-W / 2 + 0.03, Math.min(W / 2 - 0.03, at.x)), Math.max(-H / 2 + 0.03, Math.min(H / 2 - 0.03, at.y)));
     return true;
@@ -2185,7 +2204,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           // the size follows the distance exactly until it has settled, so it only ever grows, smoothly.)
           if (letter.heldFor < GRAB_SETTLE) {
             const grow = 1 + (tune.holdGrow - 1) * smooth01(letter.heldFor / GRAB_SETTLE);
-            letter.holdSize = Math.max(0.25, Math.min(1, letter.seen * grow * head.distanceTo(mesh.position)));
+            letter.holdSize = Math.max(0.25, Math.min(1.6, letter.seen * grow * head.distanceTo(mesh.position)));      // (up to 1.6 times its own size: the 1 it was capped at would hide a bigger holdGrow)
             body.size = letter.holdSize;
           } else body.size += (letter.holdSize - body.size) * (1 - Math.exp(-dt * 12));
           mesh.scale.setScalar(body.size * (1 - tune.dockShrink * letter.docked));      // (smaller at a target, so the reply still shows)
@@ -2410,7 +2429,11 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     } else if (game.phase === 'summary') {
       game.timer += dt;
       // the end comes in once the line under the title has settled
-      if (!logo.started && game.timer > 0.9) { logo.started = true; handBar(); void showLogo(); }
+      if (!logo.started && game.timer > 0.9) { logo.started = true; handBar(['bar']); void showLogo(); }
+      // The line under it (CLEARED 10 EMAILS) only once the logo is in (2026-11-12: "load in the logo first and then after
+      // thats in, load the subtitle badge after"): it pops in as a title's line does, then becomes something to cut.
+      if (endLine.introAt >= 0 && clock >= endLine.introAt) { endLine.introAt = -1; ui.intro('', endLine.text); endLine.handAt = clock + 0.75; }
+      if (endLine.handAt >= 0 && clock >= endLine.handAt) { endLine.handAt = -1; handBar(['line']); }
       // two and a half seconds after the logo comes (or if it is cut first), everything bursts out of it
       const logoShow = shows.find(x => x.kind === 'logo');
       // (the burst of the day's emails and pixel things out of it was too much: 2026-11-12. explode() is kept, unused.)
@@ -2545,12 +2568,13 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     // under where the logo comes in, how many were cleared today; the bar full, with nothing either side of it
     // (the logo itself says Inbox Zero; the tally of cut, sent and later was here before, 2026-11-11)
     // (the line under the title, how many were cleared, is back on 2026-11-12: the "subtitle" to cut and grab at the end)
-    ui.intro('', `Cleared ${game.dayTotal || game.total} Email${(game.dayTotal || game.total) === 1 ? '' : 's'}`); ui.complete(game.total);
+    endLine.text = `Cleared ${game.dayTotal || game.total} Email${(game.dayTotal || game.total) === 1 ? '' : 's'}`; endLine.introAt = -1; endLine.handAt = -1;
+    ui.complete(game.total);      // (the line comes after the logo: endLine)
     logo.started = false; endSongHeard = false;
   }
   /** The end of a game is over: the logo goes if it is still there. */
   function endLogo() {
-    logo.wanted = false; logo.started = false;
+    logo.wanted = false; logo.started = false; endLine.introAt = -1; endLine.handAt = -1;
     for (const show of shows) if (loose.includes(show.body) && show.body.mode === 'show') remove(show.body);
     shows.length = 0;
     logo.cutAt = -1; logo.chime = -1;
