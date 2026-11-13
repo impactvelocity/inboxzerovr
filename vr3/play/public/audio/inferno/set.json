@@ -1,0 +1,37 @@
+{
+ "loops": {
+  "furnace": {
+   "seconds": 13.0,
+   "lead": 0.5,
+   "channels": 2
+  },
+  "crackle": {
+   "seconds": 17.5,
+   "lead": 0.5,
+   "channels": 1
+  },
+  "pipes": {
+   "seconds": 16.3,
+   "lead": 0.5,
+   "channels": 1
+  }
+ },
+ "shots": [
+  "clank",
+  "steam",
+  "flare",
+  "arrive",
+  "melt1",
+  "melt2",
+  "arm"
+ ],
+ "occasional": [
+  "clank",
+  "steam",
+  "flare"
+ ],
+ "hum": {
+  "seconds": 6.4,
+  "lead": 0.5
+ }
+}

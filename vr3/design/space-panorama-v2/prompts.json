@@ -1,0 +1,12 @@
+[
+  {
+    "name": "normal",
+    "prompt": "Create the NORMAL starting-state panoramic version of this pixel-art space background. Required output dimensions 2172 x 724, exactly 3:1 aspect ratio like a VR game level panorama. Recompose across the wide canvas without stretching square pixels. Same restrained retro pixel art: midnight indigo and muted purple space, tiny crisp square white/lavender stars, a handful of four-point stars along outer thirds, faint dithered diagonal nebula bands, small pink meteor trail in upper left. A little lighter and more inviting than reference, soft muted violet ambient space. Middle third quiet for gameplay, details distributed gently across wide sides. No text, UI, logo, planets, spacecraft, horizon or frames. Full opaque background. This is one finished normal-state image, not a comparison sheet.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-d1da025c-f81d-483e-803e-ffe04fb5a518.png"
+  },
+  {
+    "name": "dark",
+    "prompt": "Edit this exact panorama into its DARKER FUN TRANSITION endpoint. Keep exact 2172x724 3:1 dimensions, composition and positions of all existing stars and four-point stars, meteor and nebula bands so the two images can crossfade without reframing. Change mood: ambient space becomes much darker near-black midnight navy, existing outer nebula bands subtly activate in saturated violet and magenta with a few restrained cyan sparkles. Existing pink upper-left meteor becomes a brighter playful magenta streak, existing four-point stars gain tiny lavender/cyan pixel halos. A magical retro arcade cosmic night mood, beautiful but understated. Keep the entire middle third very dark, sparse and calm for gameplay; glow concentrated in outer thirds, no giant central portal. Preserve crisp square pixel art and dithering, no photorealism. No new planets, characters, spacecraft, UI or text. One full-frame dark endpoint image, not a split screen.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-5ad9fbba-8baa-4b8d-9adb-9dae9ac6f206.png"
+  }
+]

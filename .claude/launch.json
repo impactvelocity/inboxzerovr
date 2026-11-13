@@ -2,6 +2,17 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "vr3",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "vr3",
+        "run",
+        "dev:all"
+      ],
+      "port": 5183
+    },
+    {
       "name": "inboxzerovr",
       "runtimeExecutable": "npm",
       "runtimeArgs": [
@@ -26,7 +37,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "--prefix",
-        "vr3",
+        "vr3/play",
         "run",
         "dev",
         "--",
@@ -40,7 +51,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "--prefix",
-        "vr3",
+        "vr3/play",
         "run",
         "dev",
         "--",
@@ -54,7 +65,7 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "--prefix",
-        "vr3",
+        "vr3/play",
         "run",
         "dev:https",
         "--",
@@ -69,11 +80,36 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": [
         "--prefix",
-        "vr3",
+        "vr3/play",
         "run",
         "dev"
       ],
       "port": 5183
+    },
+    {
+      "name": "vr3-site",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "vr3",
+        "run",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "vr3-play",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "vr3/play",
+        "run",
+        "dev",
+        "--",
+        "--port",
+        "5186"
+      ],
+      "port": 5186
     }
   ]
 }

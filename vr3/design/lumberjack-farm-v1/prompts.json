@@ -1,0 +1,22 @@
+[
+  {
+    "name": "light",
+    "prompt": "Create a polished stylized VR game level environment panorama, EXACT 2172x724 pixels 3:1. Theme: cheerful rustic lumberjack farm, autumn rural timber yard, weapon will be an axe rendered separately. Fixed seated first-person view at comfortable eye height. Medium-distance red timber barn centered behind an open square wood-framed mail dispatch hatch with a few cream envelopes stacked inside, not dominating. Flanking timber stacks, split firewood, wooden fences, hay bales, a small wagon at far right, maple trees with gold orange foliage, blue-green pine forest and distant hills. Wide open central gameplay airspace. In front of player but set back enough to show its whole front and legs: sturdy rustic wooden chopping workbench across lower center, about 55% image width; clear middle 65% with flat scarred wood surface, only a small log and work gloves on far edges. Ground is warm packed earth with restrained grass patches. Sunlit late-afternoon farm atmosphere, golden light, soft blue sky, warm wood, barn red and forest green palette. Soft faceted low-poly painted 3D game art, inviting cohesive composition, no realistic photographic detail. No people, hands, axe, UI, lettering, floating emails or borders. One complete environment.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-811f9ca6-d74d-4fa5-8d8b-50b8067db19c.png"
+  },
+  {
+    "name": "dark",
+    "prompt": "Lighting-only edit of this exact rustic lumberjack farm panorama, exact 2172x724 3:1. Preserve camera, barn, trees, all props, workbench position and clear tabletop exactly. Transition to cozy late twilight: deep blue violet sky with faint last peach horizon, cool moonlit blue ambient shadows, warm amber light from existing barn lamp and window, subtle warm glow inside mail hatch. Autumn trees become dusky copper silhouettes, yard and foreground bench still readable. Inviting magical rural evening, not horror. No new objects or lanterns, no people, no UI, no floating particles. Same softly faceted painted game style, lighting only.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-b367ca5a-1007-47c5-a234-43b18a822e02.png"
+  },
+  {
+    "name": "axe-hero",
+    "prompt": "Design an original stylized lumberjack axe as a digital VR game prop. One large three-quarter hero view on neutral warm-gray studio background. Whole axe visible with margins. Friendly chunky low-poly faceted 3D style, softly painted materials. Broad single-bit steel axe head with satin silver edge, dark charcoal upper metal, small forest-green painted accent on cheek, subtle brass rivet. Gently curved warm honey-brown wooden handle with simple dark red leather grip wrap near bottom, cream butt cap. Clear practical-looking silhouette, uncomplicated geometry easy to model, no spikes, skulls, blood, ornate runes or complex mechanics. Cozy autumn farm and timberyard aesthetic. Studio lighting emphasizes head thickness and handle curvature. No hands, text or environment. Nontechnical visual design for a fictional game asset.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-828d6f17-d682-47a2-9148-ff236a9d3c79.png"
+  },
+  {
+    "name": "axe-angles",
+    "prompt": "Create clean digital game prop modeling turnaround sheet of the exact stylized axe in reference. Show FRONT SIDE profile and REVERSE SIDE profile vertically at identical scale, EDGE view showing blade head thickness, TOP head view, plus a smaller three-quarter view. Neutral light gray background, orthographic primary views, generous margins. Exact same single-bit charcoal steel head, silver edge, green pine-tree motif, brass pin, curved honey wood handle, burgundy leather wrap and cream butt cap. Consistent silhouette and proportions across views. Soft faceted low-poly 3D painted style. Simple small view labels only. No functional assembly details or cutaway, no dimensions, no hands, no environment. Exterior visual reference for modeling a fictional game mesh.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-28631c96-0ea4-4ea1-868f-7a0ddfb42b27.png"
+  }
+]

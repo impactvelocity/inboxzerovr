@@ -1,4 +1,10 @@
-
-# User-supplied music stays local, consistent with repository media policy.
-/public/audio/*.m4a
-/public/audio/**/*.m4a
+node_modules/
+.next/
+out/
+# the game's build, copied in by `npm run build:game`
+/public/play/
+.env
+.env*.local
+*.tsbuildinfo
+.vercel
+.DS_Store

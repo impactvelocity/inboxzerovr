@@ -1,0 +1,4 @@
+
+# User-supplied music stays local, consistent with repository media policy.
+/public/audio/*.m4a
+/public/audio/**/*.m4a

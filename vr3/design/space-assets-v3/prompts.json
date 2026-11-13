@@ -1,0 +1,22 @@
+[
+  {
+    "name": "normal",
+    "prompt": "Edit this exact background, preserving 2172x724 dimensions, 3:1 framing, palette, quiet center, faint dithered nebula bands and tiny square background stars. REMOVE ALL large four-point cross-shaped stars and their halos. REMOVE the pink diagonal meteor streak in upper left completely. Fill those areas naturally with matching dark space. Keep only small unobtrusive pinprick square stars, no bright flares, shooting stars, streaks or particle effects baked in. Preserve the rest unchanged.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-6ab64acd-ddf4-4372-8db8-cd855e2fa1a0.png"
+  },
+  {
+    "name": "dark",
+    "prompt": "Edit this exact background, preserving 2172x724 dimensions, 3:1 framing, palette, quiet center, faint dithered nebula bands and tiny square background stars. REMOVE ALL large four-point cross-shaped stars and their halos. REMOVE the pink diagonal meteor streak in upper left completely. Fill those areas naturally with matching dark space. Keep only small unobtrusive pinprick square stars, no bright flares, shooting stars, streaks or particle effects baked in. Preserve the rest unchanged.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-66ae7b41-1fd3-4ef8-9faf-d4cb933ba2f3.png"
+  },
+  {
+    "name": "saber-hero",
+    "prompt": "Design an original stylized low-poly lightsaber game prop for a playful retro space VR email-slicing game. One large three-quarter product view of the hilt, plus a smaller full-length view with activated straight cyan energy blade on the right. Neutral dark slate studio background. Hilt is simple and easy to model: 28 cm long, 4 cm diameter main body, beveled 12-sided cylindrical construction, off-white enamel upper shell, deep plum rubber grip with three broad recessed rings, silver lower pommel, short stepped silver emitter collar 5 cm diameter, one small magenta rectangular thumb button. Tiny cyan emitter ring. No elaborate mechanical greebles, no spikes or crossguard. Friendly chunky faceted game-art style consistent with soft stylized VR props. Cyan blade 80 cm long, 2.6 cm diameter, rounded tip; white core gentle cyan glow. Hero hilt view blade deactivated to show emitter opening, full view activated. Clear clean geometry and material separation, no hands, no text, no logos, no brands.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-b09b208f-1ae6-46a3-817a-e1e904cbd507.png"
+  },
+  {
+    "name": "saber-diagram",
+    "prompt": "Create a clean 3D GAME PROP MODELING REFERENCE SHEET for the exact original lightsaber hilt in the reference image. Neutral light gray background, precise orthographic views, no perspective distortion in technical views. Large FRONT, RIGHT SIDE and BACK views of deactivated hilt aligned vertically at identical scale, plus TOP emitter end and BOTTOM pommel end circular views. Smaller full-length silhouette with blade at right. Match reference: beveled 12-sided cylinders, silver stepped emitter collar with cyan inner ring, ivory upper shell with one magenta raised rectangular button on FRONT only, plum lower grip with three recessed circumferential rings, silver pommel. No redesign or added details. Thin clean dimension arrows and legible labels: hilt total length 28 cm; body diameter 4 cm; emitter max diameter 5 cm; exposed blade length 80 cm; blade diameter 2.6 cm. Hilt axial segments bottom to top: pommel 3 cm, grip 12 cm, upper shell 9 cm, emitter 4 cm (sum 28). Show all three side elevations with same segment lengths. No blade glow obscuring geometry. Include small color swatches ivory, plum, silver, magenta, cyan. Title 'SPACE SABER \u2014 MODELING REFERENCE'. Professional readable layout with lots of space between views, accurate consistent design. This is a digital fictional game prop modeling guide.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-d75f7d6b-a93f-4631-91d0-a53c6e28da78.png"
+  }
+]

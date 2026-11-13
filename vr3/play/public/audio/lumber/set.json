@@ -1,0 +1,42 @@
+{
+ "loops": {
+  "yard": {
+   "seconds": 20.0,
+   "lead": 0.5,
+   "channels": 2
+  },
+  "leaves": {
+   "seconds": 16.1,
+   "lead": 0.5,
+   "channels": 1
+  },
+  "birds": {
+   "seconds": 22.0,
+   "lead": 0.5,
+   "channels": 1
+  },
+  "crickets": {
+   "seconds": 18.0,
+   "lead": 0.5,
+   "channels": 2
+  }
+ },
+ "shots": [
+  "crow",
+  "woodpecker",
+  "creak",
+  "chop",
+  "owl",
+  "arrive",
+  "slash1",
+  "slash2",
+  "arm"
+ ],
+ "occasional": [
+  "crow",
+  "woodpecker",
+  "creak",
+  "chop"
+ ],
+ "hum": null
+}

@@ -1,0 +1,12 @@
+[
+  {
+    "name": "day",
+    "prompt": "Edit this exact daytime lab panorama. Preserve camera position, horizon, 3:1 2172x724 composition, room geometry, central mail machine and all background objects. ADD a close foreground player's lab desk directly in front of the seated viewer, within arm's reach, filling the bottom 22-26% of image, near edge cropped by bottom frame. Broad off-white matte lab worktop with teal edge, seen from natural seated eye height; back edge below the mail machine so its opening remains fully visible. This desk should anchor the player in the room, not sit far away. Place only a few small laboratory props on extreme left and right portions: left a small test tube rack and low petri dish; right a short flask of lime liquid and closed clipboard. Leave the entire middle 60% of tabletop completely clear and uncluttered for gameplay. Keep existing two side tables. Match original soft faceted stylized 3D art, bright cool daylight and warm amber fixtures. No hands, weapons, UI, text or new floating emails. Change only foreground desk addition.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-0bb2de4a-3ea8-4633-bf2f-b7c9d667164b.png"
+  },
+  {
+    "name": "night",
+    "prompt": "Create a lighting-only night version of IMAGE 1 (lab with close foreground desk). Preserve exact geometry, camera, 3:1 2172x724 frame, desk shape and every prop position from image 1. IMAGE 2 is strictly the target NIGHT LIGHTING reference: deep dark teal ambient room, ceiling lights dim almost off, luminous lime cultures and green central mail tank, warm amber practical wall lights, soft green and amber reflections. Apply that same night mood to image 1, including the new foreground desk and props. Foreground worktop remains readable dark muted teal/gray with delicate green glow from test tubes on left and flask on right; center 60% stays completely clear. Keep background mail machine opening visible. No new objects, no changes to architecture or composition, no text or UI. Same softly faceted stylized game art.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-24ab416c-188d-441c-b35c-c5f4c97fd504.png"
+  }
+]

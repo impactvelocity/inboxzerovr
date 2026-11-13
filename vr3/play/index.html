@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#17151e"><title>Inbox Zero · VR3</title>
+<style>
+html,body{margin:0;background:#06050a}
+/* the loading screen, as the page first opens: the game's own logo (hot pink and mint on a blue shadow, the
+   user's art, 2026-11-11) floating on a dark indigo gradient lit pink from one side and mint from the other,
+   and a pixel bar sweeping from pink to mint */
+#loading{position:fixed;inset:0;z-index:9;display:grid;place-items:center;transition:opacity .6s ease,visibility .6s;
+  background:radial-gradient(ellipse 55% 45% at 22% 30%,#ff1a8c14 0%,#ff1a8c00 70%),radial-gradient(ellipse 55% 45% at 80% 72%,#3df5c210 0%,#3df5c200 70%),
+    radial-gradient(ellipse 80% 60% at 50% 50%,#140f33 0%,#0b0820 55%,#040310 100%)}      /* (darker and subtler, 2026-11-11) */
+#loading.gone{opacity:0;visibility:hidden}
+.load-inner{display:flex;flex-direction:column;align-items:center;gap:24px;width:min(64vw,380px)}
+.load-logo{width:100%;height:auto;animation:load-float 5.2s ease-in-out infinite,load-in .8s cubic-bezier(.2,1.2,.4,1) both;filter:drop-shadow(0 10px 30px #ff1a8c40) drop-shadow(0 0 40px #3df5c220)}
+.load-bar{position:relative;width:min(56vw,240px);height:14px;background:#07061acc;box-shadow:0 -3px 0 0 #3d4fe8,0 3px 0 0 #3d4fe8,-3px 0 0 0 #3d4fe8,3px 0 0 0 #3d4fe8;overflow:hidden}
+.load-bar span{position:absolute;top:3px;bottom:3px;left:0;width:30%;background:repeating-linear-gradient(90deg,transparent 0 0,transparent 10px,#07061a 10px 14px),linear-gradient(90deg,#ff1a8c,#3df5c2);animation:load-sweep 1.3s steps(14) infinite}
+.load-text{margin:0;font:700 12px ui-monospace,Menlo,monospace;letter-spacing:.42em;color:#ffffffd0;animation:load-blink 1.1s steps(2) infinite}
+.load-text.failed{animation:none;letter-spacing:.06em;font:400 14px 'Helvetica Neue',Arial,sans-serif;text-align:center}
+@keyframes load-sweep{0%{transform:translateX(-100%)}100%{transform:translateX(340%)}}
+@keyframes load-in{from{opacity:0;transform:scale(.92)}}
+@keyframes load-blink{50%{opacity:.45}}
+@keyframes load-float{0%,100%{transform:translateY(0) rotate(-.4deg)}50%{transform:translateY(-7px) rotate(.4deg)}}
+</style></head>
+<body class="at-home">
+<div id="scene" aria-label="The level. Drag or use arrow keys to look around." tabindex="0"></div>
+<div id="loading" role="status" aria-label="Loading"><div class="load-inner"><img class="load-logo" src="logos/site.webp" alt="Inbox Zero"><div class="load-bar" aria-hidden="true"><span></span></div><p class="load-text">LOADING</p></div></div>
+<section id="home" aria-label="Inbox Zero">
+ <a id="hackathon" class="pix icon hack-link" target="_blank" rel="noopener" aria-label="The Meta VR Hackathon" title="The Meta VR Hackathon"><canvas class="loop" aria-hidden="true"></canvas></a>
+ <div class="home-head"><canvas id="credit" class="credit" width="1100" height="40" role="img" aria-label="Built By Dylan Jones for Meta VR Hackathon"></canvas><h1 id="logo-stage" aria-label="Inbox Zero"><canvas class="logo-air" aria-hidden="true"></canvas><span class="logo-float"><span class="logo-shine" aria-hidden="true"></span></span></h1><canvas id="tagline" class="tagline" width="1100" height="56" role="img" aria-label="Slash the spam · save what matters"></canvas></div>
+ <div id="levels" role="radiogroup" aria-label="Choose a level"></div>
+ <div class="home-actions">
+  <div class="side left"><button id="open-setup" class="pix">Setup</button><button id="open-inbox" class="pix">Inbox</button><span class="mic-wrap"><button id="connect-mic" class="pix">Connect mic</button><span class="mic-meter" aria-hidden="true"><span></span></span></span></div>
+  <span class="start-wrap"><button id="start" class="pix" disabled>Checking VR…</button></span>
+  <div class="side right"><button id="open-guide" class="pix">How to Play</button><button id="open-settings" class="pix icon" aria-label="Settings" title="Settings"><canvas class="gear" aria-hidden="true"></canvas></button></div>
+ </div>
+ <p id="mail-status" role="status"></p>
+ <p id="xr-status" role="status"></p><button id="start-here" class="link" hidden>or play on this screen</button>
+ <dialog id="setup" class="card-dialog" aria-labelledby="setup-title">
+  <h2 id="setup-title">Setup</h2>
+  <ol>
+   <li><b>Sit down</b> with room to swing both arms.</li>
+   <li><b>Right hand: your weapon.</b> Hold the trigger to make it live, then swing through the junk.</li>
+   <li><b>Left hand: your grab.</b> Reach toward an email and squeeze to take it, even from a distance.</li>
+   <li><b>Weapon feels off?</b> Tilt and turn it until it sits right in your hand.</li>
+   <li><b>Answer out loud.</b> In round two, hold an email at the mic and say your reply. Your voice is sent to ElevenLabs to be written down. <span id="setup-mic-state" class="mic-state" role="status"></span></li>
+  </ol>
+  <div class="dialog-actions"><button id="setup-mic" class="pix">Allow mic</button><button id="setup-weapon" class="pix">Adjust weapon</button><button class="pix close-dialog">Got it</button></div>
+ </dialog>
+ <dialog id="inbox" class="card-dialog" aria-labelledby="inbox-title">
+  <h2 id="inbox-title">Inbox</h2>
+  <div class="mail-choice" role="radiogroup" aria-label="Which inbox to play">
+   <label><input type="radio" name="mail-mode" value="demo"> <b>Demo inbox</b><span>Made-up mail with replies already written. Nothing to connect.</span></label>
+   <label id="mail-gmail-choice"><input type="radio" name="mail-mode" value="gmail"> <b>Your Gmail</b><span id="mail-gmail-line">Your newest unread mail, sorted into cards by AI.</span></label>
+  </div>
+  <p class="mail-invite" id="mail-invite">Playing your own Gmail is invite only for now.</p>
+  <label class="mail-count">Emails per game <select id="mail-count"></select></label>
+  <p class="mail-note" id="mail-note">Cut mail is archived and the replies you send are saved as drafts, at the end of the game. Kept and later mail is left as it is. Nothing is stored: your mail is read for the game and forgotten.</p>
+  <p class="mail-state" id="mail-state" role="status"></p>
+  <div class="dialog-actions"><button id="mail-connect" class="pix" hidden>Connect Gmail</button><button id="mail-signout" class="pix" hidden>Sign out</button><button class="pix close-dialog">Done</button></div>
+ </dialog>
+ <dialog id="guide" class="card-dialog" aria-labelledby="guide-title">
+  <h2 id="guide-title">How to Play</h2>
+  <h3>Round 1 · Sort</h3>
+  <p>Emails fly at you. <b>Slash the junk</b> with your weapon (in Toxic Danger, spray it). <b>Grab the ones that matter</b> with your left hand and throw them anywhere to save them.</p>
+  <h3>Round 2 · Answer</h3>
+  <p>The emails you saved come back. <b>Hold one against a reply</b> until its ring fills to send it, or <b>hold it to the mic</b> to say your own, then keep it or redo it. Throw one away to leave it for later.</p>
+  <h3>Inbox zero</h3>
+  <p>Clear them all. The bar at the top shows how far you have got.</p>
+  <div class="dialog-actions"><button class="pix close-dialog">Let's go</button></div>
+ </dialog>
+</section>
+<header id="hud"><span id="hud-level"></span><button id="menu" class="quiet">Menu</button><button id="hud-settings" class="quiet">Settings</button></header>
+<p id="hint">Drag to look around · X or Space: use your weapon · C: keep · round two: 1 and 2 reply, M mic · Esc: menu</p>
+<aside id="controls" aria-label="Settings">
+ <div class="time-label"><span id="phase">Dusk</span><span id="progress">00:00 / 00:20</span></div>
+ <label class="sr-only" for="mood">Time of day</label><input id="mood" type="range" min="0" max="1" step="0.001" value="0">
+ <div class="range-labels"><span id="end-a">DUSK</span><span id="end-b">TWILIGHT</span></div>
+ <div class="actions"><button id="play" aria-pressed="true">Pause transition</button><button id="restart" aria-label="Restart the lighting transition">↺</button><button id="close-settings">Close</button></div>
+ <button id="swing">Preview sword swing</button>
+ <details><summary>Atmosphere</summary><div class="settings"><label for="music">Music</label><input id="music" type="checkbox" checked><label for="volume">Music vol.</label><input id="volume" type="range" min="0" max="1" step="0.01" value="0.95"><label for="sounds">Sounds</label><input id="sounds" type="checkbox" checked><label for="sounds-volume">Background</label><input id="sounds-volume" type="range" min="0" max="1" step="0.01" value="0.3"><label for="effects-volume">Game sounds</label><input id="effects-volume" type="range" min="0" max="1" step="0.01" value="1"><label for="pace">Transition</label><select id="pace"><option value="20">Demo · 20 seconds</option><option value="60">One minute</option><option value="180" selected>Relaxed · 3 minutes</option></select><label for="depth">Depth</label><input id="depth" type="range" min="0" max="1" step="0.01" value="0.6"><label for="wind">Breeze</label><input id="wind" type="range" min="0" max="1" step="0.01" value="0.35"><label for="motion">Motion</label><input id="motion" type="checkbox" checked><label for="quality">Detail</label><select id="quality"><option value="low">Light</option><option value="high" selected>Full</option></select></div></details>
+ <details><summary>Katana (Kyoto) and hands</summary><div class="settings sword"><label for="reach">Hand gap</label><input id="reach" type="range" min="0" max="0.4" step="0.005" value="0.05"><output id="reach-value" for="reach">5.0 cm</output><label for="lean">Lean</label><input id="lean" type="range" min="-45" max="45" step="1" value="-15"><output id="lean-value" for="lean">-15°</output><label for="turn">Turn left</label><input id="turn" type="range" min="-30" max="45" step="1" value="8"><output id="turn-value" for="turn">8°</output><label for="blade">Blade</label><input id="blade" type="range" min="0.6" max="1.6" step="0.05" value="0.8"><output id="blade-value" for="blade">58 cm</output><label for="hands">Hands</label><input id="hands" type="checkbox" checked><span></span><label for="trigger-cut">Trigger cuts</label><input id="trigger-cut" type="checkbox" checked><span></span><button id="sword-reset">Reset sword</button></div></details>
+ <details id="weapon-settings" hidden><summary>This level's weapon</summary><div class="settings sword"><label for="weapon-lean">Lean</label><input id="weapon-lean" type="range" min="-45" max="45" step="1" value="0"><output id="weapon-lean-value" for="weapon-lean">0°</output><label for="weapon-turn">Turn left</label><input id="weapon-turn" type="range" min="-30" max="45" step="1" value="0"><output id="weapon-turn-value" for="weapon-turn">0°</output><button id="weapon-reset">Reset</button></div></details>
+ <p id="audio-status" role="status">Music starts in VR</p>
+</aside>
+<script type="module" src="/src/main.ts"></script></body></html>

@@ -1,0 +1,35 @@
+{
+ "loops": {
+  "void": {
+   "seconds": 11.5,
+   "lead": 0.5,
+   "channels": 2
+  },
+  "rush": {
+   "seconds": 6.5,
+   "lead": 0.5,
+   "channels": 2
+  },
+  "signals": {
+   "seconds": 20.5,
+   "lead": 0.5,
+   "channels": 1
+  }
+ },
+ "shots": [
+  "arrive",
+  "slash1",
+  "slash2",
+  "arm",
+  "flyby",
+  "ping",
+  "jump"
+ ],
+ "occasional": [
+  "ping"
+ ],
+ "hum": {
+  "seconds": 2.2,
+  "lead": 0.5
+ }
+}

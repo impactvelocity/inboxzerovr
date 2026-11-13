@@ -1,0 +1,22 @@
+[
+  {
+    "name": "normal",
+    "prompt": "Edit this exact stylized industrial mail incinerator panorama. Preserve room, camera, framing, mail chute, furnace doors, lighting, all background geometry. Move ONLY the foreground workbench farther away from viewer into the room: make it a freestanding rectangular workbench centered across lower image, about 60 percent image width, full left and right edges visible, front edge and metal legs visible, strip of floor below. Tabletop spans approximately y=75 to 86 percent of frame, legs to 96 percent. Same metal surface and brass corner trim, red valve wheel at far left, tongs far right, scaled with table. Middle 65 percent of desktop stays completely clear. Mail chute opening fully unobstructed. Comfortable seated eye level. Exact 2172x724 3:1 panorama. No other changes, no UI, hands or weapon.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-fbd811ea-d9ec-40af-9064-6f2de09be095.png"
+  },
+  {
+    "name": "dark",
+    "prompt": "Lighting-only edit of this exact 2172x724 3:1 industrial mail furnace panorama. Keep every object, desk placement, camera, geometry and framing unchanged. Create darker night transition: overhead pendant lights dim to faint amber, room ambient becomes deep blue-plum charcoal, furnace seams glow vivid orange with restrained reflected light on floor and tabletop, mail chute softly amber inside. Strong warm/cool atmosphere, readable silhouettes, center desk clear. Keep furnace doors closed. No new flames, sparks, smoke or particles (added in game later), no new objects or text. Soft faceted game art.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-ae04eaa3-ebee-4edf-8159-56abe45f76db.png"
+  },
+  {
+    "name": "weapon-hero",
+    "prompt": "Create an original fictional flamethrower GAME PROP visual concept for a playful VR email incinerator game. Nonfunctional stylized fantasy prop, exterior appearance only. One large clean three-quarter view on neutral dark slate studio background. Friendly chunky low-poly faceted 3D art with soft painted shading, simple geometry easy to model. Short broad graphite cylindrical front barrel with oversized blunt copper rim and dark opening, chunky brick-red enamel body with brass corner bands, dark brown curved pistol grip below rear, small orange thumb switch, decorative circular cream dial on side, compact rounded brass-colored capsule below body, no exposed functional mechanics. Strong readable silhouette, restrained industrial furnace aesthetic, attractive rust red / copper / charcoal palette. No hose maze, no realistic engineering, no internals, no assembly or fuel details, no text, no hands, no flames obscuring silhouette. Entire object visible with margins. Designed as an in-game mesh reference, not a real device.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-9006893d-4340-48ed-9ac7-5f393976e444.png"
+  },
+  {
+    "name": "weapon-angles",
+    "prompt": "Create a clean exterior-only 3D game asset turnaround sheet of the exact fictional stylized flamethrower prop in reference. Neutral light gray background. Show LEFT SIDE, RIGHT SIDE, TOP, FRONT, BACK orthographic views and one small three-quarter view. Consistent silhouette, same design across all views: brick-red chunky body, copper top carry handle, brass decorative bands, broad graphite barrel with blunt copper muzzle rim, brown rear grip with orange button, cream decorative dial on left side, brass capsule under body. Preserve simple faceted cartoon 3D game style. Equal scale for side views, generous margins, readable small view labels. Model reference is surface shape and colors only: no cutaways, internals, functional schematics or assembly details. No flames, hands, environment, dimensions or extra components. Professional clean layout useful for modeling a digital mesh.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-bda3362a-9cec-4f7d-b650-d71e2ce6e48b.png"
+  }
+]

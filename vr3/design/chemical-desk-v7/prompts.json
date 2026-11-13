@@ -1,0 +1,12 @@
+[
+  {
+    "name": "day",
+    "prompt": "Edit this lab image with ONE change: move the foreground player's desk farther away from the camera into the room. Preserve exact camera and background perspective, room, lighting, side tables, mail machine and all other features. The desk should be a comfortable workstation in front of the player, not pressed against camera. Reduce its apparent width to about 65% of the image, centered (left edge around 17%, right around 83%). Show its complete front edge, front apron and upper legs, with a small strip of floor visible below. Tabletop back edge around 76% image height and front edge around 88%; legs extend to about 97%. Maintain low seated-view tabletop below the mail machine opening. Same off-white top and teal frame, same test tubes and petri dish on left, flask and clipboard on right, scaled with desk. Entire center 60% of desktop clear. Keep existing side tables unchanged. Preserve 3:1 2172x724 panoramic framing and soft faceted game art. No UI, people or new objects.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-095b9452-f032-4072-af53-32554bb5b927.png"
+  },
+  {
+    "name": "night",
+    "prompt": "Relight IMAGE 1 to night using IMAGE 2 ONLY as a lighting and color reference. Preserve precisely the desk position, size, visible legs, all props, camera and all room geometry of IMAGE 1. Do NOT use the larger close-up desk geometry of image 2. Deep teal dark ambient lighting, overhead lights nearly off, glowing lime cultures, warm amber lamps, soft colored reflections. Center of desk stays empty. Same 3:1 2172x724 frame, same stylized faceted game art. Lighting-only change, no new objects, UI or text.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-e1c201c0-50e6-4d08-85d2-c4fc1aac4fe6.png"
+  }
+]
