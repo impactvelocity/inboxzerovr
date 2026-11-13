@@ -9,8 +9,7 @@
     "build:game": "npm --prefix play run build && node scripts/copy-game.mjs",
     "build": "npm run build:game && next build",
     "start": "next start --port 3000",
-    "typecheck": "tsc --noEmit",
-    "bake": "tsx --env-file-if-exists=.env.local scripts/bake-demo.ts"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "ai": "^7.0.170",

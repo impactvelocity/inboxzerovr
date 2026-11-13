@@ -10,7 +10,7 @@ import { CATEGORIES, LEVELS, SITE } from './_site/content';
  * is the static build at /play/ (vr3/play).
  *
  * - An ?access= code given here is carried on to the game, which trades it for the cookie that
- *   shows Connect Gmail; the page then says judge access is on.
+ *   turns on the mic in the demo; the page then says judge access is on.
  * - In a headset's browser the top of the page is the short version: one PLAY GAME button.
  *   ?vr=1 and ?vr=0 force one or the other, to look at both on a desk.
  */
@@ -59,9 +59,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
             <ol className="steps">
               <li>
                 <span className="num">01</span>
-                <h3>Connect your email</h3>
-                <p>Sign in with Gmail before you put the headset on. Choose 5, 10, 15 or 20 emails. The game fetches that many of your newest unread ones.</p>
-                <p className="quiet">The public game skips this step and plays a demo inbox.</p>
+                <h3>Ask your agent</h3>
+                <p>Tell an AI agent that can read your email to set up a game. It writes a card for each of your newest unread emails and gives you a 4-digit code. Type the code into the game.</p>
+                <p className="quiet">No agent? The game plays a demo inbox.</p>
               </li>
               <li>
                 <span className="num">02</span>
@@ -70,8 +70,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
               </li>
               <li>
                 <span className="num">03</span>
-                <h3>Take the headset off</h3>
-                <p>Open Gmail. Everything you cut is in the archive. Every reply is a draft, waiting for you to press send.</p>
+                <h3>Tell your agent you’re done</h3>
+                <p>It lists what you chose: archive these six, reply to Sam, leave three. Say OK and it does it.</p>
               </li>
             </ol>
 
@@ -137,14 +137,14 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
               </article>
             </div>
 
-            <h3 className="mini">What it does to your Gmail</h3>
+            <h3 className="mini">What your agent does after</h3>
             <dl className="outcomes">
-              <div><dt>Cut</dt><dd>Archived. You can find it in All Mail.</dd></div>
+              <div><dt>Cut</dt><dd>Archived, not deleted.</dd></div>
               <div><dt>Kept</dt><dd>Left alone. Still unread.</dd></div>
-              <div><dt>Replied</dt><dd>A draft on the thread. You press send.</dd></div>
+              <div><dt>Replied</dt><dd>Sent, or saved as a draft. Your agent asks which.</dd></div>
               <div><dt>Later</dt><dd>Left alone.</dd></div>
             </dl>
-            <p className="fine">The game never sends or deletes an email. Quit halfway and Gmail is exactly as it was.</p>
+            <p className="fine">The game itself never touches your inbox. Quit halfway and your agent gets nothing to act on.</p>
           </div>
         </section>
 
@@ -154,32 +154,32 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
             <h2>It has read your mail before you pick up the sword.</h2>
             <div className="bento">
               <article className="wide">
-                <h3>Every email becomes a card</h3>
-                <p>A small model reads each unread email and writes the card you see in the game, with the sender, the gist in one line, and one of eleven types. The first cards arrive while the rest are still being sorted, so the game starts without waiting for the last one.</p>
+                <h3>Your agent makes the cards</h3>
+                <p>The game never connects to your inbox. Your own AI agent reads your unread mail and writes a card for each email: the sender, the gist, and one of eleven types.</p>
                 <ul className="chips">{CATEGORIES.map(([name, tint]) => <li key={name} style={{ '--t': tint } as React.CSSProperties}>{name}</li>)}</ul>
               </article>
               <article>
-                <h3>Two replies, written while you play</h3>
-                <p>Keep an email in round one and a second model starts on two replies to it. They are usually finished before round two begins.</p>
+                <h3>Two replies, written before you start</h3>
+                <p>For mail from a person, your agent writes two short replies. In round two you hold the email against the one you want.</p>
               </article>
               <article>
                 <h3>Say it, and it becomes an email</h3>
                 <p>Hold an email against the microphone and talk. Your words appear as you say them, and are then tidied into a reply.</p>
               </article>
               <article className="wide keep">
-                <h3>No email is stored</h3>
-                <p>The server reads your mail, sorts it, writes the replies, and has forgotten all of it by the time the request ends. No email is written to a database. Every model call asks for zero data retention.</p>
+                <h3>Deleted when you finish</h3>
+                <p>Your agent sends a short summary of each email, never the whole thing. The server deletes them the moment your game ends, and deletes your choices 10 minutes after your agent reads them.</p>
                 <ul className="ticks">
-                  <li>Your Google sign-in is an encrypted cookie in your own browser</li>
-                  <li>Cards and drafts live in the running game and nowhere else</li>
-                  <li>The models are told to treat an email’s text as data, and have no tools to act on it</li>
-                  <li>Replies are saved as drafts, so nothing goes out until you send it</li>
+                  <li>No sign-in, and no access to your mailbox</li>
+                  <li>Each email goes under a number only your agent can match to the real one</li>
+                  <li>The one model on our side writes up your spoken replies, with zero data retention</li>
+                  <li>Your agent is told to check with you before it archives or replies</li>
                 </ul>
               </article>
             </div>
             <p className="note">
               <i className="dot" />
-              <span>The public game is not connected to anyone’s email. Everyone plays the same demo inbox. Judges get a link that turns on Gmail sign-in and the microphone. Those two stay invite-only to protect privacy and to keep the audio bill small.</span>
+              <span>Anyone whose AI agent can read their email can play their own inbox. Everyone else plays the same demo inbox. The microphone is on in agent games and for judges, and off in the public demo to keep the audio bill small.</span>
             </p>
           </div>
         </section>

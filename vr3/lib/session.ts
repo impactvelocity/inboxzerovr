@@ -1,27 +1,16 @@
 import { cookies, headers } from 'next/headers';
-import { EncryptJWT, jwtDecrypt, SignJWT, jwtVerify } from 'jose';
+import { SignJWT, jwtVerify } from 'jose';
 import { env } from './env';
 
 /**
- * Three cookies, nothing on the server:
- *   izvr_s  the Gmail session: the refresh token and the current access token, encrypted (JWE)
- *   izvr_a  this browser has the access code, so Connect Gmail is offered (signed)
- *   izvr_o  an OAuth sign-in in progress: its state and PKCE verifier, for ten minutes (encrypted)
- * All http-only, SameSite=Lax (the sign-in comes back to us as a top-level GET).
+ * Two cookies, both only to say who may use the mic (its tokens cost money: app/api/scribe-token).
+ * Nothing about anyone's mail is in either.
+ *   izvr_a  this browser has an ?access= code (judges): the mic in the demo too, for a month (signed)
+ *   izvr_r  this browser opened an agent round in the last 3 hours (signed)
+ * Both http-only, SameSite=Lax. Without AUTH_SECRET, neither is given.
  */
 
-export interface Session {
-  refresh: string;
-  access: string;
-  /** When the access token runs out, in ms since 1970. */
-  expires: number;
-  email: string;
-  name: string;
-}
-
-interface Pending { state: string; verifier: string; back: string }
-
-const S = 'izvr_s', A = 'izvr_a', O = 'izvr_o';
+const A = 'izvr_a', R = 'izvr_r';
 const MONTH = 60 * 60 * 24 * 30;
 
 let keyCache: Uint8Array | null = null;
@@ -29,14 +18,6 @@ async function key(): Promise<Uint8Array> {
   if (!env.authSecret) throw new Error('AUTH_SECRET is not set');
   if (!keyCache) keyCache = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(env.authSecret)));
   return keyCache;
-}
-
-async function seal(payload: Record<string, unknown>, seconds: number): Promise<string> {
-  return new EncryptJWT(payload).setProtectedHeader({ alg: 'dir', enc: 'A256GCM' }).setIssuedAt().setExpirationTime(`${seconds}s`).encrypt(await key());
-}
-async function open<T>(token: string | undefined): Promise<T | null> {
-  if (!token || !env.authSecret) return null;
-  try { return (await jwtDecrypt(token, await key())).payload as T; } catch { return null; }
 }
 
 /** Whether this request came over https (directly, or through a proxy that says so). */
@@ -54,25 +35,23 @@ export async function origin(): Promise<string> {
   return `${proto}://${host}`;
 }
 
-async function set(name: string, value: string, maxAge: number) {
-  (await cookies()).set(name, value, { httpOnly: true, sameSite: 'lax', secure: await secure(), path: '/', maxAge });
+async function grant(name: string, seconds: number) {
+  if (!env.authSecret) return;
+  const token = await new SignJWT({ [name]: true }).setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime(`${seconds}s`).sign(await key());
+  (await cookies()).set(name, token, { httpOnly: true, sameSite: 'lax', secure: await secure(), path: '/', maxAge: seconds });
 }
-
-export async function readSession(): Promise<Session | null> {
-  return open<Session>((await cookies()).get(S)?.value);
-}
-export async function writeSession(session: Session) { await set(S, await seal({ ...session }, MONTH), MONTH); }
-export async function clearSession() { (await cookies()).delete(S); }
-
-export async function hasAccess(): Promise<boolean> {
-  const token = (await cookies()).get(A)?.value;
+async function has(name: string): Promise<boolean> {
+  const token = (await cookies()).get(name)?.value;
   if (!token || !env.authSecret) return false;
   try { await jwtVerify(token, await key()); return true; } catch { return false; }
 }
-export async function grantAccess() {
-  const token = await new SignJWT({ access: true }).setProtectedHeader({ alg: 'HS256' }).setIssuedAt().setExpirationTime(`${MONTH}s`).sign(await key());
-  await set(A, token, MONTH);
-}
+
+export const grantAccess = () => grant(A, MONTH);
+export const hasAccess = () => has(A);
+/** An agent round was opened here (lib/rounds.ts). */
+export const grantRound = () => grant(R, 3 * 3600);
+export const hasRound = () => has(R);
+
 /** Whether a code is one of ACCESS_CODE's, compared in constant time. */
 export function codeMatches(code: string): boolean {
   const given = new TextEncoder().encode(code);
@@ -84,12 +63,4 @@ export function codeMatches(code: string): boolean {
     if (diff === 0) ok = true;
   }
   return ok;
-}
-
-export async function writePending(p: Pending) { await set(O, await seal({ ...p }, 600), 600); }
-export async function takePending(): Promise<Pending | null> {
-  const jar = await cookies();
-  const p = await open<Pending>(jar.get(O)?.value);
-  jar.delete(O);
-  return p;
 }

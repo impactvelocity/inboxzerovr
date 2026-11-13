@@ -1,162 +1,104 @@
 import { Emails, dictation, type Email } from './emails';
-import baked from './demo-inbox.json';
-import {
-  CountChoices, DefaultCount, MaxCount,
-  type ApplyResponse, type DemoInbox, type InboxLine, type MeResponse, type PolishResponse, type RepliesResponse, type WireEmail, type WireReply,
-} from './wire';
+import type { AgentCard, AgentOutcome, AgentResultsResponse, AgentRoundResponse } from './wire';
 
 /**
- * Where a game's emails come from (2026-11-12): the demo inbox, or the player's own Gmail.
+ * Where a game's emails come from: the demo inbox, or an agent round.
  *
- * Demo: the baked demo inbox (src/mail/demo-inbox.json, real-looking emails with replies already
- * written) when there is one, otherwise the made-up inbox in emails.ts. Everyone gets this.
+ * Demo: the made-up inbox in emails.ts. Everyone gets this, and nothing leaves the game.
  *
- * Gmail: only with the access code (a ?access= link) and a sign-in. The site's API (vr3/app/api)
- * reads the newest unread emails and sorts each into a card; this file holds them for one game:
- *   - an email that needs an answer starts its two replies being written as it comes in, any
- *     other one when it is kept, so they are ready by round two
- *   - round two shows them as soon as they are (WRITING... until then, and they cannot be sent yet)
- *   - a reply sent, or a dictation kept, becomes the text of a draft
- *   - at the end: cut emails are archived and the drafts saved (POST /api/apply). Kept and later
- *     change nothing, so the inbox looks as it did, less what was cut.
- * Nothing is stored: the cards and drafts live here until the game is over.
+ * Agent round (2026-11-13): the player's own AI agent sent a round of their emails, already
+ * summarised and with reply drafts, to vr3/app/mcp (or /api/rounds) and told them a 4-digit code.
+ * With a code typed in (the Inbox card, or ?code= in the address; the tab keeps it until played)
+ * the next game is that round. Nothing is drafted here: the agent wrote the replies. At the end
+ * the game says what was done with each email (POST /api/rounds/{code}/results), where what was
+ * said into the mic is written up as an email by the server's one model. The agent reads that,
+ * checks with the player, and does the archiving and replying itself.
  *
- * letters.ts calls deck(), arrived(), settled(), repliesReady(), sent() and finish(); the home
- * screen (src/mailui.ts) shows the state and its choices.
+ * Gmail sign-in, reading the inbox and the models that sorted it and wrote replies were here
+ * until 2026-11-13; the agent does all of that now.
+ *
+ * letters.ts calls deck(), arrived(), settled(), repliesReady(), want(), mockWords(), sent(),
+ * abandon() and finish(); the home screen (src/mailui.ts) shows the state.
  */
 
-export type MailMode = 'demo' | 'gmail';
-export const WRITING = 'WRITING A REPLY...';
+/** The agent round's code, for this tab until it is played (a reload, or the headset waking, keeps it). */
+const ROUND_KEY = 'vr3.round';
+const remember = (code: string) => { try { if (code) sessionStorage.setItem(ROUND_KEY, code); else sessionStorage.removeItem(ROUND_KEY); } catch { /* private window */ } };
+const remembered = () => { try { return sessionStorage.getItem(ROUND_KEY) ?? ''; } catch { return ''; } };
 
-const demo = baked as DemoInbox;
-const KEY = 'vr3.mail';
-
-interface Pending { abort: AbortController; done: Promise<WireReply[] | null>; replies: WireReply[] | null }
-interface Outcome { cut: boolean; draft: Promise<string | null> | null }
-
-function load(): { mode: MailMode; count: number } {
-  try {
-    const saved = JSON.parse(localStorage.getItem(KEY) ?? '{}');
-    return { mode: saved.mode === 'gmail' ? 'gmail' : 'demo', count: CountChoices.includes(saved.count) ? saved.count : DefaultCount };
-  } catch { return { mode: 'demo', count: DefaultCount }; }
-}
-
-function toEmail(w: WireEmail): Email {
-  return { ...w, replies: [WRITING, WRITING] };
-}
+interface Outcome { cut: boolean; reply?: number; said?: string }
 
 function createMail() {
-  const saved = load();
   const listeners = new Set<() => void>();
   const told = () => listeners.forEach(f => { try { f(); } catch (e) { console.error(e); } });
 
   const state = {
-    /** What the server says (null until it has answered, or if there is no server: the game alone). */
-    me: null as MeResponse | null,
-    /** Which inbox the player chose. Gmail plays only when connected and its emails are in. */
-    mode: saved.mode as MailMode,
-    /** How many emails a game takes. */
-    count: saved.count as number,
-    inbox: { state: 'idle' as 'idle' | 'loading' | 'ready' | 'failed', expected: 0, loaded: 0, unread: 0, ai: false, error: '' },
-    /** A line for the home screen: what happened with the sign-in, or the last game's write-back. */
+    /** How many emails a game takes: 0 lets the game choose (the demo's own range; an agent round is all of it). */
+    count: 0,
+    /** A line for the home screen: how the last agent round went. */
     notice: '',
-    /** Is the game being played on real mail just now? */
+    /** Is the game being played on an agent round just now? */
     playing: false,
-    /** Busy writing back to Gmail after a game. */
-    applying: false,
+    /** An agent round, by its code: the next game plays it when it is ready. */
+    round: { code: '', title: '', state: 'idle' as 'idle' | 'loading' | 'ready' | 'failed' | 'sending', count: 0, error: '' },
   };
 
-  let cards: (Email | null)[] = [];
-  let ticket = 0;
-  const pending = new Map<Email, Pending>();
+  let roundCards: Email[] = [];
+  let roundTicket = 0;
   const outcomes = new Map<Email, Outcome>();
-  /** Called when an email's replies come in, so round two can show them if it is up. */
-  let onReplies: ((email: Email) => void) | null = null;
 
-  const save = () => { try { localStorage.setItem(KEY, JSON.stringify({ mode: state.mode, count: state.count })); } catch { /* private window */ } };
-
-  async function api<T>(path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
-    const r = await fetch(path, { method: body === undefined ? 'GET' : 'POST', headers: body === undefined ? undefined : { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body), credentials: 'same-origin', cache: 'no-store', signal });
-    if (r.status === 401) { signedOut(); throw new Error('signed out'); }
-    if (!r.ok) throw new Error(`${path} ${r.status}`);
-    return r.json() as Promise<T>;
+  function clearCode() {
+    roundTicket++; roundCards = []; remember('');
+    if (state.round.code || state.round.state !== 'idle') { state.round = { code: '', title: '', state: 'idle', count: 0, error: '' }; told(); }
   }
 
-  function signedOut() {
-    if (state.me) state.me = { ...state.me, connected: false, email: undefined, name: undefined };
-    cards = []; state.inbox.state = 'idle'; state.notice = 'Gmail signed out: connect again to play your inbox.';
-    told();
-  }
-
-  /** The demo's emails: the baked inbox if there is one, otherwise the made-up one. */
-  function demoEmails(): Email[] {
-    if (!demo.emails.length) return [...Emails];
-    return demo.emails.map(b => ({ ...b, replies: [b.replies[0].short, b.replies[1].short] as [string, string] }));
-  }
-  const demoById = new Map(demo.emails.map(b => [b.id, b]));
-
-  async function refresh() {
-    try { state.me = await api<MeResponse>('/api/me'); }
-    catch { state.me = null; }          // (no server: the game on its own, the demo only)
-    told();
-    if (gmailOn() && state.inbox.state === 'idle') void fetchInbox();
-  }
-
-  const gmailOn = () => state.mode === 'gmail' && !!state.me?.connected;
-
-  /** Reads the inbox: the cards stream in one by one, in inbox order. */
-  async function fetchInbox() {
-    const mine = ++ticket;
-    cards = []; state.inbox = { state: 'loading', expected: state.count, loaded: 0, unread: 0, ai: false, error: '' }; told();
+  /** Fetches an agent round by its code. */
+  async function loadRound(code: string) {
+    const mine = ++roundTicket;
+    roundCards = [];
+    state.round = { code, title: '', state: 'loading', count: 0, error: '' }; told();
     try {
-      const r = await fetch(`/api/inbox?count=${state.count}`, { credentials: 'same-origin', cache: 'no-store' });
-      if (r.status === 401) { signedOut(); return; }
-      if (!r.ok || !r.body) throw new Error(`the inbox said ${r.status}`);
-      const reader = r.body.pipeThrough(new TextDecoderStream()).getReader();
-      let rest = '';
-      for (;;) {
-        const { value, done } = await reader.read();
-        if (mine !== ticket) { void reader.cancel(); return; }
-        rest += value ?? '';
-        const lines = rest.split('\n'); rest = lines.pop() ?? '';
-        for (const raw of lines) {
-          if (!raw.trim()) continue;
-          const line = JSON.parse(raw) as InboxLine;
-          if (line.type === 'meta') { state.inbox.expected = line.count; state.inbox.unread = line.unread; state.inbox.ai = line.ai; cards = new Array(line.count).fill(null); }
-          else if (line.type === 'email') { cards[line.index] = toEmail(line.email); state.inbox.loaded++; }
-          else if (line.type === 'error') console.warn(`[mail] ${line.message}`);
-        }
-        told();
-        if (done) break;
-      }
-      state.inbox.state = 'ready';
+      const r = await fetch(`/api/rounds/${encodeURIComponent(code)}`, { credentials: 'same-origin', cache: 'no-store' });
+      const body = await r.json().catch(() => ({})) as AgentRoundResponse & { error?: string };
+      if (mine !== roundTicket) return;
+      if (!r.ok) throw new Error(body.error || `the server said ${r.status}`);
+      roundCards = body.emails.map((c: AgentCard): Email => ({ ...c, id: c.ref, replies: [c.replies[0], c.replies[1]] }));
+      state.round = { code, title: body.title, state: roundCards.length ? 'ready' : 'failed', count: roundCards.length, error: roundCards.length ? '' : 'That round has no emails.' };
+      state.notice = '';
+      remember(code);
     } catch (e) {
-      if (mine !== ticket) return;
-      state.inbox.state = 'failed'; state.inbox.error = (e as Error).message;
+      if (mine !== roundTicket) return;
+      state.round = { code, title: '', state: 'failed', count: 0, error: (e as Error).message };
+      remember('');
     }
     told();
   }
 
-  /** Start writing an email's two replies, if they are not already being written. */
-  function draftReplies(email: Email) {
-    if (!state.playing || !email.id || pending.has(email)) return;
-    const abort = new AbortController();
-    const p: Pending = { abort, replies: null, done: Promise.resolve(null) };
-    p.done = api<RepliesResponse>('/api/replies', { id: email.id, threadId: email.threadId }, abort.signal)
-      .then(r => {
-        p.replies = r.replies;
-        email.replies = [r.replies[0].short, r.replies[1].short];
-        onReplies?.(email);
-        return r.replies;
-      })
-      .catch(e => {
-        if (abort.signal.aborted) return null;
-        console.warn(`[mail] replies for "${email.subject}": ${(e as Error).message}`);
-        const stock: WireReply[] = [{ short: 'Thanks, sounds good to me!', full: 'Thanks, sounds good to me!' }, { short: 'Thanks! Can we talk about this later this week?', full: 'Thanks! Can we talk about this later this week?' }];
-        p.replies = stock; email.replies = [stock[0].short, stock[1].short]; onReplies?.(email);
-        return stock;
-      });
-    pending.set(email, p);
+  /** The end of an agent round: what was done with each email goes to the agent (through the server). */
+  async function finishRound() {
+    const outs: AgentOutcome[] = [];
+    for (const [email, o] of outcomes) {
+      if (!email.id) continue;
+      if (o.cut) outs.push({ ref: email.id, action: 'archive' });
+      else if (o.said !== undefined) outs.push({ ref: email.id, action: 'reply', dictated: o.said });
+      else if (o.reply !== undefined) outs.push({ ref: email.id, action: 'reply', reply_index: o.reply });
+    }
+    outcomes.clear();
+    const code = state.round.code;
+    state.round.state = 'sending'; told();
+    try {
+      const r = await fetch(`/api/rounds/${code}/results`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ outcomes: outs }), credentials: 'same-origin', cache: 'no-store' });
+      const body = await r.json().catch(() => ({})) as AgentResultsResponse & { error?: string };
+      if (!r.ok) throw new Error(body.error || `the server said ${r.status}`);
+      const bits = [body.archive ? `${body.archive} to archive` : '', body.reply ? `${body.reply} ${body.reply === 1 ? 'reply' : 'replies'}` : '', body.leave ? `${body.leave} left as they are` : ''].filter(Boolean);
+      state.notice = `Game ${code} sent to your agent: ${bits.join(', ') || 'nothing to do'}. Tell your agent you're done.`;
+      roundTicket++; roundCards = []; remember('');
+      state.round = { code: '', title: '', state: 'idle', count: 0, error: '' };
+    } catch (e) {
+      state.notice = `Game ${code}: the results could not be sent (${(e as Error).message}).`;
+      state.round.state = 'failed'; state.round.error = (e as Error).message;
+    }
+    told();
   }
 
   return {
@@ -164,132 +106,83 @@ function createMail() {
     /** Something changed (for the home screen). Returns a function that stops listening. */
     listen(f: () => void) { listeners.add(f); return () => listeners.delete(f); },
 
-    /** At startup: the ?access= code (traded for a cookie, then taken out of the address), what came back from a sign-in, and what the server says. */
+    /** At startup: an agent round's ?code= (or the one this tab kept), and a judge's ?access= code (traded for the mic's cookie). Both are taken out of the address. */
     async init() {
       const url = new URL(location.href);
-      const code = url.searchParams.get('access'), back = url.searchParams.get('gmail');
-      if (code !== null || back !== null) {
-        url.searchParams.delete('access'); url.searchParams.delete('gmail');
+      const access = url.searchParams.get('access'), round = url.searchParams.get('code') ?? remembered();
+      if (round && /^\d{4}$/.test(round.trim())) void loadRound(round.trim());
+      if (access !== null || url.searchParams.has('code')) {
+        url.searchParams.delete('access'); url.searchParams.delete('code');
         history.replaceState(history.state, '', url.pathname + (url.search === '?' ? '' : url.search) + url.hash);
       }
-      if (code) {
-        try { await api('/api/access', { code }); state.notice = 'Invite accepted: you can connect Gmail.'; }
-        catch { state.notice = 'That invite link did not work.'; }
+      if (access) {
+        const r = await fetch('/api/access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code: access }), credentials: 'same-origin' }).catch(() => null);
+        state.notice = r?.ok ? 'Judge access is on: the mic writes down what you say.' : 'That access link did not work.';
+        told();
       }
-      // (the sign-in only comes back with ?gmail= when it went wrong)
-      if (back) state.notice = back === 'denied' ? 'Gmail was not connected: access was not given.' : back === 'expired' ? 'The sign-in took too long: try again.' : 'Gmail could not be connected: try again.';
-      await refresh();
     },
 
-    setMode(mode: MailMode) {
-      if (mode === state.mode) return;
-      state.mode = mode; save(); told();
-      if (gmailOn() && state.inbox.state !== 'loading') void fetchInbox();
+    /** A code from the player's agent: the next game is that round (4 digits; anything else clears it). */
+    useCode(code: string) {
+      const c = code.replace(/\D/g, '');
+      if (c.length !== 4) { clearCode(); return; }
+      if (c === state.round.code && (state.round.state === 'ready' || state.round.state === 'loading')) return;
+      void loadRound(c);
     },
-    setCount(count: number) {
-      const n = Math.max(1, Math.min(MaxCount, Math.round(count)));
-      if (n === state.count) return;
-      state.count = n; save(); told();
-      if (gmailOn()) void fetchInbox();
-    },
-    /** Off to Google's sign-in, coming back to this page with Gmail chosen. */
-    connect() {
-      state.mode = 'gmail'; save();
-      location.href = `/api/auth/google?back=${encodeURIComponent(location.pathname)}`;
-    },
-    async signOut() {
-      ticket++; cards = []; state.inbox.state = 'idle';
-      try { await api('/api/auth/signout', {}); } catch { /* gone anyway */ }
-      state.mode = 'demo'; save();
-      await refresh();
-      state.notice = 'Signed out of Gmail.'; told();
-    },
-    reload() { if (gmailOn()) void fetchInbox(); },
+    clearCode,
+    /** Is the next game an agent round? */
+    roundReady: () => state.round.state === 'ready' && roundCards.length > 0,
 
-    /** Is the next game on real mail? (Gmail chosen, connected, and at least one email in.) */
-    gmailReady: () => gmailOn() && cards.some(Boolean),
     /** The demo's emails, for letters.ts to shuffle. */
-    demoEmails,
+    demoEmails: (): Email[] => [...Emails],
 
-    /** Round one's emails: real mail if it is ready (in inbox order, up to `n`), else null for the demo. */
-    deck(n: number): Email[] | null {
-      for (const p of pending.values()) p.abort.abort();
-      pending.clear(); outcomes.clear();
-      const real = gmailOn() ? cards.filter((c): c is Email => !!c) : [];
-      state.playing = real.length > 0;
+    /** Round one's emails: an agent round if one is ready (all of it, in the agent's order), else null for the demo. */
+    deck(_n: number): Email[] | null {
+      outcomes.clear();
+      state.playing = state.round.state === 'ready' && roundCards.length > 0;
       told();
       if (!state.playing) return null;
-      for (const c of real) c.replies = [WRITING, WRITING];
-      return real.slice(0, n);
+      return roundCards.map(c => ({ ...c, replies: [c.replies[0], c.replies[1]] as [string, string] }));
     },
-    /** An email has come in: if it needs an answer, its replies start being written now. */
-    arrived(email: Email) { if (state.playing && email.needsReply) draftReplies(email); },
+    /** An email has come in. (Agent rounds come with their replies written: nothing to start.) */
+    arrived(_email: Email) { /* nothing */ },
     /** What became of an email in round one ('cut', 'kept', 'missed'). */
     settled(email: Email, what: string) {
       if (!state.playing || !email.id) return;
-      const o = outcomes.get(email) ?? { cut: false, draft: null };
+      const o = outcomes.get(email) ?? { cut: false };
       o.cut = what === 'cut';
       outcomes.set(email, o);
-      if (what === 'kept') draftReplies(email);
-      if (what === 'cut') { const p = pending.get(email); if (p && !p.replies) { p.abort.abort(); pending.delete(email); } }
     },
-    /** Are the replies on this email real yet? (Demo emails always are.) */
-    repliesReady(email: Email) { return !state.playing || !email.id || !!pending.get(email)?.replies; },
-    /** Round two is up and waiting on an email's replies: make sure they are being written. */
-    want(email: Email) { if (state.playing && email.id) draftReplies(email); },
-    set onReplies(f: ((email: Email) => void) | null) { onReplies = f; },
+    /** Are the replies on this email ready? (Always: the demo's and the agent's are written beforehand.) */
+    repliesReady(_email: Email) { return true; },
+    /** Round two is up and waiting on an email's replies. (Never: see repliesReady.) */
+    want(_email: Email) { /* nothing */ },
+    /** Called when an email's replies come in late. (They never do now; kept for letters.ts.) */
+    set onReplies(_f: ((email: Email) => void) | null) { /* nothing */ },
     /** What the mock mic types out when there is no real one. */
-    mockWords(email: Email): string {
-      if (email.id && demoById.has(email.id)) return demoById.get(email.id)!.said;
-      const p = email.id ? pending.get(email) : undefined;
-      return p?.replies?.[0]?.full.split('\n').filter(l => l.trim() && !/^(hi|hey|hello|dear|best|thanks|cheers)\b/i.test(l.trim())).join(' ') || dictation(email);
-    },
+    mockWords(email: Email): string { return dictation(email); },
     /** Round two: a reply was sent (0 or 1), or what was said into the mic was kept. */
     sent(email: Email, how: { reply: number } | { said: string }) {
       if (!state.playing || !email.id) return;
-      const o = outcomes.get(email) ?? { cut: false, draft: null };
+      const o = outcomes.get(email) ?? { cut: false };
       o.cut = false;
-      if ('reply' in how) o.draft = (pending.get(email)?.done ?? Promise.resolve(null)).then(r => r?.[how.reply]?.full ?? null);
-      else o.draft = api<PolishResponse>('/api/polish', { id: email.id, said: how.said }).then(r => r.full).catch(() => how.said);
+      // (words the mock mic made up are not the player's: the agent is told to ask them instead)
+      if ('reply' in how) { o.reply = how.reply; o.said = undefined; } else { o.said = how.said === dictation(email) ? '' : how.said; o.reply = undefined; }
       outcomes.set(email, o);
     },
 
-    /** A game left before its end (Esc, the menu, another level): nothing is done to Gmail. */
+    /** A game left before its end (Esc, the menu, another level): nothing is sent, and the round can be played again. */
     abandon() {
       if (!state.playing) return;
       state.playing = false;
-      for (const p of pending.values()) p.abort.abort();
-      pending.clear(); outcomes.clear(); told();
+      outcomes.clear(); told();
     },
 
-    /** The game is over: archive what was cut and save the drafts. Then the inbox is read again for the next game. */
-    async finish(): Promise<ApplyResponse | null> {
-      if (!state.playing) return null;
+    /** The game is over: an agent round's results go to the agent. */
+    async finish(): Promise<void> {
+      if (!state.playing) return;
       state.playing = false;
-      for (const p of pending.values()) if (!p.replies) p.abort.abort();
-      const archive: string[] = [], drafts: { id: string; body: string }[] = [];
-      const waits: Promise<void>[] = [];
-      for (const [email, o] of outcomes) {
-        if (!email.id) continue;
-        if (o.cut) archive.push(email.id);
-        else if (o.draft) waits.push(o.draft.then(body => { if (body) drafts.push({ id: email.id!, body }); }));
-      }
-      await Promise.all(waits);
-      pending.clear(); outcomes.clear();
-      if (!archive.length && !drafts.length) { state.notice = 'Last game: nothing to change in Gmail.'; told(); void fetchInbox(); return { archived: 0, drafts: 0, failed: [] }; }
-      state.applying = true; told();
-      try {
-        const r = await api<ApplyResponse>('/api/apply', { archive, drafts });
-        const bits = [r.archived ? `${r.archived} archived` : '', r.drafts ? `${r.drafts} ${r.drafts === 1 ? 'reply saved as a draft' : 'replies saved as drafts'}` : ''].filter(Boolean);
-        state.notice = `Last game: ${bits.join(', ') || 'nothing changed'} in Gmail.${r.failed.length ? ` ${r.failed.length} could not be done.` : ''}`;
-        return r;
-      } catch (e) {
-        state.notice = `Last game: Gmail could not be updated (${(e as Error).message}).`;
-        return null;
-      } finally {
-        state.applying = false; told();
-        void fetchInbox();
-      }
+      await finishRound();
     },
   };
 }

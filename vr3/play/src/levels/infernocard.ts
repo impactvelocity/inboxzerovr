@@ -1,5 +1,5 @@
 import type { Email } from '../mail/emails';
-import { H, W, plainLetter, type CardPainter } from './cards';
+import { H, W, type CardPainter } from './cards';
 
 /**
  * What an email looks like in Inferno: BURN AFTER READING on cream paper, singed all round its
@@ -87,13 +87,13 @@ export const infernoCard: CardPainter = (g, email, hazard) => {
     const x = edge === 0 ? -r * 0.25 : edge === 1 ? W + r * 0.25 : along * W, y = edge === 2 ? -r * 0.25 : edge === 3 ? H + r * 0.25 : along * H;
     scorch(g, x, y, r, hazard);
   }
-  for (const [x, y] of [[0, 0], [W, 0], [0, H], [W, H]]) scorch(g, x, y, 70 + random() * 50, hazard);
+  for (const [x, y] of [[0, 0], [W, 0], [0, H], [W, H]]) scorch(g, x, y, 60 + random() * 36, hazard);      // (a little smaller since 2026-11-13: sender and sort of mail are in the top corners)
   const top = hazard ? 56 : 30;
   if (email) {
-    // (just a small flame in its corner, and the words plain in the middle since 2026-11-13: no BURN AFTER READING heading, no "Subject:")
-    flame(g, 100, top + 58, 40, hazard ? '#e2371c' : BRICK, hazard ? '#ffc23d' : paper);
-    plainLetter(g, email, 76, top + 6, W - 152, H - top - (hazard ? 50 : 30), { family: SANS, subject: INK, from: hazard ? '#a82a17' : '#4a3a2e', words: SOFT, clear: 220 });
-    return;
+    // (just a flame, at the bottom right and faint, since the message may run over it: no BURN AFTER READING heading since 2026-11-13)
+    const x = 90, y = top + 30, foot = H - (hazard ? 70 : 52);
+    g.globalAlpha = hazard ? 0.5 : 0.32; flame(g, W - x - 40, foot - 48, 46, hazard ? '#e2371c' : BRICK, hazard ? '#ffc23d' : paper); g.globalAlpha = 1;
+    return { box: { x, y, w: W - 2 * x, h: foot - y }, family: SANS, text: INK, dim: '#4a3a2e', accent: () => (hazard ? '#c1260f' : BRICK), onAccent: paper, ok: '#3d6b24', fail: '#c1260f' };
   }
   // the title card (not shown since 2026-11-11)
   g.textAlign = 'left'; g.textBaseline = 'middle';

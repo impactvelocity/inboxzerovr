@@ -76,8 +76,8 @@ export function Hero({ vr, judge, playHref }: { vr: boolean; judge: boolean; pla
 
         <p className="access">
           {judge
-            ? <><i className="dot on" />Judge access is on. Gmail sign-in and voice dictation are unlocked in the game.</>
-            : <><i className="dot" />This public game plays a demo inbox. Judges get Gmail sign-in and voice dictation.</>}
+            ? <><i className="dot on" />Judge access is on. The microphone writes down what you say.</>
+            : <><i className="dot" />Without a code from your AI agent, you play a demo inbox.</>}
         </p>
       </div>
 

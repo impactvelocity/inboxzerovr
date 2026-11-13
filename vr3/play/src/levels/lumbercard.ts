@@ -1,7 +1,7 @@
 import type { Email } from '../mail/emails';
 import { Categories } from '../mail/emails';
 import * as PixelFont from '../mail/pixelFont';
-import { H, W, plainLetter, type CardPainter } from './cards';
+import { H, W, type CardPainter } from './cards';
 
 /**
  * What an email looks like in LumberHack: TIMBER POST, a sheet of cream paper tacked to a board
@@ -71,7 +71,7 @@ function nail(g: CanvasRenderingContext2D, x: number, y: number, r: number) {
   g.fillStyle = iron; g.beginPath(); g.arc(x, y, r, 0, 7); g.fill();
 }
 
-const BAR = 84;
+const BAR = 44;      // (a band of colour and a leaf since 2026-11-13: the words are set the same in every level, ../mail/layout.ts)
 export const lumberCard: CardPainter = (g, email) => {
   const random = seeded(email ? email.subject : 'title');
   // the board: honey pine, its grain running along it, a knot or two, darker bark at its edge
@@ -99,8 +99,7 @@ export const lumberCard: CardPainter = (g, email) => {
   g.fillStyle = band; g.fillRect(x0, y0, pw, BAR);
   g.fillStyle = BARN_DARK; g.fillRect(x0, y0 + BAR - 10, pw, 4);
   g.fillStyle = GOLD; g.fillRect(x0, y0 + BAR - 6, pw, 6);
-  maple(g, x0 + 54, y0 + 40, 25, -0.25, GOLD);
-  if (!email) pixel(g, 'TIMBER POST', x0 + 100, y0 + 40, 6, CREAM);
+  maple(g, W / 2, y0 + 19, 15, -0.25, GOLD);
   // four nails
   for (const [nx, ny] of [[x0 + 16, y0 + 16], [x0 + pw - 16, y0 + 16], [x0 + 16, y0 + ph - 16], [x0 + pw - 16, y0 + ph - 16]]) nail(g, nx, ny, 8);
 
@@ -112,16 +111,12 @@ export const lumberCard: CardPainter = (g, email) => {
     g.font = `600 38px ${SANS}`; g.fillStyle = SOFT; g.fillText('chop this one to begin', W / 2, 458);
     return;
   }
-  // what sort of mail it is: the band's own words, in the middle of it, as Super Space's bar has
-  // (TIMBER POST and a tag to the right until 2026-11-13; then the words plain in the middle, as Kyoto's
-  // and the Haunted Halls' are, kept narrow enough to clear the postmark)
-  pixel(g, Categories.label(email.category), W / 2, y0 + 38, 5, CREAM, 'center');
-  plainLetter(g, email, x0 + 140, y0 + BAR + 4, pw - 280, ph - BAR - 24, { family: SANS, subject: INK, from: BARN_DARK, words: SOFT });
   // the postmark, bottom right: a ring of ink with a leaf in it, turned a little differently on every one
   const px = x0 + pw - 82, py = y0 + ph - 80, turn = random() * 0.8 - 0.4;
-  g.save(); g.translate(px, py); g.rotate(turn); g.globalAlpha = 0.6;
+  g.save(); g.translate(px, py); g.rotate(turn); g.globalAlpha = 0.3;      // (faint since 2026-11-13: the message may run over it)
   g.strokeStyle = BARN; g.lineWidth = 5; g.beginPath(); g.arc(0, 0, 50, 0, 7); g.stroke();
   g.lineWidth = 2; g.beginPath(); g.arc(0, 0, 40, 0, 7); g.stroke();
   g.restore();
-  g.globalAlpha = 0.72; maple(g, px, py, 26, turn, BARN); g.globalAlpha = 1;
+  g.globalAlpha = 0.32; maple(g, px, py, 26, turn, BARN); g.globalAlpha = 1;
+  return { box: { x: x0 + 42, y: y0 + BAR + 22, w: pw - 84, h: ph - BAR - 22 - 30 }, family: SANS, text: INK, dim: SOFT, accent: () => BARN, onAccent: CREAM, ok: '#3d6b24', fail: BARN };
 };

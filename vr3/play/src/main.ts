@@ -268,7 +268,7 @@ async function main() {
   });
   bindSetupMic();      // the mic line and Allow mic on the Setup card (dictate.ts)
   bindHomeMic();       // and Connect mic beside Setup: the mic is only ever asked for here, never in VR
-  bindMailUi();        // the Inbox card: the demo or your Gmail, how many emails (mailui.ts, mail/source.ts)
+  bindMailUi();        // Enter Code / Just Play: an agent's game code, or the demo (mailui.ts, mail/source.ts)
   $('menu').addEventListener('click', () => setPlaying(false));
   const useWeapon = () => { sounds.unlock(); if (now.weapon) now.weapon.previewSwing(); else sword.previewSwing(); };
   $('swing').addEventListener('click', useWeapon);

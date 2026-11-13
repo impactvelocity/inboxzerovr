@@ -128,7 +128,7 @@ export const infernoLetters: LetterTheme = {
   id: 'inferno', face: 'paint', paint: infernoCard, mechanic: 'spray', title: 'Inferno', accent: '#ff8a3d', bar: ['#ff3d2e', '#ffc23d'],
   look: { sheet: '#f3e6cc', ink: '#1c130f', back: '#e4d3b4', selfLit: 0.1, night: '#d9bcae',
     hover: '#ffe2b8', cutWide: '#ff9a3a', cutHot: '#fff3d6', mark: '#ffe27a', flash: '#fff1d0', gold: '#fff0a8',
-    burn: '#ffb347', burnStyle: 3, streak: ['#ffb070', '#ffffff'], thread: ['#ffb070', '#fff3e0'], aura: ['#ff5a14', '#ffc24a'], spell: { wisps: 1, sparkles: 14, trail: false, glow: 0.6 } },
+    burn: '#ffb347', burnStyle: 3, streak: ['#ffb070', '#ffffff'], thread: ['#ffb070', '#fff3e0'], aura: ['#ff5a14', '#ffc24a'], spell: { wisps: 1, sparkles: 8, trail: false, glow: 0.34 } },      // (glow 0.6 and 14 sparkles until the user asked for less, 2026-11-13)
   // Down the chute: small in the dark of its mouth, then out over the bench, turning a little as it comes.
   origin(head: Vector3, home: Vector3, from: Vector3, via: Vector3) {
     const across = (CHUTE.u - 0.5) * 4.71238898, down = (CHUTE.v - 0.48) * 1.57079633;

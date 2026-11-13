@@ -1,7 +1,7 @@
 import type { Email } from '../mail/emails';
 import { Categories } from '../mail/emails';
 import * as PixelFont from '../mail/pixelFont';
-import { H, W, plainLetter, type CardPainter } from './cards';
+import { H, W, type CardPainter } from './cards';
 
 /**
  * What an email looks like in Super Space: a pale data slate, its kind of mail in the bar across its
@@ -54,7 +54,7 @@ function pixel(g: CanvasRenderingContext2D, text: string, left: number, yMid: nu
   PixelFont.cells(upper, x, Math.round(yMid - PixelFont.Rows * cell / 2), cell, (cx, cy, cw, ch) => g.fillRect(cx, cy, cw, ch));
   return wide;
 }
-const BAR = 92, EDGE = 12;
+const BAR = 46, EDGE = 12;      // (the bar is only a band of colour since 2026-11-13: the sort of mail is at the top right, as in every level)
 export const spaceCard: CardPainter = (g, email) => {
   const random = seeded(email ? email.subject : 'title');
   // the slate: a plum rim, a pale face
@@ -83,11 +83,7 @@ export const spaceCard: CardPainter = (g, email) => {
     g.font = `600 38px ${SANS}`; g.fillStyle = SOFT; g.fillText('cut this one to begin', W / 2, 452);
     return;
   }
-  // what sort of mail it is: the bar's own words, in the middle of it
-  pixel(g, Categories.label(email.category), W / 2, 51, 5, IVORY, 'center');
-
-  // (the words plain in the middle since 2026-11-13, as Kyoto's and the Haunted Halls' are: subject, sender, message; no magenta tick)
-  plainLetter(g, email, 70, BAR + 6, W - 140, H - BAR - 70, { family: SANS, subject: INK, from: PLUM, words: SOFT });
   // along the foot: the signal it came in on, a row of pixels different for every email
-  for (let i = 0; i < 34; i++) { const tall = 6 + Math.floor(random() * 4) * 6; g.fillStyle = i % 9 === 4 ? MAGENTA : 'rgba(74,28,94,.42)'; g.fillRect(W / 2 - 204 + i * 12, H - EDGE - 20 - tall, 8, tall); }
+  for (let i = 0; i < 34; i++) { const tall = 4 + Math.floor(random() * 3) * 4; g.fillStyle = i % 9 === 4 ? MAGENTA : 'rgba(74,28,94,.42)'; g.fillRect(W / 2 - 204 + i * 12, H - EDGE - 10 - tall, 8, tall); }
+  return { box: { x: 60, y: BAR + 26, w: W - 120, h: H - BAR - 26 - 52 }, family: SANS, text: INK, dim: SOFT, accent: () => PLUM, onAccent: IVORY, ok: '#0a8f6a', fail: '#c4186e' };
 };

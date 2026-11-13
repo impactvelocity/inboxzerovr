@@ -79,24 +79,15 @@ Verified in desktop Chromium, frames stepped by hand: Start goes straight to the
 
 Verified headless on 5183: a whole game to the end, the bar above the logo and the line under it, and home 2.5 s plus the fade after the smash. Not verified: the music by ear (the headless browser does not play it), the logo's new distance with a real swing, and grabbing (it needs the controllers).
 
-## Real email (2026-11-12)
+## Real email: agent rounds (2026-11-13)
 
-The emails can now be the player's own Gmail (invite only) or a baked demo inbox. How it works end to end, the API, the setup and the deploy are in [../README.md](../README.md). The game's side:
+The emails are the demo inbox (`src/mail/emails.ts`), or an **agent round**: the player's own AI agent read their mail and sent summaries and reply drafts to the site's API, and the player types the 4-digit code it gave them. How it works end to end, the API and the deploy are in [../README.md](../README.md). (Gmail sign-in, reading the inbox and the AI sorting and replies lived here from 2026-11-12 and were taken out on 2026-11-13.) The game's side:
 
-- **`src/mail/source.ts`** holds a game's mail. `deck()` gives round one real mail in inbox order when Gmail is chosen and its cards are in; otherwise it returns nothing and the demo is shuffled as before (the baked `src/mail/demo-inbox.json` when there is one, else `emails.ts`). An email that needs an answer starts its two replies being written as it arrives (`arrived()`). Any other email starts when it is kept (`settled()`). A sent reply or a kept dictation becomes a draft (`sent()`). At the end, `finish()` archives what was cut and saves the drafts. A game left early (`clear()`) changes nothing (`abandon()`).
-- **`src/letters.ts`** calls those at its own moments: `beginIntro`, `spawn`, `settle`, `sendTo`, `beginSummary` and `clear`. Round two shows WRITING A REPLY... in the bubbles until real replies come in (`mail.onReplies`), and a bubble can't be chosen until then. With real mail there are no stand-in emails topping up round two, and if nothing was kept the game goes straight to its end.
-- **`src/mailui.ts`** is the **Inbox** card on the home screen, beside Setup. It chooses the demo or Gmail (Gmail only with the access link), sets how many emails a game takes (5 to 20; the demo follows it too), and connects or signs out. It shows how the inbox loading and the last game's write-back went. The line under Start says which inbox the next game plays.
+- **`src/mail/source.ts`** holds a game's mail. `deck()` gives round one the agent round, all of it in the agent's order, when one is loaded; otherwise it returns nothing and the demo is shuffled as before. `settled()` and `sent()` note what became of each email: cut, a reply chosen (0 or 1), or what was said into the mic. At the end `finish()` posts that to the server, which writes up the spoken replies and keeps the result for the agent. A game left early (`abandon()`) sends nothing, and the round can be played again. `arrived()`, `want()`, `repliesReady()` and `onReplies` are no-ops kept for `letters.ts`: every reply is written before the game starts.
+- **`src/mailui.ts`** is the **Inbox** card on the home screen: the game code box (it loads at four digits; `?code=1234` in the address works too, and the tab keeps the code in sessionStorage until played). The line under Start says when the next game is an agent round, and afterwards that the results went to the agent.
 - **`src/mail/wire.ts`** is what the game and the API say to each other. Both import it.
 
-Verified (2026-11-12, the production build in desktop Chromium, the browser pane):
-- The front page, including at phone width. `/play` goes to `/play/`.
-- A wrong invite is refused and a right one accepted, then taken out of the address bar.
-- The Inbox card offers Gmail only with the invite, and the count of 5 is remembered.
-- A demo game to the end makes no mail calls.
-- With the pretend Gmail (`MOCK_GMAIL=1`), a game on 5 real-mail cards: three people's replies requested as their emails arrived; round two with only the 2 kept; a reply sent. At the end exactly the 3 cut emails were archived and 1 draft was saved to Maya, threaded on her email, while the one left for later was untouched. The inbox was then re-read (21 left) and the home screen said what was done.
-- A game left with Esc wrote nothing.
-
-Not yet: a real Google sign-in (no OAuth client), the models (no AI Gateway key, so cards and replies were by rules), the real mic through the site, and anything on the headset.
+Verified 2026-11-13 on 5183 in the Browser pane with the desktop keys: a 3-email round loaded by `?code=` and by typing, kept across a reload, played (one cut, one reply, one by mic), and the agent's results matched. Not yet: the real mic, the polish model (no AI Gateway key) and anything on the headset.
 
 ## Dictation (2026-11-12)
 

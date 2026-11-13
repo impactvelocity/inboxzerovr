@@ -1,7 +1,8 @@
-import { AdditiveBlending, BackSide, BufferGeometry, CanvasTexture, Color, CylinderGeometry, DoubleSide, FrontSide, InterleavedBuffer, InterleavedBufferAttribute, Matrix4, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, Points, Quaternion, ShaderMaterial, SphereGeometry, SRGBColorSpace, TextureLoader, Vector2, Vector3, Vector4, type Texture, type World } from '@iwsdk/core';
+import { AdditiveBlending, BackSide, BufferGeometry, CanvasTexture, Color, CylinderGeometry, DoubleSide, FrontSide, InterleavedBuffer, InterleavedBufferAttribute, LinearSRGBColorSpace, Matrix4, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, Points, Quaternion, ShaderMaterial, SphereGeometry, SRGBColorSpace, TextureLoader, Vector2, Vector3, Vector4, type Texture, type World } from '@iwsdk/core';
 import type { BladeTracker } from './blade';
 import { covers, cut, measure, recentre, STRIDE, type Soup } from './cut';
-import { emailCard, scrollContent, scrolls, ScrollHeight, ScrollWindow } from './mail/cardArt';
+import { emailCard } from './mail/cardArt';
+import { layoutEmail, STRIP_TALL, type CardStyle, type Scroll } from './mail/layout';
 import { type Email } from './mail/emails';
 import { mail } from './mail/source';
 import { makeSurface, Painter, type Surface } from './mail/painter';
@@ -170,7 +171,8 @@ export interface LetterTheme {
   id: string;
   /** 'ink': the Unity game's card as ink on washi (Kyoto). 'paint': painted in full colour by `paint` (levels/cards.ts). */
   face: 'ink' | 'paint';
-  paint?: (g: CanvasRenderingContext2D, email: Email | null, hazard: boolean) => void;
+  /** Paints the card's decoration, and for an email says where its words go (they are set by mail/layout.ts, the same in every level). */
+  paint?: (g: CanvasRenderingContext2D, email: Email | null, hazard: boolean) => CardStyle | void;
   /** Its own shape (levels/shapes.ts); the curled paper sheet if none. */
   shape?: () => Float32Array;
   look: LetterLook;
@@ -227,6 +229,8 @@ interface Sheet {
   users: number; cuts: number; cutAt: number; burnAt: number; burn: number; reserved: boolean;
   /** Where the spray last landed on it (which of the three places is written next). */
   splats: number;
+  /** A message too long for the card: the strip all of it is painted on (made when first needed), how far it has to scroll (card units; 0: it does not) and for how long it has been read. */
+  strip?: Surface; scrollRange?: number; readFor?: number;
 }
 /** Something made of paper that is in the air: a whole letter, or a piece of one. */
 interface Body {
@@ -292,6 +296,11 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
       // (none: a Vector4 starts at w 1, which is a dent a metre deep at the middle. Things drawn with this that are
       // never reset, the end logo, the bar, the summary and the menu's cards, wore one as a dark wedge: fixed 2026-11-12)
       dents: { value: [new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0)] },
+      // a message that scrolls (mail/layout.ts): its strip (red: how much plain ink, green: bold), its window on the
+      // face (uv: left, bottom, right, top; all 0: none), the two inks, and where it has got to (how far down the
+      // strip the window's top is, how much of the strip's height the window shows, and of its width; then how much
+      // of the strip is written on, all as parts of the strip)
+      scrollMap: { value: washi }, scrollBox: { value: new Vector4(0, 0, 0, 0) }, scrollInk: { value: [new Color(), new Color()] }, scrollAt: { value: new Vector4(0, 1, 1, 1) },
     },
     vertexShader: /* glsl */ `
       uniform float burn,burnStyle,wet; uniform vec4 dents[3]; uniform vec2 span;
@@ -315,7 +324,7 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
         gl_Position=projectionMatrix*viewMatrix*world;
       }`,
     fragmentShader: /* glsl */ `
-      uniform sampler2D face,paperMap; uniform vec3 sheet,inkColor,backColor,nightTint,hoverColor,cutWide,cutHot,markColor,flashColor,goldColor,burnColor,heat;
+      uniform sampler2D face,paperMap,scrollMap; uniform vec4 scrollBox,scrollAt; uniform vec3 scrollInk[2]; uniform vec3 sheet,inkColor,backColor,nightTint,hoverColor,cutWide,cutHot,markColor,flashColor,goldColor,burnColor,heat;
       uniform float paint,selfLit,burnStyle,time,night,hover,burn,gold,mark,flash,wet,hazard,cutout,shine; uniform vec2 span; uniform vec4 cuts[3]; uniform vec4 dents[3]; uniform vec3 splats[3];
       varying vec2 vUv; varying vec3 vNormalW; varying vec3 vWorld; varying float vFront;
       float grain(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
@@ -324,6 +333,14 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
         return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
       void main(){
         vec4 tex=texture2D(face,vUv); vec3 t=tex.rgb;
+        {
+          // a long message, moving through its window: faded out at the window's edge where there is more beyond it
+          vec2 q=(vUv-scrollBox.xy)/max(scrollBox.zw-scrollBox.xy,vec2(1e-5)); float down=1.-q.y;
+          vec4 words=texture2D(scrollMap,vec2(q.x*scrollAt.z,1.-(scrollAt.x+down*scrollAt.y)));
+          float inside=step(0.,q.x)*step(q.x,1.)*step(0.,q.y)*step(q.y,1.)*step(1e-4,scrollBox.z);
+          inside*=mix(1.,smoothstep(0.,.1,down),clamp(scrollAt.x*60.,0.,1.))*mix(1.,smoothstep(0.,.1,q.y),clamp((scrollAt.w-scrollAt.y-scrollAt.x)*60.,0.,1.));
+          t=mix(t,scrollInk[0],words.r*inside); t=mix(t,scrollInk[1],words.g*inside);
+        }
         // (a picture with see-through parts, the end-of-game logo: only where it is drawn is there anything)
         if(cutout>.5&&tex.a<.45) discard;
         vec2 rim=min(vUv,1.-vUv);
@@ -377,7 +394,7 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
         }
         // Radioactive: it glows from its edges, beating.
         vec3 hazardEdge=burnStyle>2.5?vec3(1.,.36,.05):vec3(.45,1.,.15), hazardFill=burnStyle>2.5?vec3(.42,.12,.02):vec3(.16,.4,.04);      // (Inferno's smoulders; the lab's is radioactive)
-        c+=(hazardEdge*(1.-smoothstep(0.,.2,edge))*(.55+.45*sin(time*5.))*.9+hazardFill*.2)*hazard*(1.-wet*.6);
+        c+=(hazardEdge*(1.-smoothstep(0.,.2,edge))*(.55+.45*sin(time*5.))*.9+hazardFill*.2)*hazard*(1.-wet*.6)*(burnStyle>2.5?.55:1.);      // (Inferno's toned down: "reduce a bit of the glow / fire around emails", 2026-11-13)
         // A hand close enough to take it warms its edge.
         c+=hoverColor*(1.-smoothstep(0.,.08,edge))*hover*.45;
         // Where the blade went through, it glows and cools.
@@ -523,7 +540,6 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   { const seeds = new Float32Array(SPARKLES * 2); for (let i = 0; i < seeds.length; i++) seeds[i] = Math.random();
     sparkleGeometry.setAttribute('position', new InterleavedBufferAttribute(new InterleavedBuffer(new Float32Array(SPARKLES * 3), 3), 3, 0));
     sparkleGeometry.setAttribute('seed', new InterleavedBufferAttribute(new InterleavedBuffer(seeds, 2), 2, 0)); }
-  const preview = makeSurface(ScrollWindow.width, ScrollHeight, { scale: 1.5, ink: true, texture: false });
 
   // The slash itself: a streak of light along the cut, gone in a moment.
   const streakGeometry = new PlaneGeometry(1, 1);
@@ -585,29 +601,65 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (!sheet) return null;
     const u = sheet.material.uniforms;
     u.hover.value = 0; u.burn.value = 0; u.gold.value = 0; u.mark.value = 0; u.flash.value = 0; (u.heat.value as Vector3).set(0, 0, 0);
+    (u.scrollBox.value as Vector4).set(0, 0, 0, 0); sheet.scrollRange = 0;
     u.wet.value = 0; u.hazard.value = 0; for (const dent of u.dents.value as Vector4[]) dent.set(0, 0, 0, 0); for (const splat of u.splats.value as Vector3[]) splat.set(0, 0, 0);
     sheet.splats = 0; sheet.cuts = 0; sheet.cutAt = Infinity; sheet.burnAt = Infinity; sheet.burn = 0;
     return sheet;
   }
-  /** A painted level's face (levels/cards.ts), straight onto the sheet's canvas. */
-  function paintFace(sheet: Sheet, email: Email | null, hazard: boolean) {
+  /**
+   * A message too long for its card (mail/layout.ts): all of it goes on the sheet's strip, and the
+   * shader shows a window of that on the face. None: the window is shut.
+   */
+  const STRIP_WIDE = 920, inkOf = new Color();
+  function setScroll(sheet: Sheet, scroll: Scroll | null) {
+    const u = sheet.material.uniforms;
+    sheet.scrollRange = 0; sheet.readFor = 0;
+    if (!scroll) { (u.scrollBox.value as Vector4).set(0, 0, 0, 0); return; }
+    if (!sheet.strip) {
+      sheet.strip = makeSurface(STRIP_WIDE, STRIP_TALL, { scale: 1.5, ink: true });      // (ink: as written, no colour conversion; it is amounts of ink, not a picture)
+      u.scrollMap.value = sheet.strip.texture;
+    }
+    const strip = sheet.strip, g = strip.g, face = sheet.surface;
+    g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = 1; g.fillStyle = '#000'; g.fillRect(0, 0, strip.canvas.width, strip.canvas.height);
+    g.setTransform(strip.scale, 0, 0, strip.scale, 0, 0);
+    scroll.paint(g);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+    strip.texture!.needsUpdate = true;
+    (u.scrollBox.value as Vector4).set(scroll.x / face.width, 1 - (scroll.y + scroll.h) / face.height, (scroll.x + scroll.w) / face.width, 1 - scroll.y / face.height);
+    (u.scrollAt.value as Vector4).set(0, scroll.h / STRIP_TALL, scroll.w / STRIP_WIDE, scroll.tall / STRIP_TALL);
+    // the inks as the face has them: a painted face is a picture (sRGB), Kyoto's is the ink shader's own numbers
+    const inks = u.scrollInk.value as Color[], space = theme.face === 'paint' ? SRGBColorSpace : LinearSRGBColorSpace;
+    scroll.inks.forEach((ink, i) => inks[i].copy(inkOf.setStyle(ink, space)));
+    sheet.scrollRange = Math.max(0, scroll.tall - scroll.h);
+  }
+  /**
+   * A long message read while its letter is up: it waits, goes down slowly to its end, waits, comes
+   * back up quicker, and again. (2026-11-13: "scroll the body a bit slowly so they can read / scan
+   * the entire one".)
+   */
+  const READ = { wait: 1.6, speed: 26, back: 150, rest: 1.8 };      // seconds before it moves; card units a second down, and back up; seconds at the foot
+  function read(sheet: Sheet, dt: number) {
+    const range = sheet.scrollRange ?? 0;
+    if (range <= 0) return;
+    sheet.readFor = (sheet.readFor ?? 0) + dt;
+    const down = range / READ.speed, up = range / READ.back, t = sheet.readFor % (READ.wait + down + READ.rest + up);
+    const smooth = (x: number) => x * x * (3 - 2 * x);
+    const at = t < READ.wait ? 0 : t < READ.wait + down ? (t - READ.wait) / down : t < READ.wait + down + READ.rest ? 1 : 1 - smooth((t - READ.wait - down - READ.rest) / up);
+    (sheet.material.uniforms.scrollAt.value as Vector4).x = at * range / STRIP_TALL;
+  }
+  /** A painted level's face (levels/cards.ts): its decoration straight onto the sheet's canvas, then the words, set as in every level. */
+  function paintFace(sheet: Sheet, email: Email | null, hazard: boolean, still = false) {
     const s = sheet.surface, g = s.g;
     g.setTransform(s.scale, 0, 0, s.scale, 0, 0); g.globalAlpha = 1; g.clearRect(0, 0, s.width, s.height);
-    theme.paint!(g, email, hazard);
+    const style = theme.paint!(g, email, hazard);
+    setScroll(sheet, email && style ? layoutEmail(g, email, style, !still) : null);
     g.setTransform(1, 0, 0, 1, 0, 0);
     s.texture!.needsUpdate = true;
   }
-  function drawEmail(sheet: Sheet, email: Email) {
-    if (theme.paint) { paintFace(sheet, email, !!theme.hazard?.(email)); return; }
-    emailCard(painter, sheet.surface, email);
-    if (scrolls(email)) {
-      // A newsletter's window: the top of the mock email that scrolls through it in the Unity game.
-      scrollContent(painter, preview, email);
-      const g = sheet.surface.g, k = sheet.surface.scale;
-      g.setTransform(1, 0, 0, 1, 0, 0);
-      g.drawImage(preview.canvas, 0, 0, ScrollWindow.width * k, ScrollWindow.height * k, ScrollWindow.x * k, ScrollWindow.y * k, ScrollWindow.width * k, ScrollWindow.height * k);
-      sheet.surface.texture!.needsUpdate = true;
-    }
+  /** `still`: a card nobody will read (the day's mail, swirling at the end): a long message is cut short, not scrolled. */
+  function drawEmail(sheet: Sheet, email: Email, still = false) {
+    if (theme.paint) { paintFace(sheet, email, !!theme.hazard?.(email), still); return; }
+    setScroll(sheet, emailCard(painter, sheet.surface, email, !still));
   }
   // Real mail's replies come in while the game goes on: if the email is up in round two, its bubbles change from WRITING to them.
   mail.onReplies = email => { if (game.phase === 'play' && game.round === 2 && current?.email === email && game.stage === 'pick') ui.replies(email.replies[0], email.replies[1]); };
@@ -1051,7 +1103,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const day = game.dayDeck.length ? game.dayDeck : game.deck;
     day.slice(0, 12).forEach((email, i, all) => {
       const sheet = freeSheet() ?? extraSheet();
-      drawEmail(sheet, email); sheet.material.uniforms.hazard.value = theme.hazard?.(email) ? 1 : 0;
+      drawEmail(sheet, email, true); sheet.material.uniforms.hazard.value = theme.hazard?.(email) ? 1 : 0;
       const at = new Vector3(seat.x, seat.y - 1.4, seat.z - 1);
       const show = putOut(sheet, W, H, 'mail', at, facing(at));
       // (putOut built a flat slab the letter's size; the letter's own shape is used instead)
@@ -2166,6 +2218,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
         mesh.quaternion.copy(letter.start).multiply(q1.setFromAxisAngle(v1.set(0.3, letter.past.x < head.x ? 1 : -1, 0.2).normalize(), e * 1.3));
         if (letter.t >= 1) { events.on?.('missed', mesh.position); settle(body, game.round === 2 ? 'tomorrow' : 'missed'); remove(body); counts.missed++; current = null; nextIn = 0.25; }
       }
+      if (current === letter && (letter.state === 'waiting' || letter.state === 'held')) read(body.sheet, dt);
       if (current === letter && letter.state !== 'held') {
         mesh.updateMatrixWorld(true);
         // The hand can take it by being at it, or by reaching towards it: its reach line passing close enough.
@@ -2762,6 +2815,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       end: shows.map(x => x.kind + (x.held ? '*' : '') + (x.free ? '~' : '') + (x.gone >= 0 ? 'x' : '')).join(' ') }),
     /** For checks and the console: act on the letter in front of you without a controller. */
     debug: { cut: keyCut, keep: keyKeep, hold: keySend, round: (n: number) => beginIntro(n), end: () => { game.phase = 'play'; beginSummary(); },
+      /** Write another email on the letter in front of you (a long one, to see it scroll). */
+      show: (email: Email) => { if (current) drawEmail(current.body.sheet, email); },
       /** Cut a menu card, as a sword would: 'start', 'exit', or a level's id. */
       /** Choose a menu card as the left hand would. */
       pickCard: (id: string) => { const show = shows.find(x => x.gone < 0 && (x.kind === id || x.id === id)); if (show && !menu.pending) { show.hover = 2; menu.pending = { kind: show.kind === 'exit' ? 'exit' : 'pick', id: show.id, at: menu.age }; } },

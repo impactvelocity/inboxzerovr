@@ -85,34 +85,7 @@ export const knockoutCard: CardPainter = (g, email) => {
     g.font = `400 30px ${SANS}`; g.fillText('left hand: take one and throw it, to keep it', W / 2, 452);
     return;
   }
-  // who it is from, and what sort of mail it is (a red ticket)
-  g.textAlign = 'left'; g.textBaseline = 'alphabetic';
-  const label = Categories.label(email.category), tab = PixelFont.width(label, 4) + 40;
-  g.fillStyle = RED; g.fillRect(W - 40 - tab, 138, tab, 54);
-  pixel(g, label, W - 40 - tab / 2, 165, 4, '#fff3da', 'center');
-  pixel(g, 'FROM', 42, 166, 4, RED);
-  g.fillStyle = INK; g.font = `700 42px ${SANS}`;
-  g.fillText(fit(g, email.from, W - 250 - tab), 150, 180);
-  g.fillStyle = RULE; g.fillRect(34, 210, W - 68, 3);
-
-  // the headline: the subject
-  g.fillStyle = INK; g.font = `900 68px ${SERIF}`;
-  const headline = wrap(g, email.subject, W - 96, 2);
-  headline.forEach((line, i) => g.fillText(line, 44, 290 + i * 74));
-  let y = 290 + (headline.length - 1) * 74 + 34;
-  // the story under it: how the email begins
-  g.fillStyle = '#33271d'; g.font = `italic 400 40px ${SERIF}`;
-  const room = Math.max(1, Math.min(3, Math.floor((H - 96 - y) / 50)));
-  const story = wrap(g, gist(email), W - 96, room);
-  story.forEach((line, i) => g.fillText(line, 44, y + 40 + i * 50));
-  y += 40 + (story.length - 1) * 50 + 30;
-  // and what is left of the page: columns of type too small to read
-  if (H - 44 - y > 34) {
-    g.fillStyle = RULE; g.fillRect(34, y, W - 68, 3);
-    g.fillStyle = 'rgba(40,30,22,.42)';
-    const columns = 3, gap = 30, wide = (W - 88 - gap * (columns - 1)) / columns;
-    for (let c = 0; c < columns; c++) for (let line = y + 20; line < H - 40; line += 17)
-      g.fillRect(44 + c * (wide + gap), line, wide * (line + 17 >= H - 40 ? 0.35 + random() * 0.5 : 0.86 + random() * 0.14), 7);
-  }
   g.fillStyle = RULE; g.fillRect(34, H - 30, W - 68, 5);
+  // (the words are set as in every level since 2026-11-13, ../mail/layout.ts; the subject is still the headline, in the paper's own serif)
+  return { box: { x: 46, y: 140, w: W - 92, h: H - 140 - 48 }, family: SANS, display: SERIF, displayWeight: '900', text: INK, dim: '#33271d', accent: () => RED, onAccent: '#fff3da', ok: '#2f6b3a', fail: RED };
 };

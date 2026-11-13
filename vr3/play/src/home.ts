@@ -38,6 +38,18 @@ const ON_HEADSET = /OculusBrowser|Quest|Pacific|Pico|Wolvic/i.test(navigator.use
 
 const ANNOUNCE: Record<string, string> = { lumber: 'audio/lumber/announce.mp3', knockout: 'audio/knockout/announce.mp3', kyoto: 'audio/kyoto/announce.mp3', office: 'audio/office/announce.mp3', office2: 'audio/office/announce.mp3', castle: 'audio/castle/announce.mp3', lab: 'audio/lab/announce.mp3', inferno: 'audio/inferno/announce.mp3', space: 'audio/space/announce.mp3' };
 
+/**
+ * The main button's words and what happens before it starts a game (2026-11-13): src/mailui.ts
+ * sets them. With no agent code it says ENTER CODE and opens the code card instead of starting.
+ */
+const startControl = { label: 'Enter Code', gate: null as null | (() => boolean), apply: () => {} };
+export const startButton = {
+  /** The main button's words (shown once the VR check is done). */
+  setLabel(text: string) { startControl.label = text; startControl.apply(); },
+  /** Runs before a game starts from the main button; false stops it. */
+  setGate(f: () => boolean) { startControl.gate = f; },
+};
+
 export function createHome(options: { levels: Level[]; pick(level: Level): void; start(where: 'vr' | 'screen'): void; settings(): void }) {
   const base = import.meta.env.BASE_URL;
   const list = document.getElementById('levels')!, start = document.getElementById('start') as HTMLButtonElement;
@@ -331,7 +343,8 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
   }
 
   let vr = false;
-  start.addEventListener('click', () => options.start(vr ? 'vr' : 'screen'));
+  start.addEventListener('click', () => { if (startControl.gate && !startControl.gate()) return; options.start(vr ? 'vr' : 'screen'); });
+  startControl.apply = () => { if (!start.disabled) pixelLabel(start, startControl.label, 3, '#14121a'); };
   here.addEventListener('click', () => options.start('screen'));
   document.getElementById('open-settings')!.addEventListener('click', options.settings);
   // The buttons' words in the pixel letters (the main one bigger, dark on the level's colour)
@@ -372,7 +385,7 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
     busy(on: boolean) { document.body.classList.toggle('busy', on); },
     /** Can this browser enter VR? Start says which it will do. */
     vr(supported: boolean) {
-      vr = supported; start.disabled = false; pixelLabel(start, 'Clean Your Inbox', 3, '#14121a'); start.title = supported ? 'Enter VR' : 'Play on this screen'; here.hidden = !supported || ON_HEADSET;
+      vr = supported; start.disabled = false; pixelLabel(start, startControl.label, 3, '#14121a'); start.title = supported ? 'Enter VR' : 'Play on this screen'; here.hidden = !supported || ON_HEADSET;
       status.textContent = supported ? '' : window.isSecureContext ? 'Playing on this screen. Open this page in a headset browser for VR.' : 'VR needs HTTPS or localhost. Playing on this screen.';
     },
   };

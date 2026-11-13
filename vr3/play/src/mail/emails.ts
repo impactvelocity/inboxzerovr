@@ -57,12 +57,12 @@ export interface Email {
   failed: boolean;
   kind: EmailKind;
   category: Category;
-  /** Two ready-made replies offered in round 2. For real mail these start as stand-ins and are filled in when drafted (src/mail/source.ts). */
+  /** Two ready-made replies offered in round 2. For an agent round, the agent's drafts (src/mail/source.ts). */
   replies: [string, string];
-  /** Real mail only (src/mail/wire.ts): the Gmail message and thread it came from. */
+  /** Agent rounds only (src/mail/wire.ts): the agent's ref for the email. threadId is no longer used. */
   id?: string;
   threadId?: string;
-  /** Real mail only: a person wrote it and expects an answer, so its replies are drafted as soon as it arrives. */
+  /** Agent rounds only: the agent sent reply drafts for it. */
   needsReply?: boolean;
 }
 

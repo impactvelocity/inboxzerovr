@@ -1,6 +1,7 @@
 import type { Email } from '../mail/emails';
 import { Categories } from '../mail/emails';
 import * as PixelFont from '../mail/pixelFont';
+import type { CardStyle } from '../mail/layout';
 
 /**
  * What an email looks like in each of the new levels, painted in full colour straight onto the
@@ -13,9 +14,14 @@ import * as PixelFont from '../mail/pixelFont';
  * Every painter takes the 2D context already scaled so that the card is W by H units, the email
  * (null: a title card; not shown since 2026-11-11, when a game was made to start straight on its
  * countdown) and whether it is a hazard.
+ *
+ * Since 2026-11-13 a painter paints only the decoration of an email: its paper, frame and marks.
+ * It hands back a CardStyle (where the words go, their family and colours) and the words are set
+ * by ../mail/layout.ts, the same in every level: sender top left, sort of mail top right, subject,
+ * message. ("so its all consistent, and each level just has the decoration and effects")
  */
 export const W = 1024, H = 640;
-export type CardPainter = (g: CanvasRenderingContext2D, email: Email | null, hazard: boolean) => void;
+export type CardPainter = (g: CanvasRenderingContext2D, email: Email | null, hazard: boolean) => CardStyle | void;
 
 const SERIF = 'Georgia, "Noto Serif", "Times New Roman", serif';
 const SANS = '"Helvetica Neue", Arial, Roboto, "Noto Sans", sans-serif';
@@ -64,36 +70,6 @@ function gist(email: Email) {
   if (email.snippet) parts.push(email.snippet);
   if (!parts.length && email.items?.length) parts.push(email.items.slice(0, 3).join(' · '));
   return parts.join('. ') || 'No preview.';
-}
-/** How `plainLetter` sets the words: one family, and three inks (subject, sender, message). */
-export interface PlainLook { family: string; subject: string; from: string; words: string; clear?: number }
-/**
- * The words of an email set plainly, as Kyoto's and the Haunted Halls' are: no heading, the subject
- * first and largest, who it is from under it, then as much of the message as fits. All of it in the
- * middle of the box (x, y, w, h), left to right and top to bottom, lines balanced so none is left
- * with one word. `clear` narrows the subject (an icon in a top corner); the message is at most four lines.
- * (Toxic, Super Space, Inferno and LumberHack since 2026-11-13: "make simpler text like kyoto + haunted,
- * so its easier to read". Each had its own heading, a "Subject:" label or a sender off to one side.)
- */
-export function plainLetter(g: CanvasRenderingContext2D, email: Email, x: number, y: number, w: number, h: number, look: PlainLook) {
-  const SUBJECT = `800 56px ${look.family}`, FROM = `600 38px ${look.family}`, WORDS = `400 37px ${look.family}`;
-  const LINE = 66, TO_FROM = 74, TO_WORDS = 64, STEP = 50;
-  g.font = SUBJECT;
-  const subject = balance(g, email.subject, w - (look.clear ?? 0), 2);
-  const room = h - 70 - (subject.length - 1) * LINE - TO_FROM - TO_WORDS;
-  g.font = WORDS;
-  const words = balance(g, gist(email), w, Math.min(4, Math.max(1, Math.floor(room / STEP) + 1)));
-  const tall = (subject.length - 1) * LINE + TO_FROM + TO_WORDS + (words.length - 1) * STEP;
-  const cx = x + w / 2;
-  let at = y + h / 2 - tall / 2;
-  g.textAlign = 'center'; g.textBaseline = 'middle';
-  g.font = SUBJECT; g.fillStyle = look.subject;
-  subject.forEach((line, i) => g.fillText(line, cx, at + i * LINE));
-  at += (subject.length - 1) * LINE + TO_FROM;
-  g.font = FROM; g.fillStyle = look.from; g.fillText(fit(g, email.from, w), cx, at);
-  at += TO_WORDS;
-  g.font = WORDS; g.fillStyle = look.words;
-  words.forEach((line, i) => g.fillText(line, cx, at + i * STEP));
 }
 function pixel(g: CanvasRenderingContext2D, text: string, left: number, yMid: number, cell: number, colour: string, align: 'left' | 'center' | 'right' = 'left') {
   const upper = text.toUpperCase(), wide = PixelFont.width(upper, cell);
@@ -150,26 +126,14 @@ export const officeCard: CardPainter = (g, email) => {
     g.font = `700 46px ${MONO}`; g.fillText('THE OFFICE', W / 2, 346);
     g.font = `700 38px ${SANS}`; g.fillText('smash this one to begin', W / 2, 424);
     g.font = `400 28px ${SANS}`; g.fillStyle = DEEP; g.fillText('left hand: take one and throw it, to keep it', W / 2, 492);
-  } else {
-    envelope(g, 68, 160, 92, 66, INK, 7);
-    g.textAlign = 'left'; g.textBaseline = 'alphabetic'; g.fillStyle = INK;
-    g.font = `700 54px ${MONO}`; g.fillText(fit(g, email.from, W - 430), 190, 208);
-    // what sort of mail it is, as a tab
-    const label = Categories.label(email.category), tab = PixelFont.width(label, 4) + 36;
-    g.strokeStyle = DEEP; g.lineWidth = 4; g.strokeRect(W - 62 - tab, 158, tab, 50); pixel(g, label, W - 62 - tab / 2, 183, 4, DEEP, 'center');
-    g.fillStyle = INK; g.font = `700 50px ${MONO}`;
-    const subject = wrap(g, email.subject, W - 150, 2);
-    subject.forEach((line, i) => g.fillText(line, 68, 300 + i * 58));
-    const top = 300 + subject.length * 58;
-    g.fillStyle = DEEP; g.fillRect(68, top - 30, W - 136, 4);
-    g.fillStyle = '#145441'; g.font = `400 36px ${MONO}`;
-    wrap(g, gist(email), W - 150, Math.max(1, Math.floor((H - 60 - top) / 46))).forEach((line, i) => g.fillText(line, 68, top + 24 + i * 46));
   }
   // scan lines, and the tube's dim corners
   g.fillStyle = 'rgba(8,60,44,.07)';
   for (let y = 0; y < H; y += 6) g.fillRect(0, y, W, 2);
   const shade = g.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, W * 0.72); shade.addColorStop(0, 'rgba(0,40,30,0)'); shade.addColorStop(1, 'rgba(0,40,30,.28)');
   g.fillStyle = shade; g.fillRect(0, 0, W, H);
+  // (the words go on after this, over the scan lines: they are faint enough not to be missed)
+  if (email) return { box: { x: 66, y: 146, w: W - 132, h: H - 146 - 62 }, family: MONO, text: INK, dim: '#145441', accent: () => DEEP, onAccent: '#b9fbe0', ok: DEEP, fail: '#a3262e' };
 };
 
 // ------------------------------------------------------------------ castle
@@ -206,11 +170,10 @@ export const castleCard: CardPainter = (g, email) => {
   for (let i = 0; i < 18; i++) { const bx = x0 + random() * pw, by = y0 + random() * ph, r = 30 + random() * 90; const blot = g.createRadialGradient(bx, by, 0, bx, by, r); blot.addColorStop(0, 'rgba(150,104,48,.10)'); blot.addColorStop(1, 'rgba(150,104,48,0)'); g.fillStyle = blot; g.fillRect(bx - r, by - r, 2 * r, 2 * r); }
   const age = g.createRadialGradient(W / 2, H / 2, ph * 0.38, W / 2, H / 2, pw * 0.62); age.addColorStop(0, 'rgba(110,66,24,0)'); age.addColorStop(1, 'rgba(110,66,24,.34)');
   g.fillStyle = age; g.fillRect(x0, y0, pw, ph);
-  // the crest, trailing ivy
-  g.fillStyle = OXBLOOD; g.fillRect(x0 + 26, y0 + 22, 78, 78); g.strokeStyle = '#5e121c'; g.lineWidth = 4; g.strokeRect(x0 + 26, y0 + 22, 78, 78);
-  fleur(g, x0 + 65, y0 + 61, 27, GOLD);
-  g.strokeStyle = OXBLOOD; g.lineWidth = 3; g.beginPath(); g.moveTo(x0 + 30, y0 + 100); g.bezierCurveTo(x0 + 6, y0 + 150, x0 + 44, y0 + 190, x0 + 16, y0 + 250); g.stroke();
-  g.fillStyle = OXBLOOD; for (const [lx, ly, t] of [[22, 130, 0.6], [34, 168, -0.7], [22, 204, 0.8], [26, 238, -0.5], [112, 40, 0.2], [128, 58, 0.9]]) { g.save(); g.translate(x0 + lx, y0 + ly); g.rotate(t); g.beginPath(); g.moveTo(0, -11); g.lineTo(8, 0); g.lineTo(0, 11); g.lineTo(-8, 0); g.closePath(); g.fill(); g.restore(); }
+  // the crest: a seal at the bottom right, faint, since the message may run over it (it was at the top left, trailing ivy,
+  // until 2026-11-13: "move decoration for the email ... to the bottom right ... so everything else is same placement")
+  const crest = (cx: number, cy: number) => { g.fillStyle = OXBLOOD; g.fillRect(cx - 39, cy - 39, 78, 78); g.strokeStyle = '#5e121c'; g.lineWidth = 4; g.strokeRect(cx - 39, cy - 39, 78, 78); fleur(g, cx, cy, 27, GOLD); };
+  if (email) { g.globalAlpha = 0.34; crest(x0 + pw - 76, y0 + ph - 74); g.globalAlpha = 1; } else crest(x0 + 65, y0 + 61);
   g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = QUILL;
   const rule = (y: number, half: number) => { g.strokeStyle = 'rgba(52,25,15,.7)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(W / 2 - half, y); g.lineTo(W / 2 - 22, y); g.moveTo(W / 2 + 22, y); g.lineTo(W / 2 + half, y); g.stroke(); fleur(g, W / 2, y, 11, QUILL); };
   // (no ROYAL DISPATCH heading or the rule under it since 2026-11-12, asked for: the subject sits higher instead)
@@ -220,25 +183,9 @@ export const castleCard: CardPainter = (g, email) => {
     g.font = `400 40px ${SERIF}`; g.fillText('The Haunted Hall', W / 2, y0 + 254 - up);
     g.font = `italic 400 36px ${SERIF}`; g.fillText('cut this one to begin', W / 2, y0 + 318 - up);
     g.font = `400 26px ${SERIF}`; g.fillStyle = 'rgba(52,25,15,.75)'; g.fillText('left hand: take one and throw it, to keep it', W / 2, y0 + 368 - up);
-  } else {
-    // (more room between the lines, and between subject, sender and words, since 2026-11-12: "its all tight";
-    // the subject a touch narrower, so a long one clears the crest. Then: lines balanced so none is left with
-    // one word, and the whole of it set in the middle of the card, top to bottom, now there is no seal)
-    g.font = `italic 700 50px ${SERIF}`;
-    const subject = balance(g, email.subject, pw - 220, 2);
-    const LINE = 62, TO_FROM = 70, TO_WORDS = 62, WORDS = 50;
-    const room = (ph - 120) - (subject.length - 1) * LINE - TO_FROM - TO_WORDS;
-    g.font = `400 34px ${SERIF}`;
-    const words = balance(g, gist(email), pw - 170, Math.max(1, Math.floor(room / WORDS) + 1));
-    const tall = (subject.length - 1) * LINE + TO_FROM + TO_WORDS + (words.length - 1) * WORDS;
-    let y = y0 + ph / 2 - tall / 2 + 4;
-    g.font = `italic 700 50px ${SERIF}`;
-    subject.forEach((line, i) => g.fillText(line, W / 2, y + i * LINE));
-    y += (subject.length - 1) * LINE + TO_FROM;
-    g.font = `600 36px ${SERIF}`; g.fillStyle = 'rgba(52,25,15,.85)'; g.fillText(fit(g, email.from, pw - 130), W / 2, y); y += TO_WORDS;      // (bigger and darker since 2026-11-12, to see who it is from: it was 28px at .72; and just the name, no "by the hand of")
-    g.fillStyle = QUILL; g.font = `400 34px ${SERIF}`;
-    words.forEach((line, i) => g.fillText(line, W / 2, y + i * WORDS));
+    return;
   }
+  return { box: { x: x0 + 44, y: y0 + 32, w: pw - 88, h: ph - 62 }, family: SERIF, displayWeight: 'italic 700', text: QUILL, dim: 'rgba(52,25,15,.86)', accent: () => OXBLOOD, onAccent: '#f4e3bd', ok: '#2f6b3a', fail: OXBLOOD };
 };
 
 // ------------------------------------------------------------------ lab
@@ -276,17 +223,19 @@ export const labCard: CardPainter = (g, email, hazard) => {
     for (const y of [0, H - 40]) { g.fillStyle = '#ffd21f'; g.fillRect(0, y, W, 40); g.fillStyle = '#16160f'; for (let x = -40; x < W; x += 64) { g.beginPath(); g.moveTo(x, y + 40); g.lineTo(x + 32, y + 40); g.lineTo(x + 72, y); g.lineTo(x + 40, y); g.closePath(); g.fill(); } }
   }
   // scorched at one corner
-  const scorch = g.createRadialGradient(W - 30, 26, 6, W - 30, 26, 150); scorch.addColorStop(0, 'rgba(28,14,6,.95)'); scorch.addColorStop(0.45, 'rgba(96,44,10,.7)'); scorch.addColorStop(0.7, 'rgba(255,140,30,.35)'); scorch.addColorStop(1, 'rgba(255,140,30,0)');
+  const scorch = g.createRadialGradient(W - 6, 6, 4, W - 6, 6, 66);      // (small since 2026-11-13: the sort of mail is written at the top right) scorch.addColorStop(0, 'rgba(28,14,6,.95)'); scorch.addColorStop(0.45, 'rgba(96,44,10,.7)'); scorch.addColorStop(0.7, 'rgba(255,140,30,.35)'); scorch.addColorStop(1, 'rgba(255,140,30,0)');
   g.fillStyle = scorch; g.fillRect(W - 190, 0, 190, 180);
   // slime, creeping in from the edges
   const blobs: [number, number, number][] = [[24, 150, 30], [8, 196, 20], [36, 214, 13], [14, 330, 24], [40, 352, 11], [20, 470, 30], [50, 505, 14], [96, H - 16, 34], [150, H - 8, 20], [190, H - 22, 12], [W - 26, 420, 26], [W - 12, 470, 16], [W - 44, H - 20, 30], [150, 18, 22], [196, 8, 13], [W / 2 + 120, H - 10, 18]];
   for (const [x, y, r] of blobs) slime(g, x + (random() - 0.5) * 16, y + (random() - 0.5) * 16, r * (0.8 + random() * 0.5));
   const ink = '#15140f', grey = '#5f5c50', top = hazard ? 56 : 30;
   if (email) {
-    // (just the mark, small in its corner, and the words plain in the middle since 2026-11-13: no CONTAMINATED MAIL heading)
-    if (hazard) trefoil(g, 100, top + 56, 40); else biohazard(g, 100, top + 56, 50, ink, paper);
-    plainLetter(g, email, 70, top + 6, W - 140, H - top - (hazard ? 46 : 26), { family: SANS, subject: ink, from: '#3d3a30', words: grey, clear: 220 });
-    return;
+    // (just the mark, at the bottom right and faint, since the message may run over it: no CONTAMINATED MAIL heading since 2026-11-13)
+    const x = 76, y = top + 18, foot = H - (hazard ? 62 : 40);
+    g.globalAlpha = hazard ? 0.5 : 0.3;
+    if (hazard) trefoil(g, W - x - 50, foot - 48, 46); else biohazard(g, W - x - 54, foot - 50, 54, ink, paper);
+    g.globalAlpha = 1;
+    return { box: { x, y, w: W - 2 * x, h: foot - y }, family: SANS, text: ink, dim: '#45423a', accent: () => (hazard ? '#6b5200' : '#2f6a1c'), onAccent: paper, ok: '#2f6a1c', fail: '#a3262e' };
   }
   g.textAlign = 'left'; g.textBaseline = 'middle';
   if (hazard) trefoil(g, 122, top + 78, 60); else biohazard(g, 122, top + 78, 74, ink, paper);

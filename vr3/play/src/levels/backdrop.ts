@@ -50,6 +50,15 @@ export interface StageContext {
   play(name: string, pitch?: number, volume?: number, at?: THREE.Vector3): void;
 }
 
+/**
+ * The direction from the eye to a place in a stage's painting (u, v as measured on it), as the backdrop wraps it:
+ * 270 degrees across, 90 up and down, the eye line at v .48. Unit length, -z ahead.
+ */
+export function paintedDirection(u: number, v: number, out = new THREE.Vector3()) {
+  const sideways = (u - 0.5) * 4.71238898, up = (v - 0.48) * 1.57079633;
+  return out.set(Math.sin(sideways) * Math.cos(up), Math.sin(up), -Math.cos(sideways) * Math.cos(up));
+}
+
 export interface StageDef {
   id: Exclude<LevelId, 'kyoto'>;
   name: string;
@@ -176,6 +185,8 @@ export async function createStage(def: StageDef, renderer: THREE.WebGLRenderer) 
       uniform sampler2D startMap,endMap; uniform float blend,time,breeze,depthScale,pulse,hot,lamp,dolly; uniform vec3 headLean,rearA,rearB,spot; varying vec3 direction; varying vec3 eyeShift;
       ${helpers}
       // 270 degrees across, 90 up and down, the eye line 48% of the way up: the same wrap as Kyoto's, without its squeeze.
+      // (Every level the same, always: a painting sets its own perspective. 2026-11-13: "always the same degrees, so
+      // that the image it self can set that, this way I can just generate new images".)
       vec2 panoUv(vec3 d){ return vec2(.5+atan(d.x,-d.z)/4.71238898,.48+asin(clamp(d.y,-1.,1.))/1.57079633); }
       ${def.glsl}
       vec3 paint(vec2 uv, vec2 gx, vec2 gy){ return mix(textureGrad(startMap,uv,gx,gy).rgb,textureGrad(endMap,uv,gx,gy).rgb,blend); }

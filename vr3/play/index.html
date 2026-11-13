@@ -24,15 +24,15 @@ html,body{margin:0;background:#06050a}
 <div id="scene" aria-label="The level. Drag or use arrow keys to look around." tabindex="0"></div>
 <div id="loading" role="status" aria-label="Loading"><div class="load-inner"><img class="load-logo" src="logos/site.webp" alt="Inbox Zero"><div class="load-bar" aria-hidden="true"><span></span></div><p class="load-text">LOADING</p></div></div>
 <section id="home" aria-label="Inbox Zero">
- <div class="home-top"><div class="home-corner left"><span class="mic-wrap"><button id="connect-mic" class="pix icon" aria-label="Connect mic"><canvas class="mic" aria-hidden="true"></canvas></button><span class="mic-meter" aria-hidden="true"><span></span></span></span></div><div class="home-corner right"><a id="hackathon" class="pix icon hack-link" target="_blank" rel="noopener" aria-label="The Meta VR Hackathon" title="The Meta VR Hackathon"><canvas class="loop" aria-hidden="true"></canvas></a></div></div>
+ <div class="home-top"><div class="home-corner left"><span class="mic-wrap"><button id="connect-mic" class="pix icon" aria-label="Connect mic"><canvas class="mic" aria-hidden="true"></canvas></button><span class="mic-meter" aria-hidden="true"><span></span></span></span></div><div class="home-corner right"><button id="code-badge" class="pix code-badge" hidden title="The game code from your AI agent: this is your inbox">Code</button><a id="hackathon" class="pix icon hack-link" target="_blank" rel="noopener" aria-label="The Meta VR Hackathon" title="The Meta VR Hackathon"><canvas class="loop" aria-hidden="true"></canvas></a></div></div>
  <div class="home-head"><canvas id="credit" class="credit" width="1100" height="40" role="img" aria-label="Built By Dylan Jones for Meta VR Hackathon"></canvas><h1 id="logo-stage" aria-label="Inbox Zero"><canvas class="logo-air" aria-hidden="true"></canvas><span class="logo-float"><span class="logo-shine" aria-hidden="true"></span></span></h1><canvas id="tagline" class="tagline" width="1100" height="56" role="img" aria-label="Slash the spam · save what matters"></canvas></div>
  <div id="levels" role="radiogroup" aria-label="Choose a level"></div>
  <div class="home-actions">
   <div class="side left"><button id="open-guide" class="pix">How to Play</button></div>
-  <span class="start-wrap"><button id="start" class="pix" disabled>Checking VR…</button></span>
+  <div class="start-pair"><span class="start-wrap"><button id="start" class="pix" disabled>Checking VR…</button></span><button id="just-play" class="pix" title="Play the demo inbox: made-up emails">Just Play</button></div>
   <div class="side right"><button id="open-settings" class="pix icon" aria-label="Settings" title="Settings"><canvas class="gear" aria-hidden="true"></canvas></button></div>
  </div>
- <div class="home-dev" aria-label="For now: setup and the mail"><button id="open-setup" class="pix">Setup</button><button id="open-inbox" class="pix">Inbox</button></div>
+ <div class="home-dev" aria-label="For now: setup"><button id="open-setup" class="pix">Setup</button></div>
  <p id="mail-status" role="status"></p>
  <p id="xr-status" role="status"></p><button id="start-here" class="link" hidden>or play on this screen</button>
  <dialog id="setup" class="card-dialog" aria-labelledby="setup-title">
@@ -46,17 +46,18 @@ html,body{margin:0;background:#06050a}
   </ol>
   <div class="dialog-actions"><button id="setup-mic" class="pix">Allow mic</button><button id="setup-weapon" class="pix">Adjust weapon</button><button class="pix close-dialog">Got it</button></div>
  </dialog>
- <dialog id="inbox" class="card-dialog" aria-labelledby="inbox-title">
-  <h2 id="inbox-title">Inbox</h2>
-  <div class="mail-choice" role="radiogroup" aria-label="Which inbox to play">
-   <label><input type="radio" name="mail-mode" value="demo"> <b>Demo inbox</b><span>Made-up mail with replies already written. Nothing to connect.</span></label>
-   <label id="mail-gmail-choice"><input type="radio" name="mail-mode" value="gmail"> <b>Your Gmail</b><span id="mail-gmail-line">Your newest unread mail, sorted into cards by AI.</span></label>
+ <dialog id="code" class="card-dialog code-card" aria-labelledby="code-title">
+  <h2 id="code-title">Enter Code</h2>
+  <p class="code-lede">The 4-digit code from your AI agent.</p>
+  <div class="code-slots" role="img" aria-label="No digits yet"><span></span><span></span><span></span><span></span></div>
+  <p class="code-state" id="code-state" role="status"></p>
+  <div class="code-pad" role="group" aria-label="Keypad">
+   <button class="pix" data-key="1">1</button><button class="pix" data-key="2">2</button><button class="pix" data-key="3">3</button>
+   <button class="pix" data-key="4">4</button><button class="pix" data-key="5">5</button><button class="pix" data-key="6">6</button>
+   <button class="pix" data-key="7">7</button><button class="pix" data-key="8">8</button><button class="pix" data-key="9">9</button>
+   <button class="pix" data-key="clear">Clr</button><button class="pix" data-key="0">0</button><button class="pix" data-key="back">Del</button>
   </div>
-  <p class="mail-invite" id="mail-invite">Playing your own Gmail is invite only for now.</p>
-  <label class="mail-count">Emails per game <select id="mail-count"></select></label>
-  <p class="mail-note" id="mail-note">Cut mail is archived and the replies you send are saved as drafts, at the end of the game. Kept and later mail is left as it is. Nothing is stored: your mail is read for the game and forgotten.</p>
-  <p class="mail-state" id="mail-state" role="status"></p>
-  <div class="dialog-actions"><button id="mail-connect" class="pix" hidden>Connect Gmail</button><button id="mail-signout" class="pix" hidden>Sign out</button><button class="pix close-dialog">Done</button></div>
+  <div class="dialog-actions"><button id="code-cancel" class="pix">Back</button><button id="code-play" class="pix close-dialog" disabled>Play</button></div>
  </dialog>
  <dialog id="guide" class="card-dialog" aria-labelledby="guide-title">
   <h2 id="guide-title">How to Play</h2>

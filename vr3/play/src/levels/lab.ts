@@ -1,12 +1,13 @@
 import type { Vector3 } from 'three';
 import type { LetterTheme } from '../letters';
-import type { StageDef } from './backdrop';
+import { paintedDirection, type StageDef } from './backdrop';
+import { Vector3 as V3 } from 'three';
 import { labCard } from './cards';
 import type { FxStyle, LevelSound } from './types';
 
 /**
  * The lab: a tiled room under teal beams, glowing green growing things in tanks along the walls,
- * a table to either side, and in the middle a containment machine: a glass dome full of mail, a
+ * a table to either side and a bench right in front (since 2026-11-13), and in the middle a containment machine: a glass dome full of mail, a
  * warning beacon on top, and a hatch the contaminated letters come out of. Some of it is
  * radioactive, and nothing is cut: the tool is a disinfectant sprayer. One touch of the mist and
  * the froth spreads over the letter by itself and melts it.
@@ -18,12 +19,14 @@ import type { FxStyle, LevelSound } from './types';
 
 /** The machine's hatch, where letters come out: its direction, and how far it is by the depth model. */
 const HATCH = { u: 0.4998, v: 0.3928, metres: 4.3 };
+const hatchWay = new V3();
 
 export const labStage: StageDef = {
   id: 'lab', name: 'The lab',
   art: ['levels/lab/start.webp', 'levels/lab/end.webp'],
   rear: ['#b9c9cc', '#06161a'],
   glsl: /* glsl */ `
+    const float BENCH_DROP=.5, BENCH_NEAR=.86;      // the bench in front: its top under the eye, and its front edge out, metres (its front edge is 30 degrees down)
     // A room: tiles 1.2 m under the eye and the beams 2.2 m over it; the back wall about six metres
     // off down the middle, and (the painting being wrapped round the player) nearer and nearer
     // towards its two edges; the machine standing out in front of the wall; and the two tables
@@ -36,7 +39,12 @@ export const labStage: StageDef = {
       float machine=band(uv.x,.418,.6165)*band(uv.y,.30,.76);
       inv=max(inv,machine*level/4.3);
       float tables=(band(uv.x,.03,.26)+band(uv.x,.735,.97))*band(uv.y,.04,.345);
-      return max(inv,tables*level/2.3);
+      inv=max(inv,tables*level/2.3);
+      // The bench right in front of the player (in the paintings since 2026-11-13): its top half a metre under the eye,
+      // from 0.86 m out (its front edge, v .145) to 1.3 m (its back edge, v .25), and its front face straight down
+      // from that edge to the floor. Measured off the painting: u .235 to .765, the front face down to v .085.
+      float bench=band(uv.x,.235,.765)*band(uv.y,.085,.256);
+      return max(inv,bench*min(max(-d.y,0.)/BENCH_DROP,level/BENCH_NEAR));
     }
     // The liquid moves: the mail in the dome turns over slowly, the tanks' contents drift and wobble.
     vec2 warp(vec2 uv){
@@ -117,8 +125,8 @@ export const labLetters: LetterTheme = {
     burn: '#9dff5a', burnStyle: 2, streak: ['#9dffb0', '#ffffff'], thread: ['#9dffb0', '#f2fff2'], aura: ['#6dff2a', '#eaff5a'], spell: { wisps: 0.8, sparkles: 16, trail: false } },
   // Out of the machine's hatch: small in the dark of it, then out across the room, turning a little as it comes.
   origin(head: Vector3, home: Vector3, from: Vector3, via: Vector3) {
-    const across = (HATCH.u - 0.5) * 4.71238898, down = (HATCH.v - 0.48) * 1.57079633;
-    from.set(head.x + Math.sin(across) * Math.cos(down) * HATCH.metres, head.y + Math.sin(down) * HATCH.metres, head.z - Math.cos(across) * Math.cos(down) * HATCH.metres);
+    // (where the backdrop shows the hatch: backdrop.ts)
+    from.copy(head).addScaledVector(paintedDirection(HATCH.u, HATCH.v, hatchWay), HATCH.metres);
     via.lerpVectors(from, home, 0.55); via.y += 0.18;
     return { scale: 0.55, pose: 'face' as const, seconds: 1.9, ease: 2, sway: 0.05 };
   },
