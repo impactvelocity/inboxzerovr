@@ -30,6 +30,12 @@ const LOGOS: Record<string, { file: string; air: Air; colours: string[] }> = {
 /** Where the icon top right goes: the hackathon this was built for. (Empty for now: the icon shows, and goes nowhere.) */
 const HACKATHON_URL = '';
 
+/**
+ * Is this page open in a headset's own browser (the Quest's)? There, "or play on this screen" is left out, so the
+ * level select sits in the middle with nothing under it (2026-11-12): in the headset it is VR or nothing.
+ */
+const ON_HEADSET = /OculusBrowser|Quest|Pacific|Pico|Wolvic/i.test(navigator.userAgent);
+
 const ANNOUNCE: Record<string, string> = { lumber: 'audio/lumber/announce.mp3', knockout: 'audio/knockout/announce.mp3', kyoto: 'audio/kyoto/announce.mp3', office: 'audio/office/announce.mp3', office2: 'audio/office/announce.mp3', castle: 'audio/castle/announce.mp3', lab: 'audio/lab/announce.mp3', inferno: 'audio/inferno/announce.mp3', space: 'audio/space/announce.mp3' };
 
 export function createHome(options: { levels: Level[]; pick(level: Level): void; start(where: 'vr' | 'screen'): void; settings(): void }) {
@@ -52,7 +58,8 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
     const card = document.createElement('button');
     card.type = 'button'; card.className = 'level'; card.setAttribute('role', 'radio'); card.setAttribute('aria-checked', 'false'); card.setAttribute('aria-label', level.name);
     card.style.setProperty('--accent', level.accent);
-    card.innerHTML = `<span class="art" style="background-image:url('${base}${level.art[0]}')"></span><span class="art end" style="background-image:url('${base}${level.art[1]}')"></span>`
+    const [lit, dark] = level.card ?? level.art;
+    card.innerHTML = `<span class="art" style="background-image:url('${base}${lit}')"></span><span class="art end" style="background-image:url('${base}${dark}')"></span>`
       + `<span class="shade"></span><span class="pick" aria-hidden="true"><canvas class="check"></canvas></span><canvas class="name" width="560" height="120" aria-hidden="true"></canvas>`;
     card.addEventListener('click', () => options.pick(level));      // (its sting plays as it is chosen: main.ts)
     drawCheck(card.querySelector<HTMLCanvasElement>('canvas.check')!);
@@ -365,7 +372,7 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
     busy(on: boolean) { document.body.classList.toggle('busy', on); },
     /** Can this browser enter VR? Start says which it will do. */
     vr(supported: boolean) {
-      vr = supported; start.disabled = false; pixelLabel(start, 'Clean Your Inbox', 3, '#14121a'); start.title = supported ? 'Enter VR' : 'Play on this screen'; here.hidden = !supported;
+      vr = supported; start.disabled = false; pixelLabel(start, 'Clean Your Inbox', 3, '#14121a'); start.title = supported ? 'Enter VR' : 'Play on this screen'; here.hidden = !supported || ON_HEADSET;
       status.textContent = supported ? '' : window.isSecureContext ? 'Playing on this screen. Open this page in a headset browser for VR.' : 'VR needs HTTPS or localhost. Playing on this screen.';
     },
   };

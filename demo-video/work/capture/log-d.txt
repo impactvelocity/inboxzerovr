@@ -1,0 +1,15 @@
+kyoto-intro 195 frames 57s {"started":true,"phase":"intro","round":1,"dealt":0,"total":10,"marks":"","keptForRoundTwo":0,"ui":{"bar":1,"intro":1,"ring":1,"replies":0,"stage":"off","aimAt"
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Execution context was destroyed, most likely because of a navigation
+    at L (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:53:24)
+    at Object.untilLetter (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:62:66)
+    at async Object.run (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:28:97)
+    at async file:///Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:67:3 {
+  log: [],
+  name: 'Error'
+}
+
+Node.js v24.20.0

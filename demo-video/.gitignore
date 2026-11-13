@@ -1,0 +1,9 @@
+# big, rebuildable: frames, footage, audio stems
+work/frames/
+work/footage/
+work/stills/
+work/audio/*.wav
+work/audio/*.raw
+work/audio/*.m4a
+work/audio/*.mp3
+*.mp4

@@ -1,0 +1,2 @@
+kyoto-round2b 483 frames 136s {"started":true,"phase":"summary","round":2,"dealt":4,"total":4,"marks":"reply,tomorrow,reply,reply","keptForRoundTwo":4,"ui":{"bar":0,"intro":0,"ring":0,"repli
+kyoto-cut2 126 frames 33s {"started":true,"phase":"play","round":1,"dealt":4,"total":10,"marks":"cut,cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off","

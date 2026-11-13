@@ -1,0 +1,16 @@
+lumber 93 frames 57s {"started":true,"phase":"play","round":1,"dealt":2,"total":10,"marks":"cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off","aimA
+space 93 frames 36s {"started":true,"phase":"play","round":1,"dealt":2,"total":10,"marks":"cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off","aimA
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: Execution context was destroyed, most likely because of a navigation.
+    at step (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:44:26)
+    at Object.ff (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:46:58)
+    at async Object.run (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:25:7)
+    at async file:///Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:57:3 {
+  log: [],
+  name: 'Error'
+}
+
+Node.js v24.20.0

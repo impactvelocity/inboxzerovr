@@ -1,0 +1,25 @@
+kyoto-cut 93 frames 62s {"started":true,"phase":"play","round":1,"dealt":3,"total":10,"marks":"cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off","aimA
+kyoto-keep 90 frames 51s {"started":true,"phase":"play","round":1,"dealt":3,"total":10,"marks":"cut,kept","keptForRoundTwo":1,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off",
+kyoto-stream 196 frames 84s {"started":true,"phase":"play","round":1,"dealt":5,"total":10,"marks":"cut,cut,cut,cut,cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"st
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.screenshot: Timeout 30000ms exceeded.
+Call log:
+  - taking page screenshot
+  - waiting for fonts to load...
+  - fonts loaded
+
+    at Object.rec (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:47:100)
+    at async Object.run (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:27:52)
+    at async file:///Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:57:3 {
+  log: [
+    '  - taking page screenshot',
+    '  - waiting for fonts to load...',
+    '  - fonts loaded'
+  ],
+  name: 'TimeoutError'
+}
+
+Node.js v24.20.0

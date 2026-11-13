@@ -7,7 +7,7 @@ import * as PixelFont from '../mail/pixelFont';
  * letter's canvas (Kyoto's is the Unity game's own card, shown as ink on washi: ../mail).
  *
  *   office   a mint phosphor INBOX window, as if lifted off the CRT's screen
- *   castle   a ROYAL DISPATCH on parchment, in a carved frame with gold corners
+ *   castle   a dispatch on parchment (no heading), in a carved frame with gold corners
  *   lab      CONTAMINATED MAIL on stained paper, slime at its edges; RADIOACTIVE for the hot ones
  *
  * Every painter takes the 2D context already scaled so that the card is W by H units, the email
@@ -39,6 +39,17 @@ function wrap(g: CanvasRenderingContext2D, text: string, maxWidth: number, maxLi
     lines[maxLines - 1] = `${last}…`;
   }
   return lines.length ? lines : [''];
+}
+/**
+ * Wrapped like `wrap`, but with the lines made as even as they will go (CSS's text-wrap: balance), so a
+ * subject does not leave one word on a line of its own: the narrowest width that still needs no more lines.
+ */
+function balance(g: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number) {
+  const lines = wrap(g, text, maxWidth, maxLines);
+  if (lines.length < 2 || lines[lines.length - 1].endsWith('…')) return lines;
+  let low = maxWidth / lines.length, high = maxWidth;
+  for (let i = 0; i < 12; i++) { const mid = (low + high) / 2, trial = wrap(g, text, mid, 99); if (trial.length <= lines.length) high = mid; else low = mid; }
+  return wrap(g, text, Math.ceil(high) + 1, maxLines);
 }
 function fit(g: CanvasRenderingContext2D, text: string, maxWidth: number) {
   if (g.measureText(text).width <= maxWidth) return text;
@@ -172,29 +183,32 @@ export const castleCard: CardPainter = (g, email) => {
   g.fillStyle = OXBLOOD; for (const [lx, ly, t] of [[22, 130, 0.6], [34, 168, -0.7], [22, 204, 0.8], [26, 238, -0.5], [112, 40, 0.2], [128, 58, 0.9]]) { g.save(); g.translate(x0 + lx, y0 + ly); g.rotate(t); g.beginPath(); g.moveTo(0, -11); g.lineTo(8, 0); g.lineTo(0, 11); g.lineTo(-8, 0); g.closePath(); g.fill(); g.restore(); }
   g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = QUILL;
   const rule = (y: number, half: number) => { g.strokeStyle = 'rgba(52,25,15,.7)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(W / 2 - half, y); g.lineTo(W / 2 - 22, y); g.moveTo(W / 2 + 22, y); g.lineTo(W / 2 + half, y); g.stroke(); fleur(g, W / 2, y, 11, QUILL); };
-  g.font = `700 60px ${SERIF}`; g.fillText('ROYAL DISPATCH', W / 2 + 36, y0 + 66);
-  rule(y0 + 116, 230);
+  // (no ROYAL DISPATCH heading or the rule under it since 2026-11-12, asked for: the subject sits higher instead)
+  void rule; const up = email ? 46 : 13;      // (the title card, with no seal under it, sits lower: in the middle)
   if (!email) {
-    g.font = `italic 700 62px ${SERIF}`; g.fillText('Inbox Zero', W / 2, y0 + 190);
-    g.font = `400 40px ${SERIF}`; g.fillText('The Haunted Hall', W / 2, y0 + 254);
-    g.font = `italic 400 36px ${SERIF}`; g.fillText('cut this one to begin', W / 2, y0 + 318);
-    g.font = `400 26px ${SERIF}`; g.fillStyle = 'rgba(52,25,15,.75)'; g.fillText('left hand: take one and throw it, to keep it', W / 2, y0 + 368);
+    g.font = `italic 700 62px ${SERIF}`; g.fillText('Inbox Zero', W / 2, y0 + 190 - up);
+    g.font = `400 40px ${SERIF}`; g.fillText('The Haunted Hall', W / 2, y0 + 254 - up);
+    g.font = `italic 400 36px ${SERIF}`; g.fillText('cut this one to begin', W / 2, y0 + 318 - up);
+    g.font = `400 26px ${SERIF}`; g.fillStyle = 'rgba(52,25,15,.75)'; g.fillText('left hand: take one and throw it, to keep it', W / 2, y0 + 368 - up);
   } else {
-    g.font = `italic 700 54px ${SERIF}`;
-    const subject = wrap(g, email.subject, pw - 150, 2);
-    subject.forEach((line, i) => g.fillText(line, W / 2, y0 + 178 + i * 60));
-    let y = y0 + 178 + subject.length * 60 - 8;
-    g.font = `400 27px ${SERIF}`; g.fillStyle = 'rgba(52,25,15,.72)'; g.fillText(fit(g, `by the hand of ${email.from}`, pw - 200), W / 2, y); y += 46;
-    g.fillStyle = QUILL; g.font = `400 36px ${SERIF}`;
-    wrap(g, gist(email), pw - 170, Math.max(1, Math.floor((y0 + ph - 118 - y) / 44) + 1)).forEach((line, i) => g.fillText(line, W / 2, y + i * 44));
+    // (more room between the lines, and between subject, sender and words, since 2026-11-12: "its all tight";
+    // the subject a touch narrower, so a long one clears the crest. Then: lines balanced so none is left with
+    // one word, and the whole of it set in the middle of the card, top to bottom, now there is no seal)
+    g.font = `italic 700 50px ${SERIF}`;
+    const subject = balance(g, email.subject, pw - 220, 2);
+    const LINE = 62, TO_FROM = 70, TO_WORDS = 62, WORDS = 50;
+    const room = (ph - 120) - (subject.length - 1) * LINE - TO_FROM - TO_WORDS;
+    g.font = `400 34px ${SERIF}`;
+    const words = balance(g, gist(email), pw - 170, Math.max(1, Math.floor(room / WORDS) + 1));
+    const tall = (subject.length - 1) * LINE + TO_FROM + TO_WORDS + (words.length - 1) * WORDS;
+    let y = y0 + ph / 2 - tall / 2 + 4;
+    g.font = `italic 700 50px ${SERIF}`;
+    subject.forEach((line, i) => g.fillText(line, W / 2, y + i * LINE));
+    y += (subject.length - 1) * LINE + TO_FROM;
+    g.font = `600 36px ${SERIF}`; g.fillStyle = 'rgba(52,25,15,.85)'; g.fillText(fit(g, email.from, pw - 130), W / 2, y); y += TO_WORDS;      // (bigger and darker since 2026-11-12, to see who it is from: it was 28px at .72; and just the name, no "by the hand of")
+    g.fillStyle = QUILL; g.font = `400 34px ${SERIF}`;
+    words.forEach((line, i) => g.fillText(line, W / 2, y + i * WORDS));
   }
-  // the seal, on its ribbon
-  const sx = W / 2, sy = y0 + ph - 58;
-  g.strokeStyle = 'rgba(52,25,15,.6)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(sx - 150, sy); g.lineTo(sx - 64, sy); g.moveTo(sx + 64, sy); g.lineTo(sx + 150, sy); g.stroke();
-  g.fillStyle = '#7a1622'; g.beginPath(); g.moveTo(sx - 26, sy + 20); g.lineTo(sx - 34, sy + 74); g.lineTo(sx - 12, sy + 60); g.lineTo(sx, sy + 76); g.lineTo(sx + 12, sy + 60); g.lineTo(sx + 34, sy + 74); g.lineTo(sx + 26, sy + 20); g.fill();
-  g.fillStyle = '#b3202f'; g.beginPath(); for (let i = 0; i < 14; i++) { const a = i / 14 * 6.2832, r = 44 + (i % 2 ? 4 : -2); g.lineTo(sx + Math.cos(a) * r, sy + Math.sin(a) * r); } g.closePath(); g.fill();
-  g.fillStyle = '#d23a45'; g.beginPath(); g.arc(sx, sy, 33, 0, 7); g.fill();
-  envelope(g, sx - 19, sy - 13, 38, 26, '#7a1622', 3.5);
 };
 
 // ------------------------------------------------------------------ lab

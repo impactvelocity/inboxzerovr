@@ -1,0 +1,19 @@
+inferno 102 frames 66s {"started":true,"phase":"play","round":1,"dealt":2,"total":10,"marks":"cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off","aimA
+office2 93 frames 62s {"started":true,"phase":"play","round":1,"dealt":3,"total":10,"marks":"cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off","aimA
+castle 93 frames 55s {"started":true,"phase":"play","round":1,"dealt":2,"total":10,"marks":"cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off","aimA
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.evaluate: ReferenceError: __vr3 is not defined
+    at eval (eval at evaluate (:370:30), <anonymous>:1:12)
+    at UtilityScript.evaluate (<anonymous>:372:16)
+    at UtilityScript.<anonymous> (<anonymous>:1:44)
+    at step (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:44:26)
+    at Object.rec (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:47:74)
+    at async Object.run (/Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:17:115)
+    at async file:///Users/dylanjones/apps/inboxzerovr/demo-video/work/capture/capture.mjs:57:3 {
+  log: []
+}
+
+Node.js v24.20.0

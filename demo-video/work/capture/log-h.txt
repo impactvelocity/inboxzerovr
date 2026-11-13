@@ -1,0 +1,2 @@
+inferno 138 frames 69s {"started":true,"phase":"play","round":1,"dealt":3,"total":10,"marks":"cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off","aimA
+kyoto-cut 141 frames 67s {"started":true,"phase":"play","round":1,"dealt":3,"total":10,"marks":"cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0,"stage":"off","aimA

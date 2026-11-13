@@ -1,68 +1,32 @@
 # Inbox Zero demo video script
 
-Draft 2. Voiceover only: no timing, no scenes. Voice is fun, video game, cheeky.
+Voiceover take 1: `~/Downloads/inboxzero-vo-1.mp3`. This is the script that take was read from, word for word, with the voice tags as given.
 
 ## Hook
 
-You have 3,281 unread emails.
-
-You've tried filters. You've tried folders.
-
-But have you tried a sword? Or a flamethrower?
+Have you got 181 unread emails?  Tried filters, or reminders? [chuckles] ...But have you tried a sword? [excited] Or a flamethrower?
 
 ## Intro
 
-Now you can.
-
-Slash, burn, and smash your way to Inbox Zero.
-
-Built for the Meta Start Hackathon, it's the game where you clear your email inbox — one round at a time.
+[energetic] Slash, burn, and smash your way to Inbox Zero! [energetic] Built for the Meta Start Hackathon, it's a game to clear your inbox — one round at a time.
 
 ## How it works
 
-Here's how it works.
+Here's how it works. [energetic] Connect your gmail, and your latest unread emails become a game! [excited] Grab an email with your left hand to read it — throw it to keep it, or take your right hand and cut it up into tiny little pieces.
 
-Connect your email, and your latest unread becomes a game. Grab an email with your left hand to read it — throw it to keep it, or take your right hand and cut it up into tiny little pieces.
+Every email you keep comes back with two short replies. [energetic] Hold it up to the one you like, pull it close to say your own, or [chuckles] throw it away and leave it for tomorrow.
 
-Round two is for replies. Every email you kept comes back with two short replies. Hold it up to the one you like, and it's sent. Pull it close to say your own reply, or throw it away and leave it unread for tomorrow.
+## Why and levels
 
-## Why
-
-Inbox anxiety is real, so we turned it into a game. A few minutes a day to clear your inbox, and you get to break stuff.
-
-## Levels
-
-Like your monitor, with your keyboard.
-
-Defend the castle from haunted mail.
-
-Disinfect toxic spam in the lab.
-
-Torch your inbox in the Inferno mail room.
-
-Slice your worries away in a Kyoto zen garden.
-
-Split your backlog with an axe.
-
-Slice through deep space with a laser sword.
-
-## Try it
-
-Try it yourself at InboxZeroVR.com.
+[energetic] Just a few minutes a day to clear your email anxiety, and you finally get to smash your monitor with your keyboard! Defend your castle from haunted mail! Disinfect toxic spam in the lab! Torch your inbox in the Inferno mail room! Slice your worries away in a Kyoto zen garden! Split your backlog with an axe! Or... [excited] slice through deep space with a laser sword!
 
 ## How it's built
 
-It's built with Meta's Immersive Web SDK, so it runs right in the browser, with nothing to download.
-
-It's made to play from your chair. Emails come to you, and your weapons do the stretching.
-
-And it really does clear your inbox. Connect Gmail, and AI tags each email and boils it down to a quick summary. The AI reads your mail, then forgets it, nothing is saved.
-
-Every email you keep gets two replies, written while you play, so round two is ready to go. And if you'd rather say it yourself, just talk — your mic does the typing.
+[excited] It's built with Meta's Immersive Web SDK, so it runs right in the browser, with nothing to download. [excited] It's made to play from your chair. Emails come to you, and your weapons do the stretching! [excited] And it really does clear your inbox.  AI tags each email and boils it down to a quick summary. The AI reads your mail, then forgets it, nothing is saved.
 
 ## Close
 
-Inbox Zero. Your unread count never stood a chance.
+[excited] Try it yourself at Inbox Zero VR .com and play the demo in all seven levels - [singing] become a hero with inbox zero!
 
 ---
 
@@ -79,8 +43,8 @@ Why, closing line:
 - It turns the thing you dread into the thing you look forward to.
 - Zero emails. Zero dread.
 
-## To check against the build
+## Notes for captions and the edit
 
-- "It's sent": replies currently land as Gmail drafts, not sent mail. If that is still true at recording, use "and it's drafted, ready to send".
-- "Twenty emails": round one has been 10 for demos, 20 is the maximum. Say the number the footage shows.
-- The stat: an EmailToolTester survey of about 1,100 US workers found 81% feel anxiety over email (https://www.emailtooltester.com/en/?p=46012). It is a vendor survey and its methodology is unchecked, so fine for a voiceover, not for a hard claim.
+- Captions should spell the site InboxZeroVR.com and Gmail with a capital G; the "Inbox Zero VR .com" spacing is only there for the voice.
+- Cutting an email archives it in Gmail and a kept reply becomes a Gmail draft. The take says neither, so the footage is where that can show.
+- The emotion tags ([energetic], [excited], [chuckles], [singing]) are voice directions and do not go in the captions.

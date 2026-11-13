@@ -1,0 +1,504 @@
+// Inbox Zero VR demo film, v1. Every frame is a pure function of time: renderAt(T).
+// All times come from the voice (work/cues.json via cues.js): C(id) is a sentence's start, W(id, word) a word.
+'use strict';
+const FPS = 30;
+const $ = id => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const eo = t => 1 - Math.pow(1 - clamp(t), 3);
+const eio = t => { t = clamp(t); return t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; };
+const lerp = (a, b, t) => a + (b - a) * t;
+const C = id => CUES.cues[id].start, E = id => CUES.cues[id].end;
+const W = (id, word, n = 0) => { const w = CUES.words.filter(x => x.s === id && x.w === word)[n]; if (!w) throw new Error(`no word ${id}/${word}`); return w.t; };
+const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+const DUR = Math.round((CUES.duration + 2.6) * FPS) / FPS;
+
+// in at a, out at b: {o, y} or null when gone (slide up and fade in, lift and fade out)
+function vis(T, a, b, { y = 32, din = .5, dout = .3, lift = -26 } = {}) {
+  if (T < a || T > b + dout) return null;
+  const pi = eo((T - a) / din), po = clamp((T - b) / dout);
+  return { o: pi * (1 - po), y: (1 - pi) * y + eo(po) * lift, pi, po };
+}
+function show(el, on, o = 1, transform = '') {
+  el.style.visibility = on ? 'visible' : 'hidden';
+  if (on) { el.style.opacity = o; el.style.transform = transform; } else el.style.opacity = 0;      // (opacity too: a child set visible would still show)
+}
+function place(el, v, extra = '') { if (!v) return show(el, false); show(el, true, v.o, `translateY(${v.y}px) ${extra}`); }
+
+/* ---------- data ---------- */
+const MAIL = [
+  ['Pizza Palace', 'Buy 9 pizzas, get 1 free'], ['All Staff', 'RE: RE: RE: Please stop replying all'], ['SockDrawer Deals', '70% OFF ends at MIDNIGHT!!!'],
+  ['Prince Adewale', 'URGENT business proposal'], ['Webinar Wizard', 'Last chance: 10x your synergy'], ['ParcelPost', 'Your package is out for delivery'],
+  ['LinkUp', '14 people viewed your profile'], ['Calendar Robot', 'Reminder: reminder about reminders'], ['Old Gym Buddy', 'FWD: FWD: funny cat video'],
+  ['Biggest Client', 'Contract signed!'], ['Crypto Kevin', 'This coin is going to the MOON'], ['Horoscope Hub', 'Mercury is in your inbox'],
+  ['Sales Bot 3000', 'Bumping this to the top'], ['Free Cruise Center', 'You WON a free cruise'], ['Mattress Planet', 'Still thinking it over?'],
+  ['Team Fun Committee', 'Mandatory fun this Friday'],
+];
+const TIMES = ['9:41 am', '9:38 am', '9:30 am', '9:12 am', '8:57 am', '8:40 am', '8:31 am', '8:02 am', '7:55 am', '7:17 am', '7:02 am', '6:48 am', '6:30 am', '6:11 am', '5:59 am', '5:40 am'];
+const ROW_H = 76;
+const rows = MAIL.map(([from, subj], i) => {
+  const r = document.createElement('div'); r.className = 'row';
+  r.innerHTML = `<span class="dot"></span><span class="from">${from}</span><span class="subj">${subj}</span><span class="time">${TIMES[i]}</span>`;
+  $('rows').appendChild(r); return r;
+});
+// rows that fly into the game after connecting
+const flyrows = MAIL.slice(0, 4).map(([from, subj]) => {
+  const r = document.createElement('div'); r.className = 'flyrow';
+  r.innerHTML = `<span class="from">${from}</span><span class="subj">${subj}</span>`; $('flyrows').appendChild(r); return r;
+});
+const LEVELS = ['kyoto', 'office', 'castle', 'lab', 'space', 'inferno', 'lumber'];
+const cards = LEVELS.map(id => { const d = document.createElement('div'); d.className = 'lc'; d.innerHTML = `<img src="../work/assets/home/${id}.webp" alt="">`; $('cards').appendChild(d); return d; });
+const pixels = []; for (let y = 0; y < 9; y++) for (let x = 0; x < 14; x++) { const i = document.createElement('i'); $('pixels').appendChild(i); pixels.push({ i, x, y }); }
+const petals = []; for (let k = 0; k < 70; k++) { const i = document.createElement('i'); $('petals').appendChild(i); petals.push(i); }
+
+/* ---------- the timeline ---------- */
+const T_SWORD = W('sword', 'sword'), T_SPLIT = T_SWORD + .02, T_GAME = T_SWORD + .34;
+const T_INBOX = W('slash', 'inbox');
+const T_REALLY = C('really'), T_HERO = C('hero');
+const HOOK_COUNT = 181 + Math.floor(Math.max(0, T_SWORD - W('unread', '181') - .35) * 1.2);
+
+// footage: [clip, from, to, at, key] — clip frame `key` is shown at time `at`
+const SEG = [
+  ['kyoto-cut', T_GAME, W('flame', 'flamethrower') - .1, T_GAME + .12, 39],
+  ['inferno', W('flame', 'flamethrower') - .1, C('slash'), W('flame', 'flamethrower') + .25, 36],
+  ['kyoto-cut', C('slash'), W('slash', 'burn'), C('slash') + .15, 39],
+  ['inferno', W('slash', 'burn'), W('slash', 'smash'), W('slash', 'burn') + .12, 36],
+  ['office2', W('slash', 'smash'), T_INBOX, W('slash', 'smash') + .12, 39],
+  ['kyoto-intro', C('round'), C('connect') - .15, C('round'), 1],
+  ['kyoto-keep2', W('connect', 'game') + .25, C('cut'), W('throw', 'throw') + .12, 78],
+  ['kyoto-cut2', C('cut'), C('replies'), W('cut', 'cut') + .12, 66],
+  ['kyoto-round2b', C('replies'), C('later'), W('pull', 'pull') + .05, 180],      // "SENT" lands as she says pull
+  ['kyoto-round2b', C('later'), C('minutes'), W('later', 'throw') + .15, 249],
+  ['kyoto-round2b', C('minutes'), C('monitor'), C('minutes'), 'end-90'],
+  // v4: the long level shots (one cut on the word, then the view opens up while more mail is cut), each held 5 s past its line
+  ['office2-long', C('monitor'), C('castle'), W('monitor', 'smash') + .12, 'cut'],
+  ['castle-long', C('castle'), C('lab'), W('castle', 'defend') + .25, 'cut'],
+  ['lab-long', C('lab'), C('inferno'), W('lab', 'disinfect') + .3, 'cut'],
+  ['inferno-long', C('inferno'), C('kyoto'), W('inferno', 'torch') + .2, 'cut'],
+  ['kyoto-long', C('kyoto'), C('axe'), W('kyoto', 'slice') + .2, 'cut'],
+  ['lumber-long', C('axe'), C('or'), W('axe', 'split') + .2, 'cut'],
+  ['space-long', C('or'), C('iwsdk') - .02, W('space', 'slice') + .15, 'cut'],
+];
+// level logos over the footage
+const LOGOS = [
+  ['office', C('monitor')], ['castle', C('castle')], ['lab', C('lab')], ['inferno', C('inferno')], ['kyoto', C('kyoto')], ['lumber', C('axe')], ['space', C('or')],
+];
+const LOGO_END = C('iwsdk') - .3;
+// short lines on the footage: [text, from, to, style]
+const PHRASES = [
+  ['Grab to read', C('grab'), C('throw') - .05],
+  ['Throw to keep', C('throw'), C('cut') - .05],
+  ['Cut to archive', C('cut'), E('cut') + .1],
+  ['Saved as a Gmail draft', W('pull', 'pull') + .15, E('pull') + .1],
+  ['Leave it for tomorrow', W('later', 'leave') - .1, E('later') + .3],
+  // (no line over the end screen: the game's own "Cleared 10 emails" sits there)
+  ['Play from your chair', C('chair'), Math.min(E('come') + .1, C('really') - .6), 'ink'],
+];
+const phraseEls = PHRASES.map(([t, , , cls]) => { const d = document.createElement('div'); d.className = 'phrase' + (cls ? ' ' + cls : ''); d.textContent = t; $('phrases').appendChild(d); return d; });
+
+// sound effects, from the game's own sounds (the mix script reads this list)
+const A = '../../vr3/play/public/audio/';
+const SFX = [], AMB = [];
+const sfx = (t, file, gain = 1) => SFX.push({ t: +t.toFixed(3), file: A + file, gain });
+
+/* ---------- footage ---------- */
+function keyOf(clip, key0) { return key0 === 'cut' ? CUTS[clip][0] : typeof key0 === 'string' ? FOOT[clip] + +key0.slice(3) : key0; }
+let footSrc = '';
+function footage(T) {
+  const seg = SEG.find(s => T >= s[1] && T < s[2]);
+  if (!seg) { show($('foot'), false); return null; }
+  const [clip, from, , at, key0] = seg, n = FOOT[clip];
+  const key = keyOf(clip, key0);
+  const f = clamp(Math.round(key + (T - at) * FPS), 1, n);
+  const src = `../work/footage/${clip}/${String(f).padStart(4, '0')}.jpg`;
+  if (src !== footSrc) { $('foot-img').src = src; footSrc = src; }
+  // a slow push in through each shot, so nothing sits still
+  $('foot-img').style.transform = `scale(${1 + .035 * clamp((T - from) / 4)})`;
+  show($('foot'), true, 1, '');
+  return seg;
+}
+
+/* ---------- scenes ---------- */
+function inbox(T) {
+  const wrap = $('inbox-wrap');
+  const hookOn = T < T_GAME, endOn = T >= T_REALLY - .05 && T < C('tags');
+  if (!hookOn && !endOn) { show(wrap, false); show($('half-a'), false); show($('half-b'), false); return; }
+  show(wrap, true, 1, '');
+  let A, count;
+  if (hookOn) {
+    // mail keeps arriving: 6 rows, then a flood up to "181", then a slow creep
+    const t181 = W('unread', '181') + .35;
+    A = 6 + 8 * eo((T - .8) / (t181 - .8)) + Math.max(0, T - t181) * .35;
+    count = Math.round(lerp(122, 181, eo((T - .8) / (t181 - .8)))) + Math.floor(Math.max(0, T - t181) * 1.2);
+    if (T < .8) { A = 6; count = 122; }
+  } else {
+    // the same inbox at the end: everything archives away, row by row
+    A = 14 + .35 * (C('really') - W('unread', '181'));
+    count = 0;
+  }
+  A = Math.min(A, rows.length);
+  const k = Math.floor(A);
+  rows.forEach((r, j) => {
+    let top = (A - 1 - j) * ROW_H, o = clamp(A - j), x = 0;
+    if (endOn) {
+      const order = k - 1 - j, t0 = T_REALLY + .25 + order * .085;   // top row first
+      const p = eo((T - t0) / .32); x = -140 * p; o *= 1 - p;
+    }
+    r.style.transform = `translate(${x}px,${top}px)`; r.style.opacity = j < k + 1 ? o : 0;
+  });
+  if (endOn) count = Math.max(0, HOOK_COUNT - Math.round(HOOK_COUNT * eo((T - T_REALLY - .2) / .75)));
+  $('count').textContent = count;
+  // the empty state
+  const ep = eo((T - (T_REALLY + .95)) / .45);
+  $('empty').style.opacity = endOn ? ep : 0;
+  $('empty').querySelector('.tick').style.transform = `scale(${endOn ? lerp(.4, 1, ep) + .12 * Math.sin(Math.PI * clamp((T - T_REALLY - .95) / .45)) : 1})`;
+  // the card's own entrance / exit
+  let cy = 0, co = 1;
+  if (endOn) { const v = vis(T, T_REALLY - .05, C('tags') - .32); cy = v ? v.y : 0; co = v ? v.o : 0; }
+  // chips: tried things
+  const tried = $('tried');
+  tried.style.visibility = hookOn ? 'visible' : 'hidden';
+  if (hookOn) {
+    const tf = W('tried', 'filters'), tr = W('tried', 'reminders');
+    const f = vis(T, tf - .05, 99), r = vis(T, tr - .05, 99);
+    place($('chip-filters'), f); place($('chip-rem'), r);
+    const slot = $('slot-rem'), w = 214 + 16;
+    slot.style.width = (r ? w * eo((T - tr + .05) / .45) : 0) + 'px'; slot.style.paddingLeft = slot.style.width === '0px' ? '0' : '16px';
+    const s = eo((T - (C('sword') - .1)) / .35);
+    for (const el of tried.querySelectorAll('.strike')) el.style.transform = `scaleX(${s})`;
+    for (const el of tried.querySelectorAll('.chip')) el.style.color = s > .5 ? '#8b8397' : '';
+  }
+  // the slash across the card, then it splits
+  const sl = $('slash');
+  const sp = clamp((T - (T_SWORD - .12)) / .14);
+  sl.style.opacity = hookOn && T > T_SWORD - .12 && T < T_SPLIT + .12 ? 1 : 0;
+  sl.style.transform = `rotate(-14deg) translateX(${lerp(-1400, 0, eo(sp))}px) scaleY(${1 - clamp((T - T_SPLIT) / .12)})`;
+  const card = $('inbox');
+  if (hookOn && T >= T_SPLIT) {
+    const p = eo((T - T_SPLIT) / .32);
+    card.style.visibility = 'hidden'; tried.style.visibility = 'hidden';
+    for (const [id, sgn] of [['half-a', -1], ['half-b', 1]]) {
+      const h = $(id); if (!h.firstChild) { const c = wrap.cloneNode(true); c.removeAttribute('id'); c.style.position = 'absolute'; c.style.inset = '0'; c.querySelector('.slash')?.remove(); for (const k of c.querySelectorAll('.card,.chips')) { k.style.visibility = 'visible'; k.style.opacity = 1; } h.appendChild(c); }
+      const clip = sgn < 0 ? 'polygon(0 0,100% 0,100% 37%,0 63%)' : 'polygon(0 63%,100% 37%,100% 100%,0 100%)';
+      h.style.clipPath = clip; h.style.visibility = 'visible';
+      h.style.transform = `translate(${sgn * 60 * p}px,${sgn * 150 * p + 260 * p * p}px) rotate(${sgn * 5 * p}deg)`;
+      h.style.opacity = 1 - clamp((T - T_SPLIT - .18) / .14);
+      h.firstChild.style.visibility = 'visible';
+      h.firstChild.querySelector('#tried, .chips') && (h.firstChild.querySelector('.chips').style.visibility = 'visible');
+    }
+  } else {
+    card.style.visibility = 'visible'; show($('half-a'), false); show($('half-b'), false);
+    card.style.opacity = co; card.style.transform = `translateY(${cy}px)`;
+  }
+}
+
+function flash(T) {
+  const f = $('flash');
+  const hits = [[T_SPLIT, .5, .22], [T_INBOX, .7, .3], [T_HERO + .02, .45, .35]];
+  let o = 0; for (const [t, a, d] of hits) if (T >= t && T < t + d) o = Math.max(o, a * (1 - (T - t) / d));
+  show(f, o > 0, o);
+}
+
+function slam(T) {
+  // "Inbox Zero!": the logo lands on the night, then glides to where the home screen keeps it
+  const L = $('logo-slam'), a = T_INBOX, g0 = C('hack'), g1 = g0 + .9;
+  const night = $('night');
+  const nightOn = (T >= a && T < g1 + .4) || T >= C('try') - .3;
+  if (nightOn) {
+    show(night, true, T >= C('try') - .3 ? eo((T - C('try') + .3) / .3) : 1, '');
+    $('night-img').style.filter = T < g1 + .4 ? `blur(${lerp(22, 0, eio((T - g0) / .9))}px) brightness(${lerp(.42, 1, eio((T - g0) / .9))}) saturate(1.2)` : 'blur(22px) brightness(.42) saturate(1.2)';
+  } else show(night, false);
+  if (T < a || T >= g1 + .25) return show(L, false);
+  const p = eo((T - a) / .28);
+  let s = lerp(1.35, 1, p), x = 0, y = 0, w = 1100, o = clamp((T - a) / .08);
+  if (T >= g0) { const q = eio((T - g0) / .9); w = lerp(1100, 430 / 1, q); x = 0; y = lerp(0, 240 - 540, q); s = 1; o = 1 - clamp((T - g1) / .25); }
+  L.style.width = w + 'px';
+  show(L, true, o, `translate(-50%,-50%) translate(${x}px,${y}px) scale(${s})`);
+}
+
+function homeScreen(T) {
+  // the real home screen under the glide, until "one round at a time"
+  if (T >= C('hack') && T < C('round')) {
+    const f = clamp(Math.round((T - C('hack')) * FPS) + 1, 1, FOOT.home);
+    const src = `../work/footage/home/${String(f).padStart(4, '0')}.jpg`;
+    if (src !== footSrc) { $('foot-img').src = src; footSrc = src; }
+    $('foot-img').style.transform = '';
+    show($('foot'), true, eio((T - C('hack') - .3) / .6), '');
+    return true;
+  }
+  return false;
+}
+
+function cursor(T) {
+  const c = $('cursor'), r = $('ripple');
+  // [from, to, x0,y0, x1,y1, clickAt]
+  const moves = [
+    [C('hack') + .7, W('game', 'clear') - .05, 1500, 1000, 960, 765, W('game', 'clear')],
+    [C('connect') - .1, W('connect', 'gmail') + .05, 1460, 930, 990, 742, W('connect', 'gmail') + .1],
+    [C('browser') - .55, W('browser', 'browser') - .05, 1420, 980, 860, 724, W('browser', 'browser')],
+  ];
+  const m = moves.find(m => T >= m[0] && T < m[6] + .45);
+  if (!m) { show(c, false); show(r, false); return; }
+  const p = eio((T - m[0]) / (m[1] - m[0]));
+  const x = lerp(m[2], m[4], p), y = lerp(m[3], m[5], p);
+  const press = T >= m[6] && T < m[6] + .14 ? .86 : 1;
+  show(c, true, clamp((T - m[0]) / .2) * (1 - clamp((T - m[6] - .25) / .2)), `translate(${x}px,${y}px) scale(${press})`);
+  const rp = (T - m[6]) / .4;
+  if (rp >= 0 && rp < 1) { r.style.left = x + 5 + 'px'; r.style.top = y + 3 + 'px'; show(r, true, 1 - rp, `scale(${lerp(.3, 1.2, eo(rp))})`); } else show(r, false);
+}
+
+function connect(T) {
+  const a = C('connect') - .15, b = W('connect', 'game') + .25;
+  const el = $('connect');
+  if (T < a || T >= b) return show(el, false);
+  show(el, true, 1, '');
+  const click = W('connect', 'gmail') + .1;
+  const dOut = W('connect', 'latest') - .1;
+  place($('dialog'), vis(T, a, dOut, { y: 40 }));
+  const btn = $('connect-btn');
+  const done = T >= click + .12;
+  btn.classList.toggle('done', done);
+  $('connect-label').textContent = done ? 'Connected' : 'Connect Gmail';
+  btn.style.transform = `scale(${T >= click && T < click + .12 ? .94 : 1})`;
+  // the newest unread rows arrive, then fly at you
+  const fly = W('connect', 'game') - .25;
+  flyrows.forEach((r, i) => {
+    const t0 = dOut + .15 + i * .09;
+    const v = vis(T, t0, 99, { y: 30, din: .4 });
+    const top = (i - 1.5) * 104;
+    const fp = clamp((T - fly - i * .05) / .4);
+    if (!v) { r.style.opacity = 0; return; }
+    const s = 1 + 2.4 * fp * fp, o = v.o * (1 - clamp((fp - .5) / .5));
+    r.style.opacity = o;
+    r.style.transform = `translateY(${top + v.y + (i - 1.5) * 220 * fp * fp}px) scale(${s}) rotate(${(i - 1.5) * 6 * fp}deg)`;
+  });
+}
+
+function overlays(T, seg) {
+  // level logos
+  const L = $('level-logo');
+  const cur = [...LOGOS].reverse().find(l => T >= l[1]);
+  if (cur && T < LOGO_END + .3) {
+    const src = `../work/assets/logos/${cur[0]}.webp`;
+    if (!L.src.endsWith(src.slice(2))) L.src = src;
+    const p = eo((T - cur[1]) / .35), out = clamp((T - LOGO_END) / .3);
+    show(L, true, p * (1 - out), `translateY(${(1 - p) * -24 + out * -20}px) scale(${lerp(.86, 1, p)})`);
+  } else show(L, false);
+  // hands
+  const hl = $('hand-l'), hr = $('hand-r');
+  const lv = vis(T, C('grab') - .05, C('cut') - .25, { y: 120, din: .45 });
+  if (lv) {
+    const img = T >= W('throw', 'throw') ? 'left-throw' : T >= W('grab', 'read') ? 'left-read' : 'left-grab';
+    if (!hl.src.includes(img)) hl.src = `../work/assets/hands/${img}.png`;
+    const pop = T - Math.max(W('throw', 'throw'), 0) >= 0 && T - W('throw', 'throw') < .25 ? 1 + .08 * Math.sin(Math.PI * (T - W('throw', 'throw')) / .25) : 1;
+    show(hl, true, lv.o, `translate(${(1 - lv.pi) * -200}px,${lv.y}px) scale(${pop})`);
+  } else show(hl, false);
+  const rv = vis(T, C('cut') - .05, C('replies') - .3, { y: 120, din: .45 });
+  if (rv) {
+    const img = T >= W('cut', 'pieces') - .1 ? 'right-destroy' : 'right-slash';
+    if (!hr.src.includes(img)) hr.src = `../work/assets/hands/${img}.png`;
+    show(hr, true, rv.o, `translate(${(1 - rv.pi) * 200}px,${rv.y}px)`);
+  } else show(hr, false);
+  // phrases: each rises in as the last lifts out
+  PHRASES.forEach(([, a, b], i) => { const v = vis(T, a, b, { y: 28, din: .45, dout: .25, lift: -22 }); place(phraseEls[i], v, 'translateX(-50%)'); if (v) phraseEls[i].style.transform = `translateX(-50%) translateY(${v.y}px)`; });
+  // dictation bubble
+  const mv = vis(T, C('pull') - .05, C('later') + .2, { y: 24, din: .4 });
+  if (mv) {
+    const words = 'Monday works, see you then', t0 = W('pull', 'say');
+    const n = Math.round(words.length * clamp((T - t0) / .9));
+    $('mic-t').textContent = words.slice(0, n) || '…';
+    const m = $('mic'); show(m, true, mv.o, `translateX(-50%) translateY(${mv.y}px) scale(${lerp(.9, 1, mv.pi)})`);
+    m.querySelector('.micdot').style.transform = `scale(${1 + .08 * Math.sin(T * 14)})`;
+  } else show($('mic'), false);
+}
+
+function browser(T) {
+  const a = C('iwsdk') - .02, b = C('chair') - .3;
+  const el = $('browser');
+  if (T < a || T >= b + .3) return show(el, false);
+  show(el, true, 1, '');
+  const v = vis(T, a, b, { y: 50, din: .6 });
+  place($('win'), v, `scale(${lerp(.97, 1, v ? v.pi : 1)})`);
+  const s1 = vis(T, W('iwsdk', 'immersive') - .1, C('nodl') - .1, { y: 26 });
+  const s2 = vis(T, C('nodl') - .05, b, { y: 26 });
+  $('sdk-row').style.visibility = s1 ? 'visible' : 'hidden'; place($('chip-sdk'), s1);
+  $('nodl-row').style.visibility = s2 ? 'visible' : 'hidden'; place($('chip-nodl'), s2);
+  // the window lifts a little to make room for the chip
+  if (v) $('win').style.transform += ` translateY(${-36 * eo((T - W('iwsdk', 'immersive') + .1) / .5)}px)`;
+}
+
+function seated(T) {
+  const a = C('chair') - .05, b = C('really') - .3;
+  const el = $('seated');
+  if (T < a || T >= b + .3) return show(el, false);
+  const v = vis(T, a, b, { y: 40 });
+  show(el, !!v, v ? v.o : 0, v ? `translateY(${v.y - 40}px)` : '');
+  // the blade grows on "stretching"
+  const st = eo((T - W('come', 'stretching') + .1) / .5);
+  $('blade-g').setAttribute('transform', `scale(${lerp(.55, 1.55, st)} 1)`);
+  $('sword').setAttribute('transform', `translate(150 0) rotate(${lerp(-24, -10, st) + 4 * Math.sin(T * 2)})`);
+  // mail floats in to the player on "come to you"
+  const g = $('mails'); if (!g.childNodes.length) for (let i = 0; i < 3; i++) g.insertAdjacentHTML('beforeend', `<g><rect x="-80" y="-52" width="160" height="104" rx="8" fill="#efe4c8" stroke="#d9cba6" stroke-width="3"/><rect x="-58" y="-30" width="54" height="16" rx="4" fill="#ff2e93"/><rect x="-58" y="0" width="116" height="10" rx="5" fill="#8a7a62"/><rect x="-58" y="20" width="84" height="10" rx="5" fill="#b8a98d"/></g>`);
+  [...g.childNodes].forEach((m, i) => {
+    const t0 = W('come', 'come') - .2 + i * .45;
+    const p = eio((T - t0) / 1.2);
+    const x = lerp(1300, 880 - i * 10, p), y = lerp(150 + i * 120, 230 + i * 70, p) + 8 * Math.sin(T * 2.4 + i);
+    m.setAttribute('transform', `translate(${x} ${y}) rotate(${lerp(-12, -4, p) + i * 3})`);
+    m.setAttribute('opacity', clamp((T - t0) / .3));
+  });
+}
+
+function ai(T) {
+  const a = C('tags') - .05, b = E('saved') + .5;
+  const el = $('ai');
+  if (T < a || T >= b + .3) return show(el, false);
+  show(el, true, 1, '');
+  const dis = W('forgets', 'forgets');
+  const v = vis(T, a, 99, { y: 40, din: .55 });
+  const paper = $('paper');
+  const tagP = eo((T - W('tags', 'tags')) / .3);
+  $('tag').style.transform = `scale(${T < W('tags', 'tags') ? 0 : lerp(.6, 1, tagP) + .1 * Math.sin(Math.PI * clamp((T - W('tags', 'tags')) / .3))})`;
+  $('tag').style.opacity = tagP;
+  // the body boils down to a line
+  const bp = eio((T - W('tags', 'boils')) / .55);
+  const body = $('pbody'); body.style.maxHeight = lerp(190, 0, bp) + 'px'; body.style.opacity = 1 - bp;
+  const sum = $('psum'); sum.style.height = lerp(0, 46, bp) + 'px';
+  const line = 'Kickoff Monday or Tuesday, which works?';
+  $('psum-t').textContent = line.slice(0, Math.round(line.length * clamp((T - W('tags', 'boils') - .35) / .8)));
+  // then the AI forgets it: the card breaks into pixels and drifts away
+  const dp = clamp((T - dis) / 1.1);
+  if (T < dis) { show(paper, true, v ? v.o : 0, `translateY(${v ? v.y : 0}px)`); $('pixels').style.visibility = 'hidden'; }
+  else {
+    show(paper, true, 1 - clamp(dp * 6), '');
+    const r = paper.getBoundingClientRect(), sw = r.width / 14, sh = r.height / 9;
+    $('pixels').style.visibility = 'visible';
+    pixels.forEach(({ i, x, y }, k) => {
+      const d = clamp((dp - rnd(k) * .35) / .65);
+      i.style.width = sw + 1 + 'px'; i.style.height = sh + 1 + 'px';
+      i.style.left = (x - 7) * sw + 'px'; i.style.top = (y - 4.5) * sh + 'px';
+      i.style.opacity = 1 - eo(d);
+      i.style.transform = `translate(${(rnd(k + 9) - .5) * 220 * eo(d)}px,${-260 * eo(d) * (.5 + rnd(k + 3))}px) scale(${1 - .7 * d})`;
+      i.style.background = rnd(k + 5) > .8 ? '#ff9ec8' : '#efe4c8';
+    });
+  }
+  const sv = vis(T, C('saved') - .1, b, { y: 28 });
+  place($('saved'), sv);
+}
+
+function closing(T) {
+  const a = C('try') - .3, el = $('close');
+  if (T < a) { show(el, false); show($('petals'), false); return; }
+  show(el, true, 1, '');
+  const H = T_HERO;
+  // the address types itself
+  const url = 'inboxzerovr.com', t0 = W('try', 'inboxzerovrcom') - .1;
+  $('url-t').textContent = url.slice(0, Math.round(url.length * clamp((T - t0) / .7))) || '';
+  $('caret').style.opacity = (Math.floor(T * 2.2) % 2 || T < t0 + .7) ? 1 : 0;
+  const uv = vis(T, C('try') - .1, 999, { y: 30 });
+  const hq = eio((T - H) / .6);
+  const urlY = lerp(380, 520, hq);
+  const U = $('url'); U.style.top = urlY + 'px';
+  if (uv) show(U, true, uv.o, `translateX(-50%) translateY(${uv.y}px) scale(${lerp(1, .82, hq)})`);
+  // seven levels build from the centre
+  const ct = C('seven') + .25, gap = 22, cw = 210;
+  const arrived = cards.map((c, i) => eo((T - ct - i * .11) / .4));
+  const total = arrived.reduce((s, p) => s + p * (cw + gap), 0) - gap;
+  let x = 960 - total / 2;
+  const out = 0, cardsY = lerp(560, 700, hq);
+  cards.forEach((c, i) => {
+    const p = arrived[i];
+    if (p <= 0 || out >= 1) { c.style.visibility = 'hidden'; x += 0; return; }
+    c.style.visibility = 'visible'; c.style.opacity = p * (1 - out);
+    c.style.left = x + 'px'; c.style.top = cardsY + 'px';
+    c.style.transform = `translateY(${(1 - p) * 30 - out * 26}px)`;
+    x += p * (cw + gap);
+  });
+  // the hero: the logo lands
+  const lv = vis(T, H - .02, 999, { y: 50, din: .45 });
+  const ls = lv ? lerp(1.18, 1, eo((T - H) / .35)) + .012 * Math.sin((T - H) * 2) : 1;
+  const push = 1 + .03 * clamp((T - H - .6) / 4);
+  if (lv) show($('end-logo'), true, lv.o, `translateY(${250 + lv.y}px) scale(${ls * push})`); else show($('end-logo'), false);
+  place($('credit'), vis(T, H + 1.4, 999, { y: 20 }));
+  // petals burst on "hero"
+  const pt = T - W('hero', 'hero') + .05;
+  if (pt > 0) {
+    show($('petals'), true, 1, '');
+    petals.forEach((p, k) => {
+      const ang = rnd(k) * Math.PI * 2, sp = 500 + 900 * rnd(k + 1), life = clamp(pt / (2.6 + rnd(k + 2) * 1.6));
+      const px = 960 + Math.cos(ang) * sp * eo(pt / 1.2) + Math.sin(pt * 2 + k) * 30;
+      const py = 470 + Math.sin(ang) * sp * .6 * eo(pt / 1.2) + 260 * pt * pt * .25;
+      const s = 10 + 16 * rnd(k + 4);
+      p.style.width = s + 'px'; p.style.height = s * .8 + 'px';
+      p.style.left = px + 'px'; p.style.top = py + 'px';
+      p.style.opacity = 1 - life; p.style.transform = `rotate(${pt * 200 * (rnd(k + 6) - .5) + k * 40}deg)`;
+      p.style.background = rnd(k + 7) > .7 ? '#ffffff' : rnd(k + 8) > .5 ? '#ff9ec8' : '#ffc2db';
+    });
+  } else show($('petals'), false);
+}
+
+function white(T) {
+  // the clean white world: the hook, connect, built, chair, AI
+  const on = T < T_GAME || (T >= C('connect') - .15 && T < W('connect', 'game') + .25) || (T >= C('iwsdk') - .02 && T < C('try') - .3);
+  show($('white'), on, 1, '');
+}
+
+/* ---------- sound ---------- */
+function buildSfx() {
+  // hook
+  for (let t = .85; t < W('unread', '181') + .3; t += .16) sfx(t, 'blip.wav', .22);
+  sfx(W('tried', 'filters'), 'sort.wav', .5); sfx(W('tried', 'reminders'), 'sort.wav', .5);
+  sfx(T_SWORD - .14, 'kyoto/slash1.wav', 1); sfx(T_SPLIT + .05, 'office/glass.wav', .45);
+  // footage cuts: each lands when the clip's key frame shows
+  const hit = { 'kyoto-cut': ['kyoto/slash2.wav', 'kyoto/slash3.wav', 'kyoto/slash4.wav'], inferno: ['inferno/flare.wav'], office2: ['office/glass.wav'], castle: ['castle/slash1.wav'], lab: ['lab/melt1.wav'], lumber: ['lumber/chop.wav'], space: ['space/slash1.wav'], 'kyoto-cut2': ['kyoto/slash5.wav'] };
+  let n = 0;
+  for (const [clip, from, to, at] of SEG) { const f = hit[clip]; if (f && at >= from && at < to) sfx(at - .03, f[n++ % f.length], clip === 'inferno' ? .8 : .9); }
+  const HIT = { 'office2-long': 'office/glass.wav', 'castle-long': 'castle/slash2.wav', 'lab-long': 'lab/melt2.wav', 'inferno-long': 'inferno/flare.wav', 'kyoto-long': 'kyoto/slash1.wav', 'lumber-long': 'lumber/chop.wav', 'space-long': 'space/slash2.wav' };
+  const ROOM = { 'office2-long': ['office/room.mp3', 1.2], 'castle-long': ['castle/hall.mp3', 1.2], 'lab-long': ['lab/bubbles.mp3', 1.9], 'inferno-long': ['inferno/furnace.mp3', 1.2], 'kyoto-long': ['ambience/leaves.mp3', 1.3], 'lumber-long': ['lumber/yard.mp3', 1.2], 'space-long': ['space/rush.mp3', 1.5] };
+  for (const [clip, from, to, at, key0] of SEG) {
+    if (!CUTS[clip]) continue;
+    const key = keyOf(clip, key0);
+    const first = { 'office2-long': 'office/glass.wav', 'castle-long': 'castle/slash1.wav', 'lab-long': 'lab/melt1.wav', 'inferno-long': 'inferno/flare.wav', 'kyoto-long': 'kyoto/slash3.wav', 'lumber-long': 'lumber/chop.wav', 'space-long': 'space/slash1.wav' }[clip];
+    CUTS[clip].forEach((c, i) => { const t = at + (c - key) / FPS; if (t >= from && t < to) sfx(t - .03, i ? HIT[clip] : first, i ? .6 : .9); });
+    const [room, g] = ROOM[clip]; AMB.push({ t: +from.toFixed(3), dur: +(to - from).toFixed(3), file: A + room, gain: g });
+  }
+  sfx(W('flame', 'flamethrower'), 'inferno/arm.wav', .6);
+  sfx(T_INBOX - .02, 'stingers/kyoto.m4a', .85);
+  sfx(W('game', 'clear'), 'blip.wav', .7);
+  sfx(C('round') - .05, 'arrive.wav', .5);
+  sfx(W('connect', 'gmail') + .1, 'blip.wav', .7); sfx(W('connect', 'gmail') + .25, 'kyoto/keep1.wav', .45);
+  sfx(W('connect', 'game') - .25, 'arrive.wav', .6);
+  sfx(W('throw', 'throw') + .1, 'kyoto/keep2.wav', .8);
+  sfx(W('pull', 'pull') + .05, 'reply.wav', .6);
+  sfx(W('later', 'throw') + .15, 'kyoto/keep3.wav', .7);
+  for (const [lvl, t] of LOGOS) sfx(t, `stingers/${lvl}.m4a`, .35);
+  sfx(W('browser', 'browser'), 'blip.wav', .7);
+  sfx(W('come', 'stretching'), 'kyoto/arm1.wav', .7);
+  for (let i = 0; i < 6; i++) sfx(T_REALLY + .25 + i * .085, 'sort.wav', .28);
+  sfx(T_REALLY + .95, 'kyoto/keep1.wav', .6);
+  sfx(W('tags', 'tags'), 'sort.wav', .6); sfx(W('tags', 'boils'), 'lab/melt2.wav', .35);
+  sfx(W('forgets', 'forgets'), 'space/ping.wav', .45);
+  for (let i = 0; i < 7; i++) sfx(C("seven") + .25 + i * .11, 'blip.wav', .3);
+  sfx(W('hero', 'hero') - .05, 'kyoto/stinger2.wav', .8);
+}
+buildSfx();
+
+/* ---------- render ---------- */
+async function renderAt(T) {
+  white(T);
+  const seg = footage(T);
+  homeScreen(T);
+  slam(T);
+  inbox(T);
+  connect(T);
+  overlays(T, seg);
+  browser(T);
+  seated(T);
+  ai(T);
+  closing(T);
+  flash(T);
+  cursor(T);
+  const imgs = [...document.images].filter(i => i.style.visibility !== 'hidden' && !i.complete);
+  await Promise.all(imgs.map(i => i.decode().catch(() => {})));
+  if (!$('foot-img').complete) await $('foot-img').decode().catch(() => {});
+}
+Object.assign(window, { renderAt, SFX, AMB, DUR, FPS });
+document.fonts.ready.then(() => { window.READY = true; });

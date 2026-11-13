@@ -59,7 +59,7 @@ export class GardenMusic {
 
   /**
    * A level's celebration (Kyoto's end anthem, 2026-11-11): the song fades out and this comes in over it,
-   * once, at the song's volume. Asking again while it plays does nothing; `endCelebration()` fades it away
+   * once, at full volume (not the music slider's, since 2026-11-12). Asking again while it plays does nothing; `endCelebration()` fades it away
    * and lets the song back.
    */
   private anthem: HTMLAudioElement | null = null;
@@ -168,7 +168,7 @@ export class GardenMusic {
   update(dt: number) {
     // the anthem: in over about a second and a half while the song goes out; away over about a second
     if (this.anthem) {
-      const want = this.anthemWant * this.volume * (this.enabled ? 1 : 0);
+      const want = this.anthemWant * (this.enabled ? 1 : 0);      // (full volume, whatever the music slider says: asked for on 2026-11-12)
       this.anthemGain += (want - this.anthemGain) * (1 - Math.exp(-dt * (want > this.anthemGain ? 2.2 : 3)));
       this.anthem.volume = Math.max(0, Math.min(1, this.anthemGain));
       this.songShare += ((this.anthemWant > 0 ? 0 : 1) - this.songShare) * (1 - Math.exp(-dt * 2.4));

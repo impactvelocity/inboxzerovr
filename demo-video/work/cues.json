@@ -1,0 +1,1562 @@
+{
+ "duration": 116.509,
+ "cues": {
+  "unread": {
+   "start": 1.0,
+   "end": 3.71,
+   "text": "Have you got 181 unread emails?"
+  },
+  "tried": {
+   "start": 4.05,
+   "end": 5.74,
+   "text": "Tried filters, or reminders?"
+  },
+  "sword": {
+   "start": 6.04,
+   "end": 8.08,
+   "text": "But have you tried a sword?"
+  },
+  "flame": {
+   "start": 8.33,
+   "end": 9.52,
+   "text": "Or a flamethrower?"
+  },
+  "slash": {
+   "start": 10.3,
+   "end": 13.66,
+   "text": "Slash, burn, and smash your way to Inbox Zero!"
+  },
+  "hack": {
+   "start": 13.88,
+   "end": 15.61,
+   "text": "Built for the Meta Start Hackathon,"
+  },
+  "game": {
+   "start": 15.71,
+   "end": 17.53,
+   "text": "it's a game to clear your inbox,"
+  },
+  "round": {
+   "start": 17.67,
+   "end": 18.79,
+   "text": "one round at a time"
+  },
+  "howit": {
+   "start": 19.71,
+   "end": 20.6,
+   "text": "Here's how it works"
+  },
+  "connect": {
+   "start": 20.85,
+   "end": 24.21,
+   "text": "Connect your Gmail, and your latest unread emails become a game!"
+  },
+  "grab": {
+   "start": 24.45,
+   "end": 26.41,
+   "text": "Grab an email with your left hand to read it,"
+  },
+  "throw": {
+   "start": 26.63,
+   "end": 27.61,
+   "text": "throw it to keep it,"
+  },
+  "cut": {
+   "start": 27.82,
+   "end": 31.09,
+   "text": "or take your right hand and cut it up into tiny little pieces"
+  },
+  "replies": {
+   "start": 31.35,
+   "end": 34.48,
+   "text": "Every email you keep comes back with two short replies"
+  },
+  "hold": {
+   "start": 34.71,
+   "end": 36.0,
+   "text": "Hold it up to the one you like,"
+  },
+  "pull": {
+   "start": 36.22,
+   "end": 37.68,
+   "text": "pull it close to say your own,"
+  },
+  "later": {
+   "start": 37.83,
+   "end": 40.08,
+   "text": "or throw it away and leave it for tomorrow"
+  },
+  "minutes": {
+   "start": 40.96,
+   "end": 43.82,
+   "text": "Just a few minutes a day to clear your email anxiety,"
+  },
+  "monitor": {
+   "start": 43.95,
+   "end": 46.98,
+   "text": "and you finally get to smash your monitor with your keyboard!"
+  },
+  "castle": {
+   "start": 50.73,
+   "end": 52.91,
+   "text": "Defend your castle from haunted mail!"
+  },
+  "lab": {
+   "start": 56.61,
+   "end": 58.81,
+   "text": "Disinfect toxic spam in the lab!"
+  },
+  "inferno": {
+   "start": 62.55,
+   "end": 65.03,
+   "text": "Torch your inbox in the Inferno mail room!"
+  },
+  "kyoto": {
+   "start": 68.77,
+   "end": 71.52,
+   "text": "Slice your worries away in a Kyoto zen garden!"
+  },
+  "axe": {
+   "start": 75.23,
+   "end": 77.1,
+   "text": "Split your backlog with an axe!"
+  },
+  "or": {
+   "start": 80.72,
+   "end": 81.09,
+   "text": "Or..."
+  },
+  "space": {
+   "start": 81.27,
+   "end": 83.98,
+   "text": "slice through deep space with a laser sword!"
+  },
+  "iwsdk": {
+   "start": 87.73,
+   "end": 90.21,
+   "text": "It's built with Meta's Immersive Web SDK,"
+  },
+  "browser": {
+   "start": 90.34,
+   "end": 91.82,
+   "text": "so it runs right in the browser,"
+  },
+  "nodl": {
+   "start": 91.9,
+   "end": 93.18,
+   "text": "with nothing to download"
+  },
+  "chair": {
+   "start": 93.4,
+   "end": 95.09,
+   "text": "It's made to play from your chair"
+  },
+  "come": {
+   "start": 95.27,
+   "end": 98.13,
+   "text": "Emails come to you, and your weapons do the stretching!"
+  },
+  "really": {
+   "start": 98.36,
+   "end": 100.53,
+   "text": "And it really does clear your inbox"
+  },
+  "tags": {
+   "start": 100.72,
+   "end": 103.94,
+   "text": "AI tags each email and boils it down to a quick summary"
+  },
+  "forgets": {
+   "start": 104.17,
+   "end": 106.37,
+   "text": "The AI reads your mail, then forgets it,"
+  },
+  "saved": {
+   "start": 106.56,
+   "end": 107.61,
+   "text": "nothing is saved"
+  },
+  "try": {
+   "start": 108.48,
+   "end": 111.35,
+   "text": "Try it yourself at InboxZeroVR.com"
+  },
+  "seven": {
+   "start": 111.46,
+   "end": 113.6,
+   "text": "and play the demo in all seven levels"
+  },
+  "hero": {
+   "start": 113.74,
+   "end": 116.23,
+   "text": "Become a hero with inbox zero!"
+  }
+ },
+ "words": [
+  {
+   "s": "unread",
+   "w": "have",
+   "t": 1.0
+  },
+  {
+   "s": "unread",
+   "w": "you",
+   "t": 1.469
+  },
+  {
+   "s": "unread",
+   "w": "got",
+   "t": 1.834
+  },
+  {
+   "s": "unread",
+   "w": "181",
+   "t": 2.199
+  },
+  {
+   "s": "unread",
+   "w": "unread",
+   "t": 2.563
+  },
+  {
+   "s": "unread",
+   "w": "emails",
+   "t": 3.241
+  },
+  {
+   "s": "tried",
+   "w": "tried",
+   "t": 4.05
+  },
+  {
+   "s": "tried",
+   "w": "filters",
+   "t": 4.422
+  },
+  {
+   "s": "tried",
+   "w": "or",
+   "t": 4.996
+  },
+  {
+   "s": "tried",
+   "w": "reminders",
+   "t": 5.165
+  },
+  {
+   "s": "sword",
+   "w": "but",
+   "t": 6.04
+  },
+  {
+   "s": "sword",
+   "w": "have",
+   "t": 6.365
+  },
+  {
+   "s": "sword",
+   "w": "you",
+   "t": 6.782
+  },
+  {
+   "s": "sword",
+   "w": "tried",
+   "t": 7.106
+  },
+  {
+   "s": "sword",
+   "w": "a",
+   "t": 7.616
+  },
+  {
+   "s": "sword",
+   "w": "sword",
+   "t": 7.755
+  },
+  {
+   "s": "flame",
+   "w": "or",
+   "t": 8.33
+  },
+  {
+   "s": "flame",
+   "w": "a",
+   "t": 8.516
+  },
+  {
+   "s": "flame",
+   "w": "flamethrower",
+   "t": 8.627
+  },
+  {
+   "s": "slash",
+   "w": "slash",
+   "t": 10.3
+  },
+  {
+   "s": "slash",
+   "w": "burn",
+   "t": 10.875
+  },
+  {
+   "s": "slash",
+   "w": "and",
+   "t": 11.361
+  },
+  {
+   "s": "slash",
+   "w": "smash",
+   "t": 11.671
+  },
+  {
+   "s": "slash",
+   "w": "your",
+   "t": 12.157
+  },
+  {
+   "s": "slash",
+   "w": "way",
+   "t": 12.555
+  },
+  {
+   "s": "slash",
+   "w": "to",
+   "t": 12.864
+  },
+  {
+   "s": "slash",
+   "w": "inbox",
+   "t": 13.085
+  },
+  {
+   "s": "slash",
+   "w": "zero",
+   "t": 13.572
+  },
+  {
+   "s": "hack",
+   "w": "built",
+   "t": 13.88
+  },
+  {
+   "s": "hack",
+   "w": "for",
+   "t": 14.197
+  },
+  {
+   "s": "hack",
+   "w": "the",
+   "t": 14.399
+  },
+  {
+   "s": "hack",
+   "w": "meta",
+   "t": 14.601
+  },
+  {
+   "s": "hack",
+   "w": "start",
+   "t": 14.86
+  },
+  {
+   "s": "hack",
+   "w": "hackathon",
+   "t": 15.178
+  },
+  {
+   "s": "game",
+   "w": "it's",
+   "t": 15.71
+  },
+  {
+   "s": "game",
+   "w": "a",
+   "t": 16.025
+  },
+  {
+   "s": "game",
+   "w": "game",
+   "t": 16.13
+  },
+  {
+   "s": "game",
+   "w": "to",
+   "t": 16.445
+  },
+  {
+   "s": "game",
+   "w": "clear",
+   "t": 16.62
+  },
+  {
+   "s": "game",
+   "w": "your",
+   "t": 17.005
+  },
+  {
+   "s": "game",
+   "w": "inbox",
+   "t": 17.32
+  },
+  {
+   "s": "round",
+   "w": "one",
+   "t": 17.67
+  },
+  {
+   "s": "round",
+   "w": "round",
+   "t": 17.931
+  },
+  {
+   "s": "round",
+   "w": "at",
+   "t": 18.342
+  },
+  {
+   "s": "round",
+   "w": "a",
+   "t": 18.529
+  },
+  {
+   "s": "round",
+   "w": "time",
+   "t": 18.641
+  },
+  {
+   "s": "howit",
+   "w": "here's",
+   "t": 19.71
+  },
+  {
+   "s": "howit",
+   "w": "how",
+   "t": 20.072
+  },
+  {
+   "s": "howit",
+   "w": "it",
+   "t": 20.266
+  },
+  {
+   "s": "howit",
+   "w": "works",
+   "t": 20.405
+  },
+  {
+   "s": "connect",
+   "w": "connect",
+   "t": 20.85
+  },
+  {
+   "s": "connect",
+   "w": "your",
+   "t": 21.317
+  },
+  {
+   "s": "connect",
+   "w": "gmail",
+   "t": 21.597
+  },
+  {
+   "s": "connect",
+   "w": "and",
+   "t": 22.001
+  },
+  {
+   "s": "connect",
+   "w": "your",
+   "t": 22.219
+  },
+  {
+   "s": "connect",
+   "w": "latest",
+   "t": 22.499
+  },
+  {
+   "s": "connect",
+   "w": "unread",
+   "t": 22.903
+  },
+  {
+   "s": "connect",
+   "w": "emails",
+   "t": 23.308
+  },
+  {
+   "s": "connect",
+   "w": "become",
+   "t": 23.712
+  },
+  {
+   "s": "connect",
+   "w": "a",
+   "t": 24.117
+  },
+  {
+   "s": "connect",
+   "w": "game",
+   "t": 24.21
+  },
+  {
+   "s": "grab",
+   "w": "grab",
+   "t": 24.45
+  },
+  {
+   "s": "grab",
+   "w": "an",
+   "t": 24.695
+  },
+  {
+   "s": "grab",
+   "w": "email",
+   "t": 24.831
+  },
+  {
+   "s": "grab",
+   "w": "with",
+   "t": 25.131
+  },
+  {
+   "s": "grab",
+   "w": "your",
+   "t": 25.376
+  },
+  {
+   "s": "grab",
+   "w": "left",
+   "t": 25.621
+  },
+  {
+   "s": "grab",
+   "w": "hand",
+   "t": 25.866
+  },
+  {
+   "s": "grab",
+   "w": "to",
+   "t": 26.111
+  },
+  {
+   "s": "grab",
+   "w": "read",
+   "t": 26.247
+  },
+  {
+   "s": "grab",
+   "w": "it",
+   "t": 26.492
+  },
+  {
+   "s": "throw",
+   "w": "throw",
+   "t": 26.63
+  },
+  {
+   "s": "throw",
+   "w": "it",
+   "t": 26.967
+  },
+  {
+   "s": "throw",
+   "w": "to",
+   "t": 27.12
+  },
+  {
+   "s": "throw",
+   "w": "keep",
+   "t": 27.273
+  },
+  {
+   "s": "throw",
+   "w": "it",
+   "t": 27.549
+  },
+  {
+   "s": "cut",
+   "w": "or",
+   "t": 27.82
+  },
+  {
+   "s": "cut",
+   "w": "take",
+   "t": 27.987
+  },
+  {
+   "s": "cut",
+   "w": "your",
+   "t": 28.287
+  },
+  {
+   "s": "cut",
+   "w": "right",
+   "t": 28.587
+  },
+  {
+   "s": "cut",
+   "w": "hand",
+   "t": 28.954
+  },
+  {
+   "s": "cut",
+   "w": "and",
+   "t": 29.255
+  },
+  {
+   "s": "cut",
+   "w": "cut",
+   "t": 29.488
+  },
+  {
+   "s": "cut",
+   "w": "it",
+   "t": 29.722
+  },
+  {
+   "s": "cut",
+   "w": "up",
+   "t": 29.889
+  },
+  {
+   "s": "cut",
+   "w": "into",
+   "t": 30.056
+  },
+  {
+   "s": "cut",
+   "w": "tiny",
+   "t": 30.356
+  },
+  {
+   "s": "cut",
+   "w": "little",
+   "t": 30.656
+  },
+  {
+   "s": "cut",
+   "w": "pieces",
+   "t": 31.09
+  },
+  {
+   "s": "replies",
+   "w": "every",
+   "t": 31.35
+  },
+  {
+   "s": "replies",
+   "w": "email",
+   "t": 31.733
+  },
+  {
+   "s": "replies",
+   "w": "you",
+   "t": 32.115
+  },
+  {
+   "s": "replies",
+   "w": "keep",
+   "t": 32.359
+  },
+  {
+   "s": "replies",
+   "w": "comes",
+   "t": 32.672
+  },
+  {
+   "s": "replies",
+   "w": "back",
+   "t": 33.054
+  },
+  {
+   "s": "replies",
+   "w": "with",
+   "t": 33.367
+  },
+  {
+   "s": "replies",
+   "w": "two",
+   "t": 33.68
+  },
+  {
+   "s": "replies",
+   "w": "short",
+   "t": 33.924
+  },
+  {
+   "s": "replies",
+   "w": "replies",
+   "t": 34.306
+  },
+  {
+   "s": "hold",
+   "w": "hold",
+   "t": 34.71
+  },
+  {
+   "s": "hold",
+   "w": "it",
+   "t": 34.952
+  },
+  {
+   "s": "hold",
+   "w": "up",
+   "t": 35.086
+  },
+  {
+   "s": "hold",
+   "w": "to",
+   "t": 35.221
+  },
+  {
+   "s": "hold",
+   "w": "the",
+   "t": 35.355
+  },
+  {
+   "s": "hold",
+   "w": "one",
+   "t": 35.543
+  },
+  {
+   "s": "hold",
+   "w": "you",
+   "t": 35.731
+  },
+  {
+   "s": "hold",
+   "w": "like",
+   "t": 35.919
+  },
+  {
+   "s": "pull",
+   "w": "pull",
+   "t": 36.22
+  },
+  {
+   "s": "pull",
+   "w": "it",
+   "t": 36.494
+  },
+  {
+   "s": "pull",
+   "w": "close",
+   "t": 36.646
+  },
+  {
+   "s": "pull",
+   "w": "to",
+   "t": 36.98
+  },
+  {
+   "s": "pull",
+   "w": "say",
+   "t": 37.133
+  },
+  {
+   "s": "pull",
+   "w": "your",
+   "t": 37.345
+  },
+  {
+   "s": "pull",
+   "w": "own",
+   "t": 37.619
+  },
+  {
+   "s": "later",
+   "w": "or",
+   "t": 37.83
+  },
+  {
+   "s": "later",
+   "w": "throw",
+   "t": 37.995
+  },
+  {
+   "s": "later",
+   "w": "it",
+   "t": 38.359
+  },
+  {
+   "s": "later",
+   "w": "away",
+   "t": 38.525
+  },
+  {
+   "s": "later",
+   "w": "and",
+   "t": 38.823
+  },
+  {
+   "s": "later",
+   "w": "leave",
+   "t": 39.054
+  },
+  {
+   "s": "later",
+   "w": "it",
+   "t": 39.418
+  },
+  {
+   "s": "later",
+   "w": "for",
+   "t": 39.584
+  },
+  {
+   "s": "later",
+   "w": "tomorrow",
+   "t": 39.815
+  },
+  {
+   "s": "minutes",
+   "w": "just",
+   "t": 40.96
+  },
+  {
+   "s": "minutes",
+   "w": "a",
+   "t": 41.259
+  },
+  {
+   "s": "minutes",
+   "w": "few",
+   "t": 41.359
+  },
+  {
+   "s": "minutes",
+   "w": "minutes",
+   "t": 41.592
+  },
+  {
+   "s": "minutes",
+   "w": "a",
+   "t": 42.091
+  },
+  {
+   "s": "minutes",
+   "w": "day",
+   "t": 42.19
+  },
+  {
+   "s": "minutes",
+   "w": "to",
+   "t": 42.423
+  },
+  {
+   "s": "minutes",
+   "w": "clear",
+   "t": 42.59
+  },
+  {
+   "s": "minutes",
+   "w": "your",
+   "t": 42.955
+  },
+  {
+   "s": "minutes",
+   "w": "email",
+   "t": 43.255
+  },
+  {
+   "s": "minutes",
+   "w": "anxiety",
+   "t": 43.62
+  },
+  {
+   "s": "monitor",
+   "w": "and",
+   "t": 43.95
+  },
+  {
+   "s": "monitor",
+   "w": "you",
+   "t": 44.158
+  },
+  {
+   "s": "monitor",
+   "w": "finally",
+   "t": 44.366
+  },
+  {
+   "s": "monitor",
+   "w": "get",
+   "t": 44.811
+  },
+  {
+   "s": "monitor",
+   "w": "to",
+   "t": 45.019
+  },
+  {
+   "s": "monitor",
+   "w": "smash",
+   "t": 45.168
+  },
+  {
+   "s": "monitor",
+   "w": "your",
+   "t": 45.495
+  },
+  {
+   "s": "monitor",
+   "w": "monitor",
+   "t": 45.762
+  },
+  {
+   "s": "monitor",
+   "w": "with",
+   "t": 46.208
+  },
+  {
+   "s": "monitor",
+   "w": "your",
+   "t": 46.475
+  },
+  {
+   "s": "monitor",
+   "w": "keyboard",
+   "t": 46.742
+  },
+  {
+   "s": "castle",
+   "w": "defend",
+   "t": 50.73
+  },
+  {
+   "s": "castle",
+   "w": "your",
+   "t": 51.173
+  },
+  {
+   "s": "castle",
+   "w": "castle",
+   "t": 51.479
+  },
+  {
+   "s": "castle",
+   "w": "from",
+   "t": 51.922
+  },
+  {
+   "s": "castle",
+   "w": "haunted",
+   "t": 52.229
+  },
+  {
+   "s": "castle",
+   "w": "mail",
+   "t": 52.74
+  },
+  {
+   "s": "lab",
+   "w": "disinfect",
+   "t": 56.61
+  },
+  {
+   "s": "lab",
+   "w": "toxic",
+   "t": 57.384
+  },
+  {
+   "s": "lab",
+   "w": "spam",
+   "t": 57.832
+  },
+  {
+   "s": "lab",
+   "w": "in",
+   "t": 58.199
+  },
+  {
+   "s": "lab",
+   "w": "the",
+   "t": 58.403
+  },
+  {
+   "s": "lab",
+   "w": "lab",
+   "t": 58.688
+  },
+  {
+   "s": "inferno",
+   "w": "torch",
+   "t": 62.55
+  },
+  {
+   "s": "inferno",
+   "w": "your",
+   "t": 62.94
+  },
+  {
+   "s": "inferno",
+   "w": "inbox",
+   "t": 63.259
+  },
+  {
+   "s": "inferno",
+   "w": "in",
+   "t": 63.648
+  },
+  {
+   "s": "inferno",
+   "w": "the",
+   "t": 63.825
+  },
+  {
+   "s": "inferno",
+   "w": "inferno",
+   "t": 64.073
+  },
+  {
+   "s": "inferno",
+   "w": "mail",
+   "t": 64.605
+  },
+  {
+   "s": "inferno",
+   "w": "room",
+   "t": 64.924
+  },
+  {
+   "s": "kyoto",
+   "w": "slice",
+   "t": 68.77
+  },
+  {
+   "s": "kyoto",
+   "w": "your",
+   "t": 69.168
+  },
+  {
+   "s": "kyoto",
+   "w": "worries",
+   "t": 69.494
+  },
+  {
+   "s": "kyoto",
+   "w": "away",
+   "t": 70.036
+  },
+  {
+   "s": "kyoto",
+   "w": "in",
+   "t": 70.362
+  },
+  {
+   "s": "kyoto",
+   "w": "a",
+   "t": 70.543
+  },
+  {
+   "s": "kyoto",
+   "w": "kyoto",
+   "t": 70.652
+  },
+  {
+   "s": "kyoto",
+   "w": "zen",
+   "t": 71.05
+  },
+  {
+   "s": "kyoto",
+   "w": "garden",
+   "t": 71.303
+  },
+  {
+   "s": "axe",
+   "w": "split",
+   "t": 75.23
+  },
+  {
+   "s": "axe",
+   "w": "your",
+   "t": 75.626
+  },
+  {
+   "s": "axe",
+   "w": "backlog",
+   "t": 75.949
+  },
+  {
+   "s": "axe",
+   "w": "with",
+   "t": 76.489
+  },
+  {
+   "s": "axe",
+   "w": "an",
+   "t": 76.812
+  },
+  {
+   "s": "axe",
+   "w": "axe",
+   "t": 76.992
+  },
+  {
+   "s": "or",
+   "w": "or",
+   "t": 80.72
+  },
+  {
+   "s": "space",
+   "w": "slice",
+   "t": 81.27
+  },
+  {
+   "s": "space",
+   "w": "through",
+   "t": 81.673
+  },
+  {
+   "s": "space",
+   "w": "deep",
+   "t": 82.222
+  },
+  {
+   "s": "space",
+   "w": "space",
+   "t": 82.552
+  },
+  {
+   "s": "space",
+   "w": "with",
+   "t": 82.955
+  },
+  {
+   "s": "space",
+   "w": "a",
+   "t": 83.284
+  },
+  {
+   "s": "space",
+   "w": "laser",
+   "t": 83.394
+  },
+  {
+   "s": "space",
+   "w": "sword",
+   "t": 83.797
+  },
+  {
+   "s": "iwsdk",
+   "w": "it's",
+   "t": 87.73
+  },
+  {
+   "s": "iwsdk",
+   "w": "built",
+   "t": 88.049
+  },
+  {
+   "s": "iwsdk",
+   "w": "with",
+   "t": 88.439
+  },
+  {
+   "s": "iwsdk",
+   "w": "meta's",
+   "t": 88.757
+  },
+  {
+   "s": "iwsdk",
+   "w": "immersive",
+   "t": 89.218
+  },
+  {
+   "s": "iwsdk",
+   "w": "web",
+   "t": 89.891
+  },
+  {
+   "s": "iwsdk",
+   "w": "sdk",
+   "t": 90.139
+  },
+  {
+   "s": "browser",
+   "w": "so",
+   "t": 90.34
+  },
+  {
+   "s": "browser",
+   "w": "it",
+   "t": 90.482
+  },
+  {
+   "s": "browser",
+   "w": "runs",
+   "t": 90.625
+  },
+  {
+   "s": "browser",
+   "w": "right",
+   "t": 90.881
+  },
+  {
+   "s": "browser",
+   "w": "in",
+   "t": 91.194
+  },
+  {
+   "s": "browser",
+   "w": "the",
+   "t": 91.336
+  },
+  {
+   "s": "browser",
+   "w": "browser",
+   "t": 91.535
+  },
+  {
+   "s": "nodl",
+   "w": "with",
+   "t": 91.9
+  },
+  {
+   "s": "nodl",
+   "w": "nothing",
+   "t": 92.174
+  },
+  {
+   "s": "nodl",
+   "w": "to",
+   "t": 92.631
+  },
+  {
+   "s": "nodl",
+   "w": "download",
+   "t": 92.784
+  },
+  {
+   "s": "chair",
+   "w": "it's",
+   "t": 93.4
+  },
+  {
+   "s": "chair",
+   "w": "made",
+   "t": 93.682
+  },
+  {
+   "s": "chair",
+   "w": "to",
+   "t": 93.963
+  },
+  {
+   "s": "chair",
+   "w": "play",
+   "t": 94.12
+  },
+  {
+   "s": "chair",
+   "w": "from",
+   "t": 94.401
+  },
+  {
+   "s": "chair",
+   "w": "your",
+   "t": 94.683
+  },
+  {
+   "s": "chair",
+   "w": "chair",
+   "t": 94.965
+  },
+  {
+   "s": "come",
+   "w": "emails",
+   "t": 95.27
+  },
+  {
+   "s": "come",
+   "w": "come",
+   "t": 95.674
+  },
+  {
+   "s": "come",
+   "w": "to",
+   "t": 95.954
+  },
+  {
+   "s": "come",
+   "w": "you",
+   "t": 96.109
+  },
+  {
+   "s": "come",
+   "w": "and",
+   "t": 96.389
+  },
+  {
+   "s": "come",
+   "w": "your",
+   "t": 96.607
+  },
+  {
+   "s": "come",
+   "w": "weapons",
+   "t": 96.887
+  },
+  {
+   "s": "come",
+   "w": "do",
+   "t": 97.353
+  },
+  {
+   "s": "come",
+   "w": "the",
+   "t": 97.508
+  },
+  {
+   "s": "come",
+   "w": "stretching",
+   "t": 97.726
+  },
+  {
+   "s": "really",
+   "w": "and",
+   "t": 98.36
+  },
+  {
+   "s": "really",
+   "w": "it",
+   "t": 98.622
+  },
+  {
+   "s": "really",
+   "w": "really",
+   "t": 98.809
+  },
+  {
+   "s": "really",
+   "w": "does",
+   "t": 99.295
+  },
+  {
+   "s": "really",
+   "w": "clear",
+   "t": 99.632
+  },
+  {
+   "s": "really",
+   "w": "your",
+   "t": 100.044
+  },
+  {
+   "s": "really",
+   "w": "inbox",
+   "t": 100.38
+  },
+  {
+   "s": "tags",
+   "w": "ai",
+   "t": 100.72
+  },
+  {
+   "s": "tags",
+   "w": "tags",
+   "t": 100.903
+  },
+  {
+   "s": "tags",
+   "w": "each",
+   "t": 101.232
+  },
+  {
+   "s": "tags",
+   "w": "email",
+   "t": 101.562
+  },
+  {
+   "s": "tags",
+   "w": "and",
+   "t": 101.964
+  },
+  {
+   "s": "tags",
+   "w": "boils",
+   "t": 102.22
+  },
+  {
+   "s": "tags",
+   "w": "it",
+   "t": 102.623
+  },
+  {
+   "s": "tags",
+   "w": "down",
+   "t": 102.806
+  },
+  {
+   "s": "tags",
+   "w": "to",
+   "t": 103.135
+  },
+  {
+   "s": "tags",
+   "w": "a",
+   "t": 103.318
+  },
+  {
+   "s": "tags",
+   "w": "quick",
+   "t": 103.428
+  },
+  {
+   "s": "tags",
+   "w": "summary",
+   "t": 103.83
+  },
+  {
+   "s": "forgets",
+   "w": "the",
+   "t": 104.17
+  },
+  {
+   "s": "forgets",
+   "w": "ai",
+   "t": 104.403
+  },
+  {
+   "s": "forgets",
+   "w": "reads",
+   "t": 104.57
+  },
+  {
+   "s": "forgets",
+   "w": "your",
+   "t": 104.937
+  },
+  {
+   "s": "forgets",
+   "w": "mail",
+   "t": 105.237
+  },
+  {
+   "s": "forgets",
+   "w": "then",
+   "t": 105.603
+  },
+  {
+   "s": "forgets",
+   "w": "forgets",
+   "t": 105.903
+  },
+  {
+   "s": "forgets",
+   "w": "it",
+   "t": 106.403
+  },
+  {
+   "s": "saved",
+   "w": "nothing",
+   "t": 106.56
+  },
+  {
+   "s": "saved",
+   "w": "is",
+   "t": 107.123
+  },
+  {
+   "s": "saved",
+   "w": "saved",
+   "t": 107.31
+  },
+  {
+   "s": "try",
+   "w": "try",
+   "t": 108.48
+  },
+  {
+   "s": "try",
+   "w": "it",
+   "t": 108.815
+  },
+  {
+   "s": "try",
+   "w": "yourself",
+   "t": 109.054
+  },
+  {
+   "s": "try",
+   "w": "at",
+   "t": 109.867
+  },
+  {
+   "s": "try",
+   "w": "inboxzerovrcom",
+   "t": 110.106
+  },
+  {
+   "s": "seven",
+   "w": "and",
+   "t": 111.46
+  },
+  {
+   "s": "seven",
+   "w": "play",
+   "t": 111.71
+  },
+  {
+   "s": "seven",
+   "w": "the",
+   "t": 112.031
+  },
+  {
+   "s": "seven",
+   "w": "demo",
+   "t": 112.28
+  },
+  {
+   "s": "seven",
+   "w": "in",
+   "t": 112.601
+  },
+  {
+   "s": "seven",
+   "w": "all",
+   "t": 112.78
+  },
+  {
+   "s": "seven",
+   "w": "seven",
+   "t": 113.029
+  },
+  {
+   "s": "seven",
+   "w": "levels",
+   "t": 113.422
+  },
+  {
+   "s": "hero",
+   "w": "become",
+   "t": 113.74
+  },
+  {
+   "s": "hero",
+   "w": "a",
+   "t": 114.039
+  },
+  {
+   "s": "hero",
+   "w": "hero",
+   "t": 114.238
+  },
+  {
+   "s": "hero",
+   "w": "with",
+   "t": 114.86
+  },
+  {
+   "s": "hero",
+   "w": "inbox",
+   "t": 115.234
+  },
+  {
+   "s": "hero",
+   "w": "zero",
+   "t": 115.732
+  }
+ ]
+}

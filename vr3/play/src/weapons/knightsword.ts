@@ -14,6 +14,10 @@ import { liveGlow, Soup, type P3 } from './parts';
  */
 const GUARD = 0.040;                 // the crossguard's height at its middle
 const BLADE = 0.60;                  // from the guard to the point (58 cm felt right for the katana)
+const TILT = -27;      // its lean in the fist (see the hold, below)
+// and its angle across the body, positive to the left: 8 until 2026-11-12, then turned to the right about the fist
+// ("rotate the sword more to the right, keep its current position, just make it feel like its more in the hand")
+const TURN = -4;
 const SHOULDER = GUARD + 0.505;      // where the edges turn in towards the point
 const TIP = GUARD + BLADE;
 const GRIP = 0.150;
@@ -129,7 +133,8 @@ export function buildKnightSword(renderer: THREE.WebGLRenderer): HeldSpec {
     // A Quest controller held level has the fist's axis about 45 degrees forward of straight up, and the lean
     // adds to that: the katana's 28 points a blade forward, -15 stands this one at about 60 degrees.
     // (and a little to the right, 2026-11-12: "sword is good position, but more to the right a bit, so it fits more into the vr hand model")
-    hold: rodHold({ guardY: 0, reach: 0.03, tilt: -15, turn: 8, side: 0.012 }), tilt: -15, rod: { guardY: 0, reach: 0.03, tilt: -15, turn: 8, side: 0.012 },
+    // (and more upright, 2026-11-12: "more vertical, it feels like its leaning forward too much": -27, about 72 degrees up; it was -15)
+    hold: rodHold({ guardY: 0, reach: 0.03, tilt: TILT, turn: TURN, side: 0.012 }), tilt: TILT, rod: { guardY: 0, reach: 0.03, tilt: TILT, turn: TURN, side: 0.012 },
     hit: { base: new THREE.Vector3(0, GUARD + 0.012, 0), tip: new THREE.Vector3(0, TIP, 0) },
     trail: [0.5, 0.58, 1],
     glow: { halo: [0.42, 0.36, 1], core: [0.72, 0.95, 1], width: 0.07 },

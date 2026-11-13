@@ -1,0 +1,3 @@
+kyoto-long 354 frames 119s {"started":true,"phase":"play","round":1,"dealt":6,"total":10,"marks":"cut,cut,cut,cut,cut,cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0
+lumber-long 354 frames 116s {"started":true,"phase":"play","round":1,"dealt":6,"total":10,"marks":"cut,cut,cut,cut,cut,cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0
+space-long 354 frames 57s {"started":true,"phase":"play","round":1,"dealt":6,"total":10,"marks":"cut,cut,cut,cut,cut,cut","keptForRoundTwo":0,"ui":{"bar":1,"intro":0,"ring":1,"replies":0

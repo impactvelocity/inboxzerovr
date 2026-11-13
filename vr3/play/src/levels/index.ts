@@ -31,6 +31,8 @@ export interface Level {
   weapon: string; line: string;
   /** Its two paintings (start and end lighting), under public/. */
   art: [string, string];
+  /** Its card on the level select, if not those paintings (start lighting, then end, shown on hover). */
+  card?: [string, string];
   /** Its colour on the home screen, and behind everything while it loads. */
   accent: string; ground: string;
   /** The time-of-day slider's words: three phases, and its two ends. */
@@ -40,7 +42,7 @@ export interface Level {
   sound: LevelSound | null;
   /** Its music, a path under public/ (user-supplied tracks, kept out of git), or null for none. */
   music: string | null;
-  /** A celebration song for the end of a game, crossfaded in as the last email is dealt with (the user's own: Kyoto's anthem). */
+  /** A celebration song for the end of a game, crossfaded in as the last email is dealt with (the user's own: Kyoto's anthem, Haunted Hall, Keyboard Smash and Toxic Danger's, from 2026-11-12). */
   anthem?: string;
   /** A short fun music sting as a game begins (about ten seconds; tools/stingers.py), the song coming in as it ends. */
   stinger?: string;
@@ -54,18 +56,20 @@ export interface Level {
 }
 
 export const LEVELS: Level[] = [
-  { id: 'kyoto', number: '01', name: 'Kyoto Nights', weapon: 'Katana', line: 'After the rain', art: ['garden/dusk-v2.webp', 'garden/twilight-v2.webp'], accent: '#f6b3cc', ground: '#17151e',
-    phases: ['Dusk', 'Blue hour', 'Twilight'], ends: ['DUSK', 'TWILIGHT'], letters: KYOTO_LETTERS, fx: KYOTO_FX, sound: null, music: 'audio/kyoto/music.m4a', anthem: 'audio/kyoto/anthem.m4a', stinger: 'audio/stingers/kyoto.m4a',     // 忍道の鼓動, the user's track (late 2026-11-11; before it 竹林の冒険, and before that 京都の静けさ, still at audio/kyoto-serenity-aac.m4a); its end anthem, theirs too
+  { id: 'kyoto', number: '01', name: 'Kyoto Nights', weapon: 'Katana', line: 'After the rain', art: ['garden/dusk-v2.webp', 'garden/twilight-v2.webp'], card: ['levels/kyoto/card-start.webp', 'levels/kyoto/card-end.webp'],      // (the user's card art, 2026-11-12)
+    accent: '#f6b3cc', ground: '#17151e',
+    phases: ['Dusk', 'Blue hour', 'Twilight'], ends: ['DUSK', 'TWILIGHT'], letters: KYOTO_LETTERS, fx: KYOTO_FX, sound: null, music: 'audio/kyoto/music.m4a', anthem: 'audio/kyoto/anthem.m4a', stinger: 'audio/stingers/kyoto.m4a',     // 忍道の鼓動, the user's track (late 2026-11-11; before it 竹林の冒険, and before that 京都の静けさ, still at audio/kyoto-serenity-aac.m4a); its end anthem, theirs too (replaced 2026-11-12 with kyoto-end-song; the old one is tools/level-src/kyoto/anthem-before-2026-11-12.m4a)
     stage: null, held: null },
   // The office again, the monitor and what is on the desk real (asked for on 2026-11-11): the emails are on its screen, and it is what gets hit.
   { id: 'office2', number: '02', name: 'Keyboard Smash', weapon: 'Keyboard', line: 'Smash the monitor', art: office2Stage.art, accent: '#7dffc9', ground: '#1a2a47',
-    phases: ['Office hours', 'Closing time', 'After hours'], ends: ['OFFICE HOURS', 'AFTER HOURS'], letters: office2Letters, fx: office2Fx, sound: office2Sound, music: null, stinger: 'audio/stingers/office.m4a', stage: office2Stage, held: buildKeyboard },
+    phases: ['Office hours', 'Closing time', 'After hours'], ends: ['OFFICE HOURS', 'AFTER HOURS'], letters: office2Letters, fx: office2Fx, sound: office2Sound, music: 'audio/office/music.m4a', anthem: 'audio/office/anthem.m4a', stinger: 'audio/stingers/office.m4a', stage: office2Stage, held: buildKeyboard },
   { id: 'office', number: '02', name: 'Keyboard Smash v1', hidden: true, weapon: 'Keyboard', line: 'You have mail', art: officeStage.art, accent: '#7dffc9', ground: '#1a2a47',
     phases: ['Office hours', 'Closing time', 'After hours'], ends: ['OFFICE HOURS', 'AFTER HOURS'], letters: officeLetters, fx: officeFx, sound: officeSound, music: null, stinger: 'audio/stingers/office.m4a', stage: officeStage, held: buildKeyboard },
-  { id: 'castle', number: '03', name: 'The Haunted Hall', weapon: 'Sword', line: 'Royal dispatches', art: castleStage.art, accent: '#b79cff', ground: '#120d1c',
-    phases: ['Candlelight', 'Witching hour', 'Haunted'], ends: ['CANDLELIGHT', 'HAUNTED'], letters: castleLetters, fx: castleFx, sound: castleSound, music: 'audio/castle/music.m4a', stinger: 'audio/stingers/castle.m4a', stage: castleStage, held: buildKnightSword },
+  { id: 'castle', number: '03', name: 'Haunted Halls', weapon: 'Sword', line: 'Royal dispatches', art: castleStage.art, card: ['levels/castle/card-start.webp', 'levels/castle/card-end.webp'],      // (the user's card art, 2026-11-12)
+    accent: '#b79cff', ground: '#120d1c',
+    phases: ['Candlelight', 'Witching hour', 'Haunted'], ends: ['CANDLELIGHT', 'HAUNTED'], letters: castleLetters, fx: castleFx, sound: castleSound, music: 'audio/castle/music.m4a', anthem: 'audio/castle/anthem.m4a', stinger: 'audio/stingers/castle.m4a', stage: castleStage, held: buildKnightSword },
   { id: 'lab', number: '04', name: 'Toxic Danger', weapon: 'Sprayer', line: 'Contaminated mail', art: labStage.art, accent: '#8dff6a', ground: '#0c1f2a',
-    phases: ['Lights on', 'Lockdown', 'Blackout'], ends: ['LIGHTS ON', 'BLACKOUT'], letters: labLetters, fx: labFx, sound: labSound, music: null, stinger: 'audio/stingers/lab.m4a', stage: labStage, held: buildSprayer },
+    phases: ['Lights on', 'Lockdown', 'Blackout'], ends: ['LIGHTS ON', 'BLACKOUT'], letters: labLetters, fx: labFx, sound: labSound, music: 'audio/lab/music.m4a', anthem: 'audio/lab/anthem.m4a', stinger: 'audio/stingers/lab.m4a', stage: labStage, held: buildSprayer },
   // Super Space (asked for on 2026-11-12): a flight through pixel-art space, the mail incoming transmissions, the weapon a saber. Its music is the user's to add (its sting is theirs: 2026-11-12).
   // (Its card on the home screen is a piece cut from the side of the painting, where the nebula bands are: the middle, which a card would show, was painted empty for the mail. Dark first, since that is the one with colour in it.)
   { id: 'space', number: '05', name: 'Super Space', weapon: 'Saber', line: 'Incoming transmissions', art: ['levels/space/card-end.webp', 'levels/space/card-start.webp'], accent: '#35e8ff', ground: '#0a0820',

@@ -21,6 +21,7 @@ import './style.css';
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const query = new URLSearchParams(location.search);
 const STINGER_SECONDS = 5;      // (the longest sting: tools/stingers.py cuts them to it; Kyoto's own hit is 2.3 s)
+const STINGER_VOLUME = 0.8;      // the level-select hits: 80%, on their own, not tied to the music slider (the user, 2026-11-12)
 const remembered = (key: string) => { try { return localStorage.getItem(key); } catch { return null; } };
 const remember = (key: string, value: string) => { try { localStorage.setItem(key, value); } catch { /* private window */ } };
 const mood = $<HTMLInputElement>('mood');
@@ -223,14 +224,14 @@ async function main() {
   }
   /**
    * A level's sting, as it is chosen (on the home screen, or in the menu in VR): about five seconds of fun
-   * music ending on a hit, one per level (2026-11-12; its name is said as a game begins). At the music's
-   * volume; in a game (the menu in VR) the song waits under it.
+   * music ending on a hit, one per level (2026-11-12; its name is said as a game begins). At its own
+   * volume (STINGER_VOLUME), whatever the music slider says; in a game (the menu in VR) the song waits under it.
    */
   const stinger = new Audio(); stinger.preload = 'auto';
   function playStinger(url: string | undefined) {
     stopStinger();
     if (!url || !$<HTMLInputElement>('music').checked) return;
-    stinger.src = `${import.meta.env.BASE_URL}${url}`; stinger.volume = Math.min(1, Number($<HTMLInputElement>('volume').value));
+    stinger.src = `${import.meta.env.BASE_URL}${url}`; stinger.volume = STINGER_VOLUME;
     void stinger.play().catch(() => undefined);
     if (playing) music.duck(STINGER_SECONDS - 0.4);
     // (a shorter sting lets the song back sooner: Kyoto's hit, 2026-11-12)

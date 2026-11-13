@@ -1,0 +1,12 @@
+[
+  {
+    "name": "dusk",
+    "prompt": "Create a simplified 16:9 landscape LEVEL SELECTOR THUMBNAIL based on this haunted castle corridor. Recompose for a small card, not a panoramic crop. Strong readable shapes at 320px wide. One large gothic stone arch framing a short receding purple hallway, a prominent tall window on left showing lavender dusk sky and distant castle silhouette, one closed burgundy wooden arched door on right, two warm amber candle sconces, burgundy carpet leading toward soft violet distant doorway. Only 3 receding arches, eliminate tiny picture frames and repeated busy details. Chunky softly faceted painted 3D game art, purple stone, muted lavender moonlight and warm amber accents, dusk atmosphere still clear and inviting with haunted mystery. Composition centered, calm lower portion for separately overlaid level title. No text, no logo, no UI, border, weapons or characters. Full bleed opaque image. This is DUSK normal state; it will have a matching night version with identical geometry.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-1ab8bfe1-1d04-4d89-9d36-dc849fa72e9b.png"
+  },
+  {
+    "name": "night",
+    "prompt": "Create NIGHT hover state of this exact castle level-selector thumbnail. Lighting-only edit, exact same canvas size, camera, crop, arches, door, window, sconces, carpet and all objects in identical positions for an aligned crossfade. Change dusk sky visible through window to deep indigo night, cool blue moonlight entering window, stone shadows become dark plum purple, warm candle flames dim slightly but retain amber contrast, distant doorway gains a restrained ghostly blue-violet glow and thin low ground mist. Maintain readable large shapes at small thumbnail scale. No new moon disk or objects, no ghosts, characters, text, logo or interface. Same softly faceted painted 3D style. No reframing or geometry changes.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-2b9d019a-2eab-451e-9c6e-b5ee42447c3f.png"
+  }
+]

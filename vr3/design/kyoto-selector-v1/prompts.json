@@ -1,0 +1,12 @@
+[
+  {
+    "name": "dusk",
+    "prompt": "Create simplified 16:9 landscape LEVEL SELECTOR THUMBNAIL for Kyoto Gardens based on this reference. Recompose for small card with large clear shapes readable at 320px wide, not a panoramic crop. View from wooden temple veranda: slim roof eave and two posts framing serene Japanese garden, one prominent pink cherry blossom tree on left, warm stone lantern by pond, broad stepping stones leading across pond to a small centered tiled-roof wooden garden gate, simple shoji-lit building on right, lavender mountains and peach-pink dusk sky. Reduce repeated beams and tiny garden clutter; keep iconic sakura, pond, lantern, gate. Foreground lower portion calm dark wooden veranda for later title overlay. DUSK normal state, warm amber lights and muted dusty pink/lavender palette, peaceful inviting atmosphere, softly faceted painterly 3D game art. No text, logo, UI, borders, people, weapons or floating particles. Full bleed opaque image. Will have matching night hover state with identical geometry.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-320c4ba9-82f0-45fb-9ed3-b8adee82d46f.png"
+  },
+  {
+    "name": "night",
+    "prompt": "Create NIGHT hover state of this exact Kyoto Gardens selector thumbnail. Change lighting only. Preserve exact canvas, framing, camera, sakura branches, stone lantern, stepping stones, gate, buildings, mountains and all objects in identical positions for crossfade. Sky becomes deep indigo blue with muted lavender clouds, soft cool moonlight on pink blossoms and tiled roofs, darker violet wood shadows. Existing stone lantern, gate window and shoji windows glow warm amber with stronger reflections on pond and veranda. Tranquil enchanted Japanese garden night, readable large silhouettes at thumbnail scale. No new objects, no moon disk, no particles, people, text, logo or UI. Same softly faceted painted 3D art. Do not reframe or move geometry.",
+    "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-6772846f-a335-4546-8c2f-f79b9c719f26.png"
+  }
+]

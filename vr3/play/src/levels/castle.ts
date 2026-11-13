@@ -57,7 +57,7 @@ export const castleStage: StageDef = {
       float roll=softNoise(uv*vec2(150.,62.)+vec2(time*.10,-time*.03))*softNoise(uv*vec2(64.,27.)-vec2(time*.06,0.));
       float far=oval(uv,vec2(.5,.505),vec2(.075,.085));
       vec3 mist=mix(vec3(.40,.34,.78),vec3(.16,.92,.76),blend);
-      col=mix(col,mist,clamp(low*roll*(.07+.12*blend)+far*(.16+.10*sin(time*.4)+.35*pulse)*(.5+.6*blend),0.,.6));
+      col=mix(col,mist,clamp(low*roll*(.05+.02*blend)+far*(.16+.10*sin(time*.4)+.35*pulse)*(.3+.1*blend),0.,.3));      // (thinner since 2026-11-12: "tone down some of the fog / smoke ... so more of the background"; and at night hardly thicker than by day: "on night / round 2 reduce the fog even more")
       col+=mist*oval(uv,vec2(.5,.52),vec2(.03,.05))*pulse*.5;
       return col;
     }`,
@@ -67,7 +67,8 @@ export const castleStage: StageDef = {
     { name: 'Things that are not candles', count: 9, box: [7, 1.8, 9], centre: [0, 1.7, -7], size: 46, colour: ['#8f84ff', '#6dffd8'], opacity: [0.04, 0.22], rise: 0.02, sway: 0.8, twinkle: 0.7, additive: true },
   ],
   // Real mist, standing in the hall in sheets one behind another: frames come out of it, and it parts as you lean.
-  fog: { cards: 7, from: 2.6, to: 13.5, width: 7.5, height: 2.1, colour: ['#6a5cc8', '#2bd6b4'], opacity: [0.12, 0.3] },
+  // (fewer and fainter since 2026-11-12, so more of the hall shows through: it was 7 sheets at 0.12 to 0.3)
+  fog: { cards: 5, from: 3.2, to: 13.5, width: 7.5, height: 2.1, colour: ['#6a5cc8', '#2bd6b4'], opacity: [0.07, 0.06] },      // (night no thicker than day, 2026-11-12: it was 0.16 at night)
   flicker: time => 1 + 0.16 * Math.sin(time * 1.3 + 0.6) + 0.1 * Math.sin(time * 11 + 1.9) * Math.sin(time * 7.3),
 };
 
@@ -76,14 +77,14 @@ export const castleLetters: LetterTheme = {
   look: { sheet: '#f1dfb8', ink: '#34190f', back: '#3d2113', selfLit: 0.22, night: '#b4d8d2',
     hover: '#c9ffe9', cutWide: '#a98bff', cutHot: '#f4f0ff', mark: '#ffd978', flash: '#fff3cf', gold: '#ffe29a',
     burn: '#7dffc8', burnStyle: 0, streak: ['#b79cff', '#ffffff'], thread: ['#9dffd6', '#f2fff9'], aura: ['#35ff96', '#9a5cff'],
-    spell: { wisps: 0.35, sparkles: 6, trail: false, glow: 0.22 } },
+    spell: { wisps: 0.2, sparkles: 3, trail: false, glow: 0.1 } },      // (softer since 2026-11-12, "reduce the glow / magic effect on the edges": it was wisps 0.35, 6 sparkles, glow 0.22)
   // Down the hall: it starts as a speck where the hall runs away to, and glides in at its real size,
   // rocking and drifting a little, taking its time.
   origin(head: Vector3, home: Vector3, from: Vector3, via: Vector3) {
     const up = (FAR.v - 0.48) * 1.57079633;
     from.set(home.x, head.y + Math.sin(up) * FAR.metres, head.z - Math.cos(up) * FAR.metres);
     via.lerpVectors(from, home, 0.6); via.y += 0.22;
-    return { scale: 1, pose: 'face' as const, seconds: 2.6, ease: 2, sway: 0.16 };
+    return { scale: 1, pose: 'face' as const, seconds: 1.8, ease: 2, sway: 0.16 };      // (1.8 s up the hall since 2026-11-12, "a bit faster into view"; it was 2.6)
   },
 };
 
@@ -102,9 +103,9 @@ export const castleSound: LevelSound = {
   hum: { level: 0.45, swing: false, fadeIn: 0.15, fadeOut: 0.25 },        // (was 1: the user asked for it subtler)
   // (The user's organ note played on every cut for a while, wandering a minor scale; taken out at their asking the same day.
   // To bring it back: cutNote: { name: 'organ', scale: [-2, 0, 2, 3, 5, 7, 8, 10, 12, 14, 15], volume: 0.8 }.)
-  // The first round over: a door slams far down the hall, and witches laugh (the user's sounds, asked for on 2026-11-11).
+  // The first round over: witches laugh (the user's sounds, asked for on 2026-11-11). A door slammed far down the
+  // hall first until 2026-11-12, "remove the door sound": { name: 'doorslam', delay: 0, volume: 1, at: [0.6, 0.2, -11] }.
   afterRound: [{ round: 1, sounds: [
-    { name: 'doorslam', delay: 0, volume: 1, at: [0.6, 0.2, -11] },
-    { name: 'witches', delay: 0.55, volume: 0.9, at: [-2.4, 1.3, -5] },
+    { name: 'witches', delay: 0, volume: 0.9, at: [-2.4, 1.3, -5] },
   ] }],
 };

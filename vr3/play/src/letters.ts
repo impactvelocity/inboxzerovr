@@ -73,7 +73,7 @@ const tune = {
   pointWiden: 0.06,     // controller lying in the lap, pointing vaguely forward, would always have the letter
   shoulder: [-0.17, -0.2, 0.02] as [number, number, number],   // the left shoulder, from the head (seated, facing the garden)
   holdDistance: 0.45,   // a letter taken from afar flies in to this far from the hand, not into it
-  workHold: 0.6,        // round two: it is held out this far (further than in round one), out where the replies are
+  workHold: 0.6,        // round two: it is held out this far (further than in round one), out where the replies are (0.72 for a while on 2026-11-12, after the replies moved back: it felt off, so back to 0.6)
   dockShrink: 0.15,     // round two: held at a target, it is this much smaller (only a bit: 40% was too much, 2026-11-11)
   replyHalf: 1.2,       // round two, a reply: seconds the ring takes to go three quarters of the way round, steadily from the first touch
   replyRest: 0.25,      // and the last quarter, snapping shut (2026-11-12: "intentional at the start, then finish quickly"), sent at 1.45 s
@@ -85,6 +85,7 @@ const tune = {
   // The rounds. One is so many emails; round two brings back the ones that were kept.
   // Round one's emails. 10 for demos for now (asked for on 2026-11-11); it will vary from day to day later, never more than 20.
   roundEmails: 10,
+  demoEmails: [6, 18] as [number, number],      // the demo's inbox: somewhere from this many to this many, at random
   workSeconds: 16,      // round two: how long a letter waits to be answered before it is left for tomorrow
   readySeconds: 5,      // the ring under the round's title fills over this long before the first letter comes
   flickSpeed: 1.3,      // a held letter swept this fast leaves the hand without letting go
@@ -704,7 +705,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    */
   const LOGO_FILE: Record<string, string> = { lumber: 'lumber', knockout: 'knockout', kyoto: 'kyoto', office: 'office', office2: 'office', castle: 'castle', lab: 'lab', space: 'space', inferno: 'inferno' };
   const LOGO_WIDTH = 0.66;      // (a bit smaller since 2026-11-12; smaller again as it came nearer, so it looks a little bigger than it did)
-  const LOGO_DISTANCE = 1.0;    // how far in front of the seat it floats (2026-11-12: "make the logo a closer, it feels far away to smash"; it was 1.45 m)
+  const GRAB_LOOKS = 1.2;      // the end's pieces, held: how much bigger they look than where they floated, at most
+  const END_DARKEN_SECONDS = 20;      // the end of a game: how long the level takes to go dark behind the logo
+  const LOGO_DISTANCE = 1.2;    // how far in front of the seat it floats (2026-11-12: "make the logo a closer, it feels far away to smash"; it was 1.45 m. Then 1.0, and later that day 1.2: "a bit further from the player")
+  const LOGO_SPREAD = LOGO_DISTANCE / 1.0;      // the bar above it and the line below it, spaced to stay at the same angles as at 1 m
   const SMASHED_TO_HOME = 2.5;  // seconds after the logo is smashed before the game fades out to the home screen (2026-11-12)
   const LOGO_HITS = 4;          // hits it takes: the last of them breaks it up
   const STRIP_HITS = 3;         // and the progress bar and the line under the logo, the same way (2026-11-12: "also need a few cuts to be done, so its more fun")
@@ -782,6 +786,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     hits?: number; area0?: number; shiftX?: number; shiftY?: number; shake?: number; hitAt?: number;
     /** The bar and the line: how far from the seat each was handed over; it shrinks as it comes nearer, keeping its size to the eye (a little bigger at the end), and that size now. */
     reach?: number; keep?: number;
+    /** Held: how much smaller it is drawn, for being nearer the eye (1 where it floated). */
+    grabSize?: number;
   }
   const shows: Show[] = [];
   /** The cards' own sheets, made for one end and let go at the next (their pieces may still be burning). */
@@ -820,8 +826,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       const sheet = canvasSheet(handed.canvas); endSheets.push(sheet);
       const show = putOut(sheet, handed.width, handed.height, which, handed.at, handed.turn);
       show.reach = handed.at.distanceTo(seat);
-      if (which === 'bar') show.home.set(seat.x * 0.7, seat.y + 0.3, seat.z - LOGO_DISTANCE - 0.1);
-      else show.home.set(seat.x * 0.7, seat.y - 0.36, seat.z - LOGO_DISTANCE + 0.05);
+      if (which === 'bar') show.home.set(seat.x * 0.7, seat.y + 0.3 * LOGO_SPREAD, seat.z - LOGO_DISTANCE - 0.1);
+      else show.home.set(seat.x * 0.7, seat.y - 0.36 * LOGO_SPREAD, seat.z - LOGO_DISTANCE + 0.05);
     }
   }
   /** The end comes in: the line and the bar change to things that can be cut, and the logo arrives. */
@@ -837,7 +843,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     try { sheet = await logoSheet(LOGO_FILE[theme.id] ?? 'kyoto'); } catch { return; }
     if (!logo.wanted || game.phase !== 'summary' || shows.some(x => x.kind === 'logo')) return;
     const h = LOGO_WIDTH * sheet.surface.height / sheet.surface.width, bar = theme.bar ?? [theme.accent ?? '#f6b3cc', theme.accent ?? '#f6b3cc'];
-    logo.home.set(seat.x * 0.7, seat.y - 0.06, seat.z - LOGO_DISTANCE);      // (a little lower too, in the swing)
+    logo.home.set(seat.x * 0.7, seat.y - 0.06 * LOGO_SPREAD, seat.z - LOGO_DISTANCE);      // (a little lower too, in the swing)
     look3.position.copy(logo.home); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z);
     const show = putOut(sheet, LOGO_WIDTH, h, 'logo', logo.home, look3.quaternion);
     sheet.material.uniforms.flash.value = 1;
@@ -881,7 +887,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       const turn = show.spin.length();
       if (turn > 1e-3) body.mesh.quaternion.premultiply(q1.setFromAxisAngle(v2.copy(show.spin).divideScalar(turn), turn * dt));
       show.spin.multiplyScalar(Math.exp(-dt * 0.5));
-      body.mesh.scale.setScalar(swell * (show.kind === 'mail' ? MAIL_SIZE : show.keep ?? 1) * Math.min(1, 0.2 + t * 2.5));
+      if (show.grabSize !== undefined) show.grabSize += (1 - show.grabSize) * (1 - Math.exp(-dt * 3));      // (let go of: back to its own size, easily)
+      body.mesh.scale.setScalar(swell * (show.kind === 'mail' ? MAIL_SIZE : show.keep ?? 1) * (show.grabSize ?? 1) * Math.min(1, 0.2 + t * 2.5));
       // burst out: once it has slowed, it joins the swirl round in front from where it is
       if (show.settle && t > 0.9 && show.vel.length() < 0.8) {
         const off2 = v1.copy(body.mesh.position).sub(seat), speed = (0.35 + Math.random() * 0.4) * (Math.random() < 0.5 ? -1 : 1);
@@ -1082,7 +1089,12 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       m1.copy(hand.matrix).multiply(held.grip); v1.setFromMatrixPosition(m1); q1.setFromRotationMatrix(m1);
       const ease = 1 - Math.exp(-dt * 25);
       body.mesh.position.lerp(v1, ease); body.mesh.quaternion.slerp(q1, ease);
-      body.mesh.scale.setScalar((1 + 0.05 * beatNow) * (held.kind === 'mail' ? MAIL_SIZE : held.keep ?? 1));
+      // held, it shrinks as it comes nearer, so it looks only a little bigger than where it floated (2026-11-12: "the zoom
+      // scale when grabbing the logo, progress, is too large": it kept its size and filled the view)
+      const homeAway = held.home.distanceTo(seat), nowAway = body.mesh.position.distanceTo(seat);
+      const near = (held.kind === 'logo' || held.kind === 'bar' || held.kind === 'line') && homeAway > 0.05 ? Math.min(1, Math.max(0.3, GRAB_LOOKS * nowAway / homeAway)) : 1;      // (the logo, bar and line only: the day's emails keep their size, as they did)
+      held.grabSize = (held.grabSize ?? 1) + (near - (held.grabSize ?? 1)) * (1 - Math.exp(-dt * 10));
+      body.mesh.scale.setScalar((1 + 0.05 * beatNow) * (held.kind === 'mail' ? MAIL_SIZE : 1) * held.grabSize);
       if (held.kind === 'logo') logoFloat(held, dt, body.age);
       return;
     }
@@ -1657,7 +1669,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const hits = body.knock + 1, ko = strength >= feel.hard || hits > feel.hits;
     // It is dealt with, as a cut letter is; one thrown to be kept and then punched was never kept.
     if (letter) { settle(body, 'cut'); counts.cut++; current = null; nextIn = tune.nextAfterCut + 0.2; u.hover.value = 0; events.on?.('cut', mesh.position); }
-    else if (body.mode === 'kept') { settle(body, 'cut'); counts.cut++; u.mark.value = 0; u.gold.value = 0; body.going = -1; }
+    else if (body.mode === 'kept') { if (!stillSaved(body)) { settle(body, 'cut'); counts.cut++; } else counts.kept++; u.mark.value = 0; u.gold.value = 0; body.going = -1; }
     // The dent, on the sheet itself, so every piece of it keeps it; and it goes when the next letter is in place.
     const slot = (dentCount.get(sheet) ?? 0) % 3; dentCount.set(sheet, slot + 1);
     (u.dents.value as Vector4[])[slot].set(x + body.offset[0], y + body.offset[1], feel.dentRadius * (0.8 + 0.5 * strength), mix(feel.dent[0], feel.dent[1], strength));
@@ -1846,7 +1858,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     buzz('right', body.hazard ? 0.9 : 0.7, body.hazard ? 90 : 60); hitStop = 0.035;
     counts.cut++;
     const letter = current;
-    if (body.mark >= 0) settle(body, 'cut');          // (thrown, then sprayed out of the air: it was never kept)
+    if (body.mark >= 0 && !stillSaved(body)) settle(body, 'cut');          // (thrown, then sprayed out of the air: in round two it was never put off; saved in round one, it stays saved)
     if (letter && letter.body === body) {
       settle(body, 'cut');
       current = null; nextIn = tune.nextAfterCut + 0.25;
@@ -2253,9 +2265,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           const kept = body.mode === 'kept';
           if (!tryBlade(body, blade, dt, true, undefined, loose.length >= MAX_LOOSE)) continue;
           if (kept) {
-            // cut out of the air: it was never kept, and what falls is only paper
-            settle(body, 'cut');
-            counts.cut++;
+            // cut out of the air: what falls is only paper. Saved in round one, it stays saved (2026-11-12: "when an
+            // email is thrown and its marked as saved, make it so you can still cut it, but its still saved");
+            // in round two, thrown for later, a cut still makes it later
+            if (!stillSaved(body)) { settle(body, 'cut'); counts.cut++; } else counts.kept++;
             const u = body.sheet.material.uniforms; u.mark.value = 0; u.gold.value = 0; u.flash.value = 0;
           }
           buzz('right', 0.6, 40);
@@ -2413,7 +2426,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // (2026-11-12: "fade out and go to home screen after a few seconds of the end logo being all destroyed";
       // left alone, it ends as before)
       const smashed = !!logoNow && logoNow.gone >= 0 && game.timer - logoNow.gone > SMASHED_TO_HOME;
-      const over = game.timer > 60 || smashed || (!shows.length ? game.timer > 9 : !left ? cutUp && !endSong : endSongHeard ? !endSong : game.timer > 20);
+      // (2026-11-12, later: "go to menu when end song is done, not just when everything is smashed or cut": with an
+      // end song it is over when the song is, cut up or not, and not before; with none, as above)
+      const over = game.timer > 60 || (endSongHeard ? !endSong : smashed || (!shows.length ? game.timer > 9 : !left ? cutUp : game.timer > 20));
       if (over && logo.outro < 0) logo.outro = 0;
       if (logo.outro >= 0) {
         logo.outro += dt;
@@ -2434,7 +2449,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     stepBeat(dt);
     {
       if (game.phase === 'menu') updateMenu(dt, head);
-      const m = dimmer.material as MeshBasicMaterial, want = game.phase === 'summary' ? (logo.outro >= 0 ? 0.9 : 0.62) : game.phase === 'menu' ? 0.55 : 0;
+      // the end of a game: the level darkens steadily over the twenty seconds from its start, nearly black by then
+      // (2026-11-12, for every level; it went straight to 0.62 before), and the outro takes it the rest of the way
+      const darkening = 0.35 + 0.57 * clamp01(game.timer / END_DARKEN_SECONDS);
+      const m = dimmer.material as MeshBasicMaterial, want = game.phase === 'summary' ? Math.max(darkening, logo.outro >= 0 ? 0.9 : 0) : game.phase === 'menu' ? 0.55 : 0;
       m.opacity += (want - m.opacity) * (1 - Math.exp(-dt * (want > m.opacity ? 1.4 : 2.5)));
       dimmer.visible = m.opacity > 0.005; dimmer.position.copy(head);
       // black: from a second into the outro, over a second and a half, and it holds
@@ -2452,6 +2470,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   // ---------------------------------------------------------------- the rounds
 
   /** What became of an email: its band on the progress bar (and if it was thrown and then cut, that changes). */
+  /** Thrown in round one and marked SAVED: cut, punched or sprayed out of the air after that, it stays saved. */
+  function stillSaved(body: Body) { return game.phase === 'play' && game.round === 1 && body.mark >= 0 && game.marks[body.mark] === 'kept'; }
   function settle(body: Body, what: string) {
     if (!body.email || game.phase !== 'play') return;
     // (round two: cut, thrown, or left, it is all tomorrow, and the word comes up under the bar)
@@ -2476,8 +2496,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (round === 2) game.cutInRoundOne = game.marks.filter(m => m === 'cut').length;
     if (round === 1) {
       // (real mail when Gmail is chosen and in, in inbox order; otherwise the demo, shuffled: src/mail/source.ts)
-      const n = mail.state.count || tune.roundEmails;
-      game.deck = mail.deck(n) ?? shuffled().slice(0, n); game.kept = []; game.dayTotal = game.deck.length; game.dayDeck = [...game.deck];
+      // (the demo: a different number every game, 6 to 18, asked for on 2026-11-12; real mail: the count chosen in Setup)
+      const n = mail.state.count || tune.roundEmails, [few, many] = tune.demoEmails;
+      game.deck = mail.deck(n) ?? shuffled().slice(0, few + Math.floor(Math.random() * (many - few + 1))); game.kept = []; game.dayTotal = game.deck.length; game.dayDeck = [...game.deck];
     } else {
       // The ones that were kept come back to be answered: those and only those, in the demo as with real mail
       // (the demo topped them up to a few with others until 2026-11-12: "make the saved emails from round 1 be

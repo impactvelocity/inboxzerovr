@@ -42,9 +42,12 @@ dist/
 *.wav
 *.mp3
 *.ogg
-*.mp4
-*.mov
-*.webm
+*.[mM][pP]4
+*.[mM][oO][vV]
+*.[wW][eE][bB][mM]
+*.[mM][kK][vV]
+*.[mM]4[vV]
+*.[aA][vV][iI]
 *.zip
 *.7z
 *.tar

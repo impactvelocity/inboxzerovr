@@ -187,6 +187,11 @@ export function createRoundUi(world: World) {
   let micDemo = false;     // no approved mic or no speech service: the mic is a demo, and says so under it
   let stage: Stage = 'off', aimAt = -1, aimFill = 0, heardWords = 0, heardText = '', micRedraw = 0, dictLeave = -1;
   const hoverAmount = [0, 0, 0], ringFill = [0, 0, 0], leave = [-1, -1, -1];
+  // their coming and going: seconds since each began (-1: not), whether each was wanted last frame, how shown when it began to go
+  const appearAt = [-1, -1, -1], vanishAt = [-1, -1, -1], vanishFrom = [0, 0, 0], wanted = [0, 0, 0];
+  const APPEAR_SECONDS = 0.5, APPEAR_STAGGER = 0.07, VANISH_SECONDS = 0.32;
+  const backOut = (t: number) => 1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2);      // past 1 and back
+  const smooth = (t: number) => t * t * (3 - 2 * t);
   const base = [0, 1, 2].map(() => ({ at: new THREE.Vector3(), turn: new THREE.Quaternion() }));
   const dictBase = new THREE.Vector3();
   // Held near a target, it glows from behind, and a ring runs round it: slow at first, then fast to finish.
@@ -497,6 +502,7 @@ export function createRoundUi(world: World) {
     look.position.set(x, y, z); look.lookAt(seat.x, seat.y - 0.04, seat.z);
     object.position.copy(look.position); object.quaternion.copy(look.quaternion);       // (lookAt turns an object's +z, where a plane's picture is, to the player)
   }
+  const REPLY_SIDE = 0.52, REPLY_AHEAD = 1.22, MIC_DOWN = 0.46, MIC_AHEAD = 0.9;      // round two's targets, from the head (metres)
   /** Set everything out from where the player's head is now. Called as each round begins. */
   function place(head: THREE.Vector3, introAt?: { up: number; nearer: number; size: number }) {
     seat.copy(head);
@@ -506,11 +512,13 @@ export function createRoundUi(world: World) {
     face(intro, x, head.y - 0.14 + (introAt?.up ?? 0), head.z - 1.6 + (introAt?.nearer ?? 0)); introSize = introAt?.size ?? 1;
     // (round two's replies a little nearer than they were, so a letter held out can be taken to them;
     // the mic low and close, under the hands: asked for on 2026-11-11)
-    face(chips[0], x - 0.56, head.y - 0.16, head.z - 1.02);
-    face(chips[1], x + 0.56, head.y - 0.16, head.z - 1.02);
-    face(mic, x, head.y - 0.44, head.z - 0.74);       // (higher than it was, so it is not so far to look down: asked for on 2026-11-11)
+    // (2026-11-12: "a bit further away ... so more of it is in view": back about 20 cm and a touch closer
+    // together, so the replies sit 23 degrees out to each side, not 29, and the mic 27 degrees down, not 31)
+    face(chips[0], x - REPLY_SIDE, head.y - 0.17, head.z - REPLY_AHEAD);
+    face(chips[1], x + REPLY_SIDE, head.y - 0.17, head.z - REPLY_AHEAD);
+    face(mic, x, head.y - MIC_DOWN, head.z - MIC_AHEAD);       // (higher than it was, so it is not so far to look down: asked for on 2026-11-11)
     // what is dictated: just above the mic with a clear gap, and staying there (it followed the head for a while: too hard to read)
-    face(dictation, x, head.y - 0.44 + 0.157 + 0.05 + 0.07, head.z - 0.78); dictBase.copy(dictation.mesh.position);
+    face(dictation, x, head.y - MIC_DOWN + 0.157 + 0.05 + 0.07, head.z - MIC_AHEAD - 0.04); dictBase.copy(dictation.mesh.position);
     [chips[0], chips[1], mic].forEach((c, i) => { base[i].at.copy(c.mesh.position); base[i].turn.copy(c.mesh.quaternion); });
     targets[0].copy(chips[0].mesh.position); targets[1].copy(chips[1].mesh.position);
     targets[2].copy(v0.set(0, micUp, 0).applyQuaternion(mic.mesh.quaternion).add(mic.mesh.position));
@@ -536,13 +544,30 @@ export function createRoundUi(world: World) {
     // Round two's targets. Held at, one swells a little and glows, and its ring runs round; sent, it
     // pops, then flies up and away and is gone.
     [chips[0], chips[1], mic].forEach((c, k) => {
-      c.shown += (c.want - c.shown) * ease; c.pop *= Math.exp(-dt * 7);
+      c.pop *= Math.exp(-dt * 7);
+      // In: one after another, fading up and rising a little, a bounce past full size and back. Out (not sent): a
+      // small swell, then shrinking and sinking as it fades (2026-11-12: "a bit nicer, fade bounce in and out").
+      let grow = 1, lift = 0;
+      if (c.want && !wanted[k] && appearAt[k] < 0) appearAt[k] = 0;
+      if (!c.want && wanted[k] && leave[k] < 0) { vanishAt[k] = 0; vanishFrom[k] = c.shown; appearAt[k] = -1; }
+      wanted[k] = c.want;
+      if (c.want && appearAt[k] >= 0) {
+        const t = clamp01(((appearAt[k] += dt) - k * APPEAR_STAGGER) / APPEAR_SECONDS);
+        grow = 0.55 + 0.45 * backOut(t); c.shown = smooth(clamp01(t / 0.45)); lift = -0.045 * Math.pow(1 - t, 3);
+        if (t >= 1) appearAt[k] = -1;
+      } else if (!c.want && leave[k] < 0) {
+        if (vanishAt[k] >= 0) {
+          const t = clamp01((vanishAt[k] += dt) / VANISH_SECONDS);
+          grow = (1 + 0.07 * Math.sin(Math.min(1, t / 0.35) * Math.PI)) * (1 - 0.4 * t * t); c.shown = vanishFrom[k] * (1 - smooth(t)); lift = -0.035 * t * t;
+          if (t >= 1) { vanishAt[k] = -1; c.shown = 0; }
+        } else c.shown = 0;
+      } else if (c.want) c.shown += (1 - c.shown) * ease;
       const at = aimAt === k ? 1 : 0;
       hoverAmount[k] += (at - hoverAmount[k]) * (1 - Math.exp(-dt * 12));
       ringFill[k] = at ? aimFill : ringFill[k] * Math.exp(-dt * 10);
-      let scale = (0.86 + 0.14 * c.shown) * (1 + c.pop * 0.3 + hoverAmount[k] * 0.09 + at * aimFill * 0.05);
+      let scale = grow * (1 + c.pop * 0.3 + hoverAmount[k] * 0.09 + at * aimFill * 0.05);
       if (k === 2 && stage === 'recording') scale *= 1 + 0.035 * Math.sin(clock * 9);
-      c.mesh.position.copy(base[k].at); c.mesh.quaternion.copy(base[k].turn);
+      c.mesh.position.copy(base[k].at); c.mesh.quaternion.copy(base[k].turn); c.mesh.position.y += lift;
       let fade = 1;
       if (leave[k] >= 0) {
         const t = (leave[k] += dt) / 0.8, out = clamp01((t - 0.2) / 0.8), e = out * out;
@@ -682,7 +707,7 @@ export function createRoundUi(world: World) {
       const on = a !== null && b !== null;
       if (on) {
         stage = 'pick'; drawChip(0, a); drawChip(1, b); drawMic(false);
-        for (let k = 0; k < 3; k++) { leave[k] = -1; const c = k === 2 ? mic : chips[k]; c.pop = 0.5; }
+        for (let k = 0; k < 3; k++) { leave[k] = -1; const c = k === 2 ? mic : chips[k]; c.pop = 0; appearAt[k] = 0; vanishAt[k] = -1; }
       } else stage = 'off';
       chips[0].want = chips[1].want = mic.want = on ? 1 : 0;
       if (dictLeave < 0) dictation.want = 0;
@@ -715,7 +740,7 @@ export function createRoundUi(world: World) {
     choose() {
       stage = 'choose'; heardWords = heardText.split(' ').length; drawDictation(); drawMic(false);
       drawChip(0, '', 'send'); drawChip(1, '', 'redo');
-      for (let k = 0; k < 2; k++) { leave[k] = -1; chips[k].want = 1; chips[k].pop = 0.8; }
+      for (let k = 0; k < 2; k++) { leave[k] = -1; chips[k].want = 1; chips[k].pop = 0; appearAt[k] = 0; vanishAt[k] = -1; }      // (SEND IT and REDO bounce in, as the replies did)
       mic.want = 0; aimAt = -1;
     },
     /** The letter has gone into a target: it and the letter go, and SENT. (Kept after dictating, the words go with it.) */
@@ -737,7 +762,7 @@ export function createRoundUi(world: World) {
       show.titleAt = -1; show.readyAt = -1; show.goAt = -1; show.outAt = -1; intro.visible = false;
       for (const c of [bar, chips[0], chips[1], mic, dictation]) { c.want = 0; c.shown = 0; c.mesh.visible = false; }
       toastAge = 9; toast.mesh.visible = false;
-      stage = 'off'; aimAt = -1; aimFill = 0; leave.fill(-1); dictLeave = -1; ringFill.fill(0); hoverAmount.fill(0); drawMic(false); barLeave = -1;
+      stage = 'off'; aimAt = -1; aimFill = 0; leave.fill(-1); appearAt.fill(-1); vanishAt.fill(-1); wanted.fill(0); dictLeave = -1; ringFill.fill(0); hoverAmount.fill(0); drawMic(false); barLeave = -1;
     },
     diagnostics: () => ({ bar: +bar.shown.toFixed(2), intro: intro.visible ? 1 : 0, ring: +show.fill.toFixed(2), replies: +chips[0].shown.toFixed(2), stage, aimAt, aimFill: +aimFill.toFixed(2), heardWords }),
     dispose() {
