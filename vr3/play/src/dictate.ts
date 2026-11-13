@@ -1,4 +1,3 @@
-import { pixelLabel } from './home';
 
 /**
  * Round two's mic, for real (2026-11-12: the dictation plan, "build this").
@@ -364,7 +363,8 @@ function createDictate() {
 export const dictate = createDictate();
 
 /**
- * Connect mic, on the home page beside Setup (asked for on 2026-11-12: "on the home screen - not in vr,
+ * Connect mic, an icon at the home page's top right (moved there from beside Setup, 2026-11-12: "make simpler
+ * of just icon button"; its words are its tooltip, its edge its state) (asked for on 2026-11-12: "on the home screen - not in vr,
  * test if mic is connected, and show a button to say connect mic / approve"). It shows what it finds
  * without asking: CONNECT MIC (never asked), MIC ON, MIC BLOCKED, NO MIC FOUND, MIC NEEDS HTTPS.
  * A click asks if need be, then listens for four seconds with a meter under the button, so the
@@ -382,11 +382,12 @@ export function bindHomeMic() {
       : p === 'granted' ? [dictate.testing ? 'Listening...' : 'Mic on', 'on', `${words} Click to test it.`]
       : ['Connect mic', 'ask', 'Approve the mic here, before VR, so round two can hear your replies. Without it the mic is a demo.'];
     button!.disabled = p === 'unavailable' || !dictate.hasDevice;
-    button!.title = title;
     button!.classList.toggle('mic-on', tone === 'on'); button!.classList.toggle('mic-off', tone === 'off'); button!.classList.toggle('mic-ask', tone === 'ask');
     wrap!.classList.toggle('testing', dictate.testing);
-    if (label !== shown) { shown = label; pixelLabel(button!, label, 2, '#ffffff'); }
+    if (label !== shown) { shown = label; button!.setAttribute('aria-label', label); }
+    button!.title = `${label}. ${title}`;
   }
+  drawMic(button.querySelector<HTMLCanvasElement>('canvas.mic'));
   // the meter under the button while it listens
   function meter() { if (bar) bar.style.width = `${Math.round(Math.min(1, dictate.level * 1.4) * 100)}%`; if (dictate.testing) requestAnimationFrame(meter); else if (bar) bar.style.width = '0%'; }
   button.addEventListener('click', () => { void dictate.test(4).then(ok => { show(); if (ok) requestAnimationFrame(meter); }); });
@@ -412,4 +413,14 @@ export function bindSetupMic() {
   button.addEventListener('click', () => { void dictate.ask().then(show); });
   dictate.onChange(show);
   show();
+}
+
+/** A microphone in pixels, white, the size of the settings gear. */
+function drawMic(canvas: HTMLCanvasElement | null) {
+  if (!canvas) return;
+  const rows = ['..###...', '..###...', '..###...', '#.###.#.', '#.###.#.', '.#...#..', '..###...', '...#....', '.#####..'], cell = 4;
+  canvas.width = 8 * cell; canvas.height = rows.length * cell; canvas.style.width = `${(8 * cell) / 2}px`; canvas.style.height = `${(rows.length * cell) / 2}px`;
+  const g = canvas.getContext('2d'); if (!g) return;
+  g.fillStyle = '#ffffff';
+  rows.forEach((row, y) => [...row].forEach((on, x) => { if (on === '#') g.fillRect(x * cell, y * cell, cell, cell); }));
 }

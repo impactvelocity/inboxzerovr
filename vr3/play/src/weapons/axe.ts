@@ -13,7 +13,9 @@ import { insetPolygon, liveGlow, Soup, type P2, type P3 } from './parts';
  * where the top of the fist comes to, on the wrap. Two draws (steel; wood, leather and cap), and a
  * third while the trigger makes it live: a light along the edge.
  */
-const CAP = -0.150, WRAP_FROM = -0.116, WRAP_TO = 0.036;
+const CAP = -0.150, WRAP_FROM = -0.116, WRAP_TO = 0.106;
+/** Where the top of the fist comes to, up the handle (it was the wrap's top, 0, until 2026-11-12: "the hand feels too low on the handle"). The wrap runs on up past it. */
+const GRIP_Y = 0.07;
 /** The middle of the head, up the handle, and how far the handle goes on through it to the top of the wedge. */
 const HEAD_Y = 0.35, TOP_Y = 0.428;
 /** The handle's middle line, [x, y]: an S, its belly towards the edge, straightening into the head; the butt kicks forward. */
@@ -170,7 +172,7 @@ export function buildAxe(renderer: THREE.WebGLRenderer): HeldSpec {
   wood.paint(shade(cream, 0.05)).fan(ring(capRings[3][0], capRings[3][1], capRings[3][2], SIDES, Math.PI / SIDES));
   // ---- leather: the wrap, two straps wound opposite ways so that they cross, standing a little proud of the wood
   const strapA = new THREE.Color('#a8342a'), strapB = new THREE.Color('#8e2a25'), seam = new THREE.Color('#5c1a18');
-  const AROUND = 14, RINGS = 46, TURNS = 5.5;
+  const AROUND = 14, RINGS = 67, TURNS = 8;        // (as tightly wound as before, over the longer wrap)
   const wrapRing = (j: number) => {
     const k = j / RINGS, y = WRAP_FROM + (WRAP_TO - WRAP_FROM) * k, at = spine(y), nx = at.along[1], ny = -at.along[0];
     return Array.from({ length: AROUND }, (_, i) => {
@@ -246,12 +248,12 @@ export function buildAxe(renderer: THREE.WebGLRenderer): HeldSpec {
   // So a swing that catches a letter with the head or with the handle just under it both count, the swing
   // ribbon (bright at its tip, faint at its base) follows the head, and the long reach past the tip runs on
   // the way the edge is pointing.
-  const toe = place(EDGE[0][0], EDGE[0][1] + 0.004, 0), base = spine(0.115);
+  const toe = place(EDGE[0][0], EDGE[0][1] + 0.004, 0), base = spine(GRIP_Y + 0.115);
   return {
     name: "Lumberjack's axe — right grip", model,
     // Upright in the hand, as the sword, the katana and the keyboard are (the user's own choice for those,
     // 2026-11-11); its head hangs forward of the handle by itself. Lean and Turn are in the Settings.
-    hold: rodHold({ guardY: 0, reach: 0.03, tilt: -15, turn: 8 }), tilt: -15, rod: { guardY: 0, reach: 0.03, tilt: -15, turn: 8 },
+    hold: rodHold({ guardY: GRIP_Y, reach: 0.03, tilt: -15, turn: 8 }), tilt: -15, rod: { guardY: GRIP_Y, reach: 0.03, tilt: -15, turn: 8 },
     // (these two are in the hand's space, not the model's: turned as the model is)
     hit: { base: new THREE.Vector3(base.at[0], base.at[1], 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), TWIST), tip: new THREE.Vector3(...toe).applyAxisAngle(new THREE.Vector3(0, 1, 0), TWIST) },
     trail: [1, 0.74, 0.36],

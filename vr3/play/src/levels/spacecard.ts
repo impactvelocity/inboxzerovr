@@ -4,7 +4,9 @@ import * as PixelFont from '../mail/pixelFont';
 import { H, W, type CardPainter } from './cards';
 
 /**
- * What an email looks like in Super Space: an INCOMING TRANSMISSION on a pale data slate, in the
+ * What an email looks like in Super Space: a pale data slate, its kind of mail in the bar across its
+ * head (it said INCOMING TRANSMISSION beside a planet until 2026-11-12: "drop the plane icon ... and
+ * instead of incoming transmission, just make that the label - centered"), in the
  * saber's own colours (ivory, plum, magenta, cyan). Pale, because the sky behind it is dark and the
  * mail is what is to be looked at; the words are plain and large, and only the labels are in pixels.
  * (Its own file, with its own copies of cards.ts' small helpers, so that levels being made at the
@@ -52,16 +54,6 @@ function pixel(g: CanvasRenderingContext2D, text: string, left: number, yMid: nu
   PixelFont.cells(upper, x, Math.round(yMid - PixelFont.Rows * cell / 2), cell, (cx, cy, cw, ch) => g.fillRect(cx, cy, cw, ch));
   return wide;
 }
-/** A small ringed planet, as the level's logo has at its corner. */
-function planet(g: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
-  g.save(); g.translate(cx, cy); g.rotate(-0.42);
-  g.strokeStyle = CYAN; g.lineWidth = r * 0.2; g.beginPath(); g.ellipse(0, 0, r * 1.75, r * 0.5, 0, Math.PI, Math.PI * 2); g.stroke();
-  const ball = g.createLinearGradient(-r, -r, r, r); ball.addColorStop(0, '#ffd9f6'); ball.addColorStop(0.5, MAGENTA); ball.addColorStop(1, '#7a1c8e');
-  g.fillStyle = ball; g.beginPath(); g.arc(0, 0, r, 0, Math.PI * 2); g.fill();
-  g.strokeStyle = '#7df3ff'; g.beginPath(); g.ellipse(0, 0, r * 1.75, r * 0.5, 0, 0, Math.PI); g.stroke();
-  g.restore();
-}
-
 const BAR = 92, EDGE = 12;
 export const spaceCard: CardPainter = (g, email) => {
   const random = seeded(email ? email.subject : 'title');
@@ -79,8 +71,6 @@ export const spaceCard: CardPainter = (g, email) => {
   g.fillStyle = bar; g.fillRect(EDGE, EDGE, W - 2 * EDGE, BAR - EDGE);
   const line = g.createLinearGradient(0, 0, W, 0); line.addColorStop(0, MAGENTA); line.addColorStop(1, CYAN);
   g.fillStyle = line; g.fillRect(EDGE, BAR - 6, W - 2 * EDGE, 6);
-  planet(g, 62, 50, 17);
-  pixel(g, 'INCOMING TRANSMISSION', 108, 51, 5, IVORY);
   // corner marks, as on a sight
   g.fillStyle = CYAN;
   for (const [cx, cy, sx, sy] of [[EDGE, H - EDGE, 1, -1], [W - EDGE, H - EDGE, -1, -1]] as const) { g.fillRect(cx + (sx > 0 ? 14 : -62), cy - 20, 48, 6); g.fillRect(cx + (sx > 0 ? 14 : -20), cy + sy * 62, 6, 48); }
@@ -93,11 +83,8 @@ export const spaceCard: CardPainter = (g, email) => {
     g.font = `600 38px ${SANS}`; g.fillStyle = SOFT; g.fillText('cut this one to begin', W / 2, 452);
     return;
   }
-  // what sort of mail it is, as a tab in the bar
-  const label = Categories.label(email.category), tab = PixelFont.width(label, 4) + 40;
-  g.fillStyle = 'rgba(0,200,230,.16)'; g.fillRect(W - 40 - tab, 26, tab, 46);
-  g.strokeStyle = '#7df3ff'; g.lineWidth = 3; g.strokeRect(W - 40 - tab, 26, tab, 46);
-  pixel(g, label, W - 40 - tab / 2, 49, 4, '#bff8ff', 'center');
+  // what sort of mail it is: the bar's own words, in the middle of it
+  pixel(g, Categories.label(email.category), W / 2, 51, 5, IVORY, 'center');
 
   g.textAlign = 'left'; g.textBaseline = 'alphabetic';
   const left = 76, wide = W - 2 * left;

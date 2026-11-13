@@ -24,7 +24,7 @@ export interface HeldSpec {
   /** Degrees the closed fist is leaned to sit round the handle (what the outline hand is turned by). */
   tilt: number;
   /** Rods: the numbers `hold` was made from, so that the lean can be changed from the Settings (Weapon.setRod). */
-  rod?: { guardY: number; reach: number; tilt: number; turn: number };
+  rod?: { guardY: number; reach: number; tilt: number; turn: number; side?: number };
   /** On a monitor: where it sits from the camera, and how it is turned (radians, applied X then Y then Z). */
   desktop?: { position?: [number, number, number]; rotateX?: number; rotateY?: number; rotateZ?: number;
     /** Its preview is a punch (a jab straight out along base to tip and back), not a swing. */
@@ -75,6 +75,8 @@ export interface Weapon {
 }
 
 const RAD = Math.PI / 180;
+/** Which way grip space's x runs for the right hand: +1 if +x is the player's right (from pistolHold's turn, which was measured in the emulator: its nozzle runs out along -y and a positive turn swings it towards +x, to the right). */
+export const SIDE_RIGHT = 1;
 const rodBasis = new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, -1), new THREE.Vector3(-1, 0, 0));
 
 /**
@@ -82,10 +84,11 @@ const rodBasis = new THREE.Matrix4().makeBasis(new THREE.Vector3(0, 1, 0), new T
  * through the closed fist from little finger to thumb and -Y towards the knuckles.
  * guardY: the model-space height the top of the fist comes up to; reach: metres from the middle of
  * the fist to there; tilt: degrees it leans towards the knuckles; turn: degrees it is angled across
- * the body to the left.
+ * the body to the left; side: metres it is moved across the fist afterwards, to the player's right
+ * (`SIDE_RIGHT`: so it sits in the drawn hand, not beside it).
  */
-export function rodHold({ guardY = 0, reach = 0.03, tilt = 28, turn = 15 }: { guardY?: number; reach?: number; tilt?: number; turn?: number } = {}) {
-  return new THREE.Matrix4().makeRotationX(-tilt * RAD).multiply(rodBasis)
+export function rodHold({ guardY = 0, reach = 0.03, tilt = 28, turn = 15, side = 0 }: { guardY?: number; reach?: number; tilt?: number; turn?: number; side?: number } = {}) {
+  return new THREE.Matrix4().makeTranslation(side * SIDE_RIGHT, 0, 0).multiply(new THREE.Matrix4().makeRotationX(-tilt * RAD)).multiply(rodBasis)
     .multiply(new THREE.Matrix4().makeRotationX(turn * RAD))
     .multiply(new THREE.Matrix4().makeTranslation(0, reach - guardY, 0));
 }

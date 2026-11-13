@@ -10,8 +10,9 @@ import { createPuffs } from './puffs';
  * The second office's monitor: a chunky beige CRT on a tilt stand, a real model standing on the
  * painted desk (design: design/office-seated-v3/props/crt-monitor-angles.png).
  *
- * The email of the moment is shown on its screen (letters.ts docks the letter at `pose`), and the
- * keyboard is brought down on it: every blow that deletes an email cracks the glass where it
+ * Each email comes out of its screen (levels/office2.ts starts it at `pose`, and `launch` is the
+ * monitor's kick as it goes: 2026-11-12, "make the emails fly out of the monitor so they float like
+ * others"). The keyboard can still be brought down on the monitor itself (`contact`): every blow cracks the glass where it
  * landed, dents and scorches the case, rocks the head on its stand and leaves it a little more
  * askew; the picture tears and loses rows, the light goes amber and then red, smoke comes out of
  * the vents. When the last email is gone it says INBOX ZERO and switches itself off, the picture
@@ -37,6 +38,8 @@ export const crtTune = {
   kick: 10,                      // how far a blow rocks it
   dent: 0.016,                   // metres a hard blow pushes the plastic in
   hitsToWreck: 14,               // blows from new to as battered as it gets
+  hitSpeed: 1.4,                 // m/s the keyboard must be going for touching the monitor to count as a blow
+  launchKick: 1.3,               // how far an email leaving the screen rocks it back
   zeroSeconds: 1.0,              // INBOX ZERO stays up this long before it switches off
 };
 
@@ -176,7 +179,7 @@ function faceMaterial(cracks: { value: THREE.Vector4[] }) {
 function glassMaterial(ui: THREE.Texture) {
   return new THREE.ShaderMaterial({
     uniforms: { ui: { value: ui }, time: { value: 0 }, collapse: { value: 1 }, warm: { value: 0 }, glitch: { value: 0 }, damage: { value: 0 }, flash: { value: 0 }, room: { value: 1 },
-      cracks: { value: Array.from({ length: CRACKS }, () => new THREE.Vector4()) } },
+      cracks: { value: Array.from({ length: CRACKS }, () => new THREE.Vector4(0, 0, 0, 0)) } },      // (w 0: none yet; a bare Vector4 is w 1, a crack)
     vertexShader: 'varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.); }',
     fragmentShader: /* glsl */ `
       uniform sampler2D ui; uniform float time,collapse,warm,glitch,damage,flash,room; uniform vec4 cracks[${CRACKS}]; varying vec2 vUv;
@@ -269,7 +272,7 @@ export function createCrt(context: StageContext) {
 
   const swing = { angle: new THREE.Vector3(), speed: new THREE.Vector3(), rest: new THREE.Vector3(), shove: 0, shoveSpeed: 0 };
   let clock = 0, hits = 0, damage = 0, glitch = 0, flash = 0, on = false, collapse = 1, warm = 0, zero = 0, drawn = '', smokeDue = 0, crackle = 2, nextCrack = 0;
-  let phase: RoundProgress['phase'] = 'ready', round = 1, blade: BladeTracker | undefined;
+  let phase: RoundProgress['phase'] = 'ready', round = 1, blade: BladeTracker | undefined, cooling = 0;
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), m1 = new THREE.Matrix4(), tint = new THREE.Color();
   const rand = (spread: number) => (Math.random() - 0.5) * 2 * spread;
   const world = (x: number, y: number, z: number, out: THREE.Vector3) => out.set(x, y, z).applyMatrix4(head.matrixWorld);
@@ -357,8 +360,31 @@ export function createCrt(context: StageContext) {
     return strength;
   }
 
+  /**
+   * An email leaving the screen: the picture flares and jumps, the head rocks back on its stand as if
+   * it had spat it out, and a few bits of phosphor come with it.
+   */
+  function launch() {
+    head.updateWorldMatrix(true, false);
+    flash = Math.max(flash, 0.7); glitch = Math.max(glitch, 0.35);
+    swing.speed.x -= crtTune.launchKick * (0.85 + 0.3 * Math.random()); swing.speed.y += rand(0.4); swing.shoveSpeed += 0.35;
+    const out = v2.set(0, 0, 1).transformDirection(head.matrixWorld);
+    for (let i = 0; i < 9; i++)
+      shards.emit(world(rand(SW * 0.35), SY + rand(SH * 0.35), FRONT, v1), v3.set(rand(0.5), 0.35 + Math.random() * 0.6, rand(0.3)).addScaledVector(out, 0.5 + Math.random() * 0.9), 0.35 + Math.random() * 0.3, 0.45 + Math.random() * 0.5);
+  }
+  /** Is the keyboard hitting the monitor itself just now (fast enough, and not the same blow again)? */
+  function contact(b?: BladeTracker) {
+    if (!b?.moving || b.speed < crtTune.hitSpeed || cooling > 0) return false;
+    head.updateWorldMatrix(true, false); m1.copy(head.matrixWorld).invert();
+    for (const f of [1, 0.75, 0.5]) {
+      const p = v1.lerpVectors(b.base, b.tip, f).applyMatrix4(m1);
+      if (Math.abs(p.x) < BW / 2 + 0.02 && p.y > -0.02 && p.y < BH + 0.02 && p.z < FRONT + 0.03 && p.z > FRONT - DEPTH) { cooling = 0.45; return true; }
+    }
+    return false;
+  }
+
   function update(dt: number, c: { blend: number; pixelRatio: number; blade?: BladeTracker }) {
-    clock += dt; blade = c.blade;
+    clock += dt; blade = c.blade; cooling = Math.max(0, cooling - dt);
     // the head on its stand: a spring back to where it has been left, and a shove back along the desk
     const s = swing;
     s.speed.addScaledVector(v1.copy(s.angle), -crtTune.spring * dt).multiplyScalar(Math.exp(-crtTune.damping * dt));
@@ -411,8 +437,8 @@ export function createCrt(context: StageContext) {
   }
 
   return {
-    group, root, update, game, strike,
-    /** Where a letter shown on the screen is (world space); returns its size there. */
+    group, root, update, game, strike, launch, contact,
+    /** Where the picture on the screen is (world space) and which way it faces; returns its size (a letter is 1). */
     pose(position: THREE.Vector3, quaternion: THREE.Quaternion) {
       head.updateWorldMatrix(true, false);
       position.copy(PANE.at).applyMatrix4(head.matrixWorld); head.getWorldQuaternion(quaternion);

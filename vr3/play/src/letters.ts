@@ -86,8 +86,7 @@ const tune = {
   // Round one's emails. 10 for demos for now (asked for on 2026-11-11); it will vary from day to day later, never more than 20.
   roundEmails: 10,
   workSeconds: 16,      // round two: how long a letter waits to be answered before it is left for tomorrow
-  workLeast: 4,
-  readySeconds: 5,      // the ring under the round's title fills over this long before the first letter comes         // round two always has at least this many letters, kept or not (it is an example for now)
+  readySeconds: 5,      // the ring under the round's title fills over this long before the first letter comes
   flickSpeed: 1.3,      // a held letter swept this fast leaves the hand without letting go
   // A thrown letter is thrown: it leaves at the hand's speed (and a bit), and from there it is
   // paper in the air, falling and slowing as paper does. No slow start.
@@ -184,13 +183,15 @@ export interface LetterTheme {
   /** The progress bar's two colours, left to right: vivid, the level's own. From `accent` if not given. */
   bar?: [string, string];
   /**
-   * Where a letter comes from: sets `from` and `via` (world space; `home` is where it will arrive)
-   * and says how big it starts (1 is full size) and how it is turned: tumbling in, already facing
-   * the player, or lying flat.
+   * Where a letter comes from: sets `from` and `via` (world space; `home` is where it will arrive,
+   * and may be moved: something standing in the way) and says how big it starts (1 is full size) and
+   * how it is turned: tumbling in, already facing the player, or lying flat; or exactly `turn`.
    */
-  origin?(head: Vector3, home: Vector3, from: Vector3, via: Vector3): { scale: number; pose: 'tumble' | 'face' | 'flat';
+  origin?(head: Vector3, home: Vector3, from: Vector3, via: Vector3): { scale: number; pose: 'tumble' | 'face' | 'flat'; turn?: Quaternion;
     /** How long it takes to arrive (tune.arriveSeconds if not given), how gently it slows (3 quick then slow, 2 a steady glide), and how much it rocks on the way (radians). */
     seconds?: number; ease?: number; sway?: number };
+  /** Where the round's intro card goes, if something stands where it would be (as `dock.intro`), and the seconds between a round's last letter and what comes next (as `dock.pause`). */
+  intro?: { up: number; nearer: number; size: number }; pause?: number;
   /** Is this one dangerous (the lab's radioactive mail)? It takes more, and glows. */
   hazard?(email: Email): boolean;
   /**
@@ -287,7 +288,9 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
       cutout: { value: 0 }, span: { value: new Vector2(W, H) }, shine: { value: -1 },
       cuts: { value: [new Vector4(), new Vector4(), new Vector4()] }, heat: { value: new Vector3() },
       // punched (Knockout): where on the sheet (x, y), how wide, how deep. Every piece of the sheet keeps them.
-      dents: { value: [new Vector4(), new Vector4(), new Vector4()] },
+      // (none: a Vector4 starts at w 1, which is a dent a metre deep at the middle. Things drawn with this that are
+      // never reset, the end logo, the bar, the summary and the menu's cards, wore one as a dark wedge: fixed 2026-11-12)
+      dents: { value: [new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0), new Vector4(0, 0, 0, 0)] },
     },
     vertexShader: /* glsl */ `
       uniform float burn,burnStyle,wet; uniform vec4 dents[3]; uniform vec2 span;
@@ -658,12 +661,12 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     // (they come from the centre, straight down the middle of the view: asked for on 2026-11-11)
     const from = new Vector3(home.x, home.y + 0.8 + Math.random() * 0.5, home.z - 7.5);
     const via = new Vector3(home.x, home.y + 0.5, home.z - 2.4);
+    // (a level may have its letters come from somewhere of its own: out of a screen, off a table)
+    const begin: ReturnType<NonNullable<LetterTheme['origin']>> = theme.origin ? theme.origin(head, home, from, via) : { scale: 1, pose: 'tumble' };
     // Waiting, it faces whoever is reading it.
     look.position.copy(home); look.up.set(0, 1, 0); look.lookAt(head.x, head.y - 0.04, head.z);
     const face = look.quaternion.clone();
-    // (a level may have its letters come from somewhere of its own: out of a screen, off a table)
-    const begin = theme.origin ? theme.origin(head, home, from, via) : { scale: 1, pose: 'tumble' as const };
-    const start = begin.pose === 'tumble' ? face.clone().multiply(q1.setFromAxisAngle(v1.set(rand(1), rand(1), rand(1)).normalize(), 0.9 + Math.random() * 0.8))
+    const start = begin.turn ? begin.turn.clone() : begin.pose === 'tumble' ? face.clone().multiply(q1.setFromAxisAngle(v1.set(rand(1), rand(1), rand(1)).normalize(), 0.9 + Math.random() * 0.8))
       : begin.pose === 'flat' ? face.clone().multiply(q1.setFromAxisAngle(v1.set(1, 0, 0), -1.25)).multiply(new Quaternion().setFromAxisAngle(v2.set(0, 0, 1), rand(0.5)))
       : face.clone().multiply(q1.setFromAxisAngle(v1.set(rand(0.3), 1, rand(0.3)).normalize(), rand(0.45)));
     const dock = theme.dock;
@@ -2421,9 +2424,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // (a level that shows its letters on something gives that thing its moment first: the monitor switching off;
       // what is left of the last letter does not hang about through it)
       if (theme.dock && game.timer > 0.7) for (const sheet of sheets) if (sheet.cutAt < Infinity && sheet.burnAt === Infinity) sheet.burnAt = clock;
-      if ((game.timer += dt) > (theme.dock?.pause ?? 1.1)) {
-        if (game.round === 1 && (game.kept.length || !mail.state.playing)) beginIntro(2);
-        else { if (game.round === 1) game.cutInRoundOne = 0; beginSummary(); }      // (real mail with nothing kept: nothing to answer)
+      if ((game.timer += dt) > (theme.dock?.pause ?? theme.pause ?? 1.1)) {
+        // (nothing kept, demo or real mail: nothing to answer, so straight to the ending: 2026-11-12)
+        if (game.round === 1 && game.kept.length) beginIntro(2);
+        else { if (game.round === 1) game.cutInRoundOne = 0; beginSummary(); }      // (round one's own marks are what the summary counts then)
       }
     }
     if (game.phase === 'play' && game.round === 2) answer(dt);
@@ -2475,17 +2479,16 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       const n = mail.state.count || tune.roundEmails;
       game.deck = mail.deck(n) ?? shuffled().slice(0, n); game.kept = []; game.dayTotal = game.deck.length; game.dayDeck = [...game.deck];
     } else {
-      // The ones that were kept come back to be answered. In the demo there are always a few, kept or not;
-      // with real mail only what was kept (and with nothing kept there is no round two: see the end of round one).
-      const work = [...game.kept];
-      if (!mail.state.playing) for (const email of shuffled()) { if (work.length >= tune.workLeast) break; if (email.kind === 'Real' && !work.includes(email)) work.push(email); }
-      game.deck = work;
+      // The ones that were kept come back to be answered: those and only those, in the demo as with real mail
+      // (the demo topped them up to a few with others until 2026-11-12: "make the saved emails from round 1 be
+      // the real emails used in round 2"). With nothing kept there is no round two: see the end of round one.
+      game.deck = [...game.kept];
       for (const sheet of sheets) if (sheet.cutAt < Infinity && sheet.burnAt === Infinity) sheet.burnAt = clock;     // what is left of round one goes
     }
     game.round = round; game.total = game.deck.length; game.dealt = 0; game.marks = [];
     game.phase = 'intro'; game.timer = 0; game.beat = -1;
     if (prepared) { prepared.reserved = false; prepared = null; preparedEmail = null; }
-    ui.setAccent(theme.accent ?? '#f6b3cc', theme.bar); ui.place(seat, theme.dock?.intro); ui.replies(null, null);
+    ui.setAccent(theme.accent ?? '#f6b3cc', theme.bar); ui.place(seat, theme.dock?.intro ?? theme.intro); ui.replies(null, null);
     ui.progress(game.marks, game.total);
   }
   /** The day is done: what was done with it all, for a few seconds, and then the title letter again. */

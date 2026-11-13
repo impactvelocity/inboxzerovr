@@ -12,63 +12,55 @@ But have you tried a sword? Or a flamethrower?
 
 ## Intro
 
-Now you can, with Inbox Zero, built for the Meta Start Hackathon.
+Now you can.
 
-The game where you clear your real inbox, one round at a time.
+Slash, burn, and smash your way to Inbox Zero.
+
+Built for the Meta Start Hackathon, it's the game where you clear your email inbox — one round at a time.
 
 ## How it works
 
 Here's how it works.
 
-Connect your email and your mic. Every game grabs your latest unread emails, and AI sorts each one into a card. It runs on a zero-data-retention model, so your mail gets read, played, and forgotten.
+Connect your email, and your latest unread becomes a game. Grab an email with your left hand to read it — throw it to keep it, or take your right hand and cut it up into tiny little pieces.
 
-Round one. Twenty emails, one at a time.
-
-Left hand: grab it to read it. Worth keeping? Throw it.
-
-Right hand: destroy it. Tiny pieces. Very satisfying. That email is now archived in your real inbox.
-
-Round two. Everything you kept comes back for an answer.
-
-Each email shows up with two short replies already written. Hold it up to the one you like, and it's sent.
-
-Got more to say? Pull it in close and just say it. Check it over, then send.
-
-Not today? Throw it or slash it. It stays unread, and it's tomorrow's problem.
+Round two is for replies. Every email you kept comes back with two short replies. Hold it up to the one you like, and it's sent. Pull it close to say your own reply, or throw it away and leave it unread for tomorrow.
 
 ## Why
 
-Four out of five workers say email gives them anxiety.
-
-Inbox Zero is a daily practice. A few minutes, a clear inbox, and you get to hit something.
+Inbox anxiety is real, so we turned it into a game. A few minutes a day to clear your inbox, and you get to break stuff.
 
 ## Levels
 
-Pick your therapy.
-
-Smash your monitor with your own keyboard at the office.
-
-Slice your worries away in a Kyoto zen garden.
-
-Saber through spam at warp speed in Super Space.
+Like your monitor, with your keyboard.
 
 Defend the castle from haunted mail.
 
-Disinfect toxic emails in the lab.
+Disinfect toxic spam in the lab.
 
 Torch your inbox in the Inferno mail room.
 
-Chop the pile down to size in LumberHack.
+Slice your worries away in a Kyoto zen garden.
 
-And when an email really has it coming: Knockout.
+Split your backlog with an axe.
 
-## Web VR
+Slice through deep space with a laser sword.
 
-It's all built on Web VR. No store, no download, no install. Open a link in your headset and you're playing.
+## Try it
+
+Try it yourself at InboxZeroVR.com.
+
+## How it's built
+
+It's built with Meta's Immersive Web SDK, so it runs right in the browser, with nothing to download.
+
+It's made to play from your chair. Emails come to you, and your weapons do the stretching.
+
+And it really does clear your inbox. Connect Gmail, and AI tags each email and boils it down to a quick summary. The AI reads your mail, then forgets it, nothing is saved.
+
+Every email you keep gets two replies, written while you play, so round two is ready to go. And if you'd rather say it yourself, just talk — your mic does the typing.
 
 ## Close
-
-Try it right now with a demo inbox at InboxZeroVR.com.
 
 Inbox Zero. Your unread count never stood a chance.
 

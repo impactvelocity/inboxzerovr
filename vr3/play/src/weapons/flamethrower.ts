@@ -24,7 +24,10 @@ const TIP_Z = px(47, 0)[0];          // the muzzle: 24 cm ahead of it
 const HANDLE_RAKE = 24;              // degrees the grip is raked back, as the sheet draws it
 // How it sits in the fist: the sprayer's hold, which the user settled on 2026-11-11 ("more natural
 // like it's being held, more straight"): the grip nearly in the fist, the barrel along the forearm.
-const AIM_RAKE = 21;
+// (8 degrees higher than it was, and in the hand a little to the right, 2026-11-12: "move the gun more to the
+// right (in hand slightly) and angle the gun up more, it feels too pointed down")
+const AIM_RAKE = 29;
+const SHIFT: [number, number, number] = [0.012, 0, 0];
 const TURN = -7;
 const HALF = R(104);                 // half the body's width: it is as broad as it is tall
 const NEEDLE_REST = -42, NEEDLE_FULL = 64;      // degrees from straight up, towards the back of the gun
@@ -138,7 +141,7 @@ export function buildFlameThrower(renderer: THREE.WebGLRenderer): HeldSpec {
 
   const spec: HeldSpec = {
     name: 'Flame thrower — right grip', model,
-    hold: pistolHold({ rake: AIM_RAKE, turn: TURN }), tilt: HANDLE_RAKE - AIM_RAKE,
+    hold: pistolHold({ rake: AIM_RAKE, turn: TURN, shift: SHIFT }), tilt: HANDLE_RAKE - AIM_RAKE,
     aim: { origin: new THREE.Vector3(0, AXIS_Y, TIP_Z - 0.004), direction: new THREE.Vector3(0, 0, -1) },
     onLive(level) { squeezed = level; },
     onUpdate(dt, clock, _speed, night) {

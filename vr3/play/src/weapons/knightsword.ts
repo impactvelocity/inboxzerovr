@@ -128,7 +128,8 @@ export function buildKnightSword(renderer: THREE.WebGLRenderer): HeldSpec {
     // Upright in the hand, as a knight carries one (asked for on 2026-11-11: "more up, more vertical with the player").
     // A Quest controller held level has the fist's axis about 45 degrees forward of straight up, and the lean
     // adds to that: the katana's 28 points a blade forward, -15 stands this one at about 60 degrees.
-    hold: rodHold({ guardY: 0, reach: 0.03, tilt: -15, turn: 8 }), tilt: -15, rod: { guardY: 0, reach: 0.03, tilt: -15, turn: 8 },
+    // (and a little to the right, 2026-11-12: "sword is good position, but more to the right a bit, so it fits more into the vr hand model")
+    hold: rodHold({ guardY: 0, reach: 0.03, tilt: -15, turn: 8, side: 0.012 }), tilt: -15, rod: { guardY: 0, reach: 0.03, tilt: -15, turn: 8, side: 0.012 },
     hit: { base: new THREE.Vector3(0, GUARD + 0.012, 0), tip: new THREE.Vector3(0, TIP, 0) },
     trail: [0.5, 0.58, 1],
     glow: { halo: [0.42, 0.36, 1], core: [0.72, 0.95, 1], width: 0.07 },

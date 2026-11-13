@@ -24,14 +24,15 @@ html,body{margin:0;background:#06050a}
 <div id="scene" aria-label="The level. Drag or use arrow keys to look around." tabindex="0"></div>
 <div id="loading" role="status" aria-label="Loading"><div class="load-inner"><img class="load-logo" src="logos/site.webp" alt="Inbox Zero"><div class="load-bar" aria-hidden="true"><span></span></div><p class="load-text">LOADING</p></div></div>
 <section id="home" aria-label="Inbox Zero">
- <a id="hackathon" class="pix icon hack-link" target="_blank" rel="noopener" aria-label="The Meta VR Hackathon" title="The Meta VR Hackathon"><canvas class="loop" aria-hidden="true"></canvas></a>
+ <div class="home-top"><div class="home-corner left"><span class="mic-wrap"><button id="connect-mic" class="pix icon" aria-label="Connect mic"><canvas class="mic" aria-hidden="true"></canvas></button><span class="mic-meter" aria-hidden="true"><span></span></span></span></div><div class="home-corner right"><a id="hackathon" class="pix icon hack-link" target="_blank" rel="noopener" aria-label="The Meta VR Hackathon" title="The Meta VR Hackathon"><canvas class="loop" aria-hidden="true"></canvas></a></div></div>
  <div class="home-head"><canvas id="credit" class="credit" width="1100" height="40" role="img" aria-label="Built By Dylan Jones for Meta VR Hackathon"></canvas><h1 id="logo-stage" aria-label="Inbox Zero"><canvas class="logo-air" aria-hidden="true"></canvas><span class="logo-float"><span class="logo-shine" aria-hidden="true"></span></span></h1><canvas id="tagline" class="tagline" width="1100" height="56" role="img" aria-label="Slash the spam · save what matters"></canvas></div>
  <div id="levels" role="radiogroup" aria-label="Choose a level"></div>
  <div class="home-actions">
-  <div class="side left"><button id="open-setup" class="pix">Setup</button><button id="open-inbox" class="pix">Inbox</button><span class="mic-wrap"><button id="connect-mic" class="pix">Connect mic</button><span class="mic-meter" aria-hidden="true"><span></span></span></span></div>
+  <div class="side left"><button id="open-guide" class="pix">How to Play</button></div>
   <span class="start-wrap"><button id="start" class="pix" disabled>Checking VR…</button></span>
-  <div class="side right"><button id="open-guide" class="pix">How to Play</button><button id="open-settings" class="pix icon" aria-label="Settings" title="Settings"><canvas class="gear" aria-hidden="true"></canvas></button></div>
+  <div class="side right"><button id="open-settings" class="pix icon" aria-label="Settings" title="Settings"><canvas class="gear" aria-hidden="true"></canvas></button></div>
  </div>
+ <div class="home-dev" aria-label="For now: setup and the mail"><button id="open-setup" class="pix">Setup</button><button id="open-inbox" class="pix">Inbox</button></div>
  <p id="mail-status" role="status"></p>
  <p id="xr-status" role="status"></p><button id="start-here" class="link" hidden>or play on this screen</button>
  <dialog id="setup" class="card-dialog" aria-labelledby="setup-title">

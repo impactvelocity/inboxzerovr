@@ -58,15 +58,8 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
     drawCheck(card.querySelector<HTMLCanvasElement>('canvas.check')!);
     list.append(card); cards.set(level.id, card);
   }
-  // The rest of the last row (four to a row): blank, for levels still to come (asked for on 2026-11-11).
-  for (let i = 0; i < (4 - options.levels.length % 4) % 4; i++) {
-    const soon = document.createElement('div');
-    soon.className = 'level soon'; soon.setAttribute('aria-label', 'Coming soon');
-    const words = document.createElement('canvas'); words.width = 330; words.height = 40; words.setAttribute('aria-hidden', 'true');
-    const g = words.getContext('2d');
-    if (g) { const cell = 4, text = 'COMING SOON', left = Math.round((words.width - PixelFont.width(text, cell)) / 2); g.fillStyle = '#ffffff'; PixelFont.cells(text, left, Math.round((words.height - PixelFont.Rows * cell) / 2), cell, (x, y, cw, ch) => g.fillRect(x, y, cw, ch)); }
-    soon.append(words); list.append(soon);
-  }
+  // (no Coming Soon cards to fill the last row since 2026-11-12: "make level select nicer with just 7 -
+  // bottom row center three"; the grid centres a short last row: style.css #levels)
   // every name at the same size: the size the longest one fits at
   const size = Math.min(...options.levels.map(level => nameCell(level.name)));
   for (const level of options.levels) drawName(cards.get(level.id)!.querySelector<HTMLCanvasElement>('canvas.name')!, level.name, size);

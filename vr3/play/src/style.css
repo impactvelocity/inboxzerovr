@@ -37,7 +37,8 @@ body:not(.at-home) #home{opacity:0;visibility:hidden;pointer-events:none}
 @keyframes logo-shine{0%{opacity:1;background-position:130% 0}100%{opacity:1;background-position:-30% 0}}
 .credit{display:block;width:min(70vw,360px);height:auto;image-rendering:pixelated;filter:drop-shadow(0 1px 6px #000) drop-shadow(0 0 2px #000)}
 .tagline{display:block;margin-top:clamp(-10px,-1vh,-4px);width:min(74vw,440px);height:auto;image-rendering:pixelated;filter:drop-shadow(0 2px 10px #000)}
-#levels{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(8px,1.2vw,16px);width:min(100%,1040px,125vh)}
+#levels{--gap:clamp(8px,1.2vw,16px);--across:4;display:flex;flex-wrap:wrap;justify-content:center;gap:var(--gap);width:min(100%,1040px,125vh)}
+#levels>.level{flex:0 0 calc((100% - (var(--across) - 1) * var(--gap)) / var(--across));min-width:0}      /* (four across, a short last row centred) */
 .level{position:relative;aspect-ratio:16/10;padding:0;border:1px solid #ffffff26;border-radius:10px;overflow:hidden;background:#111;text-align:left;
   transition:transform .28s cubic-bezier(.2,.8,.2,1),box-shadow .28s,border-color .28s}
 .level:hover{background:#111;transform:translateY(-3px)}
@@ -64,6 +65,9 @@ body:not(.at-home) #home{opacity:0;visibility:hidden;pointer-events:none}
 .home-actions .side{display:flex;gap:14px;align-items:center}
 .home-actions .left{justify-content:flex-start}
 .home-actions .right{justify-content:flex-end}
+/* Setup and Inbox: small and quiet under Start, for development for now (2026-11-12) */
+.home-dev{display:flex;gap:10px;justify-content:center;margin-top:clamp(-18px,-1.6vh,-6px);opacity:.5;transform:scale(.78);transition:opacity .2s}
+.home-dev:hover,.home-dev:focus-within{opacity:1}
 /* Pixel buttons (2026-11-11): square, their corners rounded in two pixel steps of --s, an outline and a bevel,
    and labels in the game's own pixel letters (a canvas each, drawn in home.ts). The button is its outline colour
    cut to the stepped shape; its face (::before) is the same shape one step in. A glow goes on a wrapper round it,
@@ -82,7 +86,12 @@ body:not(.at-home) #home{opacity:0;visibility:hidden;pointer-events:none}
 #home #start.pix::before{box-shadow:inset 0 -5px 0 0 #00000038,inset 0 4px 0 0 #ffffff70}
 #home #start.pix:active::before{box-shadow:inset 0 4px 0 0 #00000038}
 /* the hackathon, top right */
-#home .pix.hack-link{position:absolute;top:clamp(22px,4vh,40px);right:clamp(22px,3.2vw,44px);z-index:2;--edge:var(--face)}      /* (no outline: just the dark badge and the loop) */
+/* top right: the mic (an icon, its edge its state: 2026-11-12) and the hackathon badge */
+/* along the top: the mic on the left, the hackathon badge on the right (2026-11-12) */
+.home-top{position:absolute;top:clamp(22px,4vh,40px);left:clamp(22px,3.2vw,44px);right:clamp(22px,3.2vw,44px);z-index:2;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.home-corner{display:flex;gap:12px;align-items:center;pointer-events:auto}
+#home .pix.hack-link{--edge:var(--face)}
+@media(max-width:600px){.home-top{position:static;align-self:stretch;margin-bottom:-6px}}      /* (a phone: its own row, off the logo) */      /* (no outline: just the dark badge and the loop) */
 @keyframes pix-beat{50%{filter:brightness(1.1) drop-shadow(0 8px 30px var(--accent))}}
 button.link{border:0;background:none;padding:2px 6px;font-size:11px;letter-spacing:.06em;opacity:.7;text-decoration:underline;text-underline-offset:3px}
 button.link:hover{background:none;opacity:1}
@@ -97,7 +106,6 @@ button.link:hover{background:none;opacity:1}
 .dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;flex-wrap:wrap}
 /* Connect mic on the home page (src/dictate.ts): its edge says the mic's state, a meter under it while it listens */
 .mic-wrap{position:relative;display:inline-grid}
-#home #connect-mic{min-width:150px}      /* (one width for every state, so Start does not shift as it changes) */
 .mic-meter{position:absolute;left:8px;right:8px;bottom:-10px;height:4px;background:#ffffff26;opacity:0;transition:opacity .2s;pointer-events:none}
 .mic-wrap.testing .mic-meter{opacity:1}
 .mic-meter span{display:block;height:100%;width:0;background:#7dffc9;transition:width 60ms linear}
@@ -116,7 +124,7 @@ button.link:hover{background:none;opacity:1}
 #start:not(:disabled){animation:beat 2.6s ease-in-out infinite}
 @keyframes beat{50%{box-shadow:0 10px 60px -6px var(--accent)}}
 button.quiet{padding:12px 16px;border-radius:99px;background:#14121acc;backdrop-filter:blur(10px);font-size:11px;letter-spacing:.08em}
-#xr-status{margin:0;min-height:1.6em;font-size:11px;opacity:.6;text-align:center}
+#xr-status{display:none}      /* ("Playing on this screen…" and the like: dropped for now, 2026-11-12; home.ts still writes it) */
 body.busy #start{opacity:.6;pointer-events:none}
 
 /* ---------------------------------------------------------------- playing on a monitor */
@@ -145,8 +153,8 @@ summary{font-size:10px;opacity:.65;cursor:pointer;padding:6px 0}
 .settings.sword button{grid-column:1/-1;justify-self:start}
 #audio-status{font-size:9px;line-height:1.6;opacity:.5}
 
-@media(max-width:820px){#levels{grid-template-columns:repeat(2,minmax(0,1fr));width:min(100%,520px)}.level{aspect-ratio:16/11}#home{justify-content:flex-start}}
-@media(max-width:600px){#controls{left:12px;right:12px;bottom:12px;width:auto}.home-actions{grid-template-columns:1fr}.home-actions .side{justify-content:center}.home-actions .left{order:2}#start{min-width:0;width:100%}}
+@media(max-width:820px){#levels{--across:2;width:min(100%,520px)}.level{aspect-ratio:16/11}#home{justify-content:flex-start}}
+@media(max-width:600px){#controls{left:12px;right:12px;bottom:12px;width:auto}.home-actions{grid-template-columns:1fr 1fr}.home-actions .start-wrap{grid-column:1/-1;order:1}.home-actions .left{order:2;justify-content:flex-end}.home-actions .right{order:3;justify-content:flex-start}#start{min-width:0;width:100%}}
 @media(max-height:620px) and (min-width:821px){.level{aspect-ratio:16/10}.tagline{display:none}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}.home-bg canvas.scene-air{display:none}.home-bg .pic{animation:none}#start:not(:disabled),.start-wrap{animation:none!important}.level,.level .art{transition:none}.logo-float,.logo-shine.go{animation:none}.logo-air{display:none}}
 /* The Inbox card (2026-11-12): the demo or your Gmail, how many emails, connect and sign out */

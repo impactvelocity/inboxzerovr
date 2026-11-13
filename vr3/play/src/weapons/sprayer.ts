@@ -28,7 +28,10 @@ const HANDLE_RAKE = 12;              // degrees the handle is raked back, as the
 // being held, more straight", 2026-11-11). Now the handle sits nearly in the fist, as a pistol's
 // does, the hand is only turned 8 degrees, and the nozzle runs along the forearm, about 25 degrees
 // under the controller's own pointing line. The mist's cone and one-touch melt are forgiving of that.
-const AIM_RAKE = 20;
+// (8 degrees higher than it was, and in the hand a little to the right, 2026-11-12: "move the gun more to the
+// right (in hand slightly) and angle the gun up more, it feels too pointed down")
+const AIM_RAKE = 28;
+const SHIFT: [number, number, number] = [0.012, 0, 0];
 const TURN = -7;                       // and swung a little to the left, so it points straight ahead of a level controller, not off to the right
 const LEVEL = -0.003;                // how full the bottle is: the liquid's surface, y
 const BUBBLES = 9;
@@ -123,7 +126,7 @@ export function buildSprayer(renderer: THREE.WebGLRenderer): HeldSpec {
 
   const spec: HeldSpec = {
     name: 'Disinfectant sprayer — right grip', model,
-    hold: pistolHold({ rake: AIM_RAKE, turn: TURN }), tilt: HANDLE_RAKE - AIM_RAKE,
+    hold: pistolHold({ rake: AIM_RAKE, turn: TURN, shift: SHIFT }), tilt: HANDLE_RAKE - AIM_RAKE,
     aim: { origin: new THREE.Vector3(0, AXIS_Y, TIP_Z - 0.001), direction: new THREE.Vector3(0, 0, -1) },
     onLive(level) {
       // the trigger squeezes in, and the nozzle's collar brightens

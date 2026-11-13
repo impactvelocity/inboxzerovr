@@ -1,6 +1,7 @@
 import * as THREE from 'three';
+import type { Vector3 } from 'three';
 import type { LetterTheme } from '../letters';
-import { createCrt, CRT_BOX, type Crt } from '../props/crt';
+import { createCrt, type Crt } from '../props/crt';
 import { createDeskThings } from '../props/desk';
 import type { StageContext, StageDef, StageProps } from './backdrop';
 import { officeCard } from './cards';
@@ -11,9 +12,10 @@ import type { FxStyle, LevelSound } from './types';
 /**
  * The office, second version (asked for on 2026-11-11): the same endless floor, but the desk in
  * the painting is empty, and what stands on it is real: a CRT monitor, a stapler, paper
- * (../props). The emails do not fly out: each is shown on the monitor's screen, and the keyboard
- * is brought down on the monitor to delete it. The monitor takes the damage, and when the last
- * email of a round is gone it switches itself off.
+ * (../props). Each email comes out of the monitor's screen and floats like the other levels' (it was
+ * shown on the screen and the monitor hit to delete it, until 2026-11-12: "make the emails fly out of
+ * the monitor so they float like others but make it feel right"). Hitting the monitor itself still
+ * cracks and dents it, and when the last email of a round is gone it switches itself off.
  *
  * Positions in the painting are u (0 left to 1 right over 270 degrees) and v (0 bottom to 1 top
  * over 90, the eye line at .48), measured off public/levels/office2/start.webp: the desk's top
@@ -21,9 +23,14 @@ import type { FxStyle, LevelSound } from './types';
  */
 
 /** The desk's top is this far under the seated eye, and the monitor's foot this far in front of the seat along it. */
-export const office2Tune = { deskDrop: 0.6, monitorAhead: 1.24 };
+export const office2Tune = {
+  deskDrop: 0.6, monitorAhead: 1.24,
+  // An email out of the screen: where it settles (nearer and higher than the other levels' 1.5 m, or it
+  // would be behind the monitor: just over its top, in front of it), how high it arcs on the way, how long that takes.
+  settle: { ahead: 0.98, drop: 0.08 }, arc: 0.26, seconds: 0.8, ease: 2.4,
+};
 
-/** The monitor, once the stage has made it: the letters are shown on it (see `dock` below). */
+/** The monitor, once the stage has made it: the letters come out of it (see `origin` below). */
 let crt: Crt | null = null;
 
 function office2Props(context: StageContext): StageProps {
@@ -41,10 +48,12 @@ function office2Props(context: StageContext): StageProps {
       origin.set(c.seat.x, c.seat.y - office2Tune.deskDrop, c.seat.z);
       monitor.root.position.set(origin.x, origin.y, origin.z - office2Tune.monitorAhead);
       monitor.update(dt, c);
+      // the keyboard brought down on the monitor itself
+      if (monitor.contact(c.blade)) desk.hop(monitor.strike());
       desk.update(dt, origin, c.blend, c.blade);
       context.lamp.value = monitor.glow();
     },
-    onLetter(kind) { if (kind === 'cut') desk.hop(monitor.strike()); },
+    onLetter(kind) { if (kind === 'arrive') monitor.launch(); },
     game(progress) { monitor.game(progress, step); },
     dispose() { monitor.dispose(); desk.dispose(); crt = null; },
   };
@@ -96,21 +105,24 @@ export const office2Stage: StageDef = {
   flicker: () => (crt ? crt.glow() : 0),
 };
 
+const launchTurn = new THREE.Quaternion(), outward = new THREE.Vector3();
 export const office2Letters: LetterTheme = {
-  ...officeLetters, id: 'office2', paint: officeCard, shape: paneSoup, title: 'Keyboard Smash v2',
-  origin: undefined,
-  // (no glow round the letter: it is a picture on a screen here, and the glow would stand round the whole monitor)
-  look: { ...officeLetters.look, aura: null },
-  // Shown on the monitor's screen. A blow anywhere on the monitor deletes it; left alone it closes after `wait` seconds.
-  dock: {
-    place: (position, quaternion) => (crt ? crt.pose(position, quaternion) : 0.72),
-    behind: CRT_BOX.behind, margin: CRT_BOX.margin, out: 1.7, wait: 9,
-    // after a round's last email: INBOX ZERO, the screen closing, and a moment of it dark
-    pause: 3.4,
-    // the round's intro card would be inside the monitor: it floats just in front of and over it instead, smaller
-    // (as wide to the eye as it is in the other levels, and clear of the progress bar above)
-    intro: { up: 0.2, nearer: 0.65, size: 0.5 },
+  ...officeLetters, id: 'office2', paint: officeCard, shape: paneSoup, title: 'Keyboard Smash',
+  // Out of the screen: it starts as the picture on the glass (the screen's size, turned as the screen is),
+  // springs up out of it in an arc and settles just over the monitor, growing to full size as it comes.
+  origin(head: Vector3, home: Vector3, from: Vector3, via: Vector3) {
+    home.set(head.x * 0.7, head.y - office2Tune.settle.drop, head.z - office2Tune.settle.ahead);
+    if (!crt) return { scale: 1, pose: 'face' as const };
+    const size = crt.pose(from, launchTurn);
+    from.addScaledVector(outward.set(0, 0, 1).applyQuaternion(launchTurn), 0.015);      // (just off the glass)
+    via.lerpVectors(from, home, 0.45); via.y += office2Tune.arc;
+    return { scale: size, pose: 'face' as const, turn: launchTurn, seconds: office2Tune.seconds, ease: office2Tune.ease };
   },
+  // after a round's last email: INBOX ZERO on the screen, the screen closing, and a moment of it dark
+  pause: 3.4,
+  // the round's intro card would be inside the monitor: it floats just in front of and over it instead, smaller
+  // (as wide to the eye as it is in the other levels, and clear of the progress bar above)
+  intro: { up: 0.2, nearer: 0.65, size: 0.5 },
 };
 
 export const office2Fx: FxStyle = officeFx;
