@@ -29,5 +29,23 @@
  "hum": {
   "seconds": 3.8,
   "lead": 0.5
+ },
+ "variants": {
+  "a": {
+   "seconds": 4.8,
+   "lead": 0.5
+  },
+  "b": {
+   "seconds": 4.8,
+   "lead": 0.5
+  },
+  "c": {
+   "seconds": 4.8,
+   "lead": 0.5
+  },
+  "d": {
+   "seconds": 4.8,
+   "lead": 0.5
+  }
  }
 }

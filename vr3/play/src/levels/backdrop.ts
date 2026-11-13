@@ -85,6 +85,8 @@ export interface StageDef {
   sheets?: { count: number; colour: [string, string] };
   /** How the level's fill light wavers (a flame, a failing tube), about 1. */
   flicker?(time: number, blend: number): number;
+  /** Seconds the painting's pulse (a letter arriving, a melt) takes to swell up; 0 or not given, it is there at once. */
+  pulseRise?: number;
   /**
    * Metres the view is stepped back from where the painting was made: near things come out smaller
    * and further, far ones barely change. 0 is the painting as painted. A stage that steps back must
@@ -288,11 +290,14 @@ export async function createStage(def: StageDef, renderer: THREE.WebGLRenderer) 
   const props = def.props?.({ renderer, lamp: uniforms.lamp, spot: uniforms.spot.value, play: (name, pitch, volume, at) => hear.play?.(name, pitch, volume, at) }) ?? null;
   if (props) group.add(props.group);
   const viewPosition = new THREE.Vector3(), seatedOrigin = new THREE.Vector3();
-  let settleOriginFrames = 1, animationTime = 0, pulse = 0, hot = 0, hotWanted = 0;
+  let settleOriginFrames = 1, animationTime = 0, pulse = 0, kick = 0, hot = 0, hotWanted = 0;
   function recenterDepth() { settleOriginFrames = 12; }
   function update(dt: number, eye: THREE.Vector3, pixelRatio: number, blade?: BladeTracker) {
     if (settings.motion) animationTime += dt;
-    pulse *= Math.exp(-dt * 3.2); hot += (hotWanted - hot) * Math.min(1, dt * 3);
+    // (a pulse is a kick that fades; the painting follows it at once, or swells up to it where the level asks)
+    kick *= Math.exp(-dt * 3.2);
+    pulse = def.pulseRise ? pulse + (kick - pulse) * Math.min(1, dt / def.pulseRise) : kick;
+    hot += (hotWanted - hot) * Math.min(1, dt * 3);
     uniforms.time.value = animationTime; uniforms.blend.value = settings.blend; uniforms.breeze.value = settings.motion ? settings.wind : 0;
     uniforms.pulse.value = pulse; uniforms.hot.value = hot;
     panorama.position.copy(eye);
@@ -326,7 +331,7 @@ export async function createStage(def: StageDef, renderer: THREE.WebGLRenderer) 
   }
   return { group, update, viewPosition, recenterDepth,
     /** A moment's flash in the painting (mail leaving the screen, a frame waking, something melting). */
-    pulse: (amount = 1) => { pulse = Math.max(pulse, amount); },
+    pulse: (amount = 1) => { kick = Math.max(kick, amount); },
     /** A slower state the painting answers to: how much radioactive mail is about. */
     setHot: (level: number) => { hotWanted = level; },
     /** For the level's real things: what happened to a letter, where the rounds are, and how they make themselves heard. */

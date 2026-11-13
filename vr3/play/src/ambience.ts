@@ -27,7 +27,25 @@ interface LoopInfo { seconds: number; lead: number }
 interface LevelSet {
   def: LevelSound; loops: Record<string, LoopInfo>; layers: Layer[]; started: Set<string>;
   hum: { source: AudioBufferSourceNode; gain: GainNode } | null; humLoop: LoopInfo | null; next: number[];
+  /** Whether the hum was on last frame (for its `off` sound). */
+  humOn: boolean;
 }
+
+/**
+ * Which take of a level's held-trigger sound to use, if the level has several (set.json's `variants`,
+ * written by tools/flameoptions.py): ?flame=<x> in the address, kept for next time; else the last one
+ * picked (public/flame.html sets it); else the original. "0" is the original.
+ */
+export function humVariant(level: string): string {
+  const fallback = HUM_DEFAULT[level] ?? '0', key = `vr3.hum.${level}${level in HUM_DEFAULT ? '.v2' : ''}`;      // (a new key where the default changed, so an older pick does not hide it)
+  try {
+    const asked = new URLSearchParams(location.search).get('flame');
+    if (asked) localStorage.setItem(key, asked);
+    return localStorage.getItem(key) ?? fallback;
+  } catch { return fallback; }
+}
+/** A level whose held-trigger sound is one of its options unless another is picked: the lab's sprayer is Foamy (2026-11-13: "use D ..foam sound for spray - and make .loud"). */
+const HUM_DEFAULT: Record<string, string> = { lab: 'd' };
 
 const BASE = `${import.meta.env.BASE_URL}audio/`;
 const SWINGS = 6;                   // swing1.wav (a light flick) .. swing6.wav (a long sweep)
@@ -95,9 +113,10 @@ export class GardenSounds {
   /** Told of each swing as its sound starts: how hard (0 a flick, 1 a full cut) and where the tip is. */
   onSwing: ((strength: number, tip: Vector3) => void) | null = null;
 
-  private load = (name: string) => fetch(BASE + name)
+  /** Fetch a sound; `as` is the name it is known by once loaded (a variant standing in for the usual file). */
+  private load = (name: string, as = name) => fetch(BASE + name)
     .then(response => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(`${name}: ${response.status}`))))
-    .then(data => { this.files.set(name, data); this.decode(); })
+    .then(data => { this.files.set(as, data); this.decode(); })
     .catch(() => { /* a missing sound is silence, never an error on screen */ });
 
   /**
@@ -108,15 +127,19 @@ export class GardenSounds {
     this.level = def?.id ?? 'kyoto';
     this.hot = 0;
     if (!def || this.sets.has(def.id)) return;
-    const set: LevelSet = { def, loops: {}, layers: def.layers.map(l => ({ name: l.name, at: l.at, gain: null, level: 0 })), started: new Set(), hum: null, humLoop: null,
+    const set: LevelSet = { def, loops: {}, layers: def.layers.map(l => ({ name: l.name, at: l.at, gain: null, level: 0 })), started: new Set(), hum: null, humLoop: null, humOn: false,
       next: (def.occasional ?? []).map(o => 6 + Math.random() * o.every[0]) };
     this.sets.set(def.id, set);
     fetch(`${BASE}${def.id}/set.json`).then(response => (response.ok ? response.json() : Promise.reject(new Error('no set'))))
-      .then((info: { loops: Record<string, LoopInfo>; shots: string[]; hum: LoopInfo | null }) => {
+      .then((info: { loops: Record<string, LoopInfo>; shots: string[]; hum: LoopInfo | null; variants?: Record<string, LoopInfo> }) => {
         set.loops = info.loops; set.humLoop = info.hum;
+        // another take of the held-trigger sound: its own loop, ignition (arm) and cut-off (off)
+        const pick = humVariant(def.id), variant = info.variants?.[pick] ? pick : null;
+        if (variant) set.humLoop = info.variants![variant];
         for (const layer of set.layers) if (info.loops[layer.name]) void this.load(`${def.id}/${layer.name}.mp3`);
-        for (const shot of info.shots) void this.load(`${def.id}/${shot}.wav`);
-        if (info.hum && def.hum) void this.load(`${def.id}/hum.mp3`);
+        for (const shot of info.shots) if (!(variant && shot === 'arm')) void this.load(`${def.id}/${shot}.wav`);
+        if (variant) for (const shot of ['arm', 'off']) void this.load(`${def.id}/${shot}-${variant}.wav`, `${def.id}/${shot}.wav`);
+        if (set.humLoop && def.hum) void this.load(variant ? `${def.id}/hum-${variant}.mp3` : `${def.id}/hum.mp3`, `${def.id}/hum.mp3`);
       }).catch(() => { /* no sounds for this level: it is silent */ });
   }
   /** Where the level's cut note is on its scale (an index), and which way it went last. */
@@ -403,8 +426,13 @@ export class GardenSounds {
       if (!hum || !how) continue;
       const on = id === this.level ? live : 0;
       // (setTargetAtTime's time constant is a third of the time to come most of the way)
-      hum.gain.gain.setTargetAtTime(on * how.level * (how.swing ? 0.45 + 0.55 * swing : 1), ctx.currentTime, on > 0 ? (how.fadeIn ?? 0.12) / 3 : (how.fadeOut ?? 0.3) / 3);
+      const sweep = (how.sweep ?? 0) * swing;
+      hum.gain.gain.setTargetAtTime(on * how.level * (how.swing ? 0.45 + 0.55 * swing : 1) * (1 + 0.4 * sweep), ctx.currentTime, on > 0 ? (how.fadeIn ?? 0.12) / 3 : (how.fadeOut ?? 0.3) / 3);
       if (how.swing) hum.source.playbackRate.setTargetAtTime(1 + 0.45 * swing, ctx.currentTime, 0.06);
+      else if (how.sweep) hum.source.playbackRate.setTargetAtTime(1 + 0.1 * sweep, ctx.currentTime, 0.08);
+      // the trigger let go: the level's cut-off sound, if it has one
+      if (id === this.level && set.humOn && on === 0) this.play('off', 0.96 + Math.random() * 0.08, 0.8);
+      if (id === this.level) set.humOn = on > 0;
     }
   }
 

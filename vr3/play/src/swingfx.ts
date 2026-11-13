@@ -40,6 +40,7 @@ export function createSwingFx(world: World) {
   const duskPaper = new Color('#f3e9d2'), nightPaper = new Color('#b9b1d8'), tint = new Color();
   // What the bits are in each level: a petal, a key cap, a splinter, a droplet.
   let style = KYOTO_FX;
+  let mix: Color[] = [];
   const splinter = new BufferGeometry();
   splinter.setAttribute('position', new Float32BufferAttribute([0,0,0, .16,.1,.05, .04,1.5,0,  0,0,0, .04,1.5,0, -.13,.2,-.05,  .16,.1,.05, -.13,.2,-.05, .04,1.5,0], 3));
   // (Knockout's: a five-pointed star, the kind a cartoon punch knocks loose)
@@ -131,7 +132,7 @@ export function createSwingFx(world: World) {
       p.pos[i*3] = at.x; p.pos[i*3+1] = at.y; p.pos[i*3+2] = at.z;
       p.vel[i*3] = push.x + rand(.9 * scatter); p.vel[i*3+1] = push.y + rand(.9 * scatter) + .5; p.vel[i*3+2] = push.z + rand(.9 * scatter);
       p.age[i] = 0; p.life[i] = 1.8 + Math.random() * 2.4; p.size[i] = paper ? .012 + Math.random() * .018 : (.018 + Math.random() * .018) * style.size; p.spin[i] = Math.random() * 6.283;
-      petals.setColorAt(i, paper ? tint.copy(duskPaper).lerp(nightPaper, evening) : tint.copy(duskPink).lerp(nightPink, evening));
+      petals.setColorAt(i, paper ? tint.copy(duskPaper).lerp(nightPaper, evening) : mix.length ? tint.copy(mix[Math.floor(Math.random() * mix.length)]) : tint.copy(duskPink).lerp(nightPink, evening));
     }
     if (petalCount > 0) petals.instanceColor!.needsUpdate = true;
     for (let n = sparkCount; n > 0; n--) {
@@ -206,7 +207,9 @@ export function createSwingFx(world: World) {
 
   /** Change level: what the bits are, their colours and how they fall. Whatever is in the air goes. */
   function setStyle(next: FxStyle) {
-    style = next;
+    style = next; mix = (next.mix ?? []).map(c => new Color(c));
+    const see = next.bitOpacity ?? 1;
+    if (petalMaterial.opacity !== see || petalMaterial.transparent !== see < 1) { petalMaterial.opacity = see; petalMaterial.transparent = see < 1; petalMaterial.depthWrite = see >= 1; petalMaterial.needsUpdate = true; }
     petals.geometry = bitGeometry[next.bit];
     duskPink.set(next.bits[0]); nightPink.set(next.bits[1]); duskPaper.set(next.paper[0]); nightPaper.set(next.paper[1]);
     sparkMaterial.uniforms.warm.value.set(next.sparks[0]); sparkMaterial.uniforms.cool.value.set(next.sparks[1]);

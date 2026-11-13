@@ -139,8 +139,11 @@ async function main() {
   const made = new Map<string, Played>([['kyoto', { level: LEVELS[0], place: garden, weapon: null }]]);
   let now = made.get('kyoto')!, choosing = 0, playing = false;
   let session: XRSession | null = null;
+  // Not heard from a tab that is out of sight, nor while a sound picker page (public/spray.html, flame.html) is open:
+  // the song kept playing behind them (2026-11-13: "remove background music, its playing somewhere"). In VR the session decides.
+  let hushed = false;
   const syncSound = () => {
-    const heard = playing && (!session || session.visibilityState !== 'hidden');
+    const heard = playing && !hushed && (session ? session.visibilityState !== 'hidden' : document.visibilityState !== 'hidden');
     music.setActive(heard && !!now.level.music); sounds.setActive(heard);
   };
   function enter(next: Played) {
@@ -207,28 +210,33 @@ async function main() {
     showRod();
   });
   /**
-   * In a game the level's lighting follows the rounds (asked for on 2026-11-11): its start lighting all
-   * through round one; as round one ends and round two's intro begins it starts to fall, and it is
-   * fully at its end lighting by the time the ring is full and round two begins. A new day comes back
-   * to the start lighting the same way, through round one's intro. (On the home screen the Transition
-   * setting still runs it on a timer.)
+   * In a game the level's lighting follows the rounds (asked for on 2026-11-11, numbers 2026-11-13): from its
+   * start lighting, 75% of the way to its end lighting through round one, a step for each email dealt with;
+   * then the rest quickly as round two's intro begins. A new day comes back to the start lighting through
+   * round one's intro. (On the home screen the Transition setting still runs it on a timer.)
    */
   let lightFrom = 0, lightPhase = '', lightRound = 0;
+  const ROUND_ONE_NIGHT = 0.75;      // how far to night round one goes, all of it dealt with (75% since 2026-11-13: "make the night transition on round 1 be 75% then last 25% during the round 2 intro start"; it was 65%)
+  const ROUND_TWO_NIGHT = 1.2;       // seconds round two's intro takes to bring the rest of the night
   function lightFromRounds() {
     const p = letters.progress as typeof letters.progress & { timer: number };
-    // Day to night over the game (2026-11-11): the start lighting as round one begins; halfway to night by the
-    // end of round one, a little more with each email dealt with; the other half through round two's intro.
+    // Day to night over the game, every level (2026-11-11; 2026-11-13: "start normal day ... and transition to 65% of the darker
+    // version as it plays", "round 2 should be 65% and then quick transition to 100% during the round 2 intro", "depending on how
+    // fast they play, so each email done is %"; then 75%): the start lighting as round one begins; 75% of the way to night by the end of
+    // round one, a step with each email dealt with (1/total of it); the rest quickly at the start of round two's intro.
     const want = p.round >= 2 ? 1 : 0;
     if (p.phase === 'intro' && (lightPhase !== 'intro' || lightRound !== p.round)) lightFrom = settings.blend;
     lightPhase = p.phase; lightRound = p.round;
     let blend = settings.blend;
     if (p.phase === 'intro') {
-      const t = Math.min(1, Math.max(0, p.timer / (1 + letters.tune.readySeconds)));      // the intro's lead-in, then the ring
+      // round one's: back to day over the intro's lead-in and the ring; round two's: to night quickly, in its first moments
+      const t = Math.min(1, Math.max(0, p.timer / (p.round >= 2 ? ROUND_TWO_NIGHT : 1 + letters.tune.readySeconds)));
       blend = lightFrom + (want - lightFrom) * t * t * (3 - 2 * t);
     } else if (p.phase === 'play' && p.round === 1) {
       const done = p.total > 0 ? Math.min(1, p.marks.length / p.total) : 0;
-      blend += (0.5 * done - blend) * 0.02;            // (eased, so each email's step is a slow slide, not a jump)
-    } else if (p.phase === 'play' || p.phase === 'summary') blend = want;
+      blend += (ROUND_ONE_NIGHT * done - blend) * 0.02;            // (eased, so each email's step is a slow slide, not a jump)
+    } else if (p.phase === 'play') blend = want;
+    else if (p.phase === 'summary') blend = Math.max(blend, want);      // (a game that ends in round one stays where round one left it)
     settings.blend = blend; settings.elapsed = blend * settings.duration; settings.playing = false;
   }
   /**
@@ -247,6 +255,9 @@ async function main() {
     stinger.onloadedmetadata = () => { if (playing && isFinite(stinger.duration) && stinger.duration < STINGER_SECONDS) music.duck(stinger.duration - 0.3, true); };
   }
   function stopStinger() { stinger.pause(); }
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') stopStinger(); else hushed = false; syncSound(); });
+  window.addEventListener('focus', () => { if (hushed) { hushed = false; syncSound(); } });
+  try { new BroadcastChannel('vr3-sound-picker').onmessage = () => { hushed = true; stopStinger(); syncSound(); }; } catch { /* no channel: the hidden-tab rule still holds */ }
   /** At the home screen nothing arrives and nothing is heard; playing, the level's title letter comes. */
   function setPlaying(on: boolean) {
     playing = on;
@@ -298,7 +309,7 @@ async function main() {
       const pixelRatio = world.renderer.getPixelRatio();
       now.place.update(dt,eye,pixelRatio,blade);
       letters.setBeat(music.pulse());      // the end of a game moves to the music
-      letters.setEndSong(music.celebrating());      // and waits for its song to end
+      letters.setEndSong(music.celebrating(), music.celebrationProgress());      // and waits for its song to end, going dark with it
       dictate.update(dt, letters.progress.recording);      // the real mic (dictate.ts): its take ends by itself, and stops if the game moves on
       music.setSoft(letters.progress.recording ? (dictate.live ? 0.12 : 0.3) : 1);      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
       // the end of a game: a level with a celebration song crossfades into it as the last email is dealt with

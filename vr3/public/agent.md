@@ -17,7 +17,7 @@ Inbox Zero VR is a VR game where people clear their unread email: they slash wha
    - `important` (optional): true if they would want to keep it or act on it.
    - `replies` (optional): one or two short reply drafts, a sentence or two each, for mail from a person who expects an answer.
    - `amount` and `due` (optional): for receipts and bills.
-3. **Give the user the code.** You get back a 4-digit `code` and a `key`. Tell the user the code and the `play_instructions`: open the game, tap **Inbox**, type the code, and press Start. Keep the key.
+3. **Give the user the code.** You get back a 4-digit `code` and a `key`. Tell the user the code and the `play_instructions`: open the `play_url` (it fills the code in) and press **Clean Your Inbox**, or open the game, press **Enter Code** and type it. Keep the key.
 4. **Read the results.** When the user says they're done, call `get_results` with the code and key. Each email's ref comes back with one of these actions:
    - `archive`: they slashed it.
    - `reply`: they picked a draft (`reply_index` and `reply_text`), or said their own reply into the mic. A spoken reply comes as `dictated` (the words as heard) and `reply_text` (the email our model wrote from them, `written_by: "ai"`, or a plain wrap without a model, `"rules"`). `ask_user: true` means they chose to answer by voice but their browser caught no words: ask them what to say.

@@ -170,10 +170,10 @@ export const castleCard: CardPainter = (g, email) => {
   for (let i = 0; i < 18; i++) { const bx = x0 + random() * pw, by = y0 + random() * ph, r = 30 + random() * 90; const blot = g.createRadialGradient(bx, by, 0, bx, by, r); blot.addColorStop(0, 'rgba(150,104,48,.10)'); blot.addColorStop(1, 'rgba(150,104,48,0)'); g.fillStyle = blot; g.fillRect(bx - r, by - r, 2 * r, 2 * r); }
   const age = g.createRadialGradient(W / 2, H / 2, ph * 0.38, W / 2, H / 2, pw * 0.62); age.addColorStop(0, 'rgba(110,66,24,0)'); age.addColorStop(1, 'rgba(110,66,24,.34)');
   g.fillStyle = age; g.fillRect(x0, y0, pw, ph);
-  // the crest: a seal at the bottom right, faint, since the message may run over it (it was at the top left, trailing ivy,
-  // until 2026-11-13: "move decoration for the email ... to the bottom right ... so everything else is same placement")
+  // the crest: only on the title card now. Emails have none (it sat faint at the bottom right until 2026-11-13:
+  // "drop the icon bottom right corner on haunted halls email")
   const crest = (cx: number, cy: number) => { g.fillStyle = OXBLOOD; g.fillRect(cx - 39, cy - 39, 78, 78); g.strokeStyle = '#5e121c'; g.lineWidth = 4; g.strokeRect(cx - 39, cy - 39, 78, 78); fleur(g, cx, cy, 27, GOLD); };
-  if (email) { g.globalAlpha = 0.34; crest(x0 + pw - 76, y0 + ph - 74); g.globalAlpha = 1; } else crest(x0 + 65, y0 + 61);
+  if (!email) crest(x0 + 65, y0 + 61);
   g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = QUILL;
   const rule = (y: number, half: number) => { g.strokeStyle = 'rgba(52,25,15,.7)'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(W / 2 - half, y); g.lineTo(W / 2 - 22, y); g.moveTo(W / 2 + 22, y); g.lineTo(W / 2 + half, y); g.stroke(); fleur(g, W / 2, y, 11, QUILL); };
   // (no ROYAL DISPATCH heading or the rule under it since 2026-11-12, asked for: the subject sits higher instead)

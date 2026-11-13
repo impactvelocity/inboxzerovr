@@ -66,8 +66,6 @@ body:not(.at-home) #home{opacity:0;visibility:hidden;pointer-events:none}
 .home-actions .left{justify-content:flex-start}
 .home-actions .right{justify-content:flex-end}
 /* Setup and Inbox: small and quiet under Start, for development for now (2026-11-12) */
-.home-dev{display:flex;gap:10px;justify-content:center;margin-top:clamp(-18px,-1.6vh,-6px);opacity:.5;transform:scale(.78);transition:opacity .2s}
-.home-dev:hover,.home-dev:focus-within{opacity:1}
 /* Pixel buttons (2026-11-11): square, their corners rounded in two pixel steps of --s, an outline and a bevel,
    and labels in the game's own pixel letters (a canvas each, drawn in home.ts). The button is its outline colour
    cut to the stepped shape; its face (::before) is the same shape one step in. A glow goes on a wrapper round it,

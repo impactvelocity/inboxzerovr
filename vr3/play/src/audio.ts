@@ -95,6 +95,11 @@ export class GardenMusic {
     if (this.enabled) void anthem.play().catch(() => { if (this.anthem === anthem) this.anthemFailed = true; });
   }
   endCelebration() { if (this.anthem) this.anthemWant = 0; }
+  /** How far through the celebration song it is, 0 to 1, or -1 if none is playing or its length is not known yet. */
+  celebrationProgress() {
+    const a = this.anthem;
+    return a && this.celebrating() && isFinite(a.duration) && a.duration > 0 ? Math.min(1, a.currentTime / a.duration) : -1;
+  }
   /** Is a celebration song playing (not yet over)? */
   celebrating() { return !!this.anthem && this.anthemWant > 0 && !this.anthem.ended && !this.anthemFailed && this.enabled; }
   /**

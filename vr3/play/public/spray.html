@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sprayer Sounds</title>
+<style>
+  :root { --bg: #08171a; --card: #0f2529; --line: #1f4a4f; --ink: #e8fff4; --dim: #9fc9bd; --hot: #8dff6a; --hot2: #ff5fd0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: radial-gradient(ellipse at 50% -10%, #12403a 0%, var(--bg) 60%); color: var(--ink); font: 16px/1.45 system-ui, -apple-system, sans-serif; min-height: 100vh; }
+  main { max-width: 760px; margin: 0 auto; padding: 32px 16px 48px; }
+  h1 { font-size: 28px; margin: 0 0 4px; letter-spacing: .02em; }
+  p.lead { color: var(--dim); margin: 0 0 24px; }
+  .opt { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 16px; margin-bottom: 12px; display: grid; grid-template-columns: 1fr auto; gap: 8px 16px; align-items: center; }
+  .opt.chosen { border-color: var(--hot); box-shadow: 0 0 0 1px var(--hot), 0 0 24px #8dff6a33; }
+  .opt h2 { margin: 0; font-size: 19px; }
+  .opt h2 small { color: var(--hot); font-weight: 600; margin-right: 6px; }
+  .opt p { margin: 2px 0 0; color: var(--dim); font-size: 14px; }
+  .buttons { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+  button, a.play { font: inherit; font-size: 14px; border-radius: 999px; padding: 10px 16px; border: 1px solid var(--line); background: #163236; color: var(--ink); cursor: pointer; text-decoration: none; touch-action: none; user-select: none; -webkit-user-select: none; }
+  button:hover { border-color: var(--hot); }
+  button.fire { background: linear-gradient(135deg, #3de8ff, #8dff6a 50%, #ffe23a); border-color: #b6ff9a; color: #062014; font-weight: 600; min-width: 128px; }
+  button.fire.on { background: linear-gradient(135deg, #ff5fd0, #a463ff); color: #fff; }
+  button.use.chosen { background: var(--hot); color: #062014; border-color: var(--hot); font-weight: 600; }
+  .foot { margin-top: 24px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+  a.play { background: var(--hot2); color: #2a0620; font-weight: 700; border-color: var(--hot2); padding: 12px 20px; }
+  .note { color: var(--dim); font-size: 13px; }
+  @media (max-width: 560px) { .opt { grid-template-columns: 1fr; } .buttons { justify-content: flex-start; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Sprayer sounds</h1>
+  <p class="lead">Hold <b>Spray</b> to hear each one the way the game plays it: the can's rattle as the trigger goes down, the spray for as long as you hold, then the nozzle shutting. Pick one with <b>Use in game</b>.</p>
+  <div id="list"></div>
+  <div class="foot">
+    <a class="play" href="./?level=lab">Play Toxic Danger →</a>
+    <span class="note">Your pick is saved in this browser. On the Quest, open this page in the headset's browser to pick there.</span>
+  </div>
+</main>
+<script>
+const OPTIONS = [
+  { id: '0', name: 'Original', text: 'The sound it has now: a trigger click and a smooth, even hiss of fine mist.' },
+  { id: 'a', name: 'Spray Paint', text: 'A dense, pressurised spray-paint psssh, steady and full, with a can rattle on the trigger.' },
+  { id: 'b', name: 'Graffiti', text: 'Airier and brighter, with little crackles of paint droplets in it. Can rattle on the trigger.' },
+  { id: 'c', name: 'Cartoon', text: 'The liveliest one: a playful, uneven spritz that bursts and sputters. Two quick clacks on the trigger.' },
+  { id: 'd', name: 'Foamy', text: 'A wetter, fuller spray with bubbly spits in it, the most body of the four, and the loudest. Two quick clacks on the trigger. The game's sound unless you pick another.' },
+];
+const KEY = 'vr3.hum.lab.v2', BASE = 'audio/lab/', LEAD = 0.5;
+let chosen = 'd';      // (the game's own default since 2026-11-13: ambience.ts, HUM_DEFAULT)
+try { chosen = localStorage.getItem(KEY) || 'd'; } catch {}
+let ctx, info = null;
+const buffers = new Map();
+fetch(BASE + 'set.json').then(r => r.json()).then(j => { info = j; }).catch(() => {});
+function audio() {
+  if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (ctx.state !== 'running') ctx.resume();
+  return ctx;
+}
+async function buffer(name) {
+  if (!buffers.has(name)) buffers.set(name, fetch(BASE + name).then(r => (r.ok ? r.arrayBuffer() : Promise.reject())).then(d => audio().decodeAudioData(d)).catch(() => null));
+  return buffers.get(name);
+}
+const files = id => (id === '0' ? { hum: 'hum.mp3', arm: 'arm.wav', off: null, loop: info && info.hum } : { hum: `hum-${id}.mp3`, arm: `arm-${id}.wav`, off: `off-${id}.wav`, loop: info && info.variants && info.variants[id] });
+function shot(b, volume) {
+  if (!b) return;
+  const s = ctx.createBufferSource(), g = ctx.createGain();
+  s.buffer = b; g.gain.value = volume; s.connect(g).connect(ctx.destination); s.start();
+}
+let firing = null;
+async function start(id, button) {
+  stop();
+  audio();
+  const f = files(id);
+  const [hum, arm, off] = await Promise.all([buffer(f.hum), buffer(f.arm), f.off ? buffer(f.off) : null]);
+  if (!hum || !f.loop) return;
+  // the levels the game uses: arm 0.5, the spray 0.42 (lab.ts, labSound.hum), the shut-off 0.8
+  shot(arm, 0.5);
+  const s = ctx.createBufferSource(), g = ctx.createGain();
+  s.buffer = hum; s.loop = true; s.loopStart = f.loop.lead / 2; s.loopEnd = f.loop.lead / 2 + f.loop.seconds;
+  g.gain.value = 0; g.gain.setTargetAtTime(0.42, ctx.currentTime, (id === '0' ? 0.08 : 0.06) / 3);
+  s.connect(g).connect(ctx.destination); s.start(0, f.loop.lead / 2);
+  firing = { s, g, off, id, button };
+  button.classList.add('on'); button.textContent = 'Spraying…';
+}
+function stop() {
+  if (!firing) return;
+  const { s, g, off, id, button } = firing;
+  firing = null;
+  g.gain.setTargetAtTime(0, ctx.currentTime, (id === '0' ? 0.3 : 0.22) / 3);
+  s.stop(ctx.currentTime + 1);
+  shot(off, 0.8);
+  button.classList.remove('on'); button.textContent = 'Hold to spray';
+}
+function render() {
+  const list = document.getElementById('list');
+  list.innerHTML = '';
+  for (const o of OPTIONS) {
+    const card = document.createElement('div');
+    card.className = 'opt' + (o.id === chosen ? ' chosen' : '');
+    card.innerHTML = `<div><h2><small>${o.id === '0' ? '' : o.id.toUpperCase()}</small>${o.name}</h2><p>${o.text}</p></div><div class="buttons"><button class="fire">Hold to spray</button><button class="use${o.id === chosen ? ' chosen' : ''}">${o.id === chosen ? 'In game ✓' : 'Use in game'}</button></div>`;
+    const fire = card.querySelector('.fire');
+    fire.addEventListener('pointerdown', e => { e.preventDefault(); fire.setPointerCapture(e.pointerId); start(o.id, fire); });
+    fire.addEventListener('pointerup', stop);
+    fire.addEventListener('pointercancel', stop);
+    fire.addEventListener('contextmenu', e => e.preventDefault());
+    card.querySelector('.use').addEventListener('click', () => { chosen = o.id; try { localStorage.setItem(KEY, o.id); } catch {} render(); });
+    list.appendChild(card);
+  }
+}
+render();
+// hush the game if it is open in another tab or window, so only these are heard (its song kept playing behind this page)
+try { new BroadcastChannel('vr3-sound-picker').postMessage('hush'); } catch {}
+</script>
+</body>
+</html>

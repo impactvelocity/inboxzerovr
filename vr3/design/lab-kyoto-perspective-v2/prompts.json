@@ -1,0 +1,15 @@
+{
+  "tool": "built-in imagegen",
+  "images": [
+    {
+      "name": "day",
+      "prompt": "Edit this exact lab panorama. User approves central focus, perspective, camera and architecture; preserve them. 2172x724 ultra-wide 3:1. Keep the central small distant green-envelope containment machine exactly its current size and location, paired support pillars, ceiling, rails, horizon and camera unchanged. Populate the EMPTY LAB AREAS AROUND the central containment zone with substantially more purposeful lab furniture. Add several cream-top teal-frame freestanding lab island tables in the middle distance to left and right of the machine, staggered in depth and obeying existing perspective. They hold microscopes, test tube racks, flasks, small centrifuges and compact instrument screens. Add wheeled supply carts, stools tucked under benches, low drawer cabinets, specimen racks, and several taller glass tanks further toward the side walls. Add a couple of closer workstations along the outer left and right margins, making the lateral corridors feel actively equipped but still traversable. Furnish the hall behind the pillars as well as the side corridors, not just wall decorations. Make equipment clustered and coherent, readable chunky game props matching current lab style, cream teal and lime with small purple specimen accents. CRITICAL: preserve a broad clear central approach from viewer to machine, keep central third clear of added furniture, and keep the near centre foreground floor completely empty, no desk in front of player. Machine remains the visual focus; additions flank it without obscuring it. Bright clinical daytime illumination and same painterly softly faceted 3D art, hazy far wall. No people, text, UI or weapons.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-15d72248-4919-442b-b231-143e6bc753fb.png"
+    },
+    {
+      "name": "night",
+      "prompt": "Edit this exact populated lab panorama to NIGHT. Change ONLY lighting, preserve every object, table, stool, cart, specimen, microscope, flask, cabinet, pillar, rail, floor seam and ceiling fixture in exactly the same position. Identical camera, 3:1 composition and small central machine. Ceiling lights OFF: dark unlit housings. Deep teal shadows, scene illuminated by toxic green specimen tanks, machine dome and softly glowing green hatch, small instrument indicators, amber wall lamps and amber beacon. Subtle green reflections on glossy floor and worktops, dark moodier haze at far wall. Furniture remains discernible in soft reflected light; broad centre and foreground remain empty. Same stylized painterly 3D art. No added objects or particles, no people, text, weapons or UI. 2172x724 panoramic image.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-b04d3048-cd79-4a9d-87a0-d15a56f44684.png"
+    }
+  ]
+}

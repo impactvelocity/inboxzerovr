@@ -101,8 +101,11 @@ const tune = {
 const spray = {
   range: 3.4,           // how far the mist carries, metres
   cone: 0.2,            // how far off the nozzle's line still wets a letter, radians (on top of the letter's own size)
-  // One touch of the mist is enough, as one cut is (asked for on 2026-11-11): from where it lands
-  // the froth spreads over the whole sheet by itself, and then it melts.
+  // A moment's hold on it, not one touch (2026-11-13, the lab and Inferno: "a bit longer to destory, so its not just on first
+  // touch, but like .3 ms of touching, so it feels a bit more holding to finish"; one touch did it from 2026-11-11). While
+  // it is held on, froth (or scorch) grows where it lands; then it spreads over the whole sheet by itself and melts.
+  hold: 0.3,            // seconds of the jet on a letter before it is done (a gap longer than gap starts it again)
+  gap: 0.12,
   spread: 0.5,          // seconds the froth takes to cover an ordinary letter
   hazardSpread: 0.85,   // and a radioactive one
   meltSeconds: 0.85,    // how long it takes to melt away once it is covered
@@ -247,6 +250,8 @@ interface Body {
   dose: number; hazard: boolean; melting: boolean;
   /** Hit by the mist: the froth is spreading over it by itself (dose climbs to 1, then it melts). */
   spreading: boolean;
+  /** Seconds the jet has been held on it so far, and when it last touched it (spray.hold of it, and it is done). */
+  contact: number; touchedAt: number;
   /** Punched (Knockout): how many hits it has taken. From the first it is no longer paper adrift: it flies about the ring. */
   knock: number;
 }
@@ -331,6 +336,11 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
         float a=fract(sin(dot(i,vec2(12.9898,78.233)))*43758.5453), b=fract(sin(dot(i+vec2(1.,0.),vec2(12.9898,78.233)))*43758.5453);
         float c=fract(sin(dot(i+vec2(0.,1.),vec2(12.9898,78.233)))*43758.5453), d=fract(sin(dot(i+vec2(1.,1.),vec2(12.9898,78.233)))*43758.5453);
         return mix(mix(a,b,f.x),mix(c,d,f.x),f.y); }
+      // The lab's goo, round a wheel of greens and yellows: lime, yellow, emerald, chartreuse, mint and back (its froth and melt;
+      // 2026-11-13: "more gradient color, not just the green", then "make green and yellow ish": it had pinks, purples and cyans).
+      vec3 goo(float h){ h=fract(h)*5.;
+        vec3 g=vec3(.35,1.,.15), y=vec3(1.,.9,.15), p=vec3(.08,.8,.3), v=vec3(.75,1.,.2), c=vec3(.5,1.,.6);
+        return h<1.?mix(g,y,h):h<2.?mix(y,p,h-1.):h<3.?mix(p,v,h-2.):h<4.?mix(v,c,h-3.):mix(c,g,h-4.); }
       void main(){
         vec4 tex=texture2D(face,vUv); vec3 t=tex.rgb;
         {
@@ -388,13 +398,15 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
           } else {
           float bubbles=grain(vUv*vec2(64.,40.)+vec2(0.,time*.5))*.6+grain(vUv*vec2(150.,94.)-vec2(0.,time*.8))*.4;
           float cover=smoothstep(.3,.8,min(1.,foam)*(.55+.6*wet)+wet*.75-bubbles*.6);
-          vec3 froth=mix(vec3(.45,.95,.55),vec3(.92,1.,.94),smoothstep(.35,.75,bubbles));
+          // the froth runs through the goo's colours across the sheet, drifting as it fizzes, with pale bubbles on top
+          float hue=vUv.x*.55+vUv.y*.8+grain(vUv*vec2(6.,4.)+vec2(time*.2,0.))*.35+time*.12;
+          vec3 froth=mix(goo(hue),vec3(.95,1.,.96),smoothstep(.45,.85,bubbles)*.55);
           c=mix(c,froth,cover*.9);
           }
         }
         // Radioactive: it glows from its edges, beating.
         vec3 hazardEdge=burnStyle>2.5?vec3(1.,.36,.05):vec3(.45,1.,.15), hazardFill=burnStyle>2.5?vec3(.42,.12,.02):vec3(.16,.4,.04);      // (Inferno's smoulders; the lab's is radioactive)
-        c+=(hazardEdge*(1.-smoothstep(0.,.2,edge))*(.55+.45*sin(time*5.))*.9+hazardFill*.2)*hazard*(1.-wet*.6)*(burnStyle>2.5?.55:1.);      // (Inferno's toned down: "reduce a bit of the glow / fire around emails", 2026-11-13)
+        c+=(hazardEdge*(1.-smoothstep(0.,.2,edge))*(.55+.45*sin(time*5.))*.9+hazardFill*.2)*hazard*(1.-wet*.6)*(burnStyle>2.5?.55:.45);      // (Inferno's toned down: "reduce a bit of the glow / fire around emails", 2026-11-13; the lab's, "make the radio active emails the glow effect more subtle", the same day: it was 1)
         // A hand close enough to take it warms its edge.
         c+=hoverColor*(1.-smoothstep(0.,.08,edge))*hover*.45;
         // Where the blade went through, it glows and cools.
@@ -423,7 +435,8 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
           else left=clamp(length(at-splats[0].xy)*1.75+grain(vUv*vec2(11.,7.))*.2+grain(vUv*vec2(38.,24.))*.07,0.,.999);      // (burnt through from where the flame touched)
           if(left<burn) discard;
           if(burnStyle>2.5) c=mix(c,vec3(.06,.03,.02),1.-smoothstep(burn+.07,burn+.22,left));      // (char ahead of the glowing edge)
-          c=mix(c,burnColor*1.5,1.-smoothstep(burn,burn+.09,left));
+          vec3 edgeColour=burnStyle>1.5&&burnStyle<2.5?goo(vUv.x*.9+left*1.6+time*.35)*1.5:burnColor*1.5;      // (the lab's melt runs in a gradient of colours)
+          c=mix(c,edgeColour,1.-smoothstep(burn,burn+.09,left));
         }
         gl_FragColor=vec4(c,1.);
         #include <colorspace_fragment>
@@ -689,7 +702,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const mesh = new Mesh(wholeLetter ? wholeGeometry : geometryOf(soup), sheet.material);
     mesh.frustumCulled = false; root.add(mesh);
     sheet.users++;
-    return { mesh, sheet, soup, whole: wholeLetter, offset: [0, 0], vel: new Vector3(), spin: new Vector3(), age: 0, seed: Math.random() * 6.283, mode: 'held', life: 0, size: 1, going: -1, from: new Vector3(), dose: 0, hazard: false, melting: false, spreading: false, email: null, mark: -1, target: -1, knock: 0 };
+    return { mesh, sheet, soup, whole: wholeLetter, offset: [0, 0], vel: new Vector3(), spin: new Vector3(), age: 0, seed: Math.random() * 6.283, mode: 'held', life: 0, size: 1, going: -1, from: new Vector3(), dose: 0, hazard: false, melting: false, spreading: false, contact: 0, touchedAt: -9, email: null, mark: -1, target: -1, knock: 0 };
   }
   function remove(body: Body) {
     root.remove(body.mesh);
@@ -769,6 +782,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   const END_DARKEN_SECONDS = 20;      // the end of a game: how long the level takes to go dark behind the logo
   const LOGO_DISTANCE = 0.95;   // how far in front of the seat it floats (2026-11-12: "make the logo a closer, it feels far away to smash"; it was 1.45 m. Then 1.0, then 1.2: "a bit further from the player", then 0.95: "make end logo and parts closer to player")
   const LOGO_SPREAD = LOGO_DISTANCE / 1.0;      // the bar above it and the line below it, spaced to stay at the same angles as at 1 m
+  const OUTRO_BLACK = 0.5;      // seconds the last fade to black takes, once the end is over (2026-11-13: "quick")
   const SMASHED_TO_HOME = 2.5;  // seconds after the logo is smashed before the game fades out to the home screen (2026-11-12)
   // hits it takes: the last of them breaks it up. A boss to beat (2026-11-12: "many more cuts to beat, more like a boss
   // battle"): 12 for the logo and 8 for the bar and the line, then "make less hits for ending": 7 and 5, then "a bit less hits": 5 and 4. They were 4 and 3.
@@ -1039,7 +1053,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     }
   }
   /** The beat to move to: the music's (main.ts sets it, from the song's pulse), or a steady one if it has none. */
-  let beatNow = 0, beatIn = -1, endSong = false, endSongHeard = false;
+  let beatNow = 0, beatIn = -1, endSong = false, endSongHeard = false, endSongAt = -1;
   function stepBeat(dt: number) {
     const want = beatIn >= 0 ? beatIn : Math.pow(1 - ((clock * 2) % 1), 4);      // (120 beats a minute, a kick on each)
     beatNow = want > beatNow ? want : beatNow * Math.exp(-dt * 7);
@@ -1466,11 +1480,28 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       }
       release(piece, 'cut', 9);
     }
-    // the cut itself, on the paper: glowing where it was made
     const k = sheet.cuts++ % 3, u = sheet.material.uniforms;
+    sheet.cutAt = isLogo && !final ? Infinity : clock;                    // it burns once the next letter is in place (see update); (a logo only chipped: not yet)
+    if (theme.mechanic === 'spray') {
+      // The lab and Inferno break the end's logo, bar and line in their own way, not with a blade's (2026-11-13: "make it the
+      // melt / fire effects so parts break but in that style"): no streak of light, no glowing cut, no slash. Froth (or fire)
+      // spreads over it from each place it was hit, more with each hit; the last breaks it up and the pieces melt (or burn) away.
+      const hits = logoShow?.hits ?? 1, needed = logoShow ? (logoShow.kind === 'logo' ? LOGO_HITS : STRIP_HITS) : 1;
+      (u.splats.value as Vector3[])[k].set(x + body.offset[0], y + body.offset[1], 1);
+      u.wet.value = Math.max(u.wet.value as number, final ? 1 : 0.25 + 0.5 * hits / needed);
+      if (final || !isLogo) sheet.burnAt = clock + 0.35;
+      const at = v3.set(x, y, 0); mesh.localToWorld(at);
+      const thrown = push.clone().multiplyScalar(0.3);
+      fx.spray(at, at, thrown, final ? 18 : 6, final ? 50 : 20, false, final ? 1.4 : 0.7);
+      sounds.play(Math.random() < 0.5 ? 'melt1' : 'melt2', 0.94 + Math.random() * 0.14, final ? 1 : 0.75, at);
+      hitStop = final ? 0.06 : 0.03;
+      remove(body);
+      counts.pieces += pieces.length;
+      return true;
+    }
+    // the cut itself, on the paper: glowing where it was made
     (u.cuts.value as Vector4[])[k].set(x + body.offset[0], y + body.offset[1], dx, dy);
     (u.heat.value as Vector3).setComponent(k, 1);
-    sheet.cutAt = isLogo && !final ? Infinity : clock;                    // it burns once the next letter is in place (see update); (a logo only chipped: not yet)
     // and in the air: a streak of light, sparks and petals along it, shreds of paper
     const at = v3.set(x, y, 0); mesh.localToWorld(at);
     const streak = streaks[nextStreak]; nextStreak = (nextStreak + 1) % STREAKS;
@@ -1970,8 +2001,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     buzz('right', 0.35, 40);
     events.on?.('melt', mesh.position);
   }
-  /** Is the mist reaching this body? If so, soak it where the nozzle's line passes. */
-  function mist(body: Body, tool: SprayTool): boolean {
+  /** Is the mist reaching this body? If so, wet it where the nozzle's line passes; held on long enough, soak it. */
+  function mist(body: Body, tool: SprayTool, dt: number): boolean {
     if (body.melting) return false;
     const mesh = body.mesh;
     const to = v1.copy(mesh.position).sub(tool.origin), along = to.dot(tool.direction);
@@ -1984,7 +2015,16 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     // (the end's logo takes its hits from the spray too, like a blade's: one at a time, LOGO_HITS to break it)
     // (the bar and the line too, so a sprayer can beat them all: 2026-11-12)
     if (shows.some(x => (x.kind === 'logo' || x.kind === 'bar' || x.kind === 'line') && x.body === body)) { const turn = Math.random() * Math.PI; slice(body, at.x, at.y, Math.cos(turn), Math.sin(turn), v1.copy(tool.direction).multiplyScalar(3), 0.6); return true; }
-    soak(body, Math.max(-W / 2 + 0.03, Math.min(W / 2 - 0.03, at.x)), Math.max(-H / 2 + 0.03, Math.min(H / 2 - 0.03, at.y)));
+    const x = Math.max(-W / 2 + 0.03, Math.min(W / 2 - 0.03, at.x)), y = Math.max(-H / 2 + 0.03, Math.min(H / 2 - 0.03, at.y));
+    body.contact = clock - body.touchedAt <= spray.gap ? body.contact + dt : dt; body.touchedAt = clock;
+    if (body.contact < spray.hold) {
+      // not yet: froth (or scorch) gathers where it lands, growing as it is held there
+      const u = body.sheet.material.uniforms, k = body.contact / spray.hold;
+      (u.splats.value as Vector3[])[0].set(x, y, k);
+      u.wet.value = Math.max(u.wet.value as number, 0.06 * k);
+      return true;
+    }
+    soak(body, x, y);
     return true;
   }
 
@@ -2342,8 +2382,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       let reached = false;
       if (armed && tool) {
         const now = current;
-        if (now && (now.state !== 'arriving' || now.t > 0.6)) reached = mist(now.body, tool);
-        for (let i = loose.length - 1; i >= 0; i--) if ((loose[i].mode === 'kept' || loose[i].mode === 'show') && !noCut.has(loose[i])) reached = mist(loose[i], tool) || reached;
+        if (now && (now.state !== 'arriving' || now.t > 0.6)) reached = mist(now.body, tool, dt);
+        for (let i = loose.length - 1; i >= 0; i--) if ((loose[i].mode === 'kept' || loose[i].mode === 'show') && !noCut.has(loose[i])) reached = mist(loose[i], tool, dt) || reached;
       }
       const forced = current;
       if (forced?.forced) { soak(forced.body, rand(0.12), rand(0.07)); reached = true; }
@@ -2542,7 +2582,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (over && logo.outro < 0) logo.outro = 0;
       if (logo.outro >= 0) {
         logo.outro += dt;
-        if (logo.outro > 3.1 && !logo.homed) { logo.homed = true; endLogo(); events.on?.('home', head); }
+        if (logo.outro > OUTRO_BLACK + 0.25 && !logo.homed) { logo.homed = true; endLogo(); events.on?.('home', head); }      // (it was 3.1 s: now black, a beat, and the menu)
       }
     } else if (game.phase === 'play' && !current && game.dealt >= game.total && game.marks.length >= game.total) {
       // the round is done once its last letter has been dealt with
@@ -2559,15 +2599,18 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     stepBeat(dt);
     {
       if (game.phase === 'menu') updateMenu(dt, head);
-      // the end of a game: the level darkens steadily over the twenty seconds from its start, nearly black by then
-      // (2026-11-12, for every level; it went straight to 0.62 before), and the outro takes it the rest of the way
-      const darkening = 0.35 + 0.57 * clamp01(game.timer / END_DARKEN_SECONDS);
+      // The end of a game, every level (2026-11-13: "go dark 75% way through the ending song, so the last 25% are 90% dark and
+      // then quick 10% dark before in app level select"): a little dim from the start, then 90% dark by three quarters of the way
+      // through the end song (coming down over the 5% before it), held there to the song's end; then black, quickly, and the menu.
+      // With no end song, the same over its twenty seconds. (Before: down to 92% steadily over twenty seconds.)
+      const through = endSongAt >= 0 ? endSongAt : endSong ? 0 : endSongHeard ? 1 : clamp01(game.timer / END_DARKEN_SECONDS);      // (playing but its length not known yet: the start)
+      const fall = clamp01((through - 0.7) / 0.05), darkening = 0.35 + 0.55 * fall * fall * (3 - 2 * fall);
       const m = dimmer.material as MeshBasicMaterial, want = game.phase === 'summary' ? Math.max(darkening, logo.outro >= 0 ? 0.9 : 0) : game.phase === 'menu' ? 0.55 : 0;
-      m.opacity += (want - m.opacity) * (1 - Math.exp(-dt * (want > m.opacity ? 1.4 : 2.5)));
+      m.opacity += (want - m.opacity) * (1 - Math.exp(-dt * (want > m.opacity ? 4 : 2.5)));
       dimmer.visible = m.opacity > 0.005; dimmer.position.copy(head);
-      // black: from a second into the outro, over a second and a half, and it holds
+      // black: quickly, as soon as the end is over (half a second; it waited a second and took a second and a half before), and it holds
       const b = blackout.material as MeshBasicMaterial;
-      b.opacity = game.phase === 'summary' && logo.outro >= 0 ? clamp01((logo.outro - 1) / 1.5) : menuBlack();
+      b.opacity = game.phase === 'summary' && logo.outro >= 0 ? clamp01(logo.outro / OUTRO_BLACK) : menuBlack();
       blackout.visible = b.opacity > 0.005; blackout.position.copy(head);
     }
     ui.update(dt);
@@ -2796,7 +2839,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     /** The music's beat now, 0 to 1 (-1: none to go by), for the end to move to. */
     setBeat(v: number) { beatIn = v; },
     /** Is the end song (a level's anthem) playing? The end waits for it. */
-    setEndSong(on: boolean) { endSong = on; if (on) endSongHeard = true; },
+    setEndSong(on: boolean, at = -1) { endSong = on; if (on) endSongHeard = true; endSongAt = on ? at : -1; },
     /** How much dangerous mail is in front of the player just now: 0 none, 1 a radioactive letter not yet melted. */
     hazard: () => (theme.mechanic === 'punch' ? Math.min(1, hype) : current && current.body.hazard && !current.body.melting ? 1 : 0),      // (Knockout: how worked up the crowd is)
     /** Knockout: how hard the glove has just landed (0 to 1), once; then 0 until it lands again. For the glove's own squash. */

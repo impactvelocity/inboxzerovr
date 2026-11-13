@@ -22,13 +22,15 @@ const RIGS: Record<Exclude<LevelId, 'kyoto'>, Rig> = {
     key: { colour: ['#ffffff', '#b9c8e8'], power: [1.5, 0.45], from: [0.4, 3, 1.2] },
     fill: { colour: ['#9fffd8', '#5dffc0'], power: [0.1, 0.55], at: [0, 1.25, -0.8], reach: 6 } },
   // Candles on stone, a cold moon through the windows on the left; then the haunting comes on.
-  castle: { sky: ['#7a6ac8', '#3f7f8c'], ground: ['#4a2a48', '#12202c'], ambient: [1.5, 1.0],
-    key: { colour: ['#ffb26b', '#7fe0d0'], power: [2.4, 1.1], from: [1.6, 1.4, 0.6] },
-    fill: { colour: ['#8fa6ff', '#58ffd9'], power: [5, 6], at: [-2.2, 2.0, -1.2], reach: 9 } },
-  // Brick and iron under amber lamps; then the lamps go down and what is left is plum dark and the fire round the furnace doors (its fill flutters: inferno.ts).
+  // (the night violet, not teal, since the gallery paintings of 2026-11-13; the candles on the two pillars warm the blade from either side)
+  castle: { sky: ['#8a74d0', '#5a46a8'], ground: ['#4a2a48', '#1a1232'], ambient: [1.5, 1.0],
+    key: { colour: ['#ffb26b', '#ffa868'], power: [2.4, 1.2], from: [1.6, 1.4, 0.6] },
+    fill: { colour: ['#a69aff', '#a072ff'], power: [5, 6], at: [-2.2, 2.0, -1.2], reach: 9 } },
+  // Brick and iron under amber lamps; then the lamps go down and what is left is plum dark and the great furnace's fire
+  // down the hall in front (its fill breathes: inferno.ts). (The fill was at the old room's left furnace, -2.2, 1.1, -1.3, 1.6 to 4.2, until 2026-11-13.)
   inferno: { sky: ['#ffe6c8', '#3b3562'], ground: ['#8a5a48', '#1a1020'], ambient: [2.3, 1.0],
     key: { colour: ['#ffe2bc', '#9089d6'], power: [1.5, 0.55], from: [0.2, 3, 1] },
-    fill: { colour: ['#ff8a3a', '#ff6a1e'], power: [1.6, 4.2], at: [-2.2, 1.1, -1.3], reach: 8 } },
+    fill: { colour: ['#ff8a3a', '#ff6a1e'], power: [2.2, 5.2], at: [0.6, 0.9, -3], reach: 9 } },
   // Pale tiles under strip lights; then the lights go down and the green and the wall lamps are what is left.
   lab: { sky: ['#f4fbff', '#2c6a5c'], ground: ['#9db8bc', '#0b2226'], ambient: [2.3, 1.0],
     key: { colour: ['#ffffff', '#7fe8c0'], power: [1.4, 0.5], from: [-0.3, 3, 1] },

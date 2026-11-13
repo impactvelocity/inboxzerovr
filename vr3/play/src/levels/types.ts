@@ -3,6 +3,10 @@ export interface FxStyle {
   /** The little things: cherry petals, key caps, splinters, droplets. */
   bit: 'star' | 'petal' | 'cap' | 'shard' | 'drop';
   bits: [string, string];
+  /** Optional: each thrown bit takes one of these at random instead of the dusk-to-night pair (the lab's melts, 2026-11-13: "more gradient color, not just the green"). */
+  mix?: string[];
+  /** Optional: how see-through the bits are, 0 to 1 (1, solid, if not given). The lab's melt drops, 2026-11-13: "less opacity, so more subtle like before". */
+  bitOpacity?: number;
   /** Shreds of the letter itself. */
   paper: [string, string];
   sparks: [string, string];
@@ -28,8 +32,10 @@ export interface LevelSound {
   /**
    * The loop heard while the trigger is held: how loud, whether it rises with the swing (a blade) or
    * is steady (a spray), and how quickly it fades in and out (seconds to come most of the way).
+   * `sweep` (0 to 1): a steady one still swells and rises a little in pitch as the weapon is swept about.
+   * A level's `off` shot, if it has one, plays as the trigger is let go.
    */
-  hum: { level: number; swing: boolean; fadeIn?: number; fadeOut?: number } | null;
+  hum: { level: number; swing: boolean; fadeIn?: number; fadeOut?: number; sweep?: number } | null;
   /**
    * A note played on every cut, each time another note of `scale` (semitones from the recording's
    * own pitch), wandering up and down it a step or two at a time so that the cuts make a tune.

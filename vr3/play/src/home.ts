@@ -357,20 +357,14 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
   const loop = hackathon.querySelector<HTMLCanvasElement>('canvas.loop')!;
   drawLoop(loop, '#f6b3cc');
   if (HACKATHON_URL) hackathon.href = HACKATHON_URL;
-  // Setup and How to Play: cards over the home screen
-  const setup = document.getElementById('setup') as HTMLDialogElement, guide = document.getElementById('guide') as HTMLDialogElement;
-  for (const dialog of [setup, guide]) {
+  // How to Play: a card over the home screen. (Setup, with Allow mic and Adjust weapon, was here too
+  // until 2026-11-13: setting up moves to the main site. The mic button top left and the gear still do both.)
+  const guide = document.getElementById('guide') as HTMLDialogElement;
+  for (const dialog of [guide]) {
     dialog.querySelectorAll('.close-dialog').forEach(button => button.addEventListener('click', () => dialog.close()));
     dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });        // (a click outside the card)
   }
-  document.getElementById('open-setup')!.addEventListener('click', () => setup.showModal());
   document.getElementById('open-guide')!.addEventListener('click', () => guide.showModal());
-  document.getElementById('setup-weapon')!.addEventListener('click', () => {
-    // to the settings, opened at this level's weapon (the katana's own section in Kyoto)
-    setup.close(); options.settings();
-    const weapon = document.querySelector<HTMLDetailsElement>('#weapon-settings:not([hidden])') ?? document.querySelector<HTMLDetailsElement>('#controls details:has(#reach)');
-    if (weapon) { weapon.open = true; weapon.scrollIntoView({ block: 'nearest' }); }
-  });
 
   return {
     /** Mark a level's card as the chosen one, and show its logo. */
