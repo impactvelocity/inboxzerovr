@@ -13,18 +13,25 @@ import { ANTHEM_LYRICS, type LyricLine } from './levels/lyrics';
  * monitor is its end). To swap a level back, set it to 'v1' here; `?end=v1` or `?end=v2` in the address tries one
  * for every level that has words (never the office).
  */
-export const ENDING: Record<string, 'v1' | 'v2'> = {
+export const ENDING: Record<string, Ending> = {
   kyoto: 'v2', castle: 'v2', lab: 'v2', space: 'v2', inferno: 'v2', lumber: 'v2',
-  office2: 'v1',
+  office2: 'monitor',
 };
+/**
+ * 'monitor': Keyboard Smash's (2026-11-13): no logo at first; the monitor jumps up and its screen shows only the song's
+ * words, one at a time (props/crt.ts); after the last, the logo comes and smashes the monitor away, as the others' do their words.
+ */
+export type Ending = 'v1' | 'v2' | 'monitor';
 const MONITOR = new Set(['office', 'office2']);
 
 /** v2 for this level? Only where there are words to show. */
-export function endingFor(levelId: string): 'v1' | 'v2' {
-  if (MONITOR.has(levelId) || !ANTHEM_LYRICS[levelId]?.length) return 'v1';
+export function endingFor(levelId: string): Ending {
+  if (!ANTHEM_LYRICS[levelId]?.length) return 'v1';
   let forced: string | null = null;
   try { forced = new URLSearchParams(location.search).get('end'); } catch { /* no address: as set */ }
-  if (forced === 'v1' || forced === 'v2') return forced;
+  // (a monitor level is never given the floating words: its own words are on its screen)
+  if (forced === 'v1') return 'v1';
+  if (forced === 'v2') return MONITOR.has(levelId) ? 'monitor' : 'v2';
   return ENDING[levelId] ?? 'v1';
 }
 
@@ -78,7 +85,7 @@ function glowCanvas(text: string, colours: readonly [string, string]) {
 }
 
 /** A word as shown: no punctuation (2026-11-13: full stops, then "remove any punctuation like commas"); an apostrophe inside a word stays (WE'LL). */
-const shown = (word: string) => word.replace(/[^\p{L}\p{N}']+/gu, '').replace(/^'+|'+$/g, '');
+export const shown = (word: string) => word.replace(/[^\p{L}\p{N}']+/gu, '').replace(/^'+|'+$/g, '');
 
 /** A sung line, broken where it is longer than `maxChars`: at the comma nearest its middle, else the space nearest it; again if still too long. */
 function breakLine(line: LyricLine): LyricLine[] {
@@ -140,4 +147,25 @@ export function lyricLayout(words: LyricWord[], t: number) {
     }
   }
   return at;
+}
+
+/**
+ * The word being sung at song time `t` (as shown: no punctuation), for a level that shows one word at a time (Keyboard
+ * Smash, on its monitor: props/crt.ts); with `fresh` true for the first moment it is up. Null before the first word,
+ * and a breath after the last.
+ */
+export function wordAt(levelId: string, t: number): { text: string; index: number } | null {
+  const lines = ANTHEM_LYRICS[levelId] ?? [];
+  let found: { text: string; index: number } | null = null, index = 0, last = -1;
+  for (const line of lines) for (const [at, said] of line) {
+    if (at - LYRICS_TUNE.lead <= t) { const text = shown(said); if (text) found = { text, index }; last = at; }
+    index++;
+  }
+  return found && t - last < 2.5 ? found : null;
+}
+
+/** When the last word of a level's end song is sung, in song seconds (0 if it has none). */
+export function lastSungAt(levelId: string) {
+  const lines = ANTHEM_LYRICS[levelId] ?? [], line = lines[lines.length - 1];
+  return line?.length ? line[line.length - 1][0] : 0;
 }

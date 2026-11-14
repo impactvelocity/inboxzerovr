@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { BladeTracker } from '../blade';
 import type { RoundProgress, StageContext } from '../levels/backdrop';
 import * as PixelFont from '../mail/pixelFont';
+import { wordAt } from '../endlyrics';
 import { propEnvironment } from '../weapons/held';
 import { Soup, type P3 } from '../weapons/parts';
 import { createPuffs } from './puffs';
@@ -102,9 +103,16 @@ function envelope(g: CanvasRenderingContext2D, x: number, y: number, w: number, 
   g.strokeRect(x, y, w, h); g.beginPath(); g.moveTo(x, y); g.lineTo(x + w / 2, y + h * 0.55); g.lineTo(x + w, y); g.stroke();
 }
 /** The desktop behind the email: a menu bar, a status bar with the count, and in between whatever there is to say. */
-function drawScreen(g: CanvasRenderingContext2D, mode: 'boot' | 'inbox' | 'zero', round: number, total: number, left: number, beat: number) {
+function drawScreen(g: CanvasRenderingContext2D, mode: 'boot' | 'inbox' | 'zero' | 'word' | 'blank', round: number, total: number, left: number, beat: number, word = '') {
   const glass = g.createLinearGradient(0, 0, 0, UI_H); glass.addColorStop(0, '#a9f9d8'); glass.addColorStop(1, '#7eedc2');
   g.fillStyle = glass; g.fillRect(0, 0, UI_W, UI_H);
+  // the end (2026-11-13: "make the monitor only have the lyrics on it, nothing else"): the word being sung, big, on bare glass; or the bare glass
+  if (mode === 'blank') return;
+  if (mode === 'word') {
+    const upper = word.toUpperCase(), cell = Math.max(6, Math.min(22, Math.floor((UI_W - 56) / Math.max(1, PixelFont.widthCells(upper)))));
+    pixel(g, upper, UI_W / 2, UI_H / 2, cell, INK, 'center');
+    return;
+  }
   // (the bars are the eighth of the screen above and below where an email sits)
   g.fillStyle = BAR; g.fillRect(0, 0, UI_W, 46); g.fillRect(0, UI_H - 46, UI_W, 46);
   g.fillStyle = DEEP; g.fillRect(0, 44, UI_W, 4); g.fillRect(0, UI_H - 48, UI_W, 4);
@@ -239,7 +247,8 @@ function glassMaterial(ui: THREE.Texture) {
   });
 }
 
-export function createCrt(context: StageContext) {
+/** `words`: the level whose end song's words its screen shows, one at a time, as it hangs at the end (Keyboard Smash: 'office2'). */
+export function createCrt(context: StageContext, options: { words?: string } = {}) {
   const group = new THREE.Group(); group.name = 'CRT monitor';
   const root = new THREE.Group(); root.name = 'Monitor on its stand'; group.add(root);
   const head = new THREE.Group(); head.name = 'Monitor head'; head.position.y = PIVOT; root.add(head);
@@ -298,10 +307,18 @@ export function createCrt(context: StageContext) {
   const rand = (spread: number) => (Math.random() - 0.5) * 2 * spread;
   const world = (x: number, y: number, z: number, out: THREE.Vector3) => out.set(x, y, z).applyMatrix4(head.matrixWorld);
 
-  function show(mode: 'boot' | 'inbox' | 'zero', total: number, left: number, beat: number) {
-    const key = `${mode} ${round} ${total} ${left} ${mode === 'boot' ? beat : 0}`;
+  function show(mode: 'boot' | 'inbox' | 'zero' | 'word' | 'blank', total: number, left: number, beat: number, word = '') {
+    const key = `${mode} ${round} ${total} ${left} ${mode === 'boot' ? beat : 0} ${word}`;
     if (key === drawn) return;
-    drawn = key; drawScreen(g, mode, round, total, left, beat); ui.needsUpdate = true;
+    drawn = key; drawScreen(g, mode, round, total, left, beat, word); ui.needsUpdate = true;
+  }
+  /** The end: the word of the end song being sung, on the screen as it hangs, and nothing else (bare glass before the first and after the last); each new word flashes in. */
+  let sung = -1;
+  function sing(t: number) {
+    const word = options.words ? wordAt(options.words, t) : null;
+    if (!word) { show('blank', 0, 0, 0); return; }
+    show('word', 0, 0, 0, word.text);
+    if (word.index !== sung) { sung = word.index; flash = Math.max(flash, 0.35); glitch = Math.max(glitch, 0.12); }
   }
   function power(next: boolean) {
     if (next === on) return;
@@ -337,7 +354,7 @@ export function createCrt(context: StageContext) {
     flight.from.copy(root.position); flight.knock.set(0, 0, 0); flight.knockSpeed.set(0, 0, 0);
     flight.spin.set(2.2 + Math.random(), rand(2.5), rand(1.5)); flight.turn.set(0, 0, 0);
     shadow.visible = false;
-    power(true); show('zero', 0, 0, 0);
+    power(true); show(options.words ? 'blank' : 'zero', 0, 0, 0);
     head.updateWorldMatrix(true, false);
     const at = world(0, SY, FRONT, v1);
     context.play('zap', 0.8, 0.4, at); context.play('glass', 0.6, 0.3, at);      // (not 'arm': that is the keyboard made ready, key clicks since 2026-11-13)
@@ -353,9 +370,19 @@ export function createCrt(context: StageContext) {
     const beyond = Math.max(0, along - length);
     return near.distanceTo(centre) < crtTune.flyNear + crtTune.flyWiden * beyond;      // (wider the further out: as the logo's reach)
   }
+  /** A heavy thunk of the keyboard on the case (office slash3-6, made 2026-11-13 for "more umpph"), never the same one twice running. */
+  let lastThunk = 0;
+  function thunk(volume: number, at: THREE.Vector3, pitch = 1) {
+    let n = lastThunk;
+    while (n === lastThunk) n = 3 + Math.floor(Math.random() * 4);
+    lastThunk = n;
+    context.play(`slash${n}`, pitch * (0.92 + Math.random() * 0.12), volume, at);
+  }
   /** A hit where it hangs: it cracks and dents as on the desk, is knocked back and spun; the last one breaks it apart. */
   function smack(velocity: THREE.Vector3, byBlade = true) {
     flight.cool = 0.45; flight.hp--;
+    head.updateWorldMatrix(true, false);
+    thunk(0.95, world(0, BH / 2, FRONT - DEPTH / 2, v1).clone());
     const strength = strike(byBlade, 0.8);
     flight.knockSpeed.addScaledVector(v1.copy(velocity).clampLength(0, 6), 0.12 + 0.08 * strength);
     flight.spin.add(v2.set(rand(3) + velocity.y * 0.6, rand(3) + velocity.x * 0.8, rand(2)));
@@ -384,6 +411,7 @@ export function createCrt(context: StageContext) {
     for (let i = 0; i < 40; i++) shards.emit(centre, v3.set(rand(2.6), rand(2) + 1, rand(2.6)), 0.7 + Math.random() * 0.8, 0.8 + Math.random());
     for (let i = 0; i < 22; i++) smoke.emit(centre, v3.set(rand(0.6), 0.2 + Math.random() * 0.5, rand(0.6)), 1.8 + Math.random() * 1.2, 1 + Math.random() * 0.8);
     context.play('glass', 0.7, 0.9, centre); context.play('zap', 0.6, 0.6, centre); context.play('crtoff', 0.8, 0.6, centre);
+    thunk(1, centre, 0.85);
   }
 
   /**
@@ -546,7 +574,13 @@ export function createCrt(context: StageContext) {
   function game(p: RoundProgress, dt: number) {
     const fresh = p.phase !== phase; phase = p.phase; round = p.round;
     const left = Math.max(0, p.total - p.marks.length);
-    if (p.phase === 'summary') { if (fresh) fly(); zero = 0; return; }      // (the end: up it goes, behind the logo)
+    if (p.phase === 'summary') {
+      if (fresh) { fly(); sung = -1; } zero = 0;
+      if ((p.song ?? -1) >= 0) sing(p.song!);
+      // (the logo lands where it hangs, once the words are done: smashed away, as the other levels' logos smash their words)
+      if (options.words && p.logo && flight.on && !flight.gone) burst(v1.set(rand(1.5), 2.5, -5));
+      return;
+    }
     if (p.phase === 'ready') { if (fresh && (flight.on || hits > 0)) repair(); power(false); zero = 0; return; }
     if (p.phase === 'intro') {
       if (fresh && p.round === 1) repair();

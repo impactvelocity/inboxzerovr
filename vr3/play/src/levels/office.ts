@@ -42,6 +42,8 @@ export const officeSound: LevelSound = {
   id: 'office',
   // Keyboard Smash's round two begins with the user's own sting (2026-11-13; tools/level-src/office/keyboard-r2-sting.mp3, set to -3 dBFS)
   roundStinger: { name: 'stinger2', volume: 0.9 },
+  // a keyboard is no blade: the sword whoosh on swings read as a knife (the user, 2026-11-13)
+  swings: false,
   layers: [
     { name: 'room', at: null, level: () => 0.85 },
     // the people thin out as the day goes
@@ -53,5 +55,9 @@ export const officeSound: LevelSound = {
     { name: 'printer', every: [16, 36], volume: 0.5, region: [5, 10, -0.3, 0.3, -9, -4] },
     { name: 'phone', every: [30, 70], volume: 0.45, region: [-8, 8, -0.2, 0.2, -15, -9] },
   ],
-  hum: null,
+  // Haunted Halls' power-up while the trigger is held (castle/hum.mp3 copied to office/hum.mp3, 2026-11-14: "use the older haunted
+  // hall sound, that kind of held the sound, not a knife sound"): in quickly, held, out; no one-shot as it is made ready (letters.ts).
+  // (it is a sustained sound, so held past 2 s it eases to half and is full again on the next press: 2026-11-14, "lower to 50% after
+  // 2 seconds of holding, and reset on release")
+  hum: { level: 0.45, swing: false, fadeIn: 0.15, fadeOut: 0.25, settle: { after: 2, to: 0.5, over: 0.6 } },
 };

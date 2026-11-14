@@ -10,7 +10,7 @@ import * as PixelFont from './mail/pixelFont';
 import { createRoundUi, MARKS } from './roundui';
 import { dictate } from './dictate';
 import { thumb } from './thumbs';
-import { endingFor, lastWordAt, lyricLayout, lyricWords, LYRICS_TUNE, type LyricWord } from './endlyrics';
+import { endingFor, lastSungAt, lastWordAt, lyricLayout, lyricWords, LYRICS_TUNE, type LyricWord } from './endlyrics';
 import { ANTHEM_SECONDS } from './levels/anthems';
 /** The word for one left for later in round two. */
 const LATER = '#ffb347';
@@ -633,7 +633,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   // The rounds. It begins on the title letter; dealing with that starts round one's intro. Round one
   // is tune.roundEmails emails to cut or keep; round two brings the kept ones back to be answered.
   const ui = createRoundUi(world);
-  const game = { phase: 'ready' as 'ready' | 'intro' | 'play' | 'summary' | 'menu', round: 1, timer: 0, beat: -1, total: 0, dealt: 0,
+  const game = { phase: 'ready' as 'ready' | 'intro' | 'play' | 'summary' | 'menu', round: 1, timer: 0, beat: -1, total: 0, dealt: 0, song: -1, logo: false,
     deck: [] as Email[], kept: [] as Email[], marks: [] as string[], cutInRoundOne: 0, left: 0, tally: { cut: 0, replied: 0, tomorrow: 0 }, dayTotal: 0, dayDeck: [] as Email[],
     /** Round two, for the letter of the moment: picking a reply, recording one, or keeping or redoing what was recorded. */
     stage: 'pick' as 'pick' | 'recording' | 'choose', recording: false, heardFor: 0, heard: '',
@@ -1004,7 +1004,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     sheet.material.uniforms.flash.value = 1;
     logoGlow.uniforms.a.value.set(bar[0]); logoGlow.uniforms.b.value.set(bar[1]);
     const glow = new Mesh(new PlaneGeometry(LOGO_WIDTH * 1.7, h * 4), logoGlow); glow.position.z = -0.04; glow.renderOrder = 1; glow.frustumCulled = false; show.body.mesh.add(glow);
-    logo.cutAt = -1; logo.sparkle = 0; logo.chime = 0; logo.shownAt = game.timer;
+    logo.cutAt = -1; logo.sparkle = 0; logo.chime = 0; logo.shownAt = game.timer; game.logo = true;      // (game.logo: Keyboard Smash's monitor is smashed away as it lands, props/crt.ts)
     // in it comes: a burst of the level's colours right across it, and a stinger in Kyoto
     celebrate(show.body, 1.4);      // (Kyoto's stinger played here until its end anthem came: that is the celebration now, src/audio.ts)
     // (v2: and it smashes the song's words still there, as it lands)
@@ -1019,11 +1019,12 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    * stalls, still loading, is not waited on for more than a couple of seconds: the words go on by the end's clock.)
    */
   function songNow() { return endSong && endSongTime >= 0 ? Math.max(endSongTime, game.timer - 2.5) : endSongHeard ? 1e6 : game.timer; }
-  function startLyrics() {
+  /** `onScreen`: the words are on the level's own thing (Keyboard Smash's monitor), not floating here: only the logo's time is kept. */
+  function startLyrics(onScreen = false) {
     const bar = theme.bar ?? [theme.accent ?? '#f6b3cc', theme.accent ?? '#f6b3cc'];
     lyrics.on = true; lyrics.made.clear(); lyrics.logoCalled = false;
-    lyrics.words = lyricWords(theme.id, [bar[0], bar[1]]);      // (the level's two colours: the letters' outline runs from one to the other)
-    lyrics.logoAt = lastWordAt(lyrics.words) + LYRICS_TUNE.logoAfter;
+    lyrics.words = onScreen ? [] : lyricWords(theme.id, [bar[0], bar[1]]);      // (the level's two colours: the letters' outline runs from one to the other)
+    lyrics.logoAt = (onScreen ? lastSungAt(theme.id) : lastWordAt(lyrics.words)) + LYRICS_TUNE.logoAfter;
     lyrics.home.set(seat.x * 0.7, seat.y + LYRICS_TUNE.up, seat.z - LOGO_DISTANCE - LYRICS_TUNE.further);
     void logoSheet(LOGO_FILE[theme.id] ?? 'kyoto').catch(() => undefined);      // (its logo loaded now, so it lands on time)
   }
@@ -2574,7 +2575,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // (LumberHack's axe makes Kyoto's sword sound too: its four takes copied to lumber/arm1..4, 2026-11-13, "make lumberhack use the same
       // activate sound as kyoto"; its own heavy blade, lumber/arm, is unused now)
       if (theme.id === 'kyoto' || theme.id === 'lumber') { let take = lastArm; while (take === lastArm) take = 1 + Math.floor(Math.random() * 4); lastArm = take; sounds.play(`arm${take}`, 0.95 + Math.random() * 0.1, 0.55, blade.tip); }
-      else sounds.play('arm', 0.97 + Math.random() * 0.08, 0.5, spraying && tool ? tool.origin : blade.tip);
+      // (Keyboard Smash has only Haunted Halls' held power-up, its level hum: the castle's arm read as a knife, 2026-11-14)
+      else if (theme.id !== 'office2') sounds.play('arm', 0.97 + Math.random() * 0.08, 0.5, spraying && tool ? tool.origin : blade.tip);
     }
     armed = live;
     if (spraying) {
@@ -2732,12 +2734,15 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (t >= ready + 0.5) { game.phase = 'play'; ui.hideIntro(); nextIn = 0; }
     } else if (game.phase === 'summary') {
       game.timer += dt;
+      // (seconds into the end song, for a level that shows its words itself: Keyboard Smash's monitor, props/crt.ts)
+      game.song = ANTHEM_SECONDS[theme.id] ? songNow() : -1;
       // the end comes in once the line under the title has settled
       // (the logo 0.3 s into the end; 0.9 s until 2026-11-13: "make the end show the logo sooner")
       // (v2, where the level has it: the song's words first, and the logo after them: stepLyrics)
       if (!logo.started && game.timer > (theme.logoAfter ?? 0.3)) {
         logo.started = true; if (END_PARTS) handBar(['bar']); else ui.dismissBar();
-        if (endingFor(theme.id) === 'v2') startLyrics(); else void showLogo();
+        const ending = endingFor(theme.id);
+        if (ending === 'v1') void showLogo(); else startLyrics(ending === 'monitor');
       }
       if (lyrics.on) stepLyrics();
       // The line under it (CLEARED 10 EMAILS) only once the logo is in (2026-11-12: "load in the logo first and then after
@@ -2889,7 +2894,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function beginSummary() {
     const count = (what: string) => game.marks.filter(m => m === what).length;
     game.tally.replied = count('reply') + count('mic'); game.tally.tomorrow = count('tomorrow'); game.tally.cut = game.cutInRoundOne + count('cut');
-    game.phase = 'summary'; game.timer = 0;
+    game.phase = 'summary'; game.timer = 0; game.logo = false;
     ui.replies(null, null);
     void mail.finish();      // real mail: cut ones archived, sent ones saved as drafts (src/mail/source.ts)
     // under where the logo comes in, how many were cleared today; the bar full, with nothing either side of it
@@ -3025,7 +3030,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     for (const set of [sheetSets.ink, sheetSets.paint]) for (const s of set ?? []) { s.users = 0; s.reserved = false; s.cutAt = Infinity; s.burnAt = Infinity; s.burn = 0; }
     for (const streak of streaks) streak.mesh.visible = false;
     thread.visible = false; threadFade = 0; nextIn = 0.8; order = []; hitStop = 0; bladeSeen = false; armed = false; hype = 0; impact = 0;
-    game.phase = 'ready'; game.round = 1; game.timer = 0; game.beat = -1; game.total = 0; game.dealt = 0; game.deck = []; game.kept = []; game.marks = []; game.stage = 'pick'; game.recording = false; game.aim = -1; game.keyAim = -1;
+    game.phase = 'ready'; game.round = 1; game.timer = 0; game.song = -1; game.logo = false; game.beat = -1; game.total = 0; game.dealt = 0; game.deck = []; game.kept = []; game.marks = []; game.stage = 'pick'; game.recording = false; game.aim = -1; game.keyAim = -1;
     ui.clear();
   }
   /** Change level: its letters' look, shape, where they come from and what is done to them. */
@@ -3067,7 +3072,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     impact: () => { const s = impact; impact = 0; return s; },
     theme: () => theme,
     /** Where the rounds have got to, for a level that shows it (the second office's monitor). Read only. */
-    progress: game as { readonly phase: 'ready' | 'intro' | 'play' | 'summary' | 'menu'; readonly round: number; readonly total: number; readonly beat: number; readonly marks: readonly string[]; readonly recording: boolean },
+    progress: game as { readonly phase: 'ready' | 'intro' | 'play' | 'summary' | 'menu'; readonly round: number; readonly total: number; readonly beat: number; readonly marks: readonly string[]; readonly recording: boolean; readonly song: number; readonly logo: boolean },
     /** Is the blade cutting just now? (Always, unless the trigger has to be held and is not.) */
     armed: () => armed,
     /** 1 while the trigger is making the blade live, for its glow and hum; 0 otherwise (and always 0 where no trigger is needed). */

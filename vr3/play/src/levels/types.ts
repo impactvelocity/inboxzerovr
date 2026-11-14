@@ -34,8 +34,11 @@ export interface LevelSound {
    * is steady (a spray), and how quickly it fades in and out (seconds to come most of the way).
    * `sweep` (0 to 1): a steady one still swells and rises a little in pitch as the weapon is swept about.
    * A level's `off` shot, if it has one, plays as the trigger is let go.
+   * `settle`: held longer than `after` seconds, it eases down to `to` of its level (over `over` seconds), back to full on the next hold.
    */
-  hum: { level: number; swing: boolean; fadeIn?: number; fadeOut?: number; sweep?: number } | null;
+  hum: { level: number; swing: boolean; fadeIn?: number; fadeOut?: number; sweep?: number; settle?: { after: number; to: number; over?: number } } | null;
+  /** false: no sword whoosh on swings (the game's swing1-6), for a weapon that is not a blade. */
+  swings?: boolean;
   /**
    * A note played on every cut, each time another note of `scale` (semitones from the recording's
    * own pitch), wandering up and down it a step or two at a time so that the cuts make a tune.

@@ -5,7 +5,7 @@
  * Made 2026-11-13 from the user's own songs with ElevenLabs Scribe (speech to text, word timings; the raw replies are
  * tools/level-src/<level>/anthem-scribe.json), the lines as on the lyrics page (claude.ai/artifact/584Q6cQyf3G1LDzW35dLci).
  * Kyoto's chorus was heard as Japanese, so its words and their times are set by hand (its later choruses roughly).
- * Keyboard Smash has none: its end is the monitor's (v1).
+ * Keyboard Smash's are shown on its monitor, one word at a time, as it hangs over the desk (props/crt.ts): its end is the monitor's.
  */
 export type LyricLine = [number, string][];
 export const ANTHEM_LYRICS: Record<string, LyricLine[]> = {
@@ -46,5 +46,12 @@ export const ANTHEM_LYRICS: Record<string, LyricLine[]> = {
     [[2.48, "Every"], [2.68, "thread"], [2.98, "is"], [3.18, "on"], [3.32, "the"], [3.42, "block."]],
     [[4.32, "Chop"], [4.72, "chop,"], [4.98, "we'll"], [5.18, "never"], [5.46, "stop."]],
     [[5.76, "Chop"], [5.98, "chop"], [6.22, "to"], [6.4, "inbox"], [6.86, "zero!"]]
+  ],
+  office2: [
+    [[1.76, "Smash,"], [2.28, "smash"], [2.74, "keyboard."]],
+    [[3.4, "Smash"], [4.2, "it"], [4.64, "all"], [5.06, "away."]],
+    [[9.48, "No"], [9.72, "more"], [10.0, "email"], [10.42, "tonight."]],
+    [[11.6, "Inbox"], [12.42, "zero."]],
+    [[15.82, "We"], [16.04, "won!"]]
   ],
 };

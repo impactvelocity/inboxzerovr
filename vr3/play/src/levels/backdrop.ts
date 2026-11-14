@@ -24,7 +24,7 @@ export interface MoteDef {
 }
 
 /** Where the rounds have got to (letters.ts), for a level whose things show it. */
-export interface RoundProgress { readonly phase: 'ready' | 'intro' | 'play' | 'summary'; readonly round: number; readonly total: number; readonly beat: number; readonly marks: readonly string[] }
+export interface RoundProgress { readonly phase: 'ready' | 'intro' | 'play' | 'summary'; readonly round: number; readonly total: number; readonly beat: number; readonly marks: readonly string[]; /** At the end: seconds into the end song (-1: none, or not the end), for a level that shows its words (Keyboard Smash's monitor). */ readonly song?: number; /** At the end: the logo is in (Keyboard Smash's monitor is smashed away as it lands). */ readonly logo?: boolean }
 /**
  * Real things standing in a painted level (the second office's monitor and what is on its desk):
  * built once into a group, moved every frame, and told what the game is doing.

@@ -29,6 +29,8 @@ interface LevelSet {
   hum: { source: AudioBufferSourceNode; gain: GainNode } | null; humLoop: LoopInfo | null; next: number[];
   /** Whether the hum was on last frame (for its `off` sound). */
   humOn: boolean;
+  /** When the trigger was last pressed (the audio clock), for a hum that settles while held. */
+  heldSince: number;
 }
 
 /**
@@ -137,7 +139,7 @@ export class GardenSounds {
     this.level = def?.id ?? 'kyoto';
     this.hot = 0;
     if (!def || this.sets.has(def.id)) return;
-    const set: LevelSet = { def, loops: {}, layers: def.layers.map(l => ({ name: l.name, at: l.at, gain: null, level: 0 })), started: new Set(), hum: null, humLoop: null, humOn: false,
+    const set: LevelSet = { def, loops: {}, layers: def.layers.map(l => ({ name: l.name, at: l.at, gain: null, level: 0 })), started: new Set(), hum: null, humLoop: null, humOn: false, heldSince: 0,
       next: (def.occasional ?? []).map(o => 6 + Math.random() * o.every[0]) };
     this.sets.set(def.id, set);
     fetch(`${BASE}${def.id}/set.json`).then(response => (response.ok ? response.json() : Promise.reject(new Error('no set'))))
@@ -448,7 +450,11 @@ export class GardenSounds {
       const on = id === this.level ? live : 0;
       // (setTargetAtTime's time constant is a third of the time to come most of the way)
       const sweep = (how.sweep ?? 0) * swing;
-      hum.gain.gain.setTargetAtTime(on * how.level * (how.swing ? 0.45 + 0.55 * swing : 1) * (1 + 0.4 * sweep), ctx.currentTime, on > 0 ? (how.fadeIn ?? 0.12) / 3 : (how.fadeOut ?? 0.3) / 3);
+      // a sustained one settles once it has been held a while, and is full again on the next press
+      if (id === this.level && on > 0 && !set.humOn) set.heldSince = ctx.currentTime;
+      const settled = !!how.settle && on > 0 && ctx.currentTime - set.heldSince > how.settle.after;
+      hum.gain.gain.setTargetAtTime(on * how.level * (how.swing ? 0.45 + 0.55 * swing : 1) * (1 + 0.4 * sweep) * (settled ? how.settle!.to : 1), ctx.currentTime,
+        on > 0 ? (settled ? (how.settle!.over ?? 0.6) / 3 : (how.fadeIn ?? 0.12) / 3) : (how.fadeOut ?? 0.3) / 3);
       if (how.swing) hum.source.playbackRate.setTargetAtTime(1 + 0.45 * swing, ctx.currentTime, 0.06);
       else if (how.sweep) hum.source.playbackRate.setTargetAtTime(1 + 0.1 * sweep, ctx.currentTime, 0.08);
       // the trigger let go: the level's cut-off sound, if it has one
@@ -480,6 +486,8 @@ export class GardenSounds {
     const ctx = this.ctx;
     this.swingCount++;
     if (!ctx || !this.effects || ctx.state !== 'running') return;
+    // (a level whose weapon is no blade has no whoosh: Keyboard Smash's keyboard sounded like a knife)
+    if (this.sets.get(this.level)?.def.swings === false) return;
     // Light takes for light swings and the long sweeps for hard ones, with some overlap, and never
     // the same take twice running.
     let pick = -1, total = 0;

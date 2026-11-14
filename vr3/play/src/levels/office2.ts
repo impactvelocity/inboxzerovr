@@ -94,7 +94,7 @@ function createLoosePapers() {
 
 function office2Props(context: StageContext): StageProps {
   const group = new THREE.Group(); group.name = 'The office desk: monitor';
-  const monitor = createCrt(context);
+  const monitor = createCrt(context, { words: 'office2' });      // (its screen sings the end song, a word at a time: 2026-11-13)
   crt = monitor;
   if (import.meta.env.DEV) Object.assign(window, { __crt: monitor });      // (for checks in the console)
   // on a monitor, the weapon key (X or Space) hits it too, when it is up behind the logo at the end
@@ -262,7 +262,8 @@ export const office2Letters: LetterTheme = {
   // after the game's last: the end at once, so the logo comes as the monitor jumps up (2026-11-13: "make the logo show at the same time as the monitor jump")
   endPause: 0, logoAfter: 0,
   // its logo above the monitor, which jumps up into the middle (2026-11-13: "make logo on that end sequence go above it, different than the others")
-  logoAt: { up: 0.35, ahead: 1.0 },
+  // (2026-11-13, later: no logo until the song's words are done; then it comes where the monitor hangs and smashes it
+  // away, as the other levels' logos smash their words: endlyrics.ts, 'monitor'. It was { up: 0.35, ahead: 1.0 }, above it.)
   // the round's intro card would be inside the monitor: it floats just in front of and over it instead, smaller
   // (as wide to the eye as it is in the other levels, and clear of the progress bar above)
   intro: { up: 0.2, nearer: 0.65, size: 0.5 },
