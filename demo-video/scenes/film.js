@@ -47,24 +47,60 @@ const cards = LEVELS.map(id => { const d = document.createElement('div'); d.clas
 const pixels = []; for (let y = 0; y < 9; y++) for (let x = 0; x < 14; x++) { const i = document.createElement('i'); $('pixels').appendChild(i); pixels.push({ i, x, y }); }
 const petals = []; for (let k = 0; k < 70; k++) { const i = document.createElement('i'); $('petals').appendChild(i); petals.push(i); }
 
+/* ---------- the hook's pile-up (v12) ---------- */
+const ENV = '<svg viewBox="0 0 50 36"><rect x="2" y="2" width="46" height="32" rx="6" fill="#fff" stroke="#1f8cff" stroke-width="3"/><path d="M5 7l20 14 20-14" fill="none" stroke="#1f8cff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const MINI = '<svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const NOTES = [
+  ['Pizza Palace', 'Buy 9 pizzas, get 1 free'], ['All Staff', 'RE: RE: RE: Please stop replying all'], ['SockDrawer Deals', '70% OFF ends at MIDNIGHT!!!'],
+  ['Prince Adewale', 'URGENT business proposal'], ['Crypto Kevin', 'This coin is going to the MOON'], ['Sales Bot 3000', 'Bumping this to the top'],
+  ['Calendar Robot', 'Reminder: reminder about reminders'], ['Free Cruise Center', 'You WON a free cruise'],
+];
+const noteEls = NOTES.map(([from, subj]) => { const d = document.createElement('div'); d.className = 'note'; d.innerHTML = `<span class="ni">${MINI}</span><span class="nt"><div class="nf">${from}</div><div class="ns">${subj}</div></span><span class="nw">now</span>`; $('notes').appendChild(d); return d; });
+const flyEls = []; for (let k = 0; k < 30; k++) { const d = document.createElement('div'); d.className = 'fly'; d.innerHTML = ENV; $('flies').appendChild(d); flyEls.push(d); }
+
 /* ---------- the timeline ---------- */
-const T_SWORD = W('sword', 'sword'), T_SPLIT = T_SWORD + .02, T_GAME = T_SWORD + .34;
+const T_SWORD = 6.0, T_SPLIT = T_SWORD + .02, T_GAME = T_SWORD + .34;      // v24: the split at 0:06 ("have tried sword - do that at 0:06"); she says "sword" at 7.0 over the sword clip
+// the cut through the screen: -14 degrees through the centre (left edge at 72% down, right edge at 28%)
+const CUT_DEG = -14, CUT_L = 50 + 50 * Math.tan(14 * Math.PI / 180) * 1920 / 1080, CUT_R = 100 - CUT_L;
 const T_INBOX = W('slash', 'inbox');
+const T_SMASH_END = E('slash') + .45;      // the long smash plays through "Inbox Zero!"
+// v19: then the Round 1 clip from its countdown (replacing the level select), then more of the long smash to the agent scene
+const T_R2 = T_SMASH_END + 119 / FPS, T_LOGO = T_SMASH_END;
 const T_REALLY = C('really'), T_HERO = C('hero');
 const T_OUT = E('hero') + OUT_HOLD, T_END = T_OUT + OUT_LEN;
 // the agent flow (v7)
 const M_IN = C('connect') - .3, T_CONNECT = W('connect', 'muse'), T_OPEN = W('link', 'quest') + .15, T_HOME = T_OPEN + .75;
 const M2_IN = C('archives') - .35, T_OKAY = W('okay', 'okay') + .05, M2_OUT = C('never') - .55;
-const HOOK_COUNT = 181 + Math.floor(Math.max(0, T_SWORD - W('unread', '181') - .35) * 1.2);
+// the hook's clock: the badge rolls up to 181 as it's said, then creeps; Filters knocks a few off and they come straight back,
+// Reminders adds its own reminder
+const T_ROLL0 = .25, T_181 = W('unread', '181') + .35, T_FIL = W('tried', 'filters'), T_REM = W('tried', 'reminders'), CREEP = 1.2;
+function hookCount(T) {
+  if (T < T_ROLL0) return 122;
+  let n = lerp(122, 181, eo((T - T_ROLL0) / (T_181 - T_ROLL0))) + Math.floor(Math.max(0, T - T_181) * CREEP);
+  n -= 7 * Math.sin(Math.PI * clamp((T - T_FIL - .1) / .9));      // filters: down a little, then right back
+  if (T >= T_REM + .35) n += 3;                                    // reminders: one more notification, about reminders
+  return Math.round(n);
+}
+const HOOK_COUNT = hookCount(T_SWORD);
+// when each little envelope lands in the icon: a burst as the count rolls up, then one for every later +1
+const FLY_AT = [];
+for (let k = 0; k < 16; k++) FLY_AT.push(lerp(T_ROLL0 + .25, T_181, k / 15));
+for (let k = 1; FLY_AT.length < flyEls.length; k++) { const t = T_181 + k / CREEP; if (t > T_SWORD - .15) break; FLY_AT.push(t); }
+// banners: [arrives, side (-1 left, 1 right), row]
+const NOTE_AT = [[.3, -1, 0], [.7, 1, 0], [1.1, -1, 1], [1.55, 1, 1], [2.4, -1, 2], [T_FIL + .95, 1, 2], [T_REM + .3, -1, 3], [C('sword') + .35, 1, 3]];
 
 // footage: [clip, from, to, at, key] — clip frame `key` is shown at time `at`
 const SEG = [
-  ['kyoto-cut', T_GAME, W('flame', 'flamethrower') - .1, T_GAME + .12, 39],
-  ['inferno', W('flame', 'flamethrower') - .1, C('slash'), W('flame', 'flamethrower') + .25, 36],
-  ['kyoto-cut', C('slash'), W('slash', 'burn'), C('slash') + .15, 39],
-  ['inferno', W('slash', 'burn'), W('slash', 'smash'), W('slash', 'burn') + .12, 36],
-  ['office2', W('slash', 'smash'), T_INBOX, W('slash', 'smash') + .12, 39],
-  ['kyoto-intro', C('round'), C('connect') - .25, C('round'), 1],
+  // v14: the user's own headset captures (vr-video/): the slash opens mid-cut with the pieces flying,
+  // and the flamethrower's email catches fire (frame 14) just after "flamethrower"
+  ['sword-cut', T_SPLIT, W('flame', 'flamethrower') - .1, T_SPLIT, 1],      // v26: cut-0m13s.mp4 at real speed; its cut (frame 24) lands on "sword"
+  ['flame-v2', W('flame', 'flamethrower') - .1, C('slash'), W('flame', 'flamethrower') + .1, 14],
+  // v15: the user's own captures. Slash: the Haunted Hall blade mid-cut from the first frame. Burn: Toxic Danger's
+  // email at its heaviest melt. Smash: the keyboard hits the monitor (frame 13) just after "smash".
+  ['slash-space', C('slash'), W('slash', 'burn'), C('slash'), 15],      // v29: Super Space's saber, its swing (frame 24) at 10.0 and the shatter
+  ['melt-v3', W('slash', 'burn'), W('slash', 'smash'), W('slash', 'burn'), 33],
+  // v25: one continuous clip, smash-intro.mp4 (12 s), from "smash" to the agent scene; the logo moment sits over it at 0:13.5
+  ['smash-intro', W('slash', 'smash'), C('connect') - .25, W('slash', 'smash'), 1],
   ['kyoto-keep2', C('grab') - .1, C('cut'), W('throw', 'throw') + .12, 78],
   ['kyoto-cut2', C('cut'), C('replies'), W('cut', 'cut') + .12, 66],
   ['kyoto-round2b', C('replies'), C('later'), W('pull', 'pull') + .05, 180],      // "SENT" lands as she says pull
@@ -129,8 +165,10 @@ function footage(T) {
   const src = `../work/footage/${clip}/${String(f).padStart(4, '0')}.jpg`;
   if (src !== footSrc) { $('foot-img').src = src; footSrc = src; }
   // a slow push in through each shot, so nothing sits still
-  $('foot-img').style.transform = `scale(${1 + .035 * clamp((T - from) / 4)})`;
-  show($('foot'), true, 1, '');
+  $('foot-img').style.transform = clip === 'sword-cut'
+    ? `scale(${1.22 - .2 * eo((T - from) / .4)}) translate(${10 * (1 - clamp((T - from) / .3)) * Math.sin((T - from) * 80)}px,0)`      // v21: a punch in as the screen splits
+    : `scale(${1 + .035 * clamp((T - from) / 4)})`;
+  show($('foot'), true, 1, '');      // (v19: a straight cut from the smash into the round; the logo carries it)
   return seg;
 }
 
@@ -145,8 +183,8 @@ function inbox(T) {
     // mail keeps arriving: 6 rows, then a flood up to "181", then a slow creep
     const t181 = W('unread', '181') + .35;
     A = 6 + 8 * eo((T - .8) / (t181 - .8)) + Math.max(0, T - t181) * .35;
-    count = Math.round(lerp(122, 181, eo((T - .8) / (t181 - .8)))) + Math.floor(Math.max(0, T - t181) * 1.2);
-    if (T < .8) { A = 6; count = 122; }
+    count = hookCount(T);
+    if (T < .8) A = 6;
   } else {
     // the same inbox at the end: everything archives away, row by row
     A = 14 + .35 * (C('really') - W('unread', '181'));
@@ -164,6 +202,47 @@ function inbox(T) {
   });
   if (endOn) count = Math.max(0, HOOK_COUNT - Math.round(HOOK_COUNT * eo((T - T_REALLY - .2) / .75)));
   $('count').textContent = count;
+  // v11, the hook: an app icon whose badge counts up, the chips under it; the card is only for the end
+  $('app').style.display = hookOn ? 'flex' : 'none';
+  $('inbox').style.display = hookOn ? 'none' : 'block';
+  $('notes').style.display = $('flies').style.display = hookOn ? 'block' : 'none';
+  if (hookOn) {
+    const badge = $('appbadge'), icon = $('appicon');
+    badge.textContent = count;
+    // the badge swells as the number climbs and pops whenever it changes; the icon jiggles harder the fuller it gets,
+    // and holds its breath just before the sword
+    const full = clamp((count - 122) / 66), calm = 1 - clamp((T - (T_SWORD - .4)) / .25);
+    const since = Math.min(...FLY_AT.filter(t => t <= T).map(t => T - t), 9);
+    const pop = .2 * Math.max(0, 1 - since / .16) + .16 * Math.sin(Math.PI * clamp((T - T_181 + .05) / .3)) * (T > T_181 - .05 && T < T_181 + .25 ? 1 : 0);
+    badge.style.transform = `scale(${1 + .16 * full + pop})`;
+    const dip = Math.sin(Math.PI * clamp((T - T_FIL - .1) / .9));       // (it settles for a moment while Filters "works")
+    const jig = (.5 + 1.9 * full) * (1 - .8 * dip) * calm;
+    icon.style.transform = `translateY(${-6 * Math.sin(T * 1.7)}px) rotate(${jig * Math.sin(T * 23)}deg) scale(${1 + .03 * Math.max(0, 1 - since / .14)})`;
+    // little envelopes fly in from the edges and drop into the icon
+    const ir = icon.getBoundingClientRect(), ix = ir.left + ir.width / 2, iy = ir.top + ir.height / 2;
+    flyEls.forEach((el, k) => {
+      const land = FLY_AT[k], dur = .62;
+      if (land === undefined || T < land - dur || T > land) { el.style.opacity = 0; return; }
+      const p = (T - (land - dur)) / dur, e = eio(p), ang = rnd(k + 20) * Math.PI * 2;
+      const sx = 960 + Math.cos(ang) * 1250, sy = 540 + Math.sin(ang) * 760, arc = (rnd(k + 31) - .5) * 360 * Math.sin(Math.PI * e);
+      const x = lerp(sx, ix, e) - Math.sin(ang) * arc, y = lerp(sy, iy, e) + Math.cos(ang) * arc;
+      el.style.opacity = clamp(p * 8) * (1 - clamp((p - .9) / .1));
+      el.style.transform = `translate(${x - 25}px,${y - 18}px) rotate(${lerp((rnd(k + 5) - .5) * 80, 0, e)}deg) scale(${lerp(1.5, .5, e)})`;
+    });
+    // banners drop in and pile up either side, each a little crooked
+    noteEls.forEach((el, k) => {
+      const [at, side, row] = NOTE_AT[k];
+      if (T < at) { el.style.opacity = 0; return; }
+      const p = eo((T - at) / .45), tilt = (rnd(k + 40) - .5) * 9;
+      el.style.left = (side < 0 ? 150 : 1290) + (rnd(k + 50) - .5) * 60 + 'px'; el.style.top = 186 + row * 132 + (rnd(k + 60) - .5) * 26 + 'px';
+      el.style.opacity = clamp((T - at) / .15);
+      el.style.transform = `translateY(${(1 - p) * -90}px) rotate(${tilt + (1 - p) * side * 10}deg) scale(${lerp(.9, 1, p)})`;
+    });
+    // the bell rings when Reminders arrives
+    const ring = clamp((T - T_REM) / .8);
+    const bell = $('chip-rem').querySelector('.mi > svg');
+    bell.style.transform = `rotate(${ring > 0 && ring < 1 ? 24 * Math.sin(ring * 26) * (1 - ring) : 0}deg)`; bell.style.transformOrigin = '50% 12%';
+  }
   // the empty state
   const ep = eo((T - (T_REALLY + .95)) / .45);
   $('empty').style.opacity = endOn ? ep : 0;
@@ -174,43 +253,65 @@ function inbox(T) {
   // chips: tried things
   const tried = $('tried');
   tried.style.visibility = hookOn ? 'visible' : 'hidden';
+  tried.style.display = hookOn ? 'flex' : 'none';
+  // v28: the icon starts in the centre of the screen; the row under it opens up as Filters arrives, so the icon glides up
+  // and the pair stays centred together
+  if (hookOn) {
+    const open = eio((T - (W('tried', 'filters') - .25)) / .55), ROW = $('chip-filters').offsetHeight || 168;
+    tried.style.margin = `${52 * open}px 0 0`; tried.style.height = `${ROW * open}px`; tried.style.overflow = 'visible';
+  }
   if (hookOn) {
     const tf = W('tried', 'filters'), tr = W('tried', 'reminders');
     const f = vis(T, tf - .05, 99), r = vis(T, tr - .05, 99);
     place($('chip-filters'), f); place($('chip-rem'), r);
-    const slot = $('slot-rem'), w = 214 + 16;
-    slot.style.width = (r ? w * eo((T - tr + .05) / .45) : 0) + 'px'; slot.style.paddingLeft = slot.style.width === '0px' ? '0' : '16px';
-    const s = eo((T - (C('sword') - .1)) / .35);
-    for (const el of tried.querySelectorAll('.strike')) el.style.transform = `scaleX(${s})`;
-    for (const el of tried.querySelectorAll('.chip')) el.style.color = s > .5 ? '#8b8397' : '';
+    const slot = $('slot-rem'), GAP = 72, w = $('chip-rem').offsetWidth + GAP;
+    slot.style.width = (r ? w * eo((T - tr + .05) / .45) : 0) + 'px'; slot.style.paddingLeft = slot.style.width === '0px' ? '0' : GAP + 'px';
+    // v13: each is a small app icon. Filters pulses while it "works" (the count dips), Reminders rings its bell;
+    // on "But have you tried a sword?" each gets a red cross badge and droops to grey: tried, didn't work
+    const work = Math.sin(Math.PI * clamp((T - T_FIL - .1) / .9));
+    [['chip-filters', 0, -1], ['chip-rem', .14, 1]].forEach(([id, lag, dir]) => {
+      const tile = $(id).querySelector('.mi'), fail = eo((T - (C('sword') - .1) - lag) / .4);
+      const pulse = id === 'chip-filters' ? .09 * work * Math.abs(Math.sin(T * 14)) : 0;
+      tile.style.transform = `translateY(${10 * fail}px) rotate(${dir * 7 * fail}deg) scale(${1 + pulse - .06 * fail})`;
+      tile.style.filter = `grayscale(${.85 * fail}) brightness(${1 + .12 * fail})`;
+      const xp = clamp((T - (C('sword') - .1) - lag - .08) / .28);
+      $(id).querySelector('.nope').style.transform = `translate(${dir * 6 * fail}px,${10 * fail}px) scale(${xp <= 0 ? 0 : eo(xp) + .25 * Math.sin(Math.PI * xp)})`;
+      $(id).querySelector('.ml').style.color = fail > .5 ? '#8b8397' : '';
+    });
   }
   // the slash across the card, then it splits
   const sl = $('slash');
-  const sp = clamp((T - (T_SWORD - .12)) / .14);
-  sl.style.opacity = hookOn && T > T_SWORD - .12 && T < T_SPLIT + .12 ? 1 : 0;
-  sl.style.transform = `rotate(-14deg) translateX(${lerp(-1400, 0, eo(sp))}px) scaleY(${1 - clamp((T - T_SPLIT) / .12)})`;
+  // v21: a fast streak along the cut, then it flares wide in the opening seam and fades
+  const sp = clamp((T - (T_SWORD - .1)) / .12), fl = clamp((T - T_SPLIT) / .22);
+  sl.style.opacity = hookOn && T > T_SWORD - .1 ? 1 - eo(fl) : 0;
+  sl.style.transform = `rotate(${CUT_DEG}deg) translateX(${lerp(-1500, 0, eo(sp))}px) scaleY(${1 + 7 * eo(fl)})`;
   const card = $('inbox');
   if (hookOn && T >= T_SPLIT) {
     const p = eo((T - T_SPLIT) / .32);
-    card.style.visibility = 'hidden'; tried.style.visibility = 'hidden';
-    for (const [id, sgn] of [['half-a', -1], ['half-b', 1]]) {
-      const h = $(id); if (!h.firstChild) { const c = wrap.cloneNode(true); c.removeAttribute('id'); c.style.position = 'absolute'; c.style.inset = '0'; c.querySelector('.slash')?.remove(); for (const k of c.querySelectorAll('.card,.chips')) { k.style.visibility = 'visible'; k.style.opacity = 1; } h.appendChild(c); }
-      const clip = sgn < 0 ? 'polygon(0 0,100% 0,100% 37%,0 63%)' : 'polygon(0 63%,100% 37%,100% 100%,0 100%)';
-      h.style.clipPath = clip; h.style.visibility = 'visible';
-      h.style.transform = `translate(${sgn * 60 * p}px,${sgn * 150 * p + 260 * p * p}px) rotate(${sgn * 5 * p}deg)`;
-      h.style.opacity = 1 - clamp((T - T_SPLIT - .18) / .14);
+    card.style.visibility = 'hidden'; tried.style.visibility = 'hidden'; tried.style.opacity = 0; $('app').style.visibility = 'hidden';
+    const q = clamp((T - T_SPLIT) / .34), go = q * q * (1.6 - .6 * q);      // accelerating, so they're flung
+    const shake = 16 * (1 - clamp((T - T_SPLIT) / .28)) * Math.sin((T - T_SPLIT) * 95);
+    const r = CUT_DEG * Math.PI / 180, nx = Math.sin(r), ny = -Math.cos(r), tx = Math.cos(r), ty = Math.sin(r);   // (normal up, and along the cut)
+    for (const [id, sgn] of [['half-a', 1], ['half-b', -1]]) {
+      const h = $(id); if (!h.firstChild) { const c = wrap.cloneNode(true); c.removeAttribute('id'); c.style.position = 'absolute'; c.style.inset = '0'; c.querySelector('.slash')?.remove(); for (const k of c.querySelectorAll('.card,.chips,.app,#notes,#flies')) { k.style.visibility = 'visible'; k.style.opacity = 1; } h.appendChild(c); }
+      h.style.background = '#fff';      // (the white world goes with them, so the game shows through the gap)
+      h.style.clipPath = sgn > 0 ? `polygon(0 0,100% 0,100% ${CUT_R}%,0 ${CUT_L}%)` : `polygon(0 ${CUT_L}%,100% ${CUT_R}%,100% 100%,0 100%)`;
+      h.style.visibility = 'visible'; h.style.opacity = 1;
+      const d = 1150 * go, slide = 260 * go;
+      h.style.transform = `translate(${sgn * (nx * d + tx * slide) + shake}px,${sgn * (ny * d + ty * slide) + shake * .6}px) rotate(${sgn * -6 * go}deg)`;
       h.firstChild.style.visibility = 'visible';
       h.firstChild.querySelector('#tried, .chips') && (h.firstChild.querySelector('.chips').style.visibility = 'visible');
     }
+    $('notes').style.visibility = $('flies').style.visibility = 'hidden';
   } else {
-    card.style.visibility = 'visible'; show($('half-a'), false); show($('half-b'), false);
+    card.style.visibility = 'visible'; $('app').style.visibility = 'visible'; tried.style.opacity = 1; $('notes').style.visibility = $('flies').style.visibility = 'visible'; show($('half-a'), false); show($('half-b'), false);
     card.style.opacity = co; card.style.transform = `translateY(${cy}px)`;
   }
 }
 
 function flash(T) {
   const f = $('flash');
-  const hits = [[T_SPLIT, .5, .22], [T_INBOX, .7, .3], [T_HERO + .02, .45, .35]];
+  const hits = [[T_HERO + .02, .45, .35]];
   let o = 0; for (const [t, a, d] of hits) if (T >= t && T < t + d) o = Math.max(o, a * (1 - (T - t) / d));
   show(f, o > 0, o);
 }
@@ -219,22 +320,44 @@ function slam(T) {
   // "Inbox Zero!": the logo lands on the night, then glides to where the home screen keeps it
   const L = $('logo-slam'), a = T_INBOX, g0 = C('hack'), g1 = g0 + .9;
   const night = $('night');
-  const nightOn = (T >= a && T < g1 + .4) || T >= C('try') - .3;
+  const nightOn = T >= C('try') - .3;
   if (nightOn) {
     show(night, true, T >= C('try') - .3 ? eo((T - C('try') + .3) / .3) : 1, '');
-    $('night-img').style.filter = T < g1 + .4 ? `blur(${lerp(22, 0, eio((T - g0) / .9))}px) brightness(${lerp(.42, 1, eio((T - g0) / .9))}) saturate(1.2)` : 'blur(22px) brightness(.42) saturate(1.2)';
+    $('night-img').style.filter = false ? `blur(${lerp(22, 0, eio((T - g0) / .9))}px) brightness(${lerp(.42, 1, eio((T - g0) / .9))}) saturate(1.2)` : 'blur(22px) brightness(.42) saturate(1.2)';
   } else show(night, false);
-  if (T < a || T >= g1 + .25) return show(L, false);
-  const p = eo((T - a) / .28);
-  let s = lerp(1.35, 1, p), x = 0, y = 0, w = 1100, o = clamp((T - a) / .08);
-  if (T >= g0) { const q = eio((T - g0) / .9); w = lerp(1100, 430 / 1, q); x = 0; y = lerp(0, 240 - 540, q); s = 1; o = 1 - clamp((T - g1) / .25); }
-  L.style.width = w + 'px';
-  show(L, true, o, `translate(-50%,-50%) translate(${x}px,${y}px) scale(${s})`);
+  // v19: the Keyboard Smash level's logo pops into the centre as the round starts, then gets out of the way.
+  // v22: over a dark shade that fades in and out with it, and "Built for Meta VR Hackathon" with the Meta mark under it.
+  // v27: the shade stays on through "one round at a time"; the logo and the Meta line leave at 0:15 and the line
+  // "Clear your email inbox / one round at a time" takes their place, its second half arriving word by word as it's said
+  const u = T - T_LOGO, shade = $('logo-shade'), credit = $('logo-credit'), line = $('round-line');
+  const T_OUT1 = C('game') - .15, T_SHADE_OUT = E('round') + .45;
+  if (u < 0 || T > T_SHADE_OUT + .6) { show(shade, false); show(credit, false); show(line, false); return show(L, false); }
+  show(shade, true, eo(u / .35) * (1 - .1 * eo((u - .15) / .5)) * (1 - eio((T - T_SHADE_OUT) / .6)), '');
+  // the logo and the Meta line: in, then lifted away at 0:15
+  if (T < T_OUT1 + .45) {
+    if (!L.src.endsWith('logos/office.webp')) L.src = '../work/assets/logos/office.webp';
+    L.style.width = '940px';
+    const pin = eo(u / .28), pout = eio((T - T_OUT1) / .4);
+    const sc = lerp(1.35, 1, pin) + .04 * Math.sin(Math.PI * clamp((u - .2) / .25)) - .08 * pout;
+    show(L, true, clamp(u / .12) * (1 - pout), `translate(-50%,-50%) translateY(${-70 - 90 * pout}px) scale(${sc})`);
+    const cv = vis(T, T_LOGO + .3, T_OUT1 - .05, { y: 24, din: .4, dout: .35, lift: -60 });
+    if (cv) show(credit, true, cv.o, `translate(-50%,-50%) translateY(${92 + cv.y}px)`); else show(credit, false);
+  } else { show(L, false); show(credit, false); }
+  // the line: first half in as the logo leaves, then "one round at a time" word by word; out with the shade
+  const lv = vis(T, T_OUT1 + .4, T_SHADE_OUT, { y: 34, din: .5, dout: .45 });      // (after the logo has cleared: no crossfade)
+  if (!lv) return show(line, false);
+  show(line, true, lv.o, `translateY(calc(-50% + ${lv.y}px))`);
+  const second = ['one', 'round', 'at', 'a', 'time'];
+  line.querySelectorAll('.rl2 b').forEach((b, k) => {
+    const p = eo((T - W('round', second[k]) + .06) / .3);
+    b.style.display = p > 0 ? 'inline-block' : 'none';      // (only words already said take space, so the line builds from the centre)
+    b.style.opacity = p; b.style.transform = `translateY(${(1 - p) * 26}px)`;
+  });
 }
 
 function homeScreen(T) {
   // the real home screen: under the logo glide, and again when the agent's link opens on the Quest
-  const wins = [[C('hack'), C('round'), .3, .6], [T_HOME, C('grab') - .1, 0, .3]];
+  const wins = [[T_HOME, C('grab') - .1, 0, .3]];      // (v19: no level select after the smash)
   const w = wins.find(w => T >= w[0] && T < w[1]);
   const code = $('home-code');
   if (!w) { show(code, false); return false; }
@@ -253,7 +376,6 @@ function cursor(T) {
   const mid = id => { const q = $(id).getBoundingClientRect(); return [q.left + q.width / 2, q.top + q.height / 2 + 6]; };
   // [from, arrive, startX, startY, target (element id or point), clickAt]
   const moves = [
-    [C('hack') + .7, W('game', 'clear') - .05, 1500, 1000, [960, 765], W('game', 'clear')],
     [C('connect') + .15, T_CONNECT - .08, 1500, 900, 'c-btn', T_CONNECT],
     [W('link', 'opens') - .2, T_OPEN - .08, 1400, 880, 'm-open', T_OPEN],
     [T_HOME + .15, W('pick', 'level') - .05, 1500, 960, [1092, 452], W('pick', 'level')],
@@ -554,7 +676,7 @@ function outro(T) {
 
 function white(T) {
   // the clean white world: the hook, connect, built, chair, AI
-  const on = T < T_GAME || (T >= M_IN + .05 && T < T_HOME + .35) || (T >= C('iwsdk') - .02 && T < C('try') - .3);
+  const on = T < T_SPLIT || (T >= M_IN + .05 && T < T_HOME + .35) || (T >= C('iwsdk') - .02 && T < C('try') - .3);
   show($('white'), on, 1, '');
 }
 
@@ -598,8 +720,43 @@ function buildSfx() {
   sfx(W('hero', 'hero') - .05, 'kyoto/stinger2.wav', .8);
   BADGE_AT.forEach((t, i) => sfx(t, i ? 'sort.wav' : 'kyoto/keep1.wav', .55));
 }
-const SOUND = false;      // v7: "remove all sound effects"
+const SOUND = false;      // v7: "remove all sound effects" (the old full set, kept off)
 if (SOUND) buildSfx();
+// v18: "add sound effects for sword, cut, fire, melt, and keyboard to add more umph" — hits only, each on its picture
+function buildHits() {
+  const h = (t, file, g = 1) => sfx(t, file, g);
+  // v24: a keyboard hit with more punch: the swing, the crunch, and LumberHack's axe chop on the impact
+  const kb = (t, g = 1) => { h(t - .1, 'lumber/slash1.flac', .5 * g); h(t, 'lumber/chop.flac', 1.1 * g); h(t, 'office/glass.flac', .7 * g); };
+  // v30: a notification ping as each banner lands (ElevenLabs takes, work/audio/notify: a two-note knock and a single pop,
+  // alternated so eight in six seconds don't machine-gun; the "reminder about reminders" one a touch louder)
+  const PING = ['a', 'b', 'a', 'b', 'a', 'a', 'a', 'a'];
+  NOTE_AT.forEach(([at], k) => { if (at < T_SWORD - .15) SFX.push({ t: +(at + .1).toFixed(3), file: `../work/audio/notify/ping-${PING[k]}.wav`, gain: k === 6 ? .85 : k < 2 ? .8 : .7 }); });
+  // the hook: the sword through the inbox, the slash clip, the flamethrower catching
+  h(T_SWORD - .12, 'kyoto/slash1.flac');
+  h(T_SPLIT - .01, 'kyoto/slash2.flac', 1); h(T_SPLIT, 'office/glass.flac', .55);      // v21: more weight on the split
+  h(T_SPLIT + 23 / FPS - .03, 'kyoto/slash3.flac', .9);      // v26: the sword clip's own cut (frame 24)
+  h(W('flame', 'flamethrower') + .03, 'inferno/flare.flac');
+  // Slash, burn, and smash (the long smash's keyboard hits at its frames 13, 46, 78)
+  h(C('slash') + (24 - 15) / FPS - .03, 'space/slash1.flac');      // v29: the saber's swing
+  h(W('slash', 'burn') + .02, 'lab/melt1.flac');
+  // v25: the smash-intro clip's impacts (its frames), from "smash" to the agent scene
+  [[7, 1], [61, .85], [89, .8], [115, .8], [166, .85], [198, .85], [213, .7], [252, .9], [263, .8]].forEach(([fr, g]) => kb(W('slash', 'smash') + (fr - 1) / FPS - .02, g));
+  // the round: the keyboard smashes at the 7 s clip's frames 125 and 178
+
+  // how it works: cut it up into tiny little pieces
+  h(W('cut', 'cut') + .12 - .03, 'kyoto/slash3.flac');
+  // the levels and the gameplay outro: every cut in the long shots, the first loudest
+  const HIT = { 'office2-long': 'office/glass.flac', 'castle-long': 'castle/slash2.flac', 'lab-long': 'lab/melt2.flac', 'inferno-long': 'inferno/flare.flac', 'kyoto-long': 'kyoto/slash4.flac', 'lumber-long': 'lumber/chop.flac', 'space-long': 'space/slash2.flac' };
+  for (const [clip, from, to, at, key0] of SEG) {
+    if (!HIT[clip] || !CUTS[clip]) continue;
+    const key = keyOf(clip, key0), outro = from >= T_OUT;
+    CUTS[clip].forEach((c, i) => { const t = at + (c - key) / FPS, g = outro ? .55 : i === 0 || c === key ? 1 : .6; if (t >= from && t < to - .05) clip === 'office2-long' ? kb(t - .03, g) : h(t - .03, HIT[clip], g); });
+  }
+  // the seated player's three cuts (the take's 6.4, 7.5 and 12.0 s), through the same playback curve as the picture
+  const a = C('chair') - .05, b = C('really') - .3, slash = W('come', 'stretching') - a, end = b + .3 - a;
+  [6.4, 7.5, 12.0].forEach((src, i) => h(a + slash + (src - 6.4) / (13.9 - 6.4) * (end - slash) - .03, 'kyoto/slash5.flac', i ? .7 : 1));
+}
+buildHits();
 
 /* ---------- render ---------- */
 async function renderAt(T) {

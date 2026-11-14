@@ -14,14 +14,14 @@ Built with Meta's Immersive Web SDK, so it runs in the Quest browser with nothin
 🛠 Built with: Immersive Web SDK, three.js, Next.js, MCP, Claude, ElevenLabs
 
 0:00 Have you tried a sword?
-0:10 Slash, burn and smash
+0:09 Slash, burn and smash
 0:19 How it works: your agent sets up a game
 0:33 Grab, throw, cut
-0:41 Round two: replies from your agent
-0:54 Seven levels
+0:40 Round two: replies from your agent
+0:53 Seven levels
 1:37 How it's built
-1:54 Your agent does the rest, after you say okay
-2:04 Try it
-2:16 Gameplay and what's inside
+1:53 Your agent does the rest, after you say okay
+2:03 Try it
+2:15 Gameplay and what's inside
 
 #VR #MetaQuest #WebXR #InboxZero #MCP #AIagents #Hackathon

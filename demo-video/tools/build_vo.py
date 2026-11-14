@@ -7,7 +7,7 @@ things on the word for a first draft. A new take: re-measure the gaps and edit S
 import json, subprocess, os, re
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 A = os.path.join(ROOT, 'work', 'audio')
-SPEED, END_SPEED, LEAD = 1.0, 1.0, 1.0
+SPEED, END_SPEED, LEAD = 1.0, 1.0, 0.4      # v12: lead-in cut from 1.0 s so the slash lands at 7 s
 SEAT_HOLD = 3.5       # seconds after "your weapons do the stretching" (v9)
 HOLD = 3.5            # seconds of level after each level line (v4 had 5, v5 3.5)
 

@@ -10,30 +10,26 @@ cues = json.load(open(os.path.join(ROOT, 'work', 'cues.json'))); C = lambda k: c
 fx = json.load(open(os.path.join(ROOT, 'work', 'sfx.json'))); DUR = fx['dur']
 SR = 44100
 VOICE_FX = True               # v3: reverb + a hint of robot on the voice (tools/voicefx.py makes vo-fx.wav)
-MUSIC = False                 # v2: no background music (the user's call); the game's sound effects stay
-MUSIC_FROM = 150.8            # the energetic part of the user's Kyoto track
-DUCK_DB = -11.0               # music under the voice
-BED_DB, END_DB = -2.0, 0.0   # music level in the gaps, and on the end card
-SFX_DB = -4.0
-words = [w['t'] for w in cues['words'] if w['s'] == 'sword' and w['w'] == 'sword']
-T_OPEN = words[0] + 0.34      # the music opens up when the sword cuts the inbox
-T_ANTHEM = C('hero') - 0.35   # the anthem takes over for the end, its last note on the end card
-ANTHEM_END = 28.55            # where the anthem's final chord rings out (measured)
+MUSIC = True                  # v18: "add the inferno level music...", v23: "use the kyoto song instead of inferno"
+MUSIC_FILE = os.path.join(ROOT, '..', 'vr3', 'play', 'public', 'audio', 'kyoto', 'music.m4a')      # v23: the Kyoto song (was Inferno's)
+MUSIC_LEN = 298.72            # the track's length
+MUSIC_FROM = None             # v21: None = start where the track's own ending lands on the film's end (its loudest stretch, from the first frame)
+DUCK_DB = -13.0               # music under the voice (kept well under it: the voice must stay very clear)
+HOOK_DUCK_DB = -7.0           # v21: lighter under the 7 s hook, so the music is heard from the start (about 12 dB under her)
+BED_DB, END_DB = -6.0, -2.0   # music level in the gaps, and in the 20 s gameplay outro after the voice
+SFX_DB = -7.0                 # v18 hits: "there but not overboard"
+SFX_NORM = -20.0              # each hit is first levelled to this (they range from -16 to -32 LUFS as made)
 
 def run(*a): subprocess.run(a, check=True, capture_output=True)
 def wav(name): return os.path.join(A, name)
 
 if MUSIC:
-    # 1. music: the bed muffled under the hook, opening up on the sword, then the anthem's ending
-    run('ffmpeg', '-y', '-ss', str(MUSIC_FROM), '-t', f'{T_ANTHEM + 1.0:.3f}', '-i', wav('music-src.m4a'), '-ac', '2', '-ar', str(SR), wav('bed-raw.wav'))
-    an_from = ANTHEM_END - (DUR - 0.25 - T_ANTHEM)
-    run('ffmpeg', '-y', '-ss', f'{an_from:.3f}', '-i', wav('anthem-src.m4a'), '-ac', '2', '-ar', str(SR), wav('anthem-cut.wav'))
-    run('ffmpeg', '-y', '-i', wav('bed-raw.wav'), '-i', wav('anthem-cut.wav'), '-filter_complex',
-        f"[0]asplit=2[a][b];"
-        f"[a]lowpass=f=700,volume=0.7,afade=t=in:d=0.8,afade=t=out:st={T_OPEN - 0.05:.3f}:d=0.12[muff];"
-        f"[b]afade=t=in:st={T_OPEN - 0.05:.3f}:d=0.08,afade=t=out:st={T_ANTHEM:.3f}:d=0.6[open];"
-        f"[1]afade=t=in:d=0.35,adelay={int(T_ANTHEM * 1000)}|{int(T_ANTHEM * 1000)},afade=t=out:st={DUR - 0.6:.3f}:d=0.55[an];"
-        f"[muff][open][an]amix=inputs=3:normalize=0:duration=longest,atrim=0:{DUR:.3f}", wav('music.wav'))
+    # 1. music: the Inferno track from MUSIC_FROM, faded in at the start and out over the last 3 s
+    start = MUSIC_FROM if MUSIC_FROM is not None else max(0, MUSIC_LEN - DUR - 0.3)
+    # v21: "play the sound track music right away": no fade in; the track's own ending closes the film
+    run('ffmpeg', '-y', '-ss', f'{start:.3f}', '-t', f'{DUR:.3f}', '-i', MUSIC_FILE, '-ac', '2', '-ar', str(SR),
+        '-af', f'afade=t=in:d=0.02,apad,atrim=0:{DUR:.3f},afade=t=out:st={DUR - 0.4:.3f}:d=0.4', wav('music.wav'))
+    print('music from', round(start, 2), 's into the track')
 
     # 2. ducking envelope from the voice, with look-ahead so the music dips before each line
     e = env(wav('vo.wav'), 100)
@@ -45,7 +41,7 @@ if MUSIC:
         cur += (tgt - cur) * (0.35 if tgt > cur else 0.05)        # fast down, slow back up
         t = i / 100
         base = END_DB if t > C('hero') + cues['cues']['hero']['end'] - C('hero') else BED_DB
-        db = base + DUCK_DB * cur
+        db = base + (HOOK_DUCK_DB if t < C('slash') else DUCK_DB) * cur
         gains.append(10 ** (db / 20))
     # write the envelope as a stereo wav at full rate and multiply
     step = SR // 100
@@ -65,11 +61,18 @@ for k, m in enumerate(amb):
     ms = max(0, int(m['t'] * 1000))
     parts.append(f"[{k}]aformat=channel_layouts=stereo:sample_rates={SR},atrim=0:{m['dur']:.3f},asetpts=PTS-STARTPTS,afade=t=in:d=0.25,afade=t=out:st={m['dur'] - 0.3:.3f}:d=0.3,"
                  f"volume={m['gain'] * 10 ** (SFX_DB / 20):.4f},adelay={ms}|{ms}[a{k}]")
+_lv = {}
+def level_of(path):
+    if path not in _lv:
+        err = subprocess.run(['ffmpeg', '-hide_banner', '-nostats', '-i', path, '-af', 'ebur128', '-f', 'null', '-'], capture_output=True, text=True).stderr
+        _lv[path] = float(__import__('re').findall(r'I:\s+(-?[\d.]+) LUFS', err)[-1])
+    return _lv[path]
 for i, s in enumerate(fx['sfx']):
     path = os.path.normpath(os.path.join(ROOT, 'scenes', s['file']))
+    norm = 10 ** ((SFX_NORM - level_of(path)) / 20)
     ins += ['-i', path]
     ms = max(0, int(s['t'] * 1000))
-    parts.append(f"[{i + len(amb)}]aformat=channel_layouts=stereo:sample_rates={SR},highpass=f=90,volume={s['gain'] * 10 ** (SFX_DB / 20):.4f},adelay={ms}|{ms}[s{i}]")
+    parts.append(f"[{i + len(amb)}]aformat=channel_layouts=stereo:sample_rates={SR},highpass=f=90,volume={s['gain'] * norm * 10 ** (SFX_DB / 20):.4f},adelay={ms}|{ms}[s{i}]")
 if parts:
     graph = ';'.join(parts) + ';' + ''.join(f'[a{k}]' for k in range(len(amb))) + ''.join(f'[s{i}]' for i in range(len(fx['sfx']))) + f"amix=inputs={len(amb) + len(fx['sfx'])}:normalize=0:duration=longest,apad,atrim=0:{DUR:.3f}"
     run('ffmpeg', '-y', *ins, '-filter_complex', graph, '-c:a', 'pcm_s16le', wav('sfx.wav'))

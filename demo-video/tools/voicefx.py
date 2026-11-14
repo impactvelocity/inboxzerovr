@@ -1,4 +1,8 @@
-"""Video-game voice: the dry take on top, a little room reverb and a faint robot layer under it.
+"""v10: STYLE = 'howto' runs the voice through the game's own How to Play chain (vr3/play/tools/howtovoice.py), imported, so the
+film and the game sound the same ("make the voice over have the same robotic / game as the how to play sound").
+STYLE = 'layers' is the v4-v9 sound below.
+
+Video-game voice: the dry take on top, a little room reverb and a faint robot layer under it.
 
 Writes work/audio/vo-fx.wav from work/audio/vo.wav (stems kept: vo-room.wav, vo-robot.wav).
 Each layer is set by measurement relative to the dry voice, so the knobs are in dB below it.
@@ -14,6 +18,23 @@ RING_HZ = 55          # ring-mod carrier: low, so it reads as a metallic buzz, n
 COMB_MS = (6, 9.5)    # short comb echoes for the hollow, helmet-ish colour
 
 def run(*a): return subprocess.run(a, check=True, capture_output=True, text=True)
+
+STYLE = 'howto'
+if STYLE == 'howto':
+    import sys, importlib.util
+    spec = importlib.util.spec_from_file_location('howtovoice', os.path.join(ROOT, '..', 'vr3', 'play', 'tools', 'howtovoice.py'))
+    hv = importlib.util.module_from_spec(spec); spec.loader.exec_module(hv)
+    def w(n): return os.path.join(A, n)
+    def lufs(path):
+        err = subprocess.run(['ffmpeg', '-hide_banner', '-nostats', '-i', path, '-af', 'ebur128', '-f', 'null', '-'], capture_output=True, text=True).stderr
+        return float(re.findall(r'I:\s+(-?[\d.]+) LUFS', err)[-1])
+    def render(gain):
+        run('ffmpeg', '-y', '-i', w('vo.wav'), '-filter_complex', hv.CHAIN.format(digital=hv.DIGITAL, gain=gain),
+            '-map', '[out]', '-ac', '1', '-ar', str(SR), '-c:a', 'pcm_s16le', w('vo-fx.wav'))
+    render(0)
+    render(round(lufs(w('vo.wav')) - lufs(w('vo-fx.wav')), 2))      # back to the dry voice's level
+    print(f"how-to-play chain (DIGITAL {hv.DIGITAL}): dry {lufs(w('vo.wav')):.1f} LUFS, treated {lufs(w('vo-fx.wav')):.1f}")
+    sys.exit(0)
 def w(n): return os.path.join(A, n)
 def lufs(path):
     err = subprocess.run(['ffmpeg', '-hide_banner', '-nostats', '-i', path, '-af', 'ebur128', '-f', 'null', '-'], capture_output=True, text=True).stderr

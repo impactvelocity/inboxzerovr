@@ -69,3 +69,6 @@ __pycache__/
 # vr3 from GitHub. Remove these lines to go back to keeping them local.
 !/vr3/play/public/**
 !/vr3/public/site/**
+
+# Quest gameplay recordings (large, not committed)
+/vr-video/

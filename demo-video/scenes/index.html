@@ -17,7 +17,12 @@
 
   <!-- hook: the inbox -->
   <div id="inbox-wrap" class="layer center">
-    <div id="tried" class="chips"><span class="chip" id="chip-filters"><svg viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>Filters<i class="strike"></i></span><span class="chip-slot" id="slot-rem"><span class="chip" id="chip-rem"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6zm-2 15a2 2 0 0 0 4 0"/></svg>Reminders<i class="strike"></i></span></span></div>
+    <!-- v12: mail piling up around the icon: notification banners and little envelopes flying in -->
+    <div id="notes"></div>
+    <div id="flies"></div>
+    <!-- v11: the hook is an app icon with a badge, iPhone home screen style (a generic mail icon, not Apple's) -->
+    <div id="app" class="app"><div class="appicon" id="appicon"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="appbadge" id="appbadge">122</span></div><div class="applabel">Inbox</div></div>
+    <div id="tried" class="chips"><span class="mini" id="chip-filters"><span class="mi fil"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6.2 7.4v5.4l-3.6 1.9v-7.3z"/></svg></span><i class="nope"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i><span class="ml">Filters</span></span><span class="chip-slot" id="slot-rem"><span class="mini" id="chip-rem"><span class="mi rem"><svg viewBox="0 0 24 24"><path d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5v3.6L4.8 15.5h14.4l-1.7-2.9V9A5.5 5.5 0 0 0 12 3.5z"/><path d="M10 18.5a2 2 0 0 0 4 0" class="clap"/></svg></span><i class="nope"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i><span class="ml">Reminders</span></span></span></div>
     <div id="inbox" class="card inbox">
       <div class="ihead"><span class="ititle">Inbox</span><span class="badge"><b id="count">181</b> unread</span></div>
       <div class="rows" id="rows"></div>
@@ -30,7 +35,12 @@
   <div id="flash" class="layer"></div>
 
   <!-- the logo slam and the glide into the home screen -->
+  <div id="logo-shade"></div>
   <img id="logo-slam" src="../work/assets/logos/kyoto.webp" alt="">
+  <!-- v27: after the logo, on the same shade -->
+  <div id="round-line"><span class="rl1">Clear your email inbox</span><span class="rl2"><b>one</b><b>round</b><b>at</b><b>a</b><b>time</b></span></div>
+  <!-- v22: under the round's logo -->
+  <div id="logo-credit"><svg viewBox="0 0 120 60" width="84" height="42"><defs><linearGradient id="metag" x1="0" x2="1"><stop offset="0" stop-color="#0668e1"/><stop offset="1" stop-color="#2fa4ff"/></linearGradient></defs><path d="M60 30C52 17 44 9 33 9 20 9 11 20 11 31s7 20 18 20c10 0 17-8 25-19l6-9c8-11 15-19 25-19 11 0 18 9 18 20s-9 22-22 22c-11 0-19-8-27-21" fill="none" stroke="url(#metag)" stroke-width="9" stroke-linecap="round"/></svg><span>Built for Meta VR Hackathon</span></div>
 
   <!-- the agent: a Muse window, rebuilt from the user's screenshot (work/assets/muse-example.webp) -->
   <div id="muse" class="layer center">

@@ -1,5 +1,129 @@
 # Inbox Zero VR demo film, plan
 
+## v29 (2026-11-14)
+
+- The "slash" cut at 0:09.7 is now `vr-video/05-space/slash-space-short.mp4` (Super Space's saber) instead of the Haunted Hall: frames 15 to 30, so the saber's swing lands at 10.0 s and the email shatters just before "burn". The hit is Super Space's saber slash.
+
+## v28 (2026-11-14)
+
+- The hook's app icon now starts in the centre of the screen. As Filters arrives (0:03.6) the row under it opens up over about half a second, so the icon glides up and the icon and its Filters / Reminders row stay centred together.
+
+## v27 (2026-11-14)
+
+- The dark overlay at 0:13.5 now stays on through "one round at a time" and fades out at 0:18.6, before "Here's how it works".
+- The logo and "Built for Meta VR Hackathon" lift away at 0:15 (as "it's a game to clear your inbox" starts).
+- Then, on the same overlay: "Clear your email inbox" (white) rises in once the logo has cleared, and "one round at a time" (mint, the Keyboard Smash green) builds from the centre word by word as it's said.
+
+## v26 (2026-11-14)
+
+- The sword shot after the 0:06 split is now `vr-video/09-kyoto-v3-controller/cut-0m13s.mp4` at real speed (frames 1 to 58 of 75), replacing the slow-motion version: an email floats up, the blade cuts it to pieces at 6.8 s (on "sword"), and the next email arrives before "Or a flamethrower?". A katana hit sits on that cut.
+
+## v25 (2026-11-14)
+
+- 0:11 to 0:20 is one continuous clip, `vr-video/02-keyboard/smash-intro.mp4` (12 s), from "smash" to the agent scene at normal speed (frames 1 to 272; its last 3 s, the monitor powering down, are left out). It replaces the long smash and the Round 1 clip.
+- The logo moment at 0:13.5 (Keyboard Smash logo, dark shade, Meta mark and "Built for Meta VR Hackathon") stays, now over the continuing smash; with no cut to hide, the shade fades in with the logo again rather than darkening ahead of it.
+- Keyboard hits (axe swing, chop, glass) moved onto the clip's nine biggest impacts.
+
+## v24 (2026-11-14)
+
+- The sword split now lands at 0:06 (`T_SWORD` 6.0 in `scenes/film.js`), on "But have you tried a…"; she says "sword" at 7.0 over the sword clip. The hook is 6 s.
+- To fill the 1.9 s to the flamethrower, the 1 s sword clip plays at half speed with motion interpolation (`work/footage/sword-slow`, made with ffmpeg's minterpolate): a slow-motion slash, then its second swing lands on the next email just before "Or a flamethrower?". A 2 s sword clip would play at real speed instead.
+- 0:13: the long smash now darkens almost to black over its last 0.6 s (the logo's shade comes in early and darker), the round starts under it, and the logo and "Built for Meta VR Hackathon" come up out of the dark.
+- Keyboard hits have more punch: each is now LumberHack's axe swing (just before), its chop, and the glass crunch, on the long smash's three hits, the round's two smashes, and Keyboard Smash's level cuts.
+
+## v23 (2026-11-14)
+
+- Music: the Kyoto song (`vr3/play/public/audio/kyoto/music.m4a`, the user's own track) instead of Inferno's, with the same handling: no fade in, starting 2:23 in so the song's own ending closes the film, about 13 dB under the voice in the hook and about 15 dB under elsewhere, about -20 LUFS in the gameplay outro. Picture unchanged.
+
+## v22 (2026-11-14)
+
+- The Keyboard Smash logo at 0:13.5 now sits over a dark shade (a soft radial vignette) that fades in over 0.35 s and out over 0.5 s, so the logo is in focus and the round comes back gently.
+- Under the logo: the Meta mark (drawn as an SVG, a blue gradient loop, not Meta's official file) and "Built for Meta VR Hackathon", sliding in just after the logo and out with it.
+- The moment is 2.2 s (was 2.0) so the line has time to be read; the logo sits a little higher to make room.
+
+## v21 (2026-11-14)
+
+- Music "right away": no fade in, and it now starts 2:23 into the Inferno track, so the track's own ending closes the film and the opening is its loudest stretch. Under the 7 s hook it ducks less (`HOOK_DUCK_DB` -7), sitting about 13 dB under the voice so it's heard from the first frame; everywhere else it's as before (`DUCK_DB` -13).
+- The 0:07 slash "split the screen and transition to game play footage quickly, more umph": the pink streak cuts across the whole screen at -14 degrees, the white screen splits along it and both halves are flung apart (accelerating, with a shake), the gameplay (the sword clip) shows through the opening gap and punches in from 122% as the halves clear; the streak flares wide in the seam. The white flash is gone. A heavier hit lands on the split (a katana slash and a glass crunch).
+- The clips' own sound was never in the mix (only their pictures are used), so they are at 0% already.
+
+## v20 (2026-11-14)
+
+- The new 7 s `vr-video/02-keyboard/one-round.mp4` fills 0:13.5 to 0:20.1 on its own (frames 1 to 198 of 210): countdown 3-2-1 under the Keyboard Smash logo, FIGHT!, the cruise email out of the monitor, a smash at its frame 125 and another at 178. The long-smash filler from v19 is gone.
+- Keyboard hits moved to the two smashes.
+
+## v19 (2026-11-14)
+
+- After the smash (0:13.5) the film now cuts straight into `vr-video/02-keyboard/one-round.mp4`, all 4 s of it from the countdown, replacing the level select. It plays to 0:17.5.
+- The Keyboard Smash level's logo (`logos/office.webp`) pops into the centre as the round starts, holds, and lifts away, 2 s in all, gone by FIGHT!.
+- The clip is 4 s and the stretch to the agent scene (0:20.1) is 6.6 s, so the last 2.6 s are more of `smash-long.mp4` (its frames 84 to 162, more keyboard hits). A ~7 s round clip would replace that.
+- The cursor click on Clean Your Inbox and the dip through dark are gone with the level select. The keyboard hits moved with the picture (the round's smash at its frame 95, the long smash's frames 93, 126, 143).
+
+## v18 (2026-11-14), sound back in
+
+- Music: the Inferno level's track (`vr3/play/public/audio/inferno/music.m4a`) from 1:00 into it, faded in and out. It ducks 13 dB under the voice with a look-ahead, so it sits about 18 dB below the voice while she speaks (-35.7 LUFS against -17.5), comes up in the gaps, and plays at about -21 LUFS in the 20 s gameplay outro. Knobs: `DUCK_DB`, `BED_DB`, `END_DB`, `MUSIC_FROM` in `tools/mix.py`.
+- Hits, the game's own sounds, each levelled to the same loudness first and then set about 10 dB under the voice (`SFX_DB`, `SFX_NORM`):
+  - sword: the slash through the inbox, the sword clip, "slash" (Haunted Hall), "cut it up" and the level cuts (Kyoto, castle, space), the seated player's three cuts;
+  - fire: the flamethrower catching, Inferno's cuts;
+  - melt: "burn" (Toxic Danger) and the lab's cuts;
+  - keyboard: the long smash's three hits, the Round 1 smash, Keyboard Smash's cuts;
+  - LumberHack's chops; cuts in the level holds and the outro play quieter than the first.
+- 63 hits in all (`buildHits()` in `scenes/film.js`). No blips, whooshes, room tones or stings: the old v1 set stays off.
+
+## v17 (2026-11-14)
+
+- "One round at a time" through "Here's how it works" (0:17.1 to 0:20.1, 3.0 s) now plays `vr-video/02-keyboard/one-round.mp4` from frame 18 (just after the "2" of the countdown): ROUND 1, 16 UNREAD EMAILS, "1", FIGHT!, the first email ("You WON a free cruise") out of the monitor, and the keyboard smashing it as the agent window comes in. It replaces my old Kyoto round intro.
+- The level select stays on "Built for the Meta Start Hackathon, it's a game to clear your inbox" (0:13.5 to 0:17.1) with the cursor clicking Clean Your Inbox on "clear". If the clip should cover that line too, the window from the smash's fade to the agent scene is 6.6 s, so it would need about 7 s.
+
+## v16 (2026-11-14)
+
+- "smash" now uses `vr-video/02-keyboard/smash-long.mp4` (6 s) and keeps playing through "your way to Inbox Zero!" (2.4 s on screen, the monitor flashing SMASH and KEYBOARD), then fades out into a dark blur of the level select, which sharpens into the real home screen as "Built for the Meta Start Hackathon" starts (`T_SMASH_END` in `scenes/film.js`, 0.45 s after the line ends).
+- The logo slam on "Inbox Zero" and its glide into the home screen are gone; the home screen's own logo carries it.
+
+## v15 (2026-11-14)
+
+- "Slash, burn, and smash" (0:09.7) now uses the user's own captures from `vr-video/`:
+  - "slash" (0.58 s): `03-haunted/slash.mp4` frames 1 to 18, the blade mid-cut from the first frame.
+  - "burn" (0.8 s): `04-toxic/melt.mp4` frames 33 to 57, the email at its heaviest melt.
+  - "smash" (1.4 s): `02-keyboard/smash.mp4` frames 10 to 52, the keyboard hitting the monitor (frame 13) just after "smash", then the screen glitching.
+
+## v14 (2026-11-14)
+
+- The two shots after the hook are the user's own headset captures from `vr-video/`:
+  - "But have you tried a sword?" (7.5 s, 0.43 s on screen): `09-kyoto-v3-controller/sword-slash.mp4`, its first 13 frames, opening mid-cut with the paper pieces flying.
+  - "Or a flamethrower?" (7.9 s, 1.77 s): `06-inferno/flamethrower.mp4`, frames 8 to 60, so the email catches fire (frame 14) just after "flamethrower" and burns down to the next email.
+- The "Slash, burn, and smash" cuts at 0:09.7 still use my desktop captures (all game footage is due to be redone).
+
+## v13 (2026-11-14)
+
+- "Make the filter and badge better - matching the vibe of the rest of it": Filters and Reminders are no longer white pills. Each is a small app icon in the same family as the main one (a purple tile with a funnel, an orange tile with a bell, the label underneath), sitting in a row under the Inbox icon and building from the centre.
+- Filters pulses while it "works" (the count dips and comes back); Reminders rings its bell.
+- The strike-through is gone. On "But have you tried a sword?" each icon gets a red cross badge, in the style of the count badge, and droops to grey, one after the other.
+- I read "the filter and badge" as these two; the red count badge itself is unchanged.
+
+## v12 (2026-11-14)
+
+- "Make the intro 7 seconds - right before the slash": the lead-in before the voice is 0.4 s (was 1.0 s), so the slash lands at 7.0 s. Everything after is 0.6 s earlier; the film is 2:35 (155.6 s).
+- "Make that more interesting and fun": the hook now piles up.
+  - Little envelopes fly in from every edge and drop into the icon: a burst of 16 as the badge rolls to 181, then one for each later +1. The badge pops and the icon gives a small kick as each lands.
+  - The badge swells as the number climbs, and the icon jiggles harder the fuller it gets (it holds still for the last 0.4 s before the sword).
+  - Eight notification banners drop in either side and pile up, a little crooked, with the game's demo mail (Pizza Palace, Prince Adewale, Crypto Kevin…).
+  - Filters visibly fails: the count dips from 183 to 176 as it arrives, then climbs straight back. Reminders rings its bell, and the next banner is Calendar Robot's "Reminder: reminder about reminders" (+3).
+  - The sword cuts the whole pile in two: banners, icon, badge and chips.
+
+## v11 (2026-11-14)
+
+- The hook is now an iPhone-style app icon ("make that look like a iphone app icon and badge that is going up then the badges under it"): a blue rounded-square mail icon labelled "Inbox" (a generic envelope, not Apple's Mail icon) whose red badge rolls from 122 up to 181 on "181", pops as it lands, then keeps creeping (to 187 by the slash). The icon floats gently.
+- "Filters" and "Reminders" now sit under the icon, larger, arriving on their words and building from the centre; they're struck through on "But have you tried a sword?".
+- The sword slash still splits it: the icon and badge fly up, the base, label and chips fall.
+- The end ("And it really does clear your inbox") still uses the inbox card, unchanged.
+
+## v10 (2026-11-14)
+
+- The voiceover now has the same sound as the game's How to Play lines ("make the voice over have the same robotic / game as the how to play sound", "for video"). `tools/voicefx.py` imports the chain straight from `vr3/play/tools/howtovoice.py`: an announcer EQ and hard compression, an 8-bit crushed copy mixed in at 35% (`DIGITAL`), a light two-voice chorus and a 70/140 ms slapback. If the game's chain is changed, running `python3 tools/voicefx.py && python3 tools/mix.py` brings the film along.
+- It replaces v4 to v9's reverb, robot and grain layers (`STYLE = 'layers'` in `tools/voicefx.py` brings them back).
+- Picture unchanged from v9.
+
 ## v9 (2026-11-13)
 
 - The seated scene uses the new, more animated take, `vr-email-throw-transparent.mov` (14 s, ProRes 4444 with alpha; a copy is in `work/seated3/src/`). Same layout as v8: bottom left, over Kyoto at night with petals and motes.
