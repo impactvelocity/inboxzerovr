@@ -6,7 +6,7 @@ import * as THREE from 'three';
  * viewer (weapon.html), so a prop looks the same in both. `blend` is the level's time of day,
  * 0 at its start lighting and 1 at its end.
  */
-export type LevelId = 'lumber' | 'knockout' | 'kyoto' | 'office' | 'castle' | 'lab' | 'office2' | 'space' | 'inferno';
+export type LevelId = 'lumber' | 'kyoto' | 'office' | 'castle' | 'lab' | 'office2' | 'space' | 'inferno';
 
 interface Rig { sky: [string, string]; ground: [string, string]; ambient: [number, number];
   key: { colour: [string, string]; power: [number, number]; from: [number, number, number] };
@@ -44,10 +44,6 @@ const RIGS: Record<Exclude<LevelId, 'kyoto'>, Rig> = {
   lumber: { sky: ['#fff1d6', '#5a66b8'], ground: ['#b8763f', '#1c1a3a'], ambient: [2.1, 1.0],
     key: { colour: ['#ffe1a8', '#aab8ff'], power: [2.2, 0.8], from: [-1.2, 2.2, 1.0] },
     fill: { colour: ['#ffb24d', '#ffa23a'], power: [0.3, 3.6], at: [-2.0, 2.3, -0.8], reach: 8 } },
-  // Fight night: warm broadcast light with the blue canvas thrown back up; then the house goes dark and the ring floodlights come straight down, crimson from the red corner.
-  knockout: { sky: ['#fff1d8', '#5a66c8'], ground: ['#4a63d0', '#1a2166'], ambient: [1.9, 0.85],
-    key: { colour: ['#fff6e6', '#dbe7ff'], power: [2.0, 2.7], from: [0.25, 3, 0.9] },
-    fill: { colour: ['#ffb45e', '#ff4a66'], power: [2.5, 4], at: [-2.2, 1.5, -0.5], reach: 8 } },
 };
 
 export function levelLights(id: Exclude<LevelId, 'kyoto'>) {

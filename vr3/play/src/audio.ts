@@ -100,6 +100,8 @@ export class GardenMusic {
     const a = this.anthem;
     return a && this.celebrating() && isFinite(a.duration) && a.duration > 0 ? Math.min(1, a.currentTime / a.duration) : -1;
   }
+  /** Seconds into the celebration song, or -1 if none is playing (for the end's words to follow it: src/endlyrics.ts). */
+  celebrationTime() { return this.anthem && this.celebrating() && !this.anthem.paused ? this.anthem.currentTime : -1; }
   /** Is a celebration song playing (not yet over)? */
   celebrating() { return !!this.anthem && this.anthemWant > 0 && !this.anthem.ended && !this.anthemFailed && this.enabled; }
   /**

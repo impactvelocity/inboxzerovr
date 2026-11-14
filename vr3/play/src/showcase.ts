@@ -64,8 +64,6 @@ const SHOWS: Record<string, Show> = {
     air: { colours: ['#ffffff', '#7df3ff', '#ff8ae6', '#cfc4ff'], count: 70, size: [3, 8], drift: [-1.5, 0], sway: 0, glow: true, twinkle: 0.4 } },
   inferno: { lights: 'inferno', weapon: r => import('./weapons/flamethrower').then(m => m.buildFlameThrower(r)), long: 0.36, card: painted(() => import('./levels/infernocard').then(m => m.infernoCard), true), email: from('Promo'), hot: '#ffd27a',
     air: { colours: ['#ffc23d', '#ff7a1e', '#ff3d2e', '#fff1c4'], count: 56, size: [4, 10], drift: [0.05, 0.42], sway: 0.14, glow: true, twinkle: 0.6 }, jet: ['#fff3c2', '#ffc23d', '#ff7a1e', '#ff3d2e'] },
-  knockout: { lights: 'knockout', weapon: r => import('./weapons/glove').then(m => m.buildGlove(r)), long: 0.42, card: painted(() => import('./levels/knockoutcard').then(m => m.knockoutCard)), email: from('Newsletter'), hot: '#fff0b8',
-    air: { colours: ['#ffd24a', '#ff5a5a', '#6fa8ff', '#fff6d8'], count: 40, size: [4, 9], drift: [0.02, -0.12], sway: 0.1, glow: true, twinkle: 0.9 } },
   lumber: { lights: 'lumber', weapon: r => import('./weapons/axe').then(m => m.buildAxe(r)), long: 0.72, card: painted(() => import('./levels/lumbercard').then(m => m.lumberCard)), email: from('Tracking'), hot: '#ffe2a0',
     air: { colours: ['#f6a81c', '#ee7a1a', '#d9471c', '#f3c53a'], count: 40, size: [8, 16], drift: [-0.24, -0.2], sway: 0.16, glow: false, twinkle: 0 } },
 };

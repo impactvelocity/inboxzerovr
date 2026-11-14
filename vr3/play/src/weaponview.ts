@@ -18,7 +18,6 @@ const builders = {
   knight: { level: 'castle', build: () => import('./weapons/knightsword').then(m => m.buildKnightSword) },
   sprayer: { level: 'lab', build: () => import('./weapons/sprayer').then(m => m.buildSprayer) },
   axe: { level: 'lumber', build: () => import('./weapons/axe').then(m => m.buildAxe) },
-  glove: { level: 'knockout', build: () => import('./weapons/glove').then(m => m.buildGlove) },
   saber: { level: 'space', build: () => import('./weapons/saber').then(m => m.buildSaber) },
   flamethrower: { level: 'inferno', build: () => import('./weapons/flamethrower').then(m => m.buildFlameThrower) },
 } as const;

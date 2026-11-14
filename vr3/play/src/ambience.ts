@@ -48,6 +48,15 @@ export function humVariant(level: string): string {
 const HUM_DEFAULT: Record<string, string> = { lab: 'd' };
 
 const BASE = `${import.meta.env.BASE_URL}audio/`;
+/**
+ * A sound's bytes. Effects are named .wav here but ship as FLAC (lossless, half the size, no silence added at the
+ * start: tools/flac.mjs), so a .wav is asked for as .flac first; a WAV a tool has just written, not yet converted,
+ * still plays.
+ */
+function fetchSound(name: string): Promise<ArrayBuffer> {
+  const get = (file: string) => fetch(BASE + file).then(response => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(`${file}: ${response.status}`))));
+  return name.endsWith('.wav') ? get(`${name.slice(0, -4)}.flac`).catch(() => get(name)) : get(name);
+}
 const SWINGS = 6;                   // swing1.wav (a light flick) .. swing6.wav (a long sweep)
 /** The letters' own sounds (letters.ts), from the Unity game: one arriving, cut, kept, taken hold of. */
 // ('sort', the Unity game's chime, is no longer loaded: the user disliked it, 2026-11-11, "remove it from everywhere")
@@ -116,8 +125,7 @@ export class GardenSounds {
   onSwing: ((strength: number, tip: Vector3) => void) | null = null;
 
   /** Fetch a sound; `as` is the name it is known by once loaded (a variant standing in for the usual file). */
-  private load = (name: string, as = name) => fetch(BASE + name)
-    .then(response => (response.ok ? response.arrayBuffer() : Promise.reject(new Error(`${name}: ${response.status}`))))
+  private load = (name: string, as = name) => fetchSound(name)
     .then(data => { this.files.set(as, data); this.decode(); })
     .catch(() => { /* a missing sound is silence, never an error on screen */ });
 
@@ -225,7 +233,7 @@ export class GardenSounds {
     for (let i = 1; i <= SWINGS; i++) void load(`swing${i}.wav`);
     for (const name of SHOTS) void load(`${name}.wav`);
     // Kyoto's own cuts, and the samurai's yells and grunts (tools/kyotosounds.py)
-    for (const name of ['slash1', 'slash2', 'slash3', 'slash4', 'slash5', 'yell1', 'yell2', 'yell3', 'yell4', 'arm1', 'arm2', 'arm3', 'arm4', 'stinger1', 'stinger2']) void load(`kyoto/${name}.wav`);
+    for (const name of ['slash1', 'slash2', 'slash3', 'slash4', 'slash5', 'yell1', 'yell2', 'yell3', 'yell4', 'arm1', 'arm2', 'arm3', 'arm4', 'stinger2']) void load(`kyoto/${name}.wav`);      // (stinger1 is not played any more, so not loaded: its file stays)
     fetch(`${BASE}hum.json`).then(response => (response.ok ? response.json() : Promise.reject(new Error('no hum'))))
       .then((loop: LoopInfo) => { this.humLoop = loop; void load('hum.mp3'); }).catch(() => { /* no hum: the live blade is silent */ });
   }

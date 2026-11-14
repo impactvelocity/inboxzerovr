@@ -318,7 +318,7 @@ async function main() {
       const pixelRatio = world.renderer.getPixelRatio();
       now.place.update(dt,eye,pixelRatio,blade);
       letters.setBeat(music.pulse());      // the end of a game moves to the music
-      letters.setEndSong(music.celebrating(), music.celebrationProgress());      // and waits for its song to end, going dark with it
+      letters.setEndSong(music.celebrating(), music.celebrationProgress(), music.celebrationTime());      // and waits for its song to end, going dark with it
       dictate.update(dt, letters.progress.recording);      // the real mic (dictate.ts): its take ends by itself, and stops if the game moves on
       music.setSoft(letters.progress.recording ? (dictate.live ? 0.12 : 0.3) : 1);
       sounds.setRecordSoft(letters.progress.recording ? (dictate.live ? 1 : 0.75) : 0);      // (and the level's background steps back too: 2026-11-13)      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
@@ -395,7 +395,7 @@ async function main() {
   });
   // The level to open on: the address bar's (?level=castle, a hidden one too), else the one last played if it
   // is still shown (v1's opens v2), else Kyoto.
-  const first = levelById(query.get('level')) ?? shownById(remembered('vr3.level')) ?? LEVELS[0];
+  const first = levelById(query.get('level')) ?? shownById(query.get('level')) ?? shownById(remembered('vr3.level')) ?? LEVELS[0];      // (shownById: an old ?level=office opens Keyboard Smash)
   letters.setActive(false);        // the home screen comes first: nothing arrives until Start
   enter(now);
   if (first.id !== 'kyoto') await choose(first); else home.select('kyoto');

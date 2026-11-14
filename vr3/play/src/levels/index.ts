@@ -4,19 +4,16 @@ import { KYOTO_FX } from '../swingfx';
 import type { HeldSpec } from '../weapons/held';
 import { buildAxe } from '../weapons/axe';
 import { buildFlameThrower } from '../weapons/flamethrower';
-import { buildGlove } from '../weapons/glove';
 import { buildKeyboard } from '../weapons/keyboard';
 import { buildKnightSword } from '../weapons/knightsword';
 import { buildSaber } from '../weapons/saber';
 import { buildSprayer } from '../weapons/sprayer';
 import type { StageDef } from './backdrop';
 import { castleFx, castleLetters, castleSound, castleStage } from './castle';
-import { knockoutFx, knockoutLetters, knockoutSound, knockoutStage } from './knockout';
 import { infernoFx, infernoLetters, infernoSound, infernoStage } from './inferno';
 import { labFx, labLetters, labSound, labStage } from './lab';
 import type { LevelId } from './lights';
 import { lumberFx, lumberLetters, lumberSound, lumberStage } from './lumber';
-import { officeFx, officeLetters, officeSound, officeStage } from './office';
 import { office2Fx, office2Letters, office2Sound, office2Stage } from './office2';
 import { spaceFx, spaceLetters, spaceSound, spaceStage } from './space';
 import type { FxStyle, LevelSound } from './types';
@@ -49,7 +46,7 @@ export interface Level {
   /** Kyoto has neither: its backdrop and katana are its own files. */
   stage: StageDef | null;
   held: ((renderer: WebGLRenderer) => HeldSpec) | null;
-  /** Kept but off the home screen and the VR menu (2026-11-12: Knockout, "boxing doesn't feel good in VR in this game"; Keyboard Smash v1, v2 now the main one). Still reachable with ?level=<id>. */
+  /** Kept but off the home screen and the VR menu (none now: Knockout and Keyboard Smash v1 were removed 2026-11-13). Still reachable with ?level=<id>. */
   hidden?: true;
   /** What comes out of a pointing tool: the lab's mist if not given, or fire (../flame.ts). */
   jet?: 'flame';
@@ -64,8 +61,6 @@ export const LEVELS: Level[] = [
   { id: 'office2', number: '02', name: 'Keyboard Smash', weapon: 'Keyboard', line: 'Smash the monitor', art: office2Stage.art, card: ['levels/office2/card-start.webp', 'levels/office2/card-end.webp'],      // (the user's card art, 2026-11-12)
     accent: '#7dffc9', ground: '#1a2a47',
     phases: ['Office hours', 'Closing time', 'After hours'], ends: ['OFFICE HOURS', 'AFTER HOURS'], letters: office2Letters, fx: office2Fx, sound: office2Sound, music: 'audio/office/music.m4a', anthem: 'audio/office/anthem.m4a', stinger: 'audio/stingers/office.m4a', stage: office2Stage, held: buildKeyboard },
-  { id: 'office', number: '02', name: 'Keyboard Smash v1', hidden: true, weapon: 'Keyboard', line: 'You have mail', art: officeStage.art, accent: '#7dffc9', ground: '#1a2a47',
-    phases: ['Office hours', 'Closing time', 'After hours'], ends: ['OFFICE HOURS', 'AFTER HOURS'], letters: officeLetters, fx: officeFx, sound: officeSound, music: null, stinger: 'audio/stingers/office.m4a', stage: officeStage, held: buildKeyboard },
   { id: 'castle', number: '03', name: 'Haunted Halls', weapon: 'Sword', line: 'Royal dispatches', art: castleStage.art, card: ['levels/castle/card-start.webp', 'levels/castle/card-end.webp'],      // (the user's card art, 2026-11-12)
     accent: '#b79cff', ground: '#120d1c',
     phases: ['Candlelight', 'Witching hour', 'Haunted'], ends: ['CANDLELIGHT', 'HAUNTED'], letters: castleLetters, fx: castleFx, sound: castleSound, music: 'audio/castle/music.m4a', anthem: 'audio/castle/anthem.m4a', stinger: 'audio/stingers/castle.m4a', stage: castleStage, held: buildKnightSword },
@@ -83,9 +78,6 @@ export const LEVELS: Level[] = [
     accent: '#ff8a3d', ground: '#1a0f12',
     phases: ['Stoked', 'Banked', 'Lights out'], ends: ['STOKED', 'LIGHTS OUT'], letters: infernoLetters, fx: infernoFx, sound: infernoSound, music: 'audio/inferno/music.m4a', anthem: 'audio/inferno/anthem.m4a', stinger: 'audio/stingers/inferno.m4a',      // (its end song: the user's "Inbox Zero", 2026-11-13)
     stage: infernoStage, held: buildFlameThrower, jet: 'flame' },
-  // Knockout (asked for on 2026-11-12): the main event from inside the ring, the mail the evening paper flung in over the ropes, the weapon a boxing glove: it is punched, not cut (letters.ts, "the punch"). Its music is the user's to add (its sting is theirs: 2026-11-12).
-  { id: 'knockout', number: '08', hidden: true, name: 'Knockout', weapon: 'Glove', line: 'The main event', art: knockoutStage.art, accent: '#ffcf4a', ground: '#0d1030',
-    phases: ['Main event', 'Lights down', 'Final round'], ends: ['MAIN EVENT', 'FINAL ROUND'], letters: knockoutLetters, fx: knockoutFx, sound: knockoutSound, music: null, stinger: 'audio/stingers/knockout.m4a', stage: knockoutStage, held: buildGlove },
   // LumberHack (asked for on 2026-11-12): a timber yard in autumn, the mail flung out of the barn's hatch, the weapon an axe. Its music is the user's to add (its sting is theirs: 2026-11-12).
   { id: 'lumber', number: '07', name: 'LumberHack', weapon: 'Axe', line: 'Timber post', art: lumberStage.art, card: ['levels/lumber/card-start.webp', 'levels/lumber/card-end.webp'],      // (the user's card art, 2026-11-12)
     accent: '#ffc440', ground: '#2a1a12',
@@ -94,5 +86,5 @@ export const LEVELS: Level[] = [
 /** The levels to choose from: the home screen's cards and the menu in VR. */
 export const SHOWN: Level[] = LEVELS.filter(level => !level.hidden);
 export const levelById = (id: string | null | undefined) => LEVELS.find(level => level.id === id) ?? null;
-/** A level to open on: a hidden one only when asked for by name (?level=), never from an old saved pick (v1's pick opens v2). */
+/** A level to open on: a hidden one only when asked for by name (?level=), never from an old saved pick (a pick of the removed v1 office opens v2). */
 export const shownById = (id: string | null | undefined) => { const level = levelById(id === 'office' ? 'office2' : id); return level && !level.hidden ? level : null; };

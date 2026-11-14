@@ -9,6 +9,9 @@ import { makeSurface, Painter, type Surface } from './mail/painter';
 import * as PixelFont from './mail/pixelFont';
 import { createRoundUi, MARKS } from './roundui';
 import { dictate } from './dictate';
+import { thumb } from './thumbs';
+import { endingFor, lastWordAt, lyricLayout, lyricWords, LYRICS_TUNE, type LyricWord } from './endlyrics';
+import { ANTHEM_SECONDS } from './levels/anthems';
 /** The word for one left for later in round two. */
 const LATER = '#ffb347';
 
@@ -832,7 +835,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    * be cut up (or in the lab, sprayed away) like any letter (asked for on 2026-11-11). It is a flat slab
    * the logo's shape, painted with the logo and see-through where the picture is.
    */
-  const LOGO_FILE: Record<string, string> = { lumber: 'lumber', knockout: 'knockout', kyoto: 'kyoto', office: 'office', office2: 'office', castle: 'castle', lab: 'lab', space: 'space', inferno: 'inferno' };
+  const LOGO_FILE: Record<string, string> = { lumber: 'lumber', kyoto: 'kyoto', office2: 'office', castle: 'castle', lab: 'lab', space: 'space', inferno: 'inferno' };
   const LOGO_WIDTH = 0.66;      // (a bit smaller since 2026-11-12; smaller again as it came nearer, so it looks a little bigger than it did)
   // The end, tried as pure hitting (2026-11-12: "try end with no grab, but its same position now, but make the weapon hit
   // even if its further way, so its just hitting and slashing a fun mayhem"): nothing there can be taken hold of, and
@@ -843,9 +846,13 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   /** How far past the weapon's tip a swing reaches the end's pieces, how much wider it gets per metre out, and how fast the tip must move. */
   const END_REACH = { metres: 2.6, widen: 0.4, speed: 1.2 };
   const GRAB_LOOKS = 1.2;      // the end's pieces, held: how much bigger they look than where they floated, at most
-  const END_DARKEN_SECONDS = 20;      // the end of a game: how long the level takes to go all the way to black behind the logo, from the end's start
+  /** How dark the end gets by the song's end: nearly black, not quite; the last of it is OUTRO_BLACK's quick fade as the game leaves (2026-11-13: "90% dark nearly, and then just a quick fade to black before exiting"). */
+  const END_DARKEST = 0.9;
+  const END_DARKEN_SECONDS = 20;      // the end of a game with no end song playing: how long the level takes to go all the way to black behind the logo, from the end's start (with one, it is black as the song ends)
   const LOGO_DISTANCE = 0.95;   // how far in front of the seat it floats (2026-11-12: "make the logo a closer, it feels far away to smash"; it was 1.45 m. Then 1.0, then 1.2: "a bit further from the player", then 0.95: "make end logo and parts closer to player")
   const LOGO_SPREAD = LOGO_DISTANCE / 1.0;      // the bar above it and the line below it, spaced to stay at the same angles as at 1 m
+  /** Seconds after a level's end song before the screen is black and the game goes home (2026-11-13: "a second and half after song before exit"). */
+  const AFTER_SONG = 1.5;
   const OUTRO_BLACK = 0.5;      // seconds the last fade to black takes, once the end is over (2026-11-13: "quick")
   const SMASHED_TO_HOME = 2.5;  // seconds after the logo is smashed before the game fades out to the home screen (2026-11-12)
   // hits it takes: the last of them breaks it up. A boss to beat (2026-11-12: "many more cuts to beat, more like a boss
@@ -915,7 +922,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    * Each floats until it is cut (or melted), then it is gone.
    */
   interface Show {
-    body: Body; sheet: Sheet; kind: 'logo' | 'line' | 'bar' | 'card' | 'start' | 'exit' | 'mail' | 'bonus'; home: Vector3; face: Quaternion; gone: number; id?: string; delay?: number;
+    body: Body; sheet: Sheet; kind: 'logo' | 'line' | 'bar' | 'card' | 'start' | 'exit' | 'mail' | 'bonus' | 'word'; home: Vector3; face: Quaternion; gone: number; id?: string; delay?: number;
+    /** The end, v2: a word of the end song (src/endlyrics.ts); when it floats off the top (clock), and when the logo's smash reaches it. */
+    word?: LyricWord; leaving?: number; smashAt?: number;
     /** The end (2026-11-11, "more chaotic"): where it is anchored now (it glides to home), whether the hand has it, or it was thrown and flies free. */
     anchor: Vector3; held: boolean; free: boolean; grip: Matrix4; vel: Vector3; spin: Vector3;
     /** An email of the day swirling round: how far out, how high, round which way, how fast; and when it rises. */
@@ -934,7 +943,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   const shows: Show[] = [];
   /** The cards' own sheets, made for one end and let go at the next (their pieces may still be burning). */
   let oldSheets: Sheet[] = [], endSheets: Sheet[] = [];
-  const logo = { started: false, wanted: false, cutAt: -1, sparkle: 0, chime: -1, home: new Vector3(), outro: -1, homed: false, exploded: true, air: 0 };
+  const logo = { started: false, wanted: false, cutAt: -1, sparkle: 0, chime: -1, home: new Vector3(), outro: -1, homed: false, exploded: true, air: 0, shownAt: -1 };
   /** Colour a sheet for the end, from the level's look. */
   function dress(sheet: Sheet, w: number, h: number) {
     const u = sheet.material.uniforms, look = theme.look, bar = theme.bar ?? [theme.accent ?? '#f6b3cc', theme.accent ?? '#f6b3cc'];
@@ -995,9 +1004,84 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     sheet.material.uniforms.flash.value = 1;
     logoGlow.uniforms.a.value.set(bar[0]); logoGlow.uniforms.b.value.set(bar[1]);
     const glow = new Mesh(new PlaneGeometry(LOGO_WIDTH * 1.7, h * 4), logoGlow); glow.position.z = -0.04; glow.renderOrder = 1; glow.frustumCulled = false; show.body.mesh.add(glow);
-    logo.cutAt = -1; logo.sparkle = 0; logo.chime = 0;
+    logo.cutAt = -1; logo.sparkle = 0; logo.chime = 0; logo.shownAt = game.timer;
     // in it comes: a burst of the level's colours right across it, and a stinger in Kyoto
     celebrate(show.body, 1.4);      // (Kyoto's stinger played here until its end anthem came: that is the celebration now, src/audio.ts)
+    // (v2: and it smashes the song's words still there, as it lands)
+    if (lyrics.on) smashLyrics();
+  }
+
+  // ---- the end, v2 (2026-11-13): the end song's words, word by word, to cut; then the logo smashes what is left (src/endlyrics.ts)
+  const lyrics = { on: false, words: [] as LyricWord[], made: new Set<LyricWord>(), home: new Vector3(), logoAt: 0, logoCalled: false, glows: [] as Mesh[] };
+  /**
+   * Song seconds now: the end song's own clock while it plays; with no song (music off), the end's; once it is over, past
+   * every word. (The song starts as the last email goes, a little before the end: its clock is ahead of the end's. One that
+   * stalls, still loading, is not waited on for more than a couple of seconds: the words go on by the end's clock.)
+   */
+  function songNow() { return endSong && endSongTime >= 0 ? Math.max(endSongTime, game.timer - 2.5) : endSongHeard ? 1e6 : game.timer; }
+  function startLyrics() {
+    const bar = theme.bar ?? [theme.accent ?? '#f6b3cc', theme.accent ?? '#f6b3cc'];
+    lyrics.on = true; lyrics.made.clear(); lyrics.logoCalled = false;
+    lyrics.words = lyricWords(theme.id, [bar[0], bar[1]]);      // (the level's two colours: the letters' outline runs from one to the other)
+    lyrics.logoAt = lastWordAt(lyrics.words) + LYRICS_TUNE.logoAfter;
+    lyrics.home.set(seat.x * 0.7, seat.y + LYRICS_TUNE.up, seat.z - LOGO_DISTANCE - LYRICS_TUNE.further);
+    void logoSheet(LOGO_FILE[theme.id] ?? 'kyoto').catch(() => undefined);      // (its logo loaded now, so it lands on time)
+  }
+  function stepLyrics() {
+    const t = songNow(), places = lyricLayout(lyrics.words, t);
+    for (const [w, p] of places) {
+      let show = shows.find(x => x.word === w);
+      const at = v3.set(lyrics.home.x + p.x, lyrics.home.y + p.y, lyrics.home.z + p.z);
+      if (!show) {
+        if (lyrics.made.has(w) || lyrics.logoCalled) continue;
+        // in it comes, at the middle of the line, a little sparkle in the level's colours
+        lyrics.made.add(w);
+        const sheet = canvasSheet(w.canvas); endSheets.push(sheet);
+        show = putOut(sheet, w.width, w.height, 'word', at, facing(at));
+        show.word = w; show.body.mesh.scale.setScalar(0.001);
+        // its glow: added light on a plane just behind it, a child of it, so it goes when the word is cut
+        const glowMap = new CanvasTexture(w.glow); glowMap.colorSpace = SRGBColorSpace;
+        const glow = new Mesh(new PlaneGeometry(w.width, w.height), new MeshBasicMaterial({ map: glowMap, transparent: true, blending: AdditiveBlending, depthWrite: false, opacity: 0.9 }));
+        glow.position.z = -0.012; glow.renderOrder = 1; glow.frustumCulled = false; show.body.mesh.add(glow); lyrics.glows.push(glow);
+        fx.spray(at, at, v1.set(0, 0.35, 0.2), 0, 6, false, 0.45);
+        continue;
+      }
+      if (show.gone >= 0 || show.smashAt !== undefined) continue;
+      show.home.copy(at);
+      if (p.off && show.leaving === undefined) show.leaving = clock;
+    }
+    // past the lines kept: up and away, small, then gone without a sound (it was not cut)
+    for (const show of shows) {
+      if (show.kind !== 'word' || show.leaving === undefined || show.gone >= 0) continue;
+      if (clock - show.leaving > 1.1) { show.gone = game.timer; if (loose.includes(show.body)) remove(show.body); }
+    }
+    // the last word sung and a breath after: the logo comes, and smashes what is left
+    if (!lyrics.logoCalled && t >= lyrics.logoAt) { lyrics.logoCalled = true; void showLogo(); }
+    for (const show of shows) if (show.kind === 'word' && show.smashAt !== undefined && show.gone < 0 && clock >= show.smashAt) smashWord(show);
+  }
+  /** The logo lands: every word still there is hit, the nearest first, a ripple out from it. */
+  function smashLyrics() {
+    const left = shows.filter(x => x.kind === 'word' && x.gone < 0 && x.leaving === undefined && loose.includes(x.body));
+    left.sort((a, b) => a.body.mesh.position.distanceTo(logo.home) - b.body.mesh.position.distanceTo(logo.home));
+    left.forEach((show, i) => { show.smashAt = clock + 0.18 + i * 0.035; });
+    if (left.length) {
+      hitStop = Math.max(hitStop, 0.09);
+      sounds.play('throw', 0.7, 0.8, logo.home); buzz('left', 0.9, 110); buzz('right', 0.9, 110);
+    }
+  }
+  function smashWord(show: Show) {
+    const body = show.body, from = body.mesh.position;
+    const push = new Vector3().copy(from).sub(logo.home); push.z = Math.max(0.1, push.z); push.normalize().multiplyScalar(26).add(v1.set(rand(4), 6 + Math.random() * 6, 0));
+    fx.spray(from, from, v2.copy(push).multiplyScalar(0.04), 4, 14, true, 0.8);
+    sounds.play(Math.random() < 0.5 ? 'slash1' : 'slash2', 0.9 + Math.random() * 0.25, 0.45, from);
+    const dx = rand(1), dy = 1;
+    if (!slice(body, rand(0.01), rand(0.004), dx / Math.hypot(dx, dy), dy / Math.hypot(dx, dy), push, 1)) burst(body, push);
+  }
+  /** The end's words: let go of (the end is over, or the game left). */
+  function stopLyrics() {
+    lyrics.on = false; lyrics.words = []; lyrics.made.clear(); lyrics.logoCalled = false;
+    for (const glow of lyrics.glows) { glow.removeFromParent(); glow.geometry.dispose(); const m = glow.material as MeshBasicMaterial; m.map?.dispose(); m.dispose(); }
+    lyrics.glows = [];
   }
   /** Bursts of the level's petals, sparks and bits, across the logo and up out of it. */
   function celebrate(body: Body, strength: number) {
@@ -1056,6 +1140,19 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       look3.position.copy(body.mesh.position); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z);
       body.mesh.quaternion.copy(look3.quaternion).multiply(q1.setFromAxisAngle(v2.set(Math.sin(t * 0.8 + o.phase), Math.cos(t * 0.6), Math.sin(t * 1.1) * 0.7).normalize(), 0.35 + 0.15 * Math.sin(t * 2 + o.phase)));
       body.mesh.scale.setScalar(Math.max(0.001, ease) * swell * (show.kind === 'mail' ? MAIL_SIZE : 1));
+      return;
+    }
+    if (show.kind === 'word') {
+      // the end song's words (v2): pop in, glide to their place in the line as it moves, bob a little, swell on the beat
+      const pop = Math.min(1, t / 0.25), back = 1 + 2.2 * Math.pow(pop - 1, 3) + 1.2 * Math.pow(pop - 1, 2);
+      const leave = show.leaving === undefined ? 0 : clamp01((clock - show.leaving) / 1.1);
+      show.anchor.lerp(show.home, 1 - Math.exp(-dt * (show.leaving === undefined ? 16 : 3)));
+      const phase = (show.word?.index ?? 0) * 0.9 + (show.word?.line ?? 0) * 2.3;
+      body.mesh.position.copy(show.anchor); body.mesh.position.y += Math.sin(t * 2.2 + phase) * 0.006;
+      look3.position.copy(body.mesh.position); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z);
+      body.mesh.quaternion.copy(look3.quaternion).multiply(q1.setFromAxisAngle(v1.set(0, 0, 1), Math.sin(t * 1.7 + phase) * 0.03));
+      body.mesh.scale.setScalar(Math.max(0.001, back * (1 + 0.06 * beatNow) * (1 - leave * 0.85)));
+      u.flash.value *= Math.exp(-dt * 3);
       return;
     }
     if (show.kind !== 'logo') {
@@ -1117,7 +1214,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     }
   }
   /** The beat to move to: the music's (main.ts sets it, from the song's pulse), or a steady one if it has none. */
-  let beatNow = 0, beatIn = -1, endSong = false, endSongHeard = false, endSongAt = -1;
+  let beatNow = 0, beatIn = -1, endSong = false, endSongHeard = false, endSongAt = -1, endSongTime = -1;
   function stepBeat(dt: number) {
     const want = beatIn >= 0 ? beatIn : Math.pow(1 - ((clock * 2) % 1), 4);      // (120 beats a minute, a kick on each)
     beatNow = want > beatNow ? want : beatNow * Math.exp(-dt * 7);
@@ -1363,7 +1460,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     clear();
     game.phase = 'menu'; menu.levels = levels; menu.chosen = chosen; menu.age = 0; menu.pending = null; menu.from = quick ? DIP : 1;
     const ticket = ++menuTicket;
-    const images = await Promise.all(levels.map(l => picture(l.picture)));
+    const images = await Promise.all(levels.map(l => thumb(l.picture).then(picture)));      // (small copies: src/thumbs.ts)
     const logoImage = await picture(`logos/${LOGO_FILE[chosen] ?? 'kyoto'}.webp`);
     if (ticket !== menuTicket || game.phase !== 'menu') return;
     const level = levels.find(l => l.id === chosen) ?? levels[0];
@@ -2474,7 +2571,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // made ready: a tick in the hand and the sound of a blade drawn (the glow and the hum are liveblade.ts and ambience.ts)
       buzz('right', 0.3, 18);
       // (Kyoto has four takes of its own, one picked each time, never the same twice running, so the sword is not the same each time it is made ready)
-      if (theme.id === 'kyoto') { let take = lastArm; while (take === lastArm) take = 1 + Math.floor(Math.random() * 4); lastArm = take; sounds.play(`arm${take}`, 0.95 + Math.random() * 0.1, 0.55, blade.tip); }
+      // (LumberHack's axe makes Kyoto's sword sound too: its four takes copied to lumber/arm1..4, 2026-11-13, "make lumberhack use the same
+      // activate sound as kyoto"; its own heavy blade, lumber/arm, is unused now)
+      if (theme.id === 'kyoto' || theme.id === 'lumber') { let take = lastArm; while (take === lastArm) take = 1 + Math.floor(Math.random() * 4); lastArm = take; sounds.play(`arm${take}`, 0.95 + Math.random() * 0.1, 0.55, blade.tip); }
       else sounds.play('arm', 0.97 + Math.random() * 0.08, 0.5, spraying && tool ? tool.origin : blade.tip);
     }
     armed = live;
@@ -2509,7 +2608,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           // of them a hit bursts the piece rather than splitting it (tryBlade).
           if (body.age < 0.06 || body.mode === 'sent' || body.melting || body.sheet.burn > 0.93 || noCut.has(body)) continue;
           const kept = body.mode === 'kept';
-          const endPiece = game.phase === 'summary' && shows.some(x => x.body === body && (x.kind === 'logo' || x.kind === 'bar' || x.kind === 'line'));
+          const endPiece = game.phase === 'summary' && shows.some(x => x.body === body && (x.kind === 'logo' || x.kind === 'bar' || x.kind === 'line' || x.kind === 'word'));
           if (!tryBlade(body, blade, dt, true, undefined, loose.length >= MAX_LOOSE, endPiece)) continue;
           if (kept) {
             // cut out of the air: what falls is only paper. Saved in round one, it stays saved (2026-11-12: "when an
@@ -2635,7 +2734,12 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       game.timer += dt;
       // the end comes in once the line under the title has settled
       // (the logo 0.3 s into the end; 0.9 s until 2026-11-13: "make the end show the logo sooner")
-      if (!logo.started && game.timer > (theme.logoAfter ?? 0.3)) { logo.started = true; if (END_PARTS) handBar(['bar']); else ui.dismissBar(); void showLogo(); }
+      // (v2, where the level has it: the song's words first, and the logo after them: stepLyrics)
+      if (!logo.started && game.timer > (theme.logoAfter ?? 0.3)) {
+        logo.started = true; if (END_PARTS) handBar(['bar']); else ui.dismissBar();
+        if (endingFor(theme.id) === 'v2') startLyrics(); else void showLogo();
+      }
+      if (lyrics.on) stepLyrics();
       // The line under it (CLEARED 10 EMAILS) only once the logo is in (2026-11-12: "load in the logo first and then after
       // thats in, load the subtitle badge after"): it pops in as a title's line does, then becomes something to cut.
       if (endLine.introAt >= 0 && clock >= endLine.introAt) { endLine.introAt = -1; ui.intro('', endLine.text); endLine.handAt = clock + 0.75; }
@@ -2660,8 +2764,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
         if (show.sheet.burnAt === Infinity && show.sheet.cutAt < Infinity) show.sheet.burnAt = clock + (show.kind === 'logo' ? 7 : 3);
         show.held = false;
       const at = show.body.mesh.position, big = show.kind === 'logo';
-        fx.spray(at, at, v1.set(0, 1.2, 0.4), big ? 16 : 8, big ? 60 : 30, true, big ? 2 : 1.2);
-        sounds.play('blip', big ? 2 : 1.7, 0.6, at); if (big) sounds.play('blip', 2.52, 0.5, at);
+        fx.spray(at, at, v1.set(0, 1.2, 0.4), big ? 16 : show.kind === 'word' ? 5 : 8, big ? 60 : show.kind === 'word' ? 18 : 30, true, big ? 2 : 1.2);
+        // (a word cut away: a high blip, softer, so a line of them is not a racket; smashed by the logo, its own slash is enough)
+        if (show.kind !== 'word') sounds.play('blip', big ? 2 : 1.7, 0.6, at); else if (show.smashAt === undefined) sounds.play('blip', 1.9 + Math.random() * 0.3, 0.35, at);
+        if (big) sounds.play('blip', 2.52, 0.5, at);
         if (big) { logo.cutAt = game.timer; logoGlow.uniforms.strength.value = 0; }
         buzz('right', big ? 0.9 : 0.6, big ? 90 : 50); buzz('left', 0.5, 60);
       }
@@ -2680,7 +2786,15 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       const smashed = !!logoNow && logoNow.gone >= 0 && game.timer - logoNow.gone > SMASHED_TO_HOME;
       // (2026-11-12, later: "go to menu when end song is done, not just when everything is smashed or cut": with an
       // end song it is over when the song is, cut up or not, and not before; with none, as above)
-      const over = game.timer > 60 || (endSongHeard ? !endSong : smashed || (!shows.length ? game.timer > 9 : !left ? cutUp : game.timer > 20));
+      // (v2: the logo comes only after the words, near the song's end, so it is over once the logo is smashed, or the song is
+      // done and the logo has been up eight seconds (twenty with no song); never before the logo has come; a minute and a quarter at most)
+      const v2Over = logo.shownAt >= 0 && (smashed || ((endSongHeard ? !endSong : true) && game.timer - logo.shownAt > (endSongHeard ? 8 : 20)));
+      // (2026-11-13, latest: a level with an end song has an end its song's length, fixed, so the song is never cut off:
+      // black a second and a half after it, the last half second of that the quick fade, whatever has been smashed)
+      const songLength = ANTHEM_SECONDS[theme.id];
+      const over = songLength ? game.timer >= songLength + AFTER_SONG - OUTRO_BLACK
+        : lyrics.on ? game.timer > 75 || v2Over
+        : game.timer > 60 || (endSongHeard ? !endSong : smashed || (!shows.length ? game.timer > 9 : !left ? cutUp : game.timer > 20));
       if (over && logo.outro < 0) logo.outro = 0;
       if (logo.outro >= 0) {
         logo.outro += dt;
@@ -2707,7 +2821,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // end"): a little dim at once, then steadily down to black over twenty seconds from the end's start, whatever the song.
       // The logo and what floats near it stay lit (the dimmer is a shell round the head, behind them). (Until now it was
       // 90% dark three quarters through the end song, and black only once the end was over.)
-      const through = clamp01(game.timer / END_DARKEN_SECONDS), darkening = 0.35 + 0.65 * through * through * (3 - 2 * through);
+      // (2026-11-13, later: "make dynamic to the length of the song": black just as the end song ends, by how far through
+      // it is; twenty seconds still where there is no song, or its length is not known yet; black once it is over)
+      const fixedSong = ANTHEM_SECONDS[theme.id];      // (fixed per level since 2026-11-13, "not dynamic": src/levels/anthems.ts)
+      const through = fixedSong ? clamp01(game.timer / fixedSong) : clamp01(game.timer / END_DARKEN_SECONDS), darkening = 0.35 + (END_DARKEST - 0.35) * through * through * (3 - 2 * through);
       const m = dimmer.material as MeshBasicMaterial, want = game.phase === 'summary' ? Math.max(darkening, logo.outro >= 0 ? 0.9 : 0) : game.phase === 'menu' ? 0.55 : 0;
       m.opacity += (want - m.opacity) * (1 - Math.exp(-dt * (want > m.opacity ? 4 : 2.5)));
       dimmer.visible = m.opacity > 0.005; dimmer.position.copy(head);
@@ -2780,11 +2897,11 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     // (the line under the title, how many were cleared, is back on 2026-11-12: the "subtitle" to cut and grab at the end)
     endLine.text = `Cleared ${game.dayTotal || game.total} Email${(game.dayTotal || game.total) === 1 ? '' : 's'}`; endLine.introAt = -1; endLine.handAt = -1;
     ui.complete(game.total);      // (the line comes after the logo: endLine)
-    logo.started = false; endSongHeard = false;
+    logo.started = false; logo.shownAt = -1; endSongHeard = false; stopLyrics();
   }
   /** The end of a game is over: the logo goes if it is still there. */
   function endLogo() {
-    logo.wanted = false; logo.started = false; endLine.introAt = -1; endLine.handAt = -1;
+    logo.wanted = false; logo.started = false; logo.shownAt = -1; endLine.introAt = -1; endLine.handAt = -1; stopLyrics();
     for (const show of shows) if (loose.includes(show.body) && show.body.mode === 'show') remove(show.body);
     shows.length = 0;
     logo.cutAt = -1; logo.chime = -1;
@@ -2902,7 +3019,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     mail.abandon();      // (a game left before its end: nothing is done to Gmail)
     for (let i = loose.length - 1; i >= 0; i--) remove(loose[i]);
     if (current) { remove(current.body); current = null; }
-    away = null; logo.wanted = false; logo.started = false; shows.length = 0; logo.cutAt = -1; logo.outro = -1; logo.homed = false;
+    away = null; logo.wanted = false; logo.started = false; shows.length = 0; logo.cutAt = -1; logo.outro = -1; logo.homed = false; logo.shownAt = -1; stopLyrics();
     menuTicket++; for (const mesh of menu.planes) { root.remove(mesh); mesh.geometry.dispose(); const m = mesh.material as MeshBasicMaterial; m.map?.dispose(); m.dispose(); } menu.planes = []; menu.pending = null; noCut.clear(); menu.on = null;
     prepared = null; preparedEmail = null;
     for (const set of [sheetSets.ink, sheetSets.paint]) for (const s of set ?? []) { s.users = 0; s.reserved = false; s.cutAt = Infinity; s.burnAt = Infinity; s.burn = 0; }
@@ -2943,7 +3060,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     /** The music's beat now, 0 to 1 (-1: none to go by), for the end to move to. */
     setBeat(v: number) { beatIn = v; },
     /** Is the end song (a level's anthem) playing? The end waits for it. */
-    setEndSong(on: boolean, at = -1) { endSong = on; if (on) endSongHeard = true; endSongAt = on ? at : -1; },
+    setEndSong(on: boolean, at = -1, time = -1) { endSong = on; if (on) endSongHeard = true; endSongAt = on ? at : -1; endSongTime = on ? time : -1; },
     /** How much dangerous mail is in front of the player just now: 0 none, 1 a radioactive letter not yet melted. */
     hazard: () => (theme.mechanic === 'punch' ? Math.min(1, hype) : current && current.body.hazard && !current.body.melting ? 1 : 0),      // (Knockout: how worked up the crowd is)
     /** Knockout: how hard the glove has just landed (0 to 1), once; then 0 until it lands again. For the glove's own squash. */
@@ -2959,7 +3076,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       inTheAir: loose.length, sheetsInUse: sheets.filter(s => s.users > 0 || s.reserved).length, handValid: hand.valid, handPressed: hand.pressed,
       reachOnLetter: hand.onLetter, triggerToCut: tune.triggerToCut, armed,
       /** The end (and the menu): what is out to be cut, * held, ~ thrown and flying free, x gone. */
-      end: shows.map(x => x.kind + (x.held ? '*' : '') + (x.free ? '~' : '') + (x.gone >= 0 ? 'x' : '')).join(' ') }),
+      end: shows.map(x => (x.word ? `"${x.word.text}"` : x.kind) + (x.held ? '*' : '') + (x.free ? '~' : '') + (x.gone >= 0 ? 'x' : '')).join(' '),
+      /** The end's version for this level (v1 the logo alone, v2 the song's words first: src/endlyrics.ts), and the song's clock as the words follow it. */
+      ending: endingFor(theme.id), songTime: lyrics.on ? +songNow().toFixed(2) : -1 }),
     /** For checks and the console: act on the letter in front of you without a controller. */
     debug: { cut: keyCut, keep: keyKeep, hold: keySend, round: (n: number) => beginIntro(n), end: () => { game.phase = 'play'; beginSummary(); },
       /** Write another email on the letter in front of you (a long one, to see it scroll). */

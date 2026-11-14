@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { World } from '@iwsdk/core';
 import * as PixelFont from './mail/pixelFont';
+import { labelGlow, labelLetters } from './pixelLabel';
 
 /**
  * What a round shows besides the letters themselves:
@@ -324,20 +325,16 @@ export function createRoundUi(world: World) {
       subtitle.texture.needsUpdate = true;
     }
   }
-  /** What is in the ring: the seconds left, or GO. */
+  /** What is in the ring: the seconds left, or FIGHT! / REPLY!. In the look every label in the level has (pixelLabel.ts). */
   function drawCount(text: string) {
     const { g, w, h } = count;
     g.clearRect(0, 0, w, h);
-    const cell = Math.max(4, Math.min(24, Math.floor(440 / Math.max(1, PixelFont.widthCells(text.toUpperCase())))));
-    // a block of the level's colour round each lit cell, then the number in white over it: chunky, arcade-like
-    const upper = text.toUpperCase(), wide = PixelFont.width(upper, cell);
-    const left = Math.round(w / 2 - wide / 2), top = Math.round(h / 2 - PixelFont.Rows * cell / 2), edge = Math.max(3, Math.round(cell * 0.35));
-    // a hard pixel shadow down and to the right, then the block in the level's two colours top to bottom (like the bar)
-    const drop = Math.max(4, Math.round(cell * 0.45));
-    g.fillStyle = 'rgba(0,0,0,.8)'; PixelFont.cells(upper, left + drop, top + drop, cell, (x, y, cw, ch) => g.fillRect(x - edge, y - edge, cw + 2 * edge, ch + 2 * edge));
-    const sweep = g.createLinearGradient(0, top - edge, 0, top + PixelFont.Rows * cell + edge); sweep.addColorStop(0, barColours[0]); sweep.addColorStop(1, barColours[1]);
-    g.fillStyle = sweep; PixelFont.cells(upper, left, top, cell, (x, y, cw, ch) => g.fillRect(x - edge, y - edge, cw + 2 * edge, ch + 2 * edge));
-    g.fillStyle = '#ffffff'; PixelFont.cells(upper, left, top, cell, (x, y, cw, ch) => g.fillRect(x, y, cw, ch));
+    const upper = text.toUpperCase();
+    // (room left round it for the glow)
+    const cell = Math.max(4, Math.min(24, Math.floor(440 / Math.max(1, PixelFont.widthCells(upper))), Math.floor((h - 40) / (PixelFont.Rows + 2))));
+    const left = Math.round(w / 2 - PixelFont.width(upper, cell) / 2), top = Math.round(h / 2 - PixelFont.Rows * cell / 2);
+    labelGlow(g, upper, left, top, cell, barColours);
+    labelLetters(g, upper, left, top, cell, barColours);
     count.texture.needsUpdate = true;
   }
   /** A colour mixed towards another: `t` of the way. */
@@ -481,15 +478,14 @@ export function createRoundUi(world: World) {
     }
     dictation.texture.needsUpdate = true;
   }
-  function drawToast(text: string, colour: string) {
+  /** A word where something was decided (LATER, SAVED, SENT, BACK!, ...). In the level's two colours, the look every label in it has (pixelLabel.ts, 2026-11-13): each word had its own colour before. */
+  function drawToast(text: string) {
     const { g, w, h } = toast;
     g.clearRect(0, 0, w, h);
-    // chunky, like the countdown: a block of the colour round each cell, white on top, a dark drop under it all
-    const upper = text.toUpperCase(), cell = Math.max(4, Math.min(16, Math.floor((w - 80) / Math.max(1, PixelFont.widthCells(upper)))));
-    const wide = PixelFont.width(upper, cell), left = Math.round(w / 2 - wide / 2), top = Math.round(h / 2 - PixelFont.Rows * cell / 2), edge = Math.max(3, Math.round(cell * 0.35));
-    g.fillStyle = 'rgba(0,0,0,.7)'; PixelFont.cells(upper, left, top + edge, cell, (x, y, cw, ch) => g.fillRect(x - edge, y - edge, cw + 2 * edge, ch + 2 * edge));
-    g.fillStyle = colour; PixelFont.cells(upper, left, top, cell, (x, y, cw, ch) => g.fillRect(x - edge, y - edge, cw + 2 * edge, ch + 2 * edge));
-    g.fillStyle = '#ffffff'; PixelFont.cells(upper, left, top, cell, (x, y, cw, ch) => g.fillRect(x, y, cw, ch));
+    const upper = text.toUpperCase(), cell = Math.max(4, Math.min(16, Math.floor((w - 80) / Math.max(1, PixelFont.widthCells(upper))), Math.floor((h - 36) / (PixelFont.Rows + 1))));
+    const left = Math.round(w / 2 - PixelFont.width(upper, cell) / 2), top = Math.round(h / 2 - PixelFont.Rows * cell / 2);
+    labelGlow(g, upper, left, top, cell, barColours);
+    labelLetters(g, upper, left, top, cell, barColours);
     toast.texture.needsUpdate = true;
   }
   drawMic(false);
@@ -749,12 +745,12 @@ export function createRoundUi(world: World) {
       for (let k = 0; k < 3; k++) if (k !== which) (k === 2 ? mic : chips[k]).want = 0;
       if (stage === 'choose') dictLeave = 0; else dictation.want = 0;
       stage = 'off'; aimAt = -1;
-      drawToast('SENT', accent); toastAge = 0; toastSize = 1; toastFrom.copy(base[which].at).lerp(seat, 0.15); toastFrom.y += 0.02;      // (a little nearer, in front of the bubble as it goes)
+      drawToast('SENT'); toastAge = 0; toastSize = 1; toastFrom.copy(base[which].at).lerp(seat, 0.15); toastFrom.y += 0.02;      // (a little nearer, in front of the bubble as it goes)
       look.position.copy(toastFrom); look.lookAt(seat); toast.mesh.quaternion.copy(look.quaternion);
     },
     /** A word where something was decided. */
-    say(text: string, colour: string, at: THREE.Vector3, size = 1) {
-      drawToast(text, colour); toastAge = 0; toastFrom.copy(at); toastSize = size;
+    say(text: string, _colour: string, at: THREE.Vector3, size = 1) {      // (_colour: each word had its own; now all are the level's, pixelLabel.ts)
+      drawToast(text); toastAge = 0; toastFrom.copy(at); toastSize = size;
       look.position.copy(at); look.lookAt(seat); toast.mesh.quaternion.copy(look.quaternion);
     },
     /** Everything away (the home screen, a change of level). */

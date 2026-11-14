@@ -1,5 +1,6 @@
 import type { Level } from './levels';
 import * as PixelFont from './mail/pixelFont';
+import { thumbBackground } from './thumbs';
 
 /**
  * The home screen: the chosen level's own logo, a card for each level (Kyoto first) and Start. It
@@ -13,9 +14,7 @@ import * as PixelFont from './mail/pixelFont';
 type Air = 'petals' | 'phosphor' | 'embers' | 'bubbles' | 'stars';
 const LOGOS: Record<string, { file: string; air: Air; colours: string[] }> = {
   lumber: { file: 'lumber', air: 'petals', colours: ['#f6a81c', '#ee7a1a', '#d9471c', '#f3c53a'] },      // (its 'petals' are maple leaves)
-  knockout: { file: 'knockout', air: 'embers', colours: ['#ffd24a', '#ff5a5a', '#6fa8ff', '#fff6d8'] },
   kyoto: { file: 'kyoto', air: 'petals', colours: ['#ffc4d8', '#ff9fc0', '#fff0f5'] },
-  office: { file: 'office', air: 'phosphor', colours: ['#7dffc9', '#b8ffe4', '#f2e2bd'] },
   office2: { file: 'office', air: 'phosphor', colours: ['#7dffc9', '#b8ffe4', '#f2e2bd'] },
   castle: { file: 'castle', air: 'embers', colours: ['#ffc457', '#ff8a3d', '#b79cff', '#fff1c4'] },
   lab: { file: 'lab', air: 'bubbles', colours: ['#a6ff3d', '#5dffa1', '#e9ffd0'] },
@@ -36,7 +35,7 @@ const HACKATHON_URL = 'https://start-developer-competition-26.devpost.com/';
  */
 const ON_HEADSET = /OculusBrowser|Quest|Pacific|Pico|Wolvic/i.test(navigator.userAgent);
 
-const ANNOUNCE: Record<string, string> = { lumber: 'audio/lumber/announce.mp3', knockout: 'audio/knockout/announce.mp3', kyoto: 'audio/kyoto/announce.mp3', office: 'audio/office/announce.mp3', office2: 'audio/office/announce.mp3', castle: 'audio/castle/announce.mp3', lab: 'audio/lab/announce.mp3', inferno: 'audio/inferno/announce.mp3', space: 'audio/space/announce.mp3' };
+const ANNOUNCE: Record<string, string> = { lumber: 'audio/lumber/announce.mp3', kyoto: 'audio/kyoto/announce.mp3', office2: 'audio/office/announce.mp3', castle: 'audio/castle/announce.mp3', lab: 'audio/lab/announce.mp3', inferno: 'audio/inferno/announce.mp3', space: 'audio/space/announce.mp3' };
 
 /**
  * The main button's words and what happens before it starts a game (2026-11-13): src/mailui.ts
@@ -71,8 +70,9 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
     card.type = 'button'; card.className = 'level'; card.setAttribute('role', 'radio'); card.setAttribute('aria-checked', 'false'); card.setAttribute('aria-label', level.name);
     card.style.setProperty('--accent', level.accent);
     const [lit, dark] = level.card ?? level.art;
-    card.innerHTML = `<span class="art" style="background-image:url('${base}${lit}')"></span><span class="art end" style="background-image:url('${base}${dark}')"></span>`
+    card.innerHTML = `<span class="art"></span><span class="art end"></span>`
       + `<span class="shade"></span><span class="pick" aria-hidden="true"><canvas class="check"></canvas></span><canvas class="name" width="560" height="120" aria-hidden="true"></canvas>`;
+    thumbBackground(card.querySelector<HTMLElement>('.art')!, lit); thumbBackground(card.querySelector<HTMLElement>('.art.end')!, dark);      // (small copies: src/thumbs.ts)
     card.addEventListener('click', () => options.pick(level));      // (its sting plays as it is chosen: main.ts)
     drawCheck(card.querySelector<HTMLCanvasElement>('canvas.check')!);
     list.append(card); cards.set(level.id, card);
@@ -122,11 +122,6 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
       { shape: 'mist', count: 4, colours: ['#ffb347', '#e8452f', '#ffd98a'], size: [220, 380], vx: [-5, 8], vy: [-2, 2], life: [16, 24], alpha: 0.06, from: 'anywhere', sway: 3 },
       { shape: 'petal', count: 34, colours: ['#f6a81c', '#ee7a1a', '#d9471c', '#f3c53a', '#c22f1c'], size: [5, 10], vx: [10, 34], vy: [18, 44], life: [9, 16], alpha: 0.85, from: 'top', sway: 26 },
       { shape: 'glow', count: 18, colours: ['#ffe3a8', '#ffc56b'], size: [1.4, 3], vx: [-6, 6], vy: [-8, 3], life: [4, 8], alpha: 0.7, from: 'anywhere', sway: 10 },
-    ],
-    knockout: [
-      { shape: 'mist', count: 5, colours: ['#ff5a5a', '#3b7bff', '#ffd24a'], size: [220, 380], vx: [-6, 6], vy: [-2, 2], life: [14, 22], alpha: 0.06, from: 'anywhere', sway: 3 },
-      { shape: 'dust', count: 50, colours: ['#ffffff', '#ffe9b8'], size: [0.8, 2], vx: [-5, 5], vy: [2, 9], life: [6, 12], alpha: 0.45, from: 'anywhere', sway: 6 },
-      { shape: 'glow', count: 20, colours: ['#ffffff', '#ffd24a', '#cfe0ff'], size: [1.4, 3.2], vx: [-3, 3], vy: [-3, 3], life: [1.2, 3], alpha: 0.85, from: 'anywhere', sway: 4 },
     ],
     kyoto: [
       { shape: 'mist', count: 4, colours: ['#ff9fc0', '#b48cff'], size: [220, 380], vx: [-6, 6], vy: [-2, 2], life: [16, 24], alpha: 0.06, from: 'anywhere', sway: 4 },

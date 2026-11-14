@@ -183,6 +183,7 @@ export const spaceSound: LevelSound = {
     { name: 'signals', at: [-2.5, 0.4, -3], level: c => 0.3 * (0.4 + 0.6 * c.drift(c.t * 0.12, 7.7)) },
   ],
   occasional: [{ name: 'ping', every: [28, 60], volume: 0.4, region: [-12, 12, 0, 6, -30, -14] }],
-  // the saber's hum while its blade is out, rising as it is swung
-  hum: { level: 0.5, swing: true, fadeIn: 0.1, fadeOut: 0.2 },
+  // no hum while the blade is out (2026-11-13: "there is a humming sound ... from light saber while swinging, remove that its distracting");
+  // it was hum: { level: 0.5, swing: true, fadeIn: 0.1, fadeOut: 0.2 }, space/hum.mp3, rising as it was swung. Its ignition (arm) stays.
+  hum: null,
 };

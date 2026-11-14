@@ -199,8 +199,9 @@ export const infernoFx: FxStyle = { bit: 'petal', bits: ['#ff8a3a', '#ff5a1e'], 
 
 export const infernoSound: LevelSound = {
   id: 'inferno',
-  // round two begins with the user's own sting, played twice through (2026-11-13: "play 2 times to make it feel better";
-  // tools/level-src/inferno/fire-stringer.mp3, its silent tail cut so the second follows straight on, set to -3 dBFS)
+  // round two begins with the user's own sting, once (2026-11-13: it was played twice through, "play 2 times to make it feel better",
+  // then "the stinger for inferno repeats, just make it play once"; tools/level-src/inferno/fire-stringer.mp3 at -3 dBFS; the twice-through
+  // one is stinger2-twice-before-2026-11-13.flac there)
   roundStinger: { name: 'stinger2', volume: 0.9 },
   layers: [
     // the furnaces behind their doors, all round
