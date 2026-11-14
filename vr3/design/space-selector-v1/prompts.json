@@ -1,0 +1,15 @@
+{
+  "tool": "built-in imagegen",
+  "images": [
+    {
+      "name": "light",
+      "prompt": "Create a 16:9 landscape SPACE level-selector thumbnail as a companion to the supplied chemical lab thumbnail. Reference is for stylized faceted painterly 3D game art, simple bold shapes and thumbnail readability ONLY; replace laboratory with a spacecraft cockpit/command bridge. Ivory and dark navy/plum metal, cyan lights and magenta accents. Centred compact mail communications console with a clear cyan envelope pictogram, flanked by angled navigation consoles, chunky switches and small equipment racks. Large panoramic cockpit window above and behind central console shows deep indigo space with subtle purple nebula and small pinprick stars; no giant stars or meteor streaks. This is a finished selector illustration, show actual space through windows rather than chroma green production masks. Curved structural ribs frame view, low foreground cockpit rim with clear middle, equipment at sides. Readable central focal point, not crowded, no people, weapon, logos, readable text, UI overlays, borders or montage. LIGHT state: well-lit cream cockpit surfaces, cool white interior lights on, gentle cyan/magenta indicators. Match reference polish and art style, but unmistakably spaceship not lab. Single full-bleed 16:9 image.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-c105ad73-d91d-47fa-8f80-3a13f6a51831.png"
+    },
+    {
+      "name": "dark",
+      "prompt": "Edit this exact space level selector image into its DARK hover state. Preserve exact 16:9 camera framing, every object and silhouette, central envelope console, side navigation consoles, racks, dome, dish, buttons, window ribs, foreground rim, every star and nebula position. Change lighting only: white ceiling lights off, cabin deep navy and plum shadows, glowing cyan screens and magenta buttons/beacon become main lights with soft colorful reflections. Outside starfield slightly deeper indigo, purple nebula gently more luminous but identical shape. Moody late-night spaceship, readable thumbnail. Same faceted painterly 3D style. No new objects, text, characters, weapons, UI, borders or montage.",
+      "source": "/Users/dylanjones/.codex/generated_images/01a1ccdd-3ac1-7992-a338-e0ebc4b95327/exec-06e1a92b-9f08-4f49-a8de-60324f34c470.png"
+    }
+  ]
+}

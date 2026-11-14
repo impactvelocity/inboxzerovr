@@ -46,5 +46,7 @@ export interface LevelSound {
    * each of `sounds` (one of the level's shots), `delay` seconds later, from `at` (metres from the
    * seat) if given.
    */
+  /** A stinger of its own as round two's intro begins (public/audio/<id>/<name>.wav, kept out of set.json so a rebuild cannot drop it), and how loud. */
+  roundStinger?: { name: string; volume: number };
   afterRound?: { round: number; sounds: { name: string; delay: number; volume: number; at?: [number, number, number] }[] }[];
 }

@@ -96,7 +96,11 @@ export const spaceStage: StageDef = {
       col+=col*magenta*(.10+.10*sin(time*.7+uv.x*13.)+.15*blend);
       // and they bloom: the deck's own blurred copy, the bright of it (stronger in the dark, where they are the light)
       vec3 halo=max(coverAt(uv,4.)-vec3(.3),0.)+.5*max(coverAt(uv,6.)-vec3(.22),0.);
-      col+=halo*mix(.35,1.,blend)*(.85+.3*breath);
+      // (a little more of it, most of all at the start, since 2026-11-13: "more light glow on lights in level, but subtle"; .35 to 1 before)
+      col+=halo*mix(.5,1.15,blend)*(.85+.3*breath);
+      // and a soft wide glow round the brightest of them, wider than the bloom
+      vec3 wideGlow=max(coverAt(uv,7.)-vec3(.2),0.);
+      col+=wideGlow*(cyan+magenta+.35)*(.10+.08*blend)*(.9+.2*breath);
       // Space's light through the glass: the floor and things near the windows pick up its violet, flare with it at
       // the jump (lamp), and a little at each letter.
       float near=windowAt(uv,5.)*.6+windowAt(uv,3.)*.4;
@@ -146,19 +150,22 @@ export const spaceStage: StageDef = {
 };
 
 export const spaceLetters: LetterTheme = {
+  // (special: a priority transmission, cyan and magenta)
+  special: { colours: ['#3ef0ff', '#ff4fd8'], label: 'PRIORITY' },
   id: 'space', face: 'paint', paint: spaceCard, shape: paneSoup, mechanic: 'cut', title: 'Super Space', accent: '#35e8ff', bar: ['#ff3fc8', '#35e8ff'],
-  look: { sheet: '#f6f1ff', ink: '#1b1440', back: '#4a1c5e', selfLit: 1, night: '#f1ecff',
+  // (less glowy since 2026-11-13, "make normal emails less glowy": selfLit 1, the aura's glow .55 and 5 sparkles before)
+  look: { sheet: '#f6f1ff', ink: '#1b1440', back: '#4a1c5e', selfLit: 0.75, night: '#f1ecff',
     hover: '#d9fbff', cutWide: '#35e8ff', cutHot: '#ffffff', mark: '#ffe9a0', flash: '#eaffff', gold: '#fff0b8',
     // it goes in blocks, as pixels would, with a magenta edge
     burn: '#ff4fd8', burnStyle: 1, streak: ['#7df3ff', '#ffffff'], thread: ['#ff9be9', '#fff5fd'], aura: ['#27d9ff', '#c04dff'],
-    spell: { wisps: 0.16, sparkles: 5, trail: true, glow: 0.55 } },
+    spell: { wisps: 0.16, sparkles: 2, trail: true, glow: 0.2 } },
   // Out of the mail post's slot at the foot of the big window: small in the dark of it, then it rushes up across
   // the deck and brakes hard in front of the player, leaving lights behind it. (Before the deck, 2026-11-13, it
   // dropped out of the distance dead ahead, from 26 m.)
   origin(head: Vector3, home: Vector3, from: Vector3, via: Vector3) {
     from.copy(head).addScaledVector(paintedDirection(SLOT.u, SLOT.v, slotWay), SLOT.metres);
     via.lerpVectors(from, home, 0.55); via.y += 0.15;
-    return { scale: 0.45, pose: 'face' as const, seconds: 1.6, ease: 3, sway: 0.05 };
+    return { scale: 0.45, pose: 'face' as const, seconds: 1.2, ease: 3, sway: 0.05 };
   },
 };
 

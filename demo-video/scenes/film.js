@@ -397,15 +397,17 @@ function seated(T) {
   const o = clamp((T - a) / .35) * (1 - clamp((T - b) / .3));
   show(el, true, o, '');
   const u = T - a, slash = W('come', 'stretching') - a;
-  // clip seconds: 0 to 2.2 as it comes (the grab), 3.6 is the slash, 5 is the end
-  const MAP = [[0, 0], [2.3, 2.2], [slash, 3.6], [slash + 1.5, 5]];
-  let s = 5;
+  // v9 take (14 s): grab A at 2.0, read and throw it at 3.8, cut B at 6.4, pink slash 7.5, A and B again, last pink slash 12.0.
+  // The grab lands on "come to you", the first cut on "stretching", the rest plays near real speed in the hold after it.
+  const end = b + .3 - a;
+  const MAP = [[0, 0], [2.3, 2.0], [slash - 1.0, 4.0], [slash, 6.4], [end, 13.9]];
+  let s = 13.9;
   for (let k = 0; k < MAP.length - 1; k++) if (u <= MAP[k + 1][0]) { const [u0, s0] = MAP[k], [u1, s1] = MAP[k + 1]; s = s0 + (s1 - s0) * clamp((u - u0) / (u1 - u0)); break; }
-  const f = clamp(Math.round(s * 30) + 1, 1, FOOT.seated2);
-  const src = `../work/footage/seated2/${String(f).padStart(4, '0')}.png`;
+  const f = clamp(Math.round(s * 30) + 1, 1, FOOT.seated3);
+  const src = `../work/footage/seated3/${String(f).padStart(4, '0')}.png`;
   if (!$('seat-img').src.endsWith(src.slice(2))) $('seat-img').src = src;
   // the garden: a slow push in, petals drifting across, warm motes rising
-  $('seat-bg').firstElementChild.style.transform = `scale(${1.04 + .05 * clamp(u / 5.5)}) translateX(${-12 * clamp(u / 5.5)}px)`;
+  $('seat-bg').firstElementChild.style.transform = `scale(${1.04 + .06 * clamp(u / end)}) translateX(${-16 * clamp(u / end)}px)`;
   seatMotes.forEach((m, k) => {
     const petal = k < 30, sp = petal ? 70 + 90 * rnd(k + 1) : 18 + 22 * rnd(k + 1);
     const t = u + rnd(k + 2) * 12;

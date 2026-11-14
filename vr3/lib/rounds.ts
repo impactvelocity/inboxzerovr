@@ -44,6 +44,7 @@ export const RoundEmail = z.object({
   summary: z.string().trim().max(400).describe('What the email says and wants, in at most about 180 characters, written short in the sender\'s own voice. Keep names, dates, times and amounts. Never the full body.'),
   category: CategoryInput.optional().describe('Which card it is shown on: Work, Personal, Calendar (people and invites), Newsletter, Promo, Spam, Receipt, Bill, Tracking, Social or Alert.'),
   important: z.boolean().optional().describe('True if the user would want to keep it or act on it (a person writing to them, a bill, a failed payment or delivery, a security alert). Guessed from the category if left out.'),
+  special: z.boolean().optional().describe('True for the one or two emails that matter most right now (a deadline today, a failed payment, someone waiting on them). The game shows them with the level\'s own special effect, so they stand out. Use it sparingly: one or two a round.'),
   replies: z.array(z.string().trim().min(1).max(220)).max(2).optional().describe('Up to two short reply drafts (one or two sentences each) the user can pick in round two. Write them for anything a person sent that expects an answer.'),
   amount: z.string().trim().max(20).optional().describe('Receipt and Bill: the amount as written, like $84.10.'),
   due: z.string().trim().max(24).optional().describe('Bill: when it is due, like Fri 14 Nov, or "payment failed".'),
@@ -198,6 +199,7 @@ export function toCard(e: RoundEmail): AgentCard {
     // (two bubbles in round two always: what the agent wrote, topped up with a stock one)
     replies: [given[0] ?? stock[0], given[1] ?? stock[given[0] === stock[1] ? 0 : 1]],
   };
+  if (e.special) card.special = true;
   if (isPersonCard(category)) card.body = clamp(e.summary, 200);
   else if (category === 'Newsletter' || category === 'Promo') card.items = [clamp(card.subject.toUpperCase(), 30), ...lines(e.summary, 40).slice(0, 4)];
   else card.snippet = clamp(e.summary, 80);

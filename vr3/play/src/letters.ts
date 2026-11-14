@@ -50,8 +50,8 @@ const tune = {
   arriveSeconds: 1.15,  // from the garden to where it arrives
   waitSeconds: 7,       // how long the slow approach takes; then, not dealt with, it goes past
   passSeconds: 0.6,     // how long going past the shoulder takes
-  nextAfterCut: 0.5,    // the pause before the next letter
-  nextAfterKeep: 0.45,
+  nextAfterCut: 0.2,    // the pause before the next letter (0.5 until 2026-11-13: "sometimes just sits after clashing or throwing an email")
+  nextAfterKeep: 0.2,   // (0.45 until 2026-11-13)
   hitDepth: 0.12,       // the blade cuts a letter it passes this close to, in front or behind
   hitMargin: 0.05,      // and this far past its edges
   cutToMiddle: 0.3,     // a cut is drawn this far towards the letter's middle, so a clipped corner is still a proper cut
@@ -105,6 +105,9 @@ const spray = {
   // touch, but like .3 ms of touching, so it feels a bit more holding to finish"; one touch did it from 2026-11-11). While
   // it is held on, froth (or scorch) grows where it lands; then it spreads over the whole sheet by itself and melts.
   hold: 0.3,            // seconds of the jet on a letter before it is done (a gap longer than gap starts it again)
+  // The lab's sprayer is back to one touch (2026-11-13: "make the spray more reactive like it was before, the new higher hit
+  // or longer makes it not fun"); Inferno's flame keeps the hold.
+  labHold: 0,
   gap: 0.12,
   spread: 0.5,          // seconds the froth takes to cover an ordinary letter
   hazardSpread: 0.85,   // and a radioactive one
@@ -201,6 +204,13 @@ export interface LetterTheme {
   /** Is this one dangerous (the lab's radioactive mail)? It takes more, and glows. */
   hazard?(email: Email): boolean;
   /**
+   * How this level shows a special email (Email.special, 2026-11-13: "make each level have its own special email effect,
+   * like it does for radioactive, so that the mcp / api can make something as important"): a glow round its edge in these
+   * two colours with a shimmer crossing it, a frame and a badge on the card, a chime as it comes and a burst when it is
+   * done with. A level with `hazard` (the lab, Inferno) shows it as its hazard instead.
+   */
+  special?: { colours: [string, string]; label: string };
+  /**
    * The letters are not in the air: each is shown on something that stands in the level (the second
    * office's monitor) until it is dealt with. `place` is asked every frame where that is (world
    * space) and returns the letter's size there (1: full size). A hit anywhere in the box that runs
@@ -218,7 +228,7 @@ const KYOTO_LOOK: LetterLook = {
   hover: '#ffdae7', cutWide: '#ffc3dd', cutHot: '#fff6f9', mark: '#ffe7ae', flash: '#fff8e4', gold: '#ffecbf',
   burn: '#ffcee4', burnStyle: 0, streak: ['#ffdaec', '#ffffff'], thread: ['#ffddec', '#fff9fb'], aura: null,
 };
-export const KYOTO_LETTERS: LetterTheme = { id: 'kyoto', face: 'ink', look: KYOTO_LOOK, mechanic: 'cut', title: '', accent: '#f6b3cc', bar: ['#ff5fa2', '#ffc46b'] };
+export const KYOTO_LETTERS: LetterTheme = { special: { colours: ['#ffd36b', '#ff5f8f'], label: 'SEALED' }, id: 'kyoto', face: 'ink', look: KYOTO_LOOK, mechanic: 'cut', title: '', accent: '#f6b3cc', bar: ['#ff5fa2', '#ffc46b'] };
 
 /** What the right hand points with in a 'spray' level: the nozzle, and how hard the trigger is held. */
 export interface SprayTool { origin: Vector3; direction: Vector3; on: number; valid: boolean }
@@ -247,7 +257,7 @@ interface Body {
   /** Its size (a held letter is smaller), and for a thrown one, how far it has gone towards being kept: -1 not yet, then 0 to 1. */
   size: number; going: number; from: Vector3;
   /** Sprayed: how much of what it takes it has had (1 and it melts), whether it is a radioactive one, and whether it is melting. */
-  dose: number; hazard: boolean; melting: boolean;
+  dose: number; hazard: boolean; melting: boolean; special?: boolean;
   /** Hit by the mist: the froth is spreading over it by itself (dose climbs to 1, then it melts). */
   spreading: boolean;
   /** Seconds the jet has been held on it so far, and when it last touched it (spray.hold of it, and it is done). */
@@ -294,7 +304,7 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
       flashColor: { value: new Color() }, goldColor: { value: new Color() }, burnColor: { value: new Color() },
       selfLit: { value: 0 }, burnStyle: { value: 0 }, time: { value: 0 },
       night: { value: 0 }, hover: { value: 0 }, burn: { value: 0 }, gold: { value: 0 }, mark: { value: 0 }, flash: { value: 0 },
-      wet: { value: 0 }, hazard: { value: 0 }, splats: { value: [new Vector3(), new Vector3(), new Vector3()] },
+      wet: { value: 0 }, hazard: { value: 0 }, special: { value: 0 }, specialA: { value: new Color() }, specialB: { value: new Color() }, splats: { value: [new Vector3(), new Vector3(), new Vector3()] },
       cutout: { value: 0 }, span: { value: new Vector2(W, H) }, shine: { value: -1 },
       cuts: { value: [new Vector4(), new Vector4(), new Vector4()] }, heat: { value: new Vector3() },
       // punched (Knockout): where on the sheet (x, y), how wide, how deep. Every piece of the sheet keeps them.
@@ -330,7 +340,7 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
       }`,
     fragmentShader: /* glsl */ `
       uniform sampler2D face,paperMap,scrollMap; uniform vec4 scrollBox,scrollAt; uniform vec3 scrollInk[2]; uniform vec3 sheet,inkColor,backColor,nightTint,hoverColor,cutWide,cutHot,markColor,flashColor,goldColor,burnColor,heat;
-      uniform float paint,selfLit,burnStyle,time,night,hover,burn,gold,mark,flash,wet,hazard,cutout,shine; uniform vec2 span; uniform vec4 cuts[3]; uniform vec4 dents[3]; uniform vec3 splats[3];
+      uniform float paint,selfLit,burnStyle,time,night,hover,burn,gold,mark,flash,wet,hazard,special,cutout,shine; uniform vec3 specialA,specialB; uniform vec2 span; uniform vec4 cuts[3]; uniform vec4 dents[3]; uniform vec3 splats[3];
       varying vec2 vUv; varying vec3 vNormalW; varying vec3 vWorld; varying float vFront;
       float grain(vec2 p){ vec2 i=floor(p),f=fract(p); f=f*f*(3.-2.*f);
         float a=fract(sin(dot(i,vec2(12.9898,78.233)))*43758.5453), b=fract(sin(dot(i+vec2(1.,0.),vec2(12.9898,78.233)))*43758.5453);
@@ -407,6 +417,12 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
         // Radioactive: it glows from its edges, beating.
         vec3 hazardEdge=burnStyle>2.5?vec3(1.,.36,.05):vec3(.45,1.,.15), hazardFill=burnStyle>2.5?vec3(.42,.12,.02):vec3(.16,.4,.04);      // (Inferno's smoulders; the lab's is radioactive)
         c+=(hazardEdge*(1.-smoothstep(0.,.2,edge))*(.55+.45*sin(time*5.))*.9+hazardFill*.2)*hazard*(1.-wet*.6)*(burnStyle>2.5?.55:.45);      // (Inferno's toned down: "reduce a bit of the glow / fire around emails", 2026-11-13; the lab's, "make the radio active emails the glow effect more subtle", the same day: it was 1)
+        // Special (the one that matters): the level's two colours glowing round its edge, beating, a band of light
+        // running round the rim, and a slow shimmer crossing the face.
+        float around=fract(atan(vUv.y-.5,vUv.x-.5)/6.2832-time*.45);
+        vec3 specialC=mix(specialA,specialB,.5+.5*sin(time*2.6+vUv.x*4.));
+        c+=specialC*(1.-smoothstep(0.,.13,edge))*(.45+.35*sin(time*4.)+.9*exp(-pow(around-.5,2.)*90.))*special*(1.-wet*.6);
+        c+=specialB*exp(-pow(fract(vUv.x*.6+vUv.y*.4-time*.3)-.5,2.)*70.)*.18*special;
         // A hand close enough to take it warms its edge.
         c+=hoverColor*(1.-smoothstep(0.,.08,edge))*hover*.45;
         // Where the blade went through, it glows and cools.
@@ -547,7 +563,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   const sheetSets: { ink: Sheet[]; paint: Sheet[] | null } = { ink: makeSheets(false), paint: null };
   let sheets = sheetSets.ink;
   // The glow round a whole letter, in the levels that have one.
-  const aura = auraMaterial(), auraGeometry = new PlaneGeometry(W * 2.1, H * 3).translate(0, H * 0.18, -0.014);
+  const aura = auraMaterial(), specialAura = auraMaterial(), auraGeometry = new PlaneGeometry(W * 2.1, H * 3).translate(0, H * 0.18, -0.014);
   // ...and the motes of light that go round its edge, in the levels with a spell on their mail
   const SPARKLES = 40, sparkle = sparkleMaterial(), sparkleGeometry = new BufferGeometry();
   { const seeds = new Float32Array(SPARKLES * 2); for (let i = 0; i < seeds.length; i++) seeds[i] = Math.random();
@@ -615,7 +631,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const u = sheet.material.uniforms;
     u.hover.value = 0; u.burn.value = 0; u.gold.value = 0; u.mark.value = 0; u.flash.value = 0; (u.heat.value as Vector3).set(0, 0, 0);
     (u.scrollBox.value as Vector4).set(0, 0, 0, 0); sheet.scrollRange = 0;
-    u.wet.value = 0; u.hazard.value = 0; for (const dent of u.dents.value as Vector4[]) dent.set(0, 0, 0, 0); for (const splat of u.splats.value as Vector3[]) splat.set(0, 0, 0);
+    u.wet.value = 0; u.hazard.value = 0; u.special.value = 0; for (const dent of u.dents.value as Vector4[]) dent.set(0, 0, 0, 0); for (const splat of u.splats.value as Vector3[]) splat.set(0, 0, 0);
     sheet.splats = 0; sheet.cuts = 0; sheet.cutAt = Infinity; sheet.burnAt = Infinity; sheet.burn = 0;
     return sheet;
   }
@@ -671,8 +687,37 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   }
   /** `still`: a card nobody will read (the day's mail, swirling at the end): a long message is cut short, not scrolled. */
   function drawEmail(sheet: Sheet, email: Email, still = false) {
-    if (theme.paint) { paintFace(sheet, email, !!theme.hazard?.(email), still); return; }
-    setScroll(sheet, emailCard(painter, sheet.surface, email, !still));
+    if (theme.paint) paintFace(sheet, email, isHazard(email), still);
+    else setScroll(sheet, emailCard(painter, sheet.surface, email, !still));
+    if (isSpecial(email)) specialCard(sheet);
+  }
+  /** Is it this level's hazard (the lab's radioactive mail, Inferno's smoulder)? A special email is, in those levels. */
+  const isHazard = (email: Email) => !!theme.hazard && (theme.hazard(email) || !!email.special);
+  /** A special email shown this level's own way (not as a hazard). */
+  const isSpecial = (email: Email | null | undefined) => !!email?.special && !theme.hazard && !!theme.special;
+  /** The card of a special email: a frame round it in the level's colours, and its badge on the bottom edge. */
+  function specialCard(sheet: Sheet) {
+    const look = theme.special!, s = sheet.surface, g = s.g, w = s.canvas.width, h = s.canvas.height;      // (in pixels: drawn with no transform)
+    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
+    const line = Math.round(w * 0.012), inset = Math.round(w * 0.018);
+    const across = g.createLinearGradient(0, 0, w, h); across.addColorStop(0, look.colours[0]); across.addColorStop(1, look.colours[1]);
+    g.strokeStyle = across; g.lineWidth = line; g.beginPath(); g.roundRect(inset, inset, w - 2 * inset, h - 2 * inset, line * 2); g.stroke();
+    const size = Math.round(w * 0.03); g.font = `800 ${size}px system-ui, sans-serif`;
+    const text = `\u2605 ${look.label} \u2605`, tw = g.measureText(text).width, bw = tw + size * 1.6, bh = size * 1.7;
+    const bx = (w - bw) / 2, by = h - inset - bh / 2;
+    g.fillStyle = across; g.beginPath(); g.roundRect(bx, by - bh / 2, bw, bh, bh / 2); g.fill();
+    g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, w / 2, by + size * 0.05);
+    g.restore();
+    if (s.texture) s.texture.needsUpdate = true;
+  }
+  /** Done with a special one: a bigger burst, a rising chime, a harder thump in the hand. */
+  function specialDone(body: Body) {
+    if (!body.special) return;
+    body.special = false;
+    celebrate(body, 0.9);
+    const at = body.mesh.position;
+    sounds.play('blip', 1.6, 0.7, at); setTimeout(() => sounds.play('blip', 2.14, 0.6, at), 90);
+    buzz('right', 1, 110); hitStop = Math.max(hitStop, 0.05);
   }
   // Real mail's replies come in while the game goes on: if the email is up in round two, its bubbles change from WRITING to them.
   mail.onReplies = email => { if (game.phase === 'play' && game.round === 2 && current?.email === email && game.stage === 'pick') ui.replies(email.replies[0], email.replies[1]); };
@@ -680,6 +725,13 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     order = mail.demoEmails();
     for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
     return order;
+  }
+  /** The demo shows a special one too (one of the day's real ones, or any if there is none), so Just Play has one to see. */
+  function demoSpecial(deck: Email[]): Email[] {
+    const real = deck.map((e, i) => (e.kind === 'Real' ? i : -1)).filter(i => i >= 0);
+    const at = real.length ? real[Math.floor(Math.random() * real.length)] : Math.floor(Math.random() * deck.length);
+    if (deck.length) deck[at] = { ...deck[at], special: true };
+    return deck;
   }
   const nextEmail = (): Email => game.deck[game.dealt++];
   /** Is there another email to come in this round? */
@@ -738,11 +790,21 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const dock = theme.dock;
     if (dock) { body.size = dock.place(home, face); from.copy(home); via.copy(home); near.copy(home); start.copy(face); }
     body.mesh.position.copy(from); body.mesh.quaternion.copy(start); body.mesh.scale.setScalar(dock ? 0.001 : begin.scale);
-    body.hazard = !!(email && theme.hazard?.(email)); sheet.material.uniforms.hazard.value = body.hazard ? 1 : 0;
+    body.hazard = !!(email && isHazard(email)); sheet.material.uniforms.hazard.value = body.hazard ? 1 : 0;
+    body.special = isSpecial(email); sheet.material.uniforms.special.value = body.special ? 1 : 0;
+    if (body.special) {
+      sheet.material.uniforms.specialA.value.set(theme.special!.colours[0]); sheet.material.uniforms.specialB.value.set(theme.special!.colours[1]);
+      // (it is heralded: a chime, a step up, as it sets off)
+      sounds.play('blip', 1.34, 0.55, from); setTimeout(() => sounds.play('blip', 1.78, 0.5, from), 110);
+    }
     body.email = email;
     if (email && game.round === 1) mail.arrived(email);
     if (email && game.round === 2) { game.stage = 'pick'; game.recording = false; game.aim = -1; game.keyAim = -1; mail.want(email); ui.replies(email.replies[0], email.replies[1]); }
-    if (theme.look.aura && (!theme.hazard || body.hazard)) {
+    if (body.special) {
+      // (its own glow, in the level's special colours, whether or not the level's letters have one)
+      specialAura.uniforms.a.value.set(theme.special!.colours[0]); specialAura.uniforms.b.value.set(theme.special!.colours[1]);
+      const glow = new Mesh(auraGeometry, specialAura); glow.name = 'aura'; glow.frustumCulled = false; glow.renderOrder = 2; body.mesh.add(glow);
+    } else if (theme.look.aura && (!theme.hazard || body.hazard)) {
       const glow = new Mesh(auraGeometry, aura); glow.name = 'aura'; glow.frustumCulled = false; glow.renderOrder = 2; body.mesh.add(glow);
       if (theme.look.spell && theme.look.spell.sparkles > 0) { const motes = new Points(sparkleGeometry, sparkle); motes.name = 'spell'; motes.frustumCulled = false; motes.renderOrder = 3; body.mesh.add(motes); }
     }
@@ -1117,7 +1179,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const day = game.dayDeck.length ? game.dayDeck : game.deck;
     day.slice(0, 12).forEach((email, i, all) => {
       const sheet = freeSheet() ?? extraSheet();
-      drawEmail(sheet, email, true); sheet.material.uniforms.hazard.value = theme.hazard?.(email) ? 1 : 0;
+      drawEmail(sheet, email, true); sheet.material.uniforms.hazard.value = isHazard(email) ? 1 : 0;
       const at = new Vector3(seat.x, seat.y - 1.4, seat.z - 1);
       const show = putOut(sheet, W, H, 'mail', at, facing(at));
       // (putOut built a flat slab the letter's size; the letter's own shape is used instead)
@@ -1688,6 +1750,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     settle(letter.body, 'cut');
     counts.cut++; current = null; nextIn = tune.nextAfterCut;
     buzz('right', 0.9, 60);
+    specialDone(letter.body);
     events.on?.('cut', letter.body.mesh.position);
   }
 
@@ -1780,7 +1843,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     punchFace.copy(mesh.quaternion);
     const hits = body.knock + 1, ko = strength >= feel.hard || hits > feel.hits;
     // It is dealt with, as a cut letter is; one thrown to be kept and then punched was never kept.
-    if (letter) { settle(body, 'cut'); counts.cut++; current = null; nextIn = tune.nextAfterCut + 0.2; u.hover.value = 0; events.on?.('cut', mesh.position); }
+    if (letter) { settle(body, 'cut'); counts.cut++; current = null; nextIn = tune.nextAfterCut + 0.2; u.hover.value = 0; specialDone(body); events.on?.('cut', mesh.position); }
     else if (body.mode === 'kept') { if (!stillSaved(body)) { settle(body, 'cut'); counts.cut++; } else counts.kept++; u.mark.value = 0; u.gold.value = 0; body.going = -1; }
     // The dent, on the sheet itself, so every piece of it keeps it; and it goes when the next letter is in place.
     const slot = (dentCount.get(sheet) ?? 0) % 3; dentCount.set(sheet, slot + 1);
@@ -1977,6 +2040,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       body.vel.set(0, 0.02, 0); body.spin.set(rand(0.2), rand(0.2), rand(0.2));
       release(body, 'cut', 9);
     } else { body.mode = 'cut'; body.age = 0; body.life = 9; }
+    specialDone(body);
     events.on?.('cut', mesh.position);
   }
   /** Every frame for a body the mist has touched: the froth spreads; covered, it melts. */
@@ -2017,9 +2081,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (shows.some(x => (x.kind === 'logo' || x.kind === 'bar' || x.kind === 'line') && x.body === body)) { const turn = Math.random() * Math.PI; slice(body, at.x, at.y, Math.cos(turn), Math.sin(turn), v1.copy(tool.direction).multiplyScalar(3), 0.6); return true; }
     const x = Math.max(-W / 2 + 0.03, Math.min(W / 2 - 0.03, at.x)), y = Math.max(-H / 2 + 0.03, Math.min(H / 2 - 0.03, at.y));
     body.contact = clock - body.touchedAt <= spray.gap ? body.contact + dt : dt; body.touchedAt = clock;
-    if (body.contact < spray.hold) {
+    const hold = theme.id === 'lab' ? spray.labHold : spray.hold;
+    if (body.contact < hold) {
       // not yet: froth (or scorch) gathers where it lands, growing as it is held there
-      const u = body.sheet.material.uniforms, k = body.contact / spray.hold;
+      const u = body.sheet.material.uniforms, k = body.contact / hold;
       (u.splats.value as Vector3[])[0].set(x, y, k);
       u.wet.value = Math.max(u.wet.value as number, 0.06 * k);
       return true;
@@ -2188,6 +2253,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (away) watchAway(dt, head);
     for (const sheet of sheets) { sheet.material.uniforms.night.value = night; sheet.material.uniforms.time.value = clock; }
     aura.uniforms.time.value = clock; aura.uniforms.level.value = 1;
+    specialAura.uniforms.time.value = clock; specialAura.uniforms.level.value = 1; specialAura.uniforms.wisps.value = 0.7; specialAura.uniforms.strength.value = 0.85 + 0.25 * Math.sin(clock * 4);
     sparkle.uniforms.time.value = clock; sparkle.uniforms.pixelRatio.value = world.renderer.getPixelRatio();
 
     // ---- the letter in front of you
@@ -2651,7 +2717,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // (real mail when Gmail is chosen and in, in inbox order; otherwise the demo, shuffled: src/mail/source.ts)
       // (the demo: a different number every game, 6 to 18, asked for on 2026-11-12; real mail: the count chosen in Setup)
       const n = mail.state.count || tune.roundEmails, [few, many] = tune.demoEmails;
-      game.deck = mail.deck(n) ?? shuffled().slice(0, few + Math.floor(Math.random() * (many - few + 1))); game.kept = []; game.dayTotal = game.deck.length; game.dayDeck = [...game.deck];
+      game.deck = mail.deck(n) ?? demoSpecial(shuffled().slice(0, few + Math.floor(Math.random() * (many - few + 1)))); game.kept = []; game.dayTotal = game.deck.length; game.dayDeck = [...game.deck];
     } else {
       // The ones that were kept come back to be answered: those and only those, in the demo as with real mail
       // (the demo topped them up to a few with others until 2026-11-12: "make the saved emails from round 1 be
@@ -2779,7 +2845,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     release(body, 'sent', 0.42);
     sounds.swing(0.5, body.mesh.position); buzz('left', 0.6, 45);
     { let take = lastKeep; while (take === lastKeep) take = 1 + Math.floor(Math.random() * 3); lastKeep = take; sounds.play(`swoosh${take}`, 1.05 + Math.random() * 0.1, 0.6, body.mesh.position); }
-    counts.thrown++; current = null; nextIn = 1.3;
+    counts.thrown++; current = null; nextIn = 0.6;      // (1.3 until 2026-11-13)
     events.on?.('thrown', body.mesh.position);
   }
   /** Let go of without being answered (and not thrown away): it floats back to where it waits. */
@@ -2864,6 +2930,6 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       /** Choose a menu card as the left hand would. */
       pickCard: (id: string) => { const show = shows.find(x => x.gone < 0 && (x.kind === id || x.id === id)); if (show && !menu.pending) { show.hover = 2; menu.pending = { kind: show.kind === 'exit' ? 'exit' : 'pick', id: show.id, at: menu.age }; } },
       cutCard: (id: string) => { const show = shows.find(x => x.gone < 0 && (x.kind === id || x.id === id)); if (show) slice(show.body, rand(0.05), rand(0.02), 1, rand(0.3), v1.set(6, 0, -1), 0.8); }, current: () => current, loose },
-    dispose: () => { ui.dispose(); window.removeEventListener('keydown', onKey); threadGeometry.dispose(); threadMaterial.dispose(); for (const set of [sheetSets.ink, sheetSets.paint]) for (const s of set ?? []) { s.material.dispose(); s.surface.texture?.dispose(); } for (const shape of shapes.values()) shape.geometry.dispose(); streakGeometry.dispose(); aura.dispose(); auraGeometry.dispose(); sparkle.dispose(); sparkleGeometry.dispose(); },
+    dispose: () => { ui.dispose(); window.removeEventListener('keydown', onKey); threadGeometry.dispose(); threadMaterial.dispose(); for (const set of [sheetSets.ink, sheetSets.paint]) for (const s of set ?? []) { s.material.dispose(); s.surface.texture?.dispose(); } for (const shape of shapes.values()) shape.geometry.dispose(); streakGeometry.dispose(); aura.dispose(); specialAura.dispose(); auraGeometry.dispose(); sparkle.dispose(); sparkleGeometry.dispose(); },
   };
 }

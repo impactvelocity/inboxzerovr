@@ -61,7 +61,8 @@ body:not(.at-home) #home{opacity:0;visibility:hidden;pointer-events:none}
 .level.soon:hover{transform:none;background:#0b0a12a6}
 .level[aria-checked=true]{border-color:var(--accent);transform:translateY(-7px);box-shadow:0 0 0 3px var(--accent),0 22px 60px -22px var(--accent)}      /* (a thicker ring: 4 px in all, 2026-11-11) */
 .level[aria-checked=true] .pick{opacity:1;transform:none}
-.home-actions{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:12px;width:min(100%,1040px,125vh)}      /* as wide as the level cards */
+.home-actions{display:flex;justify-content:center;align-items:center;gap:12px;width:min(100%,1040px,125vh)}      /* as wide as the level cards; one centred row since 2026-11-13 */
+#open-settings[hidden]{display:none}
 .home-actions .side{display:flex;gap:14px;align-items:center}
 .home-actions .left{justify-content:flex-start}
 .home-actions .right{justify-content:flex-end}
@@ -163,7 +164,8 @@ summary{font-size:10px;opacity:.65;cursor:pointer;padding:6px 0}
 #home .pix[hidden]{display:none}
 #home .pix.code-badge{--edge:var(--accent,#f6b3cc);padding:9px 12px 11px}
 .code-card{width:min(92vw,360px);text-align:center}
-.code-card h2{margin-bottom:4px}
+.code-card h2{margin-bottom:8px;letter-spacing:0;line-height:0}
+.code-card h2 canvas{display:block;margin:0 auto}
 .code-lede{font-size:13px;opacity:.75}
 .code-slots{display:flex;justify-content:center;gap:10px;margin:18px 0 8px}
 .code-slots span{display:grid;place-items:center;width:58px;height:70px;border:2px solid #ffffff26;border-radius:8px;background:#0d0b12}

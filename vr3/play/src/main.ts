@@ -274,11 +274,18 @@ async function main() {
   const home = createHome({
     levels: SHOWN,
     pick: level => { playStinger(level.stinger); void choose(level); },
-    start: where => { sounds.unlock(); dictate.hold(); if (where === 'vr') world.launchXR(); else { setPlaying(true); $('scene').focus(); } },
+    start: where => {
+      sounds.unlock();
+      const go = () => { dictate.hold(); if (where === 'vr') world.launchXR(); else { setPlaying(true); $('scene').focus(); } };
+      // the mic asked for here on the home page, never in VR (asking there takes the player out): then in
+      if (dictate.unasked) void dictate.ask().then(go); else go();
+    },
     settings: () => toggleSettings(),
   });
   bindSetupMic();      // the mic line and Allow mic on the Setup card (dictate.ts)
   bindHomeMic();       // and Connect mic beside Setup: the mic is only ever asked for here, never in VR
+  // (and on the first click anywhere on the home page, so round two hears real words in the demo too: 2026-11-13)
+  { const home = $('home') ?? document.body; const first = (e: Event) => { if ((e.target as HTMLElement | null)?.closest?.('#start, #just-play')) return; home.removeEventListener('pointerdown', first, true); if (dictate.unasked && !world.renderer.xr.isPresenting) void dictate.ask(); }; home.addEventListener('pointerdown', first, true); }
   bindMailUi();        // Enter Code / Just Play: an agent's game code, or the demo (mailui.ts, mail/source.ts)
   $('menu').addEventListener('click', () => setPlaying(false));
   const useWeapon = () => { sounds.unlock(); if (now.weapon) now.weapon.previewSwing(); else sword.previewSwing(); };

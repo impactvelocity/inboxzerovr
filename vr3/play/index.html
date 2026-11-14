@@ -28,15 +28,15 @@ html,body{margin:0;background:#06050a}
  <div class="home-head"><canvas id="credit" class="credit" width="1100" height="40" role="img" aria-label="Built By Dylan Jones for Meta VR Hackathon"></canvas><h1 id="logo-stage" aria-label="Inbox Zero"><canvas class="logo-air" aria-hidden="true"></canvas><span class="logo-float"><span class="logo-shine" aria-hidden="true"></span></span></h1><canvas id="tagline" class="tagline" width="1100" height="56" role="img" aria-label="Slash the spam · save what matters"></canvas></div>
  <div id="levels" role="radiogroup" aria-label="Choose a level"></div>
  <div class="home-actions">
-  <div class="side left"><button id="open-guide" class="pix">How to Play</button></div>
-  <div class="start-pair"><span class="start-wrap"><button id="start" class="pix" disabled>Checking VR…</button></span><button id="just-play" class="pix" title="Play the demo inbox: made-up emails">Just Play</button></div>
-  <div class="side right"><button id="open-settings" class="pix icon" aria-label="Settings" title="Settings"><canvas class="gear" aria-hidden="true"></canvas></button></div>
+  <!-- (2026-11-13: "hide the settings button", "make the how to play next to Enter Code and just play after that centered") -->
+  <div class="start-pair"><button id="open-guide" class="pix">How to Play</button><span class="start-wrap"><button id="start" class="pix" disabled>Checking VR…</button></span><button id="just-play" class="pix" title="Play the demo inbox: made-up emails">Just Play</button></div>
+  <button id="open-settings" class="pix icon" aria-label="Settings" title="Settings" hidden><canvas class="gear" aria-hidden="true"></canvas></button>
  </div>
  <p id="mail-status" role="status"></p>
  <p id="xr-status" role="status"></p><button id="start-here" class="link" hidden>or play on this screen</button>
  <dialog id="code" class="card-dialog code-card" aria-labelledby="code-title">
   <h2 id="code-title">Enter Code</h2>
-  <p class="code-lede">The 4-digit code from your AI agent.</p>
+  <p class="code-lede">The 4-digit code from your AI agent</p>
   <div class="code-slots" role="img" aria-label="No digits yet"><span></span><span></span><span></span><span></span></div>
   <p class="code-state" id="code-state" role="status"></p>
   <div class="code-pad" role="group" aria-label="Keypad">

@@ -18,7 +18,7 @@ export const leafTune = {
   count: 140,              // (56 on Light detail; 110 until 2026-11-13, "more leaves")
   fall: [0.26, 0.6],       // m/s, the slowest and the fastest
   swing: [0.16, 0.5],      // metres side to side
-  drift: 0.55,             // m/s sideways at full Breeze
+  drift: 0.45,             // m/s sideways at full Breeze (0.55 until 2026-11-13, "reduce the wind a bit")
   gust: [9, 22],           // seconds between gusts
   reach: 0.42,             // the axe stirs leaves this near its head
   blast: 1.5,              // a chopped letter blows leaves this far from it

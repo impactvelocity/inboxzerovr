@@ -29,8 +29,12 @@ export const castleStage: StageDef = {
     float soft(float x, float from, float to, float w){ return smoothstep(from-w,from+w,x)*(1.-smoothstep(to-w,to+w,x)); }
     // A candle's breathing about 1. Slow only: nothing in this hall flutters or strobes (the shared flame() has
     // 7 to 23 Hz terms in it; see the lab's note, 2026-11-13, "not strobe effects").
+    // (2026-11-13: "make lights flicker in background in both dusk and night": a candle's own flicker on top, smooth noise at
+    // three or four a second, never a hard on-off, and deeper gutters now and then)
     float candle(float seed){
-      return 1.+.10*sin(time*1.3+seed)+.06*sin(time*2.3+seed*1.7)-.14*smoothstep(.7,1.,sin(time*.47+seed*5.)*sin(time*.29+seed*2.));
+      float flick=softNoise(vec2(time*3.4+seed*11.,seed*7.))-.5;
+      return 1.+.10*sin(time*1.3+seed)+.06*sin(time*2.3+seed*1.7)+.24*flick
+              -.22*smoothstep(.7,1.,sin(time*.47+seed*5.)*sin(time*.29+seed*2.));
     }
     // The gallery: flags 1.2 m under the eye, the vault three over it. The back wall of the far hall about 11 m off
     // down the middle (the door in it at 9.5), the side aisles' walls nearer and nearer towards the painting's edges.
@@ -72,14 +76,14 @@ export const castleStage: StageDef = {
              +oval(uv,vec2(.99,.44),vec2(.04,.12))*(candle(8.2)-1.)
              +(oval(uv,vec2(.35,.43),vec2(.04,.05))+oval(uv,vec2(.65,.43),vec2(.04,.05)))*(candle(3.3)-1.)
              +(oval(uv,vec2(.463,.49),vec2(.02,.05))+oval(uv,vec2(.538,.49),vec2(.02,.05)))*(candle(6.1)-1.);
-      col*=1.+clamp(warm*f*2.4,-.4,.4);
+      col*=1.+clamp(warm*f*2.8,-.45,.45);
       float halo=oval(uv,vec2(.2535,.715),vec2(.016,.04))*candle(.6)+oval(uv,vec2(.747,.715),vec2(.016,.04))*candle(2.4)
                 +(oval(uv,vec2(.10,.64),vec2(.008,.02))*candle(4.3)+oval(uv,vec2(.8985,.652),vec2(.008,.02))*candle(7.3)
                  +oval(uv,vec2(.155,.598),vec2(.006,.016))*candle(9.1)+oval(uv,vec2(.845,.598),vec2(.006,.016))*candle(1.8)
                  +oval(uv,vec2(.01,.453),vec2(.006,.02))*candle(5.5)+oval(uv,vec2(.991,.463),vec2(.006,.02))*candle(8.2))*.8
                 +(oval(uv,vec2(.463,.49),vec2(.006,.014))+oval(uv,vec2(.538,.49),vec2(.006,.014))
                  +oval(uv,vec2(.441,.427),vec2(.006,.01))+oval(uv,vec2(.5595,.427),vec2(.006,.01)))*candle(6.1)*.6;
-      col+=amber*halo*(.07+.07*blend);
+      col+=amber*halo*(.12+.08*blend);      // (as bright at dusk as by night, nearly: .07 then)
       // The moon through the windows, and cloud crossing it: its light on stone and armour comes and goes.
       float cloud=.8+.2*softNoise(vec2(time*.11,uv.x*5.));
       vec3 moon=mix(vec3(.78,.66,1.),vec3(.58,.52,1.),blend);
@@ -140,6 +144,8 @@ export const castleStage: StageDef = {
 };
 
 export const castleLetters: LetterTheme = {
+  // (special: cursed, in ghost-light violet and witch-fire green)
+  special: { colours: ['#b06bff', '#6dffb0'], label: 'CURSED' },
   id: 'castle', face: 'paint', paint: castleCard, shape: () => frameSoup(FRAME / W * 0.5), mechanic: 'cut', title: 'The Haunted Hall', accent: '#b79cff', bar: ['#8a4dff', '#2dffc8'],
   look: { sheet: '#f1dfb8', ink: '#34190f', back: '#3d2113', selfLit: 0.22, night: '#cdbfe8',
     hover: '#c9ffe9', cutWide: '#a98bff', cutHot: '#f4f0ff', mark: '#ffd978', flash: '#fff3cf', gold: '#ffe29a',

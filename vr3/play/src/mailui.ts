@@ -38,9 +38,13 @@ export function bindMailUi() {
     demoOnce = true; start.click();
   });
   badge.addEventListener('click', () => openPad());
+  // the line under Enter Code in the pixel letters too (2026-11-13: "make pixel font, drop the period at end")
+  { const lede = dialog.querySelector<HTMLElement>('.code-lede'); if (lede) pixelLabel(lede, lede.textContent ?? '', 1.5, '#ffffff'); }
 
   // ---------------------------------------------------------------- the keypad
   function openPad() {
+    // ENTER CODE big, in the pixel letters, in the chosen level's colour (2026-11-13: "make enter code large text on the keypad")
+    { const title = dialog!.querySelector<HTMLElement>('#code-title'); if (title) pixelLabel(title, 'Enter Code', 3, getComputedStyle(title).color); }
     digits = mail.state.round.code;
     drawSlots(); dialog!.showModal();
   }

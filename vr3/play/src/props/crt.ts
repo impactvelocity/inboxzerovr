@@ -307,12 +307,12 @@ export function createCrt(context: StageContext) {
    * A blow that deleted the email on the screen. Where the keyboard is and how it is moving is
    * read from the blade; with none (a key on a monitor), it lands somewhere on the glass.
    */
-  function strike() {
+  function strike(byBlade = true, given = 0.6) {
     head.updateWorldMatrix(true, false);
     m1.copy(head.matrixWorld).invert();
     const at = v1.set(rand(SW * 0.3), SY + rand(SH * 0.3), FRONT), way = v2.set(rand(0.3), rand(0.3), -1);
-    let strength = 0.6;
-    if (blade?.moving && blade.speed > 0.4) {
+    let strength = given;
+    if (byBlade && blade?.moving && blade.speed > 0.4) {
       const base = v3.copy(blade.base).applyMatrix4(m1), tip = at.copy(blade.tip).applyMatrix4(m1);
       // where the keyboard's line meets the glass (it reaches on past its end), else where its end is
       const t = (FACE - base.z) / (tip.z - base.z);
@@ -355,11 +355,19 @@ export function createCrt(context: StageContext) {
       sparks.emit(from, v3.set(rand(1.6), rand(1.4) + 0.6, rand(0.8)).addScaledVector(out, 0.6 + Math.random() * 1.6), 0.25 + Math.random() * 0.45, 0.6 + Math.random());
     for (let i = 0, n = 5 + Math.round(6 * strength); i < n; i++)
       shards.emit(from, v3.set(rand(1.1), rand(0.9) + 0.9, rand(0.5)).addScaledVector(out, 0.5 + Math.random() * 1.3), 0.6 + Math.random() * 0.5, 0.6 + Math.random() * 0.9);
-    context.play('glass', 0.9 + Math.random() * 0.25, 0.45 + 0.4 * strength, from);
+    context.play('glass', 0.9 + Math.random() * 0.25, (byBlade ? 0.45 : 0.3) + 0.4 * strength, from);
     if (damage > 0.45 && Math.random() < 0.6) context.play('zap', 0.9 + Math.random() * 0.3, 0.4, from);
     return strength;
   }
 
+  /**
+   * One more email dealt with: the monitor breaks a little more by itself, nothing has to touch it (2026-11-13: "make
+   * the monitor progressively get more broken over time, every email breaks it more", "doesnt need to actually touch
+   * it"). A crack somewhere new on the glass, a dent and a scorch on the case, a jolt that leaves it more askew,
+   * sparks and glass; the damage builds over the whole day (hitsToWreck emails to wrecked), so the picture tears,
+   * goes amber and then red, and smokes. Returns how hard, for the things on the desk to jump.
+   */
+  function wear() { return strike(false, 0.4 + 0.35 * Math.random()); }
   /**
    * An email leaving the screen: the picture flares and jumps, the head rocks back on its stand as if
    * it had spat it out, and a few bits of phosphor come with it.
@@ -437,7 +445,7 @@ export function createCrt(context: StageContext) {
   }
 
   return {
-    group, root, update, game, strike, launch, contact,
+    group, root, update, game, strike, wear, launch, contact,
     /** Where the picture on the screen is (world space) and which way it faces; returns its size (a letter is 1). */
     pose(position: THREE.Vector3, quaternion: THREE.Quaternion) {
       head.updateWorldMatrix(true, false);

@@ -1,5 +1,5 @@
 {
- "duration": 131.78,
+ "duration": 134.98,
  "cues": {
   "unread": {
    "start": 1.0,
@@ -182,53 +182,53 @@
    "text": "Emails come to you, and your weapons do the stretching!"
   },
   "really": {
-   "start": 108.58,
-   "end": 110.66,
+   "start": 111.78,
+   "end": 113.86,
    "text": "And it really does clear your inbox"
   },
   "archives": {
-   "start": 111.31,
-   "end": 112.78,
+   "start": 114.51,
+   "end": 115.98,
    "text": "Your agent archives what you cut"
   },
   "sends": {
-   "start": 112.86,
-   "end": 113.93,
+   "start": 116.06,
+   "end": 117.13,
    "text": "and sends your replies,"
   },
   "okay": {
-   "start": 114.02,
-   "end": 115.05,
+   "start": 117.22,
+   "end": 118.25,
    "text": "after you say okay"
   },
   "never": {
-   "start": 116.34,
-   "end": 118.14,
+   "start": 119.54,
+   "end": 121.34,
    "text": "The game never touches your inbox,"
   },
   "deleted": {
-   "start": 118.26,
-   "end": 120.18,
+   "start": 121.46,
+   "end": 123.38,
    "text": "and each round is deleted once it's done"
   },
   "try": {
-   "start": 121.21,
-   "end": 124.34,
+   "start": 124.41,
+   "end": 127.54,
    "text": "Try it yourself at InboxZeroVR.com!"
   },
   "seven": {
-   "start": 124.58,
-   "end": 126.45,
+   "start": 127.78,
+   "end": 129.65,
    "text": "Play the demo in all seven levels,"
   },
   "agent": {
-   "start": 126.54,
-   "end": 128.89,
+   "start": 129.74,
+   "end": 132.09,
    "text": "or connect your agent and play your own inbox"
   },
   "hero": {
-   "start": 129.17,
-   "end": 131.41,
+   "start": 132.37,
+   "end": 134.61,
    "text": "Become a hero with inbox zero!"
   }
  },
@@ -1516,312 +1516,312 @@
   {
    "s": "really",
    "w": "and",
-   "t": 108.58
+   "t": 111.78
   },
   {
    "s": "really",
    "w": "it",
-   "t": 108.831
+   "t": 112.031
   },
   {
    "s": "really",
    "w": "really",
-   "t": 109.01
+   "t": 112.21
   },
   {
    "s": "really",
    "w": "does",
-   "t": 109.477
+   "t": 112.677
   },
   {
    "s": "really",
    "w": "clear",
-   "t": 109.799
+   "t": 112.999
   },
   {
    "s": "really",
    "w": "your",
-   "t": 110.194
+   "t": 113.394
   },
   {
    "s": "really",
    "w": "inbox",
-   "t": 110.517
+   "t": 113.717
   },
   {
    "s": "archives",
    "w": "your",
-   "t": 111.31
+   "t": 114.51
   },
   {
    "s": "archives",
    "w": "agent",
-   "t": 111.555
+   "t": 114.755
   },
   {
    "s": "archives",
    "w": "archives",
-   "t": 111.854
+   "t": 115.054
   },
   {
    "s": "archives",
    "w": "what",
-   "t": 112.317
+   "t": 115.517
   },
   {
    "s": "archives",
    "w": "you",
-   "t": 112.562
+   "t": 115.762
   },
   {
    "s": "archives",
    "w": "cut",
-   "t": 112.753
+   "t": 115.953
   },
   {
    "s": "sends",
    "w": "and",
-   "t": 112.86
+   "t": 116.06
   },
   {
    "s": "sends",
    "w": "sends",
-   "t": 113.047
+   "t": 116.247
   },
   {
    "s": "sends",
    "w": "your",
-   "t": 113.341
+   "t": 116.541
   },
   {
    "s": "sends",
    "w": "replies",
-   "t": 113.582
+   "t": 116.782
   },
   {
    "s": "okay",
    "w": "after",
-   "t": 114.02
+   "t": 117.22
   },
   {
    "s": "okay",
    "w": "you",
-   "t": 114.398
+   "t": 117.598
   },
   {
    "s": "okay",
    "w": "say",
-   "t": 114.638
+   "t": 117.838
   },
   {
    "s": "okay",
    "w": "okay",
-   "t": 114.878
+   "t": 118.078
   },
   {
    "s": "never",
    "w": "the",
-   "t": 116.34
+   "t": 119.54
   },
   {
    "s": "never",
    "w": "game",
-   "t": 116.557
+   "t": 119.757
   },
   {
    "s": "never",
    "w": "never",
-   "t": 116.837
+   "t": 120.037
   },
   {
    "s": "never",
    "w": "touches",
-   "t": 117.178
+   "t": 120.378
   },
   {
    "s": "never",
    "w": "your",
-   "t": 117.643
+   "t": 120.843
   },
   {
    "s": "never",
    "w": "inbox",
-   "t": 117.923
+   "t": 121.123
   },
   {
    "s": "deleted",
    "w": "and",
-   "t": 118.26
+   "t": 121.46
   },
   {
    "s": "deleted",
    "w": "each",
-   "t": 118.464
+   "t": 121.664
   },
   {
    "s": "deleted",
    "w": "round",
-   "t": 118.725
+   "t": 121.925
   },
   {
    "s": "deleted",
    "w": "is",
-   "t": 119.045
+   "t": 122.245
   },
   {
    "s": "deleted",
    "w": "deleted",
-   "t": 119.191
+   "t": 122.391
   },
   {
    "s": "deleted",
    "w": "once",
-   "t": 119.627
+   "t": 122.827
   },
   {
    "s": "deleted",
    "w": "it's",
-   "t": 119.889
+   "t": 123.089
   },
   {
    "s": "deleted",
    "w": "done",
-   "t": 120.151
+   "t": 123.351
   },
   {
    "s": "try",
    "w": "try",
-   "t": 121.21
+   "t": 124.41
   },
   {
    "s": "try",
    "w": "it",
-   "t": 121.563
+   "t": 124.763
   },
   {
    "s": "try",
    "w": "yourself",
-   "t": 121.816
+   "t": 125.016
   },
   {
    "s": "try",
    "w": "at",
-   "t": 122.674
+   "t": 125.874
   },
   {
    "s": "try",
    "w": "inboxzerovrcom",
-   "t": 122.926
+   "t": 126.126
   },
   {
    "s": "seven",
    "w": "play",
-   "t": 124.58
+   "t": 127.78
   },
   {
    "s": "seven",
    "w": "the",
-   "t": 124.881
+   "t": 128.081
   },
   {
    "s": "seven",
    "w": "demo",
-   "t": 125.114
+   "t": 128.314
   },
   {
    "s": "seven",
    "w": "in",
-   "t": 125.415
+   "t": 128.615
   },
   {
    "s": "seven",
    "w": "all",
-   "t": 125.582
+   "t": 128.782
   },
   {
    "s": "seven",
    "w": "seven",
-   "t": 125.816
+   "t": 129.016
   },
   {
    "s": "seven",
    "w": "levels",
-   "t": 126.183
+   "t": 129.383
   },
   {
    "s": "agent",
    "w": "or",
-   "t": 126.54
+   "t": 129.74
   },
   {
    "s": "agent",
    "w": "connect",
-   "t": 126.699
+   "t": 129.899
   },
   {
    "s": "agent",
    "w": "your",
-   "t": 127.175
+   "t": 130.375
   },
   {
    "s": "agent",
    "w": "agent",
-   "t": 127.461
+   "t": 130.661
   },
   {
    "s": "agent",
    "w": "and",
-   "t": 127.81
+   "t": 131.01
   },
   {
    "s": "agent",
    "w": "play",
-   "t": 128.033
+   "t": 131.233
   },
   {
    "s": "agent",
    "w": "your",
-   "t": 128.318
+   "t": 131.518
   },
   {
    "s": "agent",
    "w": "own",
-   "t": 128.604
+   "t": 131.804
   },
   {
    "s": "agent",
    "w": "inbox",
-   "t": 128.826
+   "t": 132.026
   },
   {
    "s": "hero",
    "w": "become",
-   "t": 129.17
+   "t": 132.37
   },
   {
    "s": "hero",
    "w": "a",
-   "t": 129.752
+   "t": 132.952
   },
   {
    "s": "hero",
    "w": "hero",
-   "t": 129.887
+   "t": 133.087
   },
   {
    "s": "hero",
    "w": "with",
-   "t": 130.29
+   "t": 133.49
   },
   {
    "s": "hero",
    "w": "inbox",
-   "t": 130.693
+   "t": 133.893
   },
   {
    "s": "hero",
    "w": "zero",
-   "t": 131.186
+   "t": 134.386
   }
  ]
 }

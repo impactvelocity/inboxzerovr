@@ -240,6 +240,7 @@ function newspaperSoup(): Float32Array {
 }
 
 export const knockoutLetters: LetterTheme = {
+  special: { colours: ['#ffd23f', '#ff2d55'], label: 'TITLE BOUT' },
   id: 'knockout', face: 'paint', paint: knockoutCard, shape: newspaperSoup, mechanic: 'punch', punch: knockoutPunch, title: 'Knockout', accent: '#ffcf4a', bar: ['#ff3b3b', '#3b7bff'],
   // Newsprint that carries a little light of its own, so it reads once the house lights are down; gold where it is hit.
   look: { sheet: '#f6e8c8', ink: '#1d1712', back: '#e2cfa0', selfLit: 0.3, night: '#c9d2ff',

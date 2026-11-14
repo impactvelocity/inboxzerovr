@@ -195,6 +195,8 @@ export const lumberStage: StageDef = {
 };
 
 export const lumberLetters: LetterTheme = {
+  // (special: a golden one, sap gold and maple red)
+  special: { colours: ['#ffd23f', '#ff6a2b'], label: 'GOLDEN' },
   id: 'lumber', face: 'paint', paint: lumberCard, shape: () => frameSoup(BOARD / W * 0.5), mechanic: 'cut', title: 'LumberHack', accent: '#ffc440', bar: ['#e8452f', '#ffc440'],
   look: { sheet: '#f7ead0', ink: '#3a2414', back: '#b97a35', selfLit: 0.3, night: '#f0dcc0',
     hover: '#fff0c4', cutWide: '#ffb347', cutHot: '#fff6dc', mark: '#ffe08a', flash: '#fff3cf', gold: '#ffe29a',
@@ -207,7 +209,7 @@ export const lumberLetters: LetterTheme = {
     // (where the backdrop shows the hatch: backdrop.ts; the arc stays under the porch roof, 1.45 m over the eye)
     from.copy(head).addScaledVector(paintedDirection(HATCH.u, HATCH.v, hatchWay), HATCH.metres);
     via.lerpVectors(from, home, 0.5); via.y += 1.0;
-    return { scale: 1, pose: 'tumble' as const, seconds: 1.5, ease: 2.6, sway: 0.1 };
+    return { scale: 1, pose: 'tumble' as const, seconds: 1.15, ease: 2.6, sway: 0.1 };
   },
 };
 
@@ -218,7 +220,8 @@ export const lumberSound: LevelSound = {
   id: 'lumber',
   layers: [
     // the air of the yard: a breeze in the pines, all round
-    { name: 'yard', at: null, level: c => 0.5 + 0.3 * c.drift(c.t * 0.25, 1.9) },
+    // (down by about a third on 2026-11-13, "reduce the wind a bit": it was 0.5 + 0.3)
+    { name: 'yard', at: null, level: c => 0.34 + 0.2 * c.drift(c.t * 0.25, 1.9) },
     // the maple across the yard to the left: its leaves answer the wind
     { name: 'leaves', at: [-5.2, 2.6, -6], level: c => 0.2 + 0.45 * c.drift(c.t * 0.4, 5.3) },
     // birds beyond the barn by day, gone by dark; crickets come in as they go

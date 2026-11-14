@@ -90,9 +90,8 @@ export const infernoCard: CardPainter = (g, email, hazard) => {
   for (const [x, y] of [[0, 0], [W, 0], [0, H], [W, H]]) scorch(g, x, y, 60 + random() * 36, hazard);      // (a little smaller since 2026-11-13: sender and sort of mail are in the top corners)
   const top = hazard ? 56 : 30;
   if (email) {
-    // (just a flame, at the bottom right and faint, since the message may run over it: no BURN AFTER READING heading since 2026-11-13)
+    // (no flame at the bottom right any more: 2026-11-13, "drop icon bottom right in email"; no BURN AFTER READING heading either)
     const x = 90, y = top + 30, foot = H - (hazard ? 70 : 52);
-    g.globalAlpha = hazard ? 0.5 : 0.32; flame(g, W - x - 40, foot - 48, 46, hazard ? '#e2371c' : BRICK, hazard ? '#ffc23d' : paper); g.globalAlpha = 1;
     return { box: { x, y, w: W - 2 * x, h: foot - y }, family: SANS, text: INK, dim: '#4a3a2e', accent: () => (hazard ? '#c1260f' : BRICK), onAccent: paper, ok: '#3d6b24', fail: '#c1260f' };
   }
   // the title card (not shown since 2026-11-11)

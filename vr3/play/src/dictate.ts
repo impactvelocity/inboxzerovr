@@ -271,6 +271,11 @@ function createDictate() {
   const extra = {
     /** Whether real words are on their way (not the mock), for the music to go softer. */
     get live() { return d.engine !== 'mock' && (d.phase === 'opening' || d.phase === 'listening' || d.phase === 'finishing'); },
+    /**
+     * Never asked yet (2026-11-13: "make the mic always record the reply even in just play demo, so anyone can see it
+     * work"): the home page asks on the first click there, and Start / Just Play ask before going in, never in VR.
+     */
+    get unasked() { return canMic && d.permission === 'unknown' && !remembered() && !stream; },
     /** Ask for the mic now (from a click on the home page), then let it go again: the browser remembers. */
     async ask() { const ok = await open(true); if (ok && d.phase === 'idle') close(); void refresh(); return ok; },
     /**

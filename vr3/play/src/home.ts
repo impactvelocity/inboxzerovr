@@ -27,8 +27,8 @@ const LOGOS: Record<string, { file: string; air: Air; colours: string[] }> = {
  * A voice saying the level's name as it is picked (the user's own clips, 2026-11-11). Only when the
  * player picks one, never as the page opens; a pick while one is still speaking cuts it off.
  */
-/** Where the icon top right goes: the hackathon this was built for. (Empty for now: the icon shows, and goes nowhere.) */
-const HACKATHON_URL = '';
+/** Where the icon top right goes, in a new tab: the competition this was built for (2026-11-13; the site's SITE.competition.url too). */
+const HACKATHON_URL = 'https://start-developer-competition-26.devpost.com/';
 
 /**
  * Is this page open in a headset's own browser (the Quest's)? There, "or play on this screen" is left out, so the

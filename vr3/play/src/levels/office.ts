@@ -89,6 +89,7 @@ export const officeStage: StageDef = {
 };
 
 export const officeLetters: LetterTheme = {
+  special: { colours: ['#ff3b30', '#ffb020'], label: 'URGENT' },
   id: 'office', face: 'paint', paint: officeCard, shape: paneSoup, mechanic: 'cut', title: 'Keyboard Smash', accent: '#7dffc9', bar: ['#2bffb0', '#2fb8ff'],
   look: { sheet: '#a9f9d8', ink: '#0a3a2b', back: '#4fbf98', selfLit: 1, night: '#ffffff',
     hover: '#e4fff4', cutWide: '#7dffc9', cutHot: '#f4fffa', mark: '#ffe9a0', flash: '#f6fff0', gold: '#fff3b8',
@@ -106,6 +107,8 @@ export const officeFx: FxStyle = { bit: 'cap', bits: ['#dccbaa', '#93a9a2'], pap
 
 export const officeSound: LevelSound = {
   id: 'office',
+  // Keyboard Smash's round two begins with the user's own sting (2026-11-13; tools/level-src/office/keyboard-r2-sting.mp3, set to -3 dBFS)
+  roundStinger: { name: 'stinger2', volume: 0.9 },
   layers: [
     { name: 'room', at: null, level: () => 0.85 },
     // the people thin out as the day goes

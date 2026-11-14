@@ -1,5 +1,12 @@
 # Inbox Zero VR demo film, plan
 
+## v9 (2026-11-13)
+
+- The seated scene uses the new, more animated take, `vr-email-throw-transparent.mov` (14 s, ProRes 4444 with alpha; a copy is in `work/seated3/src/`). Same layout as v8: bottom left, over Kyoto at night with petals and motes.
+- The take has two rounds: grab A (2.0 s), read it and throw it away to keep (3.8 s), cut B (6.4 s), a pink-trail slash (7.5 s), then A and B together, A read, and a last pink slash on B (12.0 s).
+- To show it, the voice now pauses 3.5 s after "your weapons do the stretching" (`SEAT_HOLD` in `tools/build_vo.py`), so the scene runs about 8.6 s. The clip plays on a curve: the grab lands on "come to you" (a little slower than real), the read and throw go by fast, the first cut lands on "stretching", and the rest plays near real speed in the hold.
+- Everything after it is 3.2 s later. The film is 2:36 (156.2 s).
+
 ## v8 (2026-11-13)
 
 - The seated scene (1:43) uses the new transparent take, `vr-email-katana-transparent.mov` (ProRes 4444 with a real alpha channel, 5 s at 30 fps; a copy is in `work/seated2/src/`). No keying needed.

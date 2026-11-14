@@ -64,6 +64,11 @@ export interface Email {
   threadId?: string;
   /** Agent rounds only: the agent sent reply drafts for it. */
   needsReply?: boolean;
+  /**
+   * Special: the agent (or the demo) marked it as the one that matters (2026-11-13). Each level shows it its own way
+   * (LetterTheme.special; radioactive in the lab, smouldering in Inferno).
+   */
+  special?: boolean;
 }
 
 const NoThanks: [string, string] = ['Please take me off this list. Thank you!', 'Not interested, but good luck with it'];

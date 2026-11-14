@@ -139,6 +139,7 @@ export class GardenSounds {
         for (const layer of set.layers) if (info.loops[layer.name]) void this.load(`${def.id}/${layer.name}.mp3`);
         for (const shot of info.shots) if (!(variant && shot === 'arm')) void this.load(`${def.id}/${shot}.wav`);
         if (variant) for (const shot of ['arm', 'off']) void this.load(`${def.id}/${shot}-${variant}.wav`, `${def.id}/${shot}.wav`);
+        if (def.roundStinger) void this.load(`${def.id}/${def.roundStinger.name}.wav`);
         if (set.humLoop && def.hum) void this.load(variant ? `${def.id}/hum-${variant}.mp3` : `${def.id}/hum.mp3`, `${def.id}/hum.mp3`);
       }).catch(() => { /* no sounds for this level: it is silent */ });
   }
@@ -196,6 +197,12 @@ export class GardenSounds {
     // the song at full volume (2026-11-12: "keep the same volume to keep the energy"; the song stopped under the voice
     // before). (Kyoto had a short stinger for each round here before: kyoto/stinger1 and 2, unused now.)
     if (began && progress.round === 2 && this.shots.has('round2')) this.play('round2', 1, 1);
+    // Kyoto's round-two stinger is back (2026-11-13: "for start of round 2 kyoto nights - add one of the stingers back"):
+    // the user's own five-second hit, under the voice, the song dipping for it as it used to.
+    if (began && progress.round === 2 && this.level === 'kyoto') { this.play('stinger2', 1, 0.9); this.onStinger?.(5); }
+    // and a level's own (Keyboard Smash's, 2026-11-13: "keyboard round 2 start stinger", the user's file)
+    const sting = this.sets.get(this.level)?.def.roundStinger;
+    if (began && progress.round === 2 && sting) { this.play(sting.name, 1, sting.volume); this.onStinger?.(2); }
     if (!ended) return;
     const moment = this.sets.get(this.level)?.def.afterRound?.find(m => m.round === progress.round - 1);
     for (const s of moment?.sounds ?? []) {

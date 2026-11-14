@@ -15,6 +15,7 @@ Inbox Zero VR is a VR game where people clear their unread email: they slash wha
    - `summary`: what it says and wants, in about 180 characters. Never the full body.
    - `category` (optional): one of `Work`, `Personal`, `Calendar`, `Newsletter`, `Promo`, `Spam`, `Receipt`, `Bill`, `Tracking`, `Social`, `Alert`. It picks the card the email is drawn on.
    - `important` (optional): true if they would want to keep it or act on it.
+   - `special` (optional): true for the one or two that matter most right now (a deadline today, a failed payment, someone waiting). The game shows them with the level's own special effect. Use it sparingly.
    - `replies` (optional): one or two short reply drafts, a sentence or two each, for mail from a person who expects an answer.
    - `amount` and `due` (optional): for receipts and bills.
 3. **Give the user the code.** You get back a 4-digit `code` and a `key`. Tell the user the code and the `play_instructions`: tap the `quest_url` to open the game on their Meta Quest (it works from a phone or computer signed in to the same Meta account), or open the `play_url` (it fills the code in) and press **Clean Your Inbox**, or open the game, press **Enter Code** and type it. Keep the key.

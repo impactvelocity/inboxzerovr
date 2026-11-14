@@ -15,7 +15,8 @@ import { Soup, type P3 } from '../weapons/parts';
  * top is y = 0 and the carpet is `floor` under it. The painted desk wraps round the player (it is
  * a flat picture bent over 270 degrees), so "on the desk" is a band of distances, not a rectangle.
  */
-const DESK = { near: 0.74, far: 1.47, floor: -0.6 };
+/** The desk's band (metres out from the seat, near and far) and the carpet under its top: set by the level (createDeskThings). */
+let DESK: { near: number; far: number; floor: number; width?: number } = { near: 0.74, far: 1.47, floor: -0.6 };
 export const deskTune = {
   knockSpeed: 1.1,      // m/s the keyboard must be moving to knock something
   knock: 0.5,           // how much of the keyboard's speed a knocked thing leaves with
@@ -70,7 +71,8 @@ interface Thing {
   state: 'rest' | 'air' | 'back'; time: number; size: number;
 }
 
-export function createDeskThings(context: StageContext) {
+export function createDeskThings(context: StageContext, band?: { near: number; far: number; floor: number; width?: number }) {
+  if (band) DESK = band;
   const group = new THREE.Group(); group.name = 'On the desk';
   const material = new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, side: THREE.DoubleSide, roughness: 0.8, metalness: 0 });
   const blot = document.createElement('canvas'); blot.width = blot.height = 64;
@@ -83,9 +85,12 @@ export function createDeskThings(context: StageContext) {
     shadow.name = `${name}: shadow`; shadow.renderOrder = -2; shadow.rotation.y = yaw; group.add(shadow);
     things.push({ name, mesh, shadow, home: new THREE.Vector3(x, 0, z), yaw, tall, reach, paper, speed: new THREE.Vector3(), spin: new THREE.Vector3(), state: 'rest', time: 0, size: 1 });
   }
-  add('Stapler', buildStapler(), -0.4, -0.86, 2.2, 0.035, 0.085, false, [0.11, 0.24]);
-  add('Sheet of paper', buildSheet(), 0.43, -0.85, -0.3, 0.004, 0.14, true, [0.3, 0.4]);
-  add('Stack of paper', buildStack(), -0.66, -1.04, 0.35, 0.02, 0.15, false, [0.31, 0.41]);
+  // Placed on the desk's own band (since the 2026-11-13 repaint the desk is 1.55 to 2.07 m out and about 2 m wide, with
+  // painted papers at its two back corners, about 0.8 m either side): clear of the monitor in the middle and of those.
+  const mid = (DESK.near + DESK.far) / 2;
+  add('Stapler', buildStapler(), -0.52, -(DESK.near + 0.14), 2.2, 0.035, 0.085, false, [0.11, 0.24]);
+  add('Sheet of paper', buildSheet(), 0.72, -(DESK.near + 0.18), -0.3, 0.004, 0.14, true, [0.3, 0.4]);
+  add('Stack of paper', buildStack(), 0.46, -(mid + 0.08), 0.35, 0.02, 0.15, false, [0.31, 0.41]);
 
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), q1 = new THREE.Quaternion(), flat = new THREE.Quaternion(), euler = new THREE.Euler(), up = new THREE.Vector3(0, 1, 0);
   const rand = (spread: number) => (Math.random() - 0.5) * 2 * spread;
@@ -93,7 +98,9 @@ export function createDeskThings(context: StageContext) {
   function overDesk(x: number, z: number) {
     const out = Math.hypot(x, z);
     if (z > -0.2 || out < DESK.near || out > DESK.far) return false;
-    const side = Math.abs(Math.atan2(x, -z)), most = 1.22 - 0.32 * (out - DESK.near) / (DESK.far - DESK.near);
+    // (how wide the desk is to the eye, nearer and further: its corners, as the painting has them)
+    const halfFront = Math.atan2(DESK.width ?? 2.35, 2 * DESK.near), halfBack = Math.atan2(DESK.width ?? 2.35, 2 * DESK.far);
+    const side = Math.abs(Math.atan2(x, -z)), most = halfFront + (halfBack - halfFront) * (out - DESK.near) / (DESK.far - DESK.near);
     return side < most;
   }
   function launch(thing: Thing, x: number, y: number, z: number, turn: number) {

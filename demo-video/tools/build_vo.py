@@ -8,6 +8,7 @@ import json, subprocess, os, re
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 A = os.path.join(ROOT, 'work', 'audio')
 SPEED, END_SPEED, LEAD = 1.0, 1.0, 1.0
+SEAT_HOLD = 3.5       # seconds after "your weapons do the stretching" (v9)
 HOLD = 3.5            # seconds of level after each level line (v4 had 5, v5 3.5)
 
 # v7: four takes. vo1 is the first full take; how / built / close are the re-reads for the agent (MCP) flow.
@@ -31,7 +32,8 @@ SECTIONS = [
     ('vo1', 'kyoto', 51.90, 54.875, HOLD),
     ('vo1', 'axe', 54.875, 56.91, HOLD),
     ('vo1', 'space', 56.91, 60.35, HOLD),
-    ('built', 'built-sdk', 0.00, 10.42, 0.3),
+    ('built', 'built-sdk', 0.00, 5.63, 0.0),
+    ('built', 'built-chair', 5.63, 10.42, SEAT_HOLD),      # v9: room for the seated take after "stretching"
     ('built', 'built-clear', 10.42, 12.85, 0.3),
     ('built', 'built-agent', 12.85, 16.96, 0.9),
     ('built', 'built-private', 16.96, 21.24, 0.7),

@@ -140,7 +140,7 @@ export const labLetters: LetterTheme = {
     // (where the backdrop shows the hatch: backdrop.ts)
     from.copy(head).addScaledVector(paintedDirection(HATCH.u, HATCH.v, hatchWay), HATCH.metres);
     via.lerpVectors(from, home, 0.55); via.y += 0.18;
-    return { scale: 0.55, pose: 'face' as const, seconds: 1.9, ease: 2, sway: 0.05 };
+    return { scale: 0.55, pose: 'face' as const, seconds: 1.3, ease: 2, sway: 0.05 };
   },
   // The junk that shouts is the junk that glows.
   hazard: email => email.kind === 'Junk' && (email.category === 'Spam' || email.category === 'Promo' || email.category === 'Alert'),

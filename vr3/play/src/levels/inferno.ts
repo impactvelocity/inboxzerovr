@@ -19,9 +19,10 @@ import type { FxStyle, LevelSound } from './types';
  * and end-before-2026-11-13.webp (design/incinerator-v2).
  */
 
-/** The heap of mail on the furnace's hopper, where letters come from: its direction, and how far it is by the depth model. */
-const HOPPER = { u: 0.5, v: 0.632, metres: 5.9 };      // (in the room before it, the chute's mouth: u .5, v .453, 4.5 m)
-const hopperWay = new V3();
+/** The fire in the great furnace's mouth, where letters come from (2026-11-13: "make the emails come from the fire"; they lifted
+ * off the heap on its hopper, u .5 v .632, before): its direction, and how far it is by the depth model. */
+const FIRE = { u: 0.5, v: 0.418, metres: 6.0 };
+const fireWay = new V3();
 
 export const infernoStage: StageDef = {
   id: 'inferno', name: 'Inferno',
@@ -51,14 +52,18 @@ export const infernoStage: StageDef = {
     // A caged lamp, about 1: it breathes, slowly. Nothing in this hall flickers or strobes (the lab's lesson,
     // 2026-11-13: "not strobe effects"); the old room's lamps used flame(), which gutters at 23 Hz.
     float breathe(float seed){ return 1.+.06*sin(time*.9+seed)+.04*sin(time*1.7+seed*2.1); }
+    // A fire's flicker, about 1 (2026-11-13: "make the lighting around the level flicker nicer / glow"): smooth noise at three or
+    // four a second on top of the breath, never a hard on-off, so it lives without strobing.
+    float flick(float seed){ return breathe(seed)+.16*(softNoise(vec2(time*3.2+seed*13.,seed*5.))-.5)+.08*(softNoise(vec2(time*5.1+seed*3.,seed*9.))-.5); }
     vec2 warp(vec2 uv){
       // The fire in the great furnace's mouth climbs: the painting is read from a little lower and to one side
       // in waves that travel upwards, so the flames lick and roll. The bed of coals at the bottom stays put.
       float mouth=box(uv,vec2(.5,.428),vec2(.027,.045),.006);
       float up=clamp((uv.y-.381)/.095,0.,1.);
-      float roll=sin(uv.y*420.-time*6.+sin(uv.x*300.+time*1.3)*1.6)+.6*sin(uv.y*230.-time*4.1+uv.x*170.);
-      uv.y-=mouth*(.0035+.0025*roll)*up;
-      uv.x+=mouth*sin(uv.y*380.-time*5.2+uv.x*90.)*.0016*up;
+      // (about half as much, and slower, since 2026-11-13: "make the main fire center a bit less wavey")
+      float roll=sin(uv.y*420.-time*4.2+sin(uv.x*300.+time*.9)*1.2)+.6*sin(uv.y*230.-time*2.9+uv.x*170.);
+      uv.y-=mouth*(.0019+.0012*roll)*up;
+      uv.x+=mouth*sin(uv.y*380.-time*3.6+uv.x*90.)*.0007*up;
       // Heat: the air shivers over the furnace and the heap on its hopper, over the grate in front of it, and
       // faintly over the side furnaces' doors; more as the lights go down, while you burn, and as a letter goes.
       float heat=oval(uv,vec2(.5,.53),vec2(.05,.08))+oval(uv,vec2(.5,.33),vec2(.02,.05))*.6
@@ -80,7 +85,7 @@ export const infernoStage: StageDef = {
       col+=soft*bright*(.16+.22*blend);
       col+=wide*vec3(1.,.62,.32)*spill*(.06+.12*blend);
       // The great furnace breathes; it roars as a letter lifts off the heap or burns (pulse) and while you burn (hot).
-      float roar=.78+.22*surge(.4)+.85*pulse+.3*hot;
+      float roar=.78+.22*surge(.4)+.85*pulse+.3*hot+.12*(softNoise(vec2(time*2.8,.7))-.5);
       float mouth=box(uv,vec2(.5,.428),vec2(.029,.047),.008);
       col*=1.+glowing*mouth*(roar-.85)*1.1;
       col+=fire*mouth*glowing*.06*roar*(.5+.5*blend);
@@ -99,15 +104,15 @@ export const infernoStage: StageDef = {
       // and the furnace's light lies along the floor in a long streak to the deck and past it, breathing with it
       float floorAll=smoothstep(.37,.33,uv.y);
       col+=fire*floorAll*(oval(uv,vec2(.5,.30),vec2(.045,.07))+oval(uv,vec2(.5,.13),vec2(.035,.12))*.7)*(.02+.04*blend)*(roar-.5);
-      // Lifting off the heap: the hopper catches the light as a letter comes away.
-      col+=amber*oval(uv,vec2(.5,.632),vec2(.045,.03))*.22*pulse;
+      // A letter coming out of the fire: the mouth flares as it comes.
+      col+=amber*oval(uv,vec2(.5,.43),vec2(.05,.06))*.26*pulse;
       // The furnaces down the side bays: their door seams glow and breathe, each in its own time, and throw their
       // light on the air and the floor in front of them; they answer the great one when it roars.
       float bays=band(uv.y,.38,.58)*(1.-box(uv,vec2(.5,.46),vec2(.07,.12),.02));
-      float sideBreath=.75+.25*sin(time*.55+uv.x*31.)*sin(time*.23+uv.x*13.);
+      float sideBreath=.75+.25*sin(time*.55+uv.x*31.)*sin(time*.23+uv.x*13.)+.14*(softNoise(vec2(time*3.+uv.x*41.,uv.x*17.))-.5);
       col*=1.+glowing*bays*((sideBreath-.75)*1.2+.3*pulse+.25*hot);
       float doors=oval(uv,vec2(.096,.45),vec2(.035,.08))+oval(uv,vec2(.9025,.45),vec2(.035,.08))+(oval(uv,vec2(.287,.47),vec2(.02,.05))+oval(uv,vec2(.7125,.47),vec2(.02,.05)))*.8;
-      col+=fire*doors*(.015+.045*blend)*sideBreath;
+      col+=fire*doors*(.03+.06*blend)*sideBreath;      // (.015 + .045 before 2026-11-13's "glow")
       // The caged lamps: steady, breathing slowly, a halo round each, dimmer as the lights go down; under the
       // hanging ones a cone of lit dust drifting.
       float day=1.-.55*blend;
@@ -116,10 +121,14 @@ export const infernoStage: StageDef = {
                  +(oval(uv,vec2(.324,.685),vec2(.012,.03))+oval(uv,vec2(.675,.685),vec2(.012,.03))+oval(uv,vec2(.1565,.64),vec2(.012,.03))+oval(uv,vec2(.8425,.64),vec2(.012,.03)))*.8
                  +(oval(uv,vec2(.3665,.603),vec2(.008,.02))+oval(uv,vec2(.6325,.603),vec2(.008,.02))+oval(uv,vec2(.07,.535),vec2(.01,.025))+oval(uv,vec2(.93,.535),vec2(.01,.025)))*.7
                  +(oval(uv,vec2(.2925,.255),vec2(.014,.012))+oval(uv,vec2(.345,.255),vec2(.014,.012))+oval(uv,vec2(.655,.255),vec2(.014,.012))+oval(uv,vec2(.7125,.255),vec2(.014,.012)))*.8;
-      col+=amber*halos*(.08*day+.03)*breathe(1.3);
+      col+=amber*halos*(.11*day+.05)*flick(1.3);
+      // and a wider soft glow round each, flickering with it
+      float glowAround=oval(uv,vec2(.229,.615),vec2(.04,.09))+oval(uv,vec2(.7715,.615),vec2(.04,.09))+oval(uv,vec2(.181,.82),vec2(.05,.11))+oval(uv,vec2(.819,.82),vec2(.05,.11))
+                      +(oval(uv,vec2(.324,.685),vec2(.03,.07))+oval(uv,vec2(.675,.685),vec2(.03,.07))+oval(uv,vec2(.1565,.64),vec2(.03,.07))+oval(uv,vec2(.8425,.64),vec2(.03,.07)))*.7;
+      col+=amber*glowAround*(.035+.03*blend)*flick(4.7);
       float dust=softNoise(vec2(uv.x*46.+time*.21,uv.y*34.-time*.16))*softNoise(vec2(uv.x*17.-time*.08,uv.y*23.+time*.05));
       float cones=oval(uv,vec2(.181,.66),vec2(.05,.16))+oval(uv,vec2(.819,.66),vec2(.05,.16))+(oval(uv,vec2(.324,.58),vec2(.03,.1))+oval(uv,vec2(.675,.58),vec2(.03,.1)))*.7;
-      col+=amber*cones*dust*.10*day;
+      col+=amber*cones*dust*.10*day*flick(2.2);
       // Depth: smoke hangs down the far hall and the side corridors' far ends, drifting, so that what is near
       // stands clear of it and the furnace holds the eye.
       float far=oval(uv,vec2(.5,.47),vec2(.20,.07))*(1.-box(uv,vec2(.5,.45),vec2(.062,.105),.015))
@@ -165,7 +174,9 @@ export const infernoStage: StageDef = {
   // the letters lift off the heap: the hopper's glow swells rather than flashes (as the lab's hatch, 2026-11-13)
   pulseRise: 0.3,
   // the furnace's light on what is in the hand: it breathes, slowly (it fluttered at 5 to 9 Hz in the old room)
-  flicker: (time, blend) => 0.78 + 0.22 * (0.5 + 0.5 * Math.sin(time * 0.7 + 0.4) * Math.sin(time * 0.31 + 0.9)) * (0.5 + 0.5 * blend) + 0.05 * Math.sin(time * 1.3),
+  // (and a soft fire's flicker on top since 2026-11-13: smooth, three or four a second, no strobe)
+  flicker: (time, blend) => 0.78 + 0.22 * (0.5 + 0.5 * Math.sin(time * 0.7 + 0.4) * Math.sin(time * 0.31 + 0.9)) * (0.5 + 0.5 * blend) + 0.05 * Math.sin(time * 1.3)
+    + 0.035 * Math.sin(time * 19.3 * 0.17 + Math.sin(time * 2.3)) + 0.025 * Math.sin(time * 4.1 + 1.7),
 };
 
 export const infernoLetters: LetterTheme = {
@@ -173,11 +184,11 @@ export const infernoLetters: LetterTheme = {
   look: { sheet: '#f3e6cc', ink: '#1c130f', back: '#e4d3b4', selfLit: 0.1, night: '#d9bcae',
     hover: '#ffe2b8', cutWide: '#ff9a3a', cutHot: '#fff3d6', mark: '#ffe27a', flash: '#fff1d0', gold: '#fff0a8',
     burn: '#ffb347', burnStyle: 3, streak: ['#ffb070', '#ffffff'], thread: ['#ffb070', '#fff3e0'], aura: ['#ff5a14', '#ffc24a'], spell: { wisps: 1, sparkles: 8, trail: false, glow: 0.34 } },      // (glow 0.6 and 14 sparkles until the user asked for less, 2026-11-13)
-  // Off the heap on the furnace's hopper, lifted by the draught: small and far, then out over the deck towards you, turning a little as it comes.
+  // Out of the fire in the furnace's mouth, on the draught: small and far, up out of the flames, then over the deck towards you.
   origin(head: Vector3, home: Vector3, from: Vector3, via: Vector3) {
-    from.copy(head).addScaledVector(paintedDirection(HOPPER.u, HOPPER.v, hopperWay), HOPPER.metres);
-    via.lerpVectors(from, home, 0.55); via.y += 0.22;
-    return { scale: 0.5, pose: 'face' as const, seconds: 2, ease: 2, sway: 0.06 };
+    from.copy(head).addScaledVector(paintedDirection(FIRE.u, FIRE.v, fireWay), FIRE.metres);
+    via.lerpVectors(from, home, 0.45); via.y += 0.35;
+    return { scale: 0.5, pose: 'face' as const, seconds: 1.3, ease: 2, sway: 0.06 };
   },
   // The junk that shouts arrives already smouldering (as the lab's is radioactive): it takes the fire a little longer.
   hazard: email => email.kind === 'Junk' && (email.category === 'Spam' || email.category === 'Promo' || email.category === 'Alert'),
