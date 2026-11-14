@@ -71,7 +71,14 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#fff;font-family
 .chiprow{position:absolute;left:0;right:0;top:944px;display:flex;justify-content:center;visibility:hidden}
 
 /* seated */
-#seat-img{position:absolute;left:0;top:0;width:1920px;height:1080px}
+#seat-bg{position:absolute;inset:0;overflow:hidden;background:#140f24}
+#seat-bg img{width:100%;height:100%;object-fit:cover;transform-origin:50% 45%}
+#seat-motes{position:absolute;inset:0;overflow:hidden}
+#seat-motes i{position:absolute;display:block}
+#seat-motes i.petal{border-radius:60% 0 60% 0;background:#ffc2db}
+#seat-motes i.mote{border-radius:50%;background:#ffe2a8;box-shadow:0 0 12px 4px #ffcf7a88}
+#seat-shade{position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 18% 100%,#0b0912b3 0%,#0b091200 70%),linear-gradient(0deg,#0b091266 0%,#0b091200 35%)}
+#seat-img{position:absolute;left:24px;bottom:0;width:1248px;height:702px;filter:drop-shadow(0 18px 30px #0008)}
 
 /* AI */
 .paper{width:900px;padding:36px 44px 40px;background:var(--paper);color:var(--paper-ink);border-radius:10px;box-shadow:0 0 0 2px #d9cba6,0 30px 60px -28px #2a211855;position:relative}

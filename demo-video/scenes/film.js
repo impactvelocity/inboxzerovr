@@ -384,16 +384,48 @@ function browser(T) {
   if (v) $('win').style.transform += ` translateY(${-36 * eo((T - W('iwsdk', 'immersive') + .1) / .5)}px)`;
 }
 
+// petals and warm motes for the Kyoto backdrop (fixed seeds, so every frame is a pure function of time)
+const seatMotes = [];
+for (let k = 0; k < 46; k++) { const i = document.createElement('i'); i.className = k < 30 ? 'petal' : 'mote'; $('seat-motes').appendChild(i); seatMotes.push(i); }
+
 function seated(T) {
-  // v6: the generated seated player, keyed and retimed so the grab lands on "come to you" and the slash on "stretching"
+  // v8: the transparent take (the user's own cut, 5 s at 30 fps) in the bottom left, over Kyoto at night.
+  // Its own timing is kept, eased a little so the slash lands on "stretching".
   const a = C('chair') - .05, b = C('really') - .3;
   const el = $('seated');
   if (T < a || T >= b + .3) return show(el, false);
-  const o = clamp((T - a) / .3) * (1 - clamp((T - b) / .3));
+  const o = clamp((T - a) / .35) * (1 - clamp((T - b) / .3));
   show(el, true, o, '');
-  const f = clamp(Math.round((T - a) * FPS) + 1, 1, FOOT.seated);
-  const src = `../work/footage/seated/${String(f).padStart(4, '0')}.png`;
+  const u = T - a, slash = W('come', 'stretching') - a;
+  // clip seconds: 0 to 2.2 as it comes (the grab), 3.6 is the slash, 5 is the end
+  const MAP = [[0, 0], [2.3, 2.2], [slash, 3.6], [slash + 1.5, 5]];
+  let s = 5;
+  for (let k = 0; k < MAP.length - 1; k++) if (u <= MAP[k + 1][0]) { const [u0, s0] = MAP[k], [u1, s1] = MAP[k + 1]; s = s0 + (s1 - s0) * clamp((u - u0) / (u1 - u0)); break; }
+  const f = clamp(Math.round(s * 30) + 1, 1, FOOT.seated2);
+  const src = `../work/footage/seated2/${String(f).padStart(4, '0')}.png`;
   if (!$('seat-img').src.endsWith(src.slice(2))) $('seat-img').src = src;
+  // the garden: a slow push in, petals drifting across, warm motes rising
+  $('seat-bg').firstElementChild.style.transform = `scale(${1.04 + .05 * clamp(u / 5.5)}) translateX(${-12 * clamp(u / 5.5)}px)`;
+  seatMotes.forEach((m, k) => {
+    const petal = k < 30, sp = petal ? 70 + 90 * rnd(k + 1) : 18 + 22 * rnd(k + 1);
+    const t = u + rnd(k + 2) * 12;
+    let x, y, sz;
+    if (petal) {
+      x = ((rnd(k) * 2300 - 200 + t * sp * 1.1) % 2300) - 150;
+      y = ((rnd(k + 3) * 1300 + t * sp * .55) % 1300) - 120 + 22 * Math.sin(t * 1.3 + k);
+      sz = 9 + 12 * rnd(k + 4);
+      m.style.width = sz + 'px'; m.style.height = sz * .75 + 'px';
+      m.style.transform = `rotate(${t * 90 * (rnd(k + 5) - .5) + k * 40}deg)`;
+      m.style.opacity = .55 + .4 * rnd(k + 6);
+    } else {
+      x = 200 + rnd(k) * 1650 + 30 * Math.sin(t * .7 + k);
+      y = 1080 - ((rnd(k + 3) * 900 + t * sp) % 900) - 60;
+      sz = 3 + 4 * rnd(k + 4);
+      m.style.width = sz + 'px'; m.style.height = sz + 'px';
+      m.style.opacity = (.35 + .5 * rnd(k + 6)) * (.6 + .4 * Math.sin(t * 2.2 + k * 1.7));
+    }
+    m.style.left = x + 'px'; m.style.top = y + 'px';
+  });
 }
 
 function flow(T) {

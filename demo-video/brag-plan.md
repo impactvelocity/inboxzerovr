@@ -1,5 +1,12 @@
 # Inbox Zero VR demo film, plan
 
+## v8 (2026-11-13)
+
+- The seated scene (1:43) uses the new transparent take, `vr-email-katana-transparent.mov` (ProRes 4444 with a real alpha channel, 5 s at 30 fps; a copy is in `work/seated2/src/`). No keying needed.
+- "Smaller in bottom left corner so behind him can show kyoto night": the player is 65% size, anchored to the bottom left, over the game's Kyoto twilight painting (`vr3/play/public/garden/twilight-v2.webp`, cropped to the pavilion and cherry tree) with a slow push in, 30 drifting petals, 16 warm rising motes, and a soft dark shade behind the player.
+- The take's own timing is kept and eased a little: the grab lands near "come to you", the slash on "stretching". It fades in from the white browser scene and out to the white inbox.
+- The Higgsfield v6 clip and its key (`tools/seated_key.py`) are no longer used but are kept.
+
 ## v7 (2026-11-13), the agent (MCP) flow
 
 - Voice: three re-read parts replace the Gmail-era lines: `how-it-works-iz.mp3` (how it works, through round two), `builtwith-iz.mp3` (how it's built, through "deleted once it's done") and `try-it-yourself-iz.mp3` (the close, with the sung end; the old end take is no longer used). The hook, intro and levels are still take 1. The four takes are levelled to each other. Short beats follow each agent step (0.7 s after "set up a game", 0.9 s after "Meta Quest", 0.9 s after "say okay").

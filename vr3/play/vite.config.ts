@@ -52,6 +52,64 @@ function weaponTweaks(): Plugin {
 }
 
 /**
+ * The headset never reloads mid-game (2026-11-13: "the game still stall and kick me out, and the page reloads").
+ * The Quest reaches this server over USB (`adb reverse`), and that link drops every few minutes. Each drop closed
+ * Vite's live socket, and when it came back Vite's client reloaded the page: out of VR, mid-game. Any file saved
+ * (by any chat) did the same. So in the Quest's browser only, the client's socket is a stand-in that quietly
+ * reconnects underneath and never reports a close; and while a VR session is running, "reload" messages are held
+ * back and acted on when it ends. The weapon tuning (tune.html) still reaches the game over it. Desktop pages are
+ * left as Vite makes them.
+ */
+const HEADSET_SOCKET = /* js */ `
+(() => {
+  if (!/OculusBrowser|Quest/i.test(navigator.userAgent)) return;
+  const Real = window.WebSocket;
+  let inVR = false, reloadLater = false;
+  const xr = window.XRSystem && XRSystem.prototype, request = xr && xr.requestSession;
+  if (request) xr.requestSession = function (...args) {
+    return request.apply(this, args).then(session => {
+      inVR = true;
+      session.addEventListener('end', () => { inVR = false; if (reloadLater) location.reload(); });
+      return session;
+    });
+  };
+  class Steady extends EventTarget {
+    constructor(url, protocols) {
+      super(); this.url = url; this.protocols = protocols; this.readyState = 0; this.queue = []; this.wait = 500; this.connect();
+    }
+    connect() {
+      const ws = new Real(this.url, this.protocols); this.ws = ws;
+      ws.addEventListener('open', () => {
+        this.wait = 500; const first = this.readyState !== 1; this.readyState = 1;
+        for (const data of this.queue.splice(0)) ws.send(data);
+        if (first) this.dispatchEvent(new Event('open'));
+      });
+      ws.addEventListener('message', e => {
+        // (a file saved while in VR: held until the session ends; Vite's own client would reload now)
+        try { const m = JSON.parse(e.data); if (inVR && m && (m.type === 'full-reload' || m.type === 'update')) { reloadLater = true; return; } } catch {}
+        this.dispatchEvent(new MessageEvent('message', { data: e.data }));
+      });
+      ws.addEventListener('close', () => {
+        if (this.closed) return;
+        // (never passed on: Vite would wait for the server and reload the page)
+        if (this.readyState === 1) console.info('[headset] dev socket dropped: reconnecting without a reload');
+        setTimeout(() => this.connect(), this.wait); this.wait = Math.min(5000, this.wait * 2);
+      });
+      ws.addEventListener('error', () => {});
+    }
+    send(data) { if (this.ws.readyState === 1) this.ws.send(data); else this.queue.push(data); }
+    close() { this.closed = true; this.ws.close(); }
+  }
+  window.WebSocket = function (url, protocols) {
+    return String(protocols).includes('vite-hmr') ? new Steady(url, protocols) : new Real(url, protocols);
+  };
+  Object.assign(window.WebSocket, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3, prototype: Real.prototype });
+})();`;
+function headsetSocket(): Plugin {
+  return { name: 'vr3-headset-socket', apply: 'serve', transformIndexHtml: () => [{ tag: 'script', children: HEADSET_SOCKET, injectTo: 'head-prepend' }] };
+}
+
+/**
  * The game. Since 2026-11-12 it lives in vr3/play and the site and API (Next.js) in vr3 above it.
  * In production the site serves this build at /play, so `base` stays relative.
  *
@@ -66,7 +124,7 @@ export default defineConfig(({ mode }) => {
   const api = env.API_ORIGIN || process.env.API_ORIGIN || 'http://localhost:3000';
   return {
     base: './',
-    plugins: [weaponTweaks(), ...(process.env.HTTPS === '1' ? [basicSsl()] : [])],
+    plugins: [weaponTweaks(), headsetSocket(),...(process.env.HTTPS === '1' ? [basicSsl()] : [])],
     server: { port: 5183, strictPort: true, proxy: { '/api': { target: api, changeOrigin: false, xfwd: true } } },
     preview: { port: 4183, strictPort: true, proxy: { '/api': { target: api, changeOrigin: false, xfwd: true } } },
     resolve: { dedupe: ['three', '@pmndrs/uikit'] },

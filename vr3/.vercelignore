@@ -1,0 +1,19 @@
+# What `vercel deploy` (run in vr3/) does not upload. Everything else goes up, including the game's
+# paintings and sounds in play/public and the site's pictures in public/site, which git keeps off GitHub.
+# Vercel installs and builds itself (vercel.json), so local installs and builds stay here.
+node_modules
+/play/node_modules
+/.next
+/play/dist
+/public/play
+*.tsbuildinfo
+
+# Secrets: set them in the Vercel project instead.
+.env
+.env.*
+
+# Work files the build never reads.
+/design
+/play/design
+/play/tools
+/play/checks
