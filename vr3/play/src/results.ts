@@ -116,8 +116,9 @@ export function bindResults() {
   });
   back.addEventListener('click', () => { uiSound('back'); mail.dismissResults(); mail.clearCode(); refresh(); });
   mail.listen(refresh);
-  // MOCK, top left by the mic, in dev builds only (on 5183 and the headset through it): the results screen with mock data
-  if (import.meta.env.DEV) {
+  // MOCK, top left by the mic: the results screen with mock data. Hidden since 2026-11-14 ("you can hide the mock button - the end
+  // scene is polished"): a dev build shows it again with ?mock=1 in the address.
+  if (import.meta.env.DEV && new URLSearchParams(location.search).get('mock') === '1') {
     const mock = $<HTMLButtonElement>('mock-results');
     mock.hidden = false;
     mock.addEventListener('click', () => { uiSound('confirm'); mail.mockResults(); });

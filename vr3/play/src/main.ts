@@ -15,7 +15,7 @@ import { createHome } from './home';
 import { bindHomeMic, bindSetupMic, dictate } from './dictate';
 import { bindMailUi } from './mailui';
 import { mail } from './mail/source';
-import { createHowto } from './howto';
+import { WEAPON_VERB, createHowto } from './howto';
 import { bindResults } from './results';
 import { LEVELS, SHOWN, levelById, shownById, type Level } from './levels';
 import { createStage, type RoundProgress } from './levels/backdrop';
@@ -282,7 +282,9 @@ async function main() {
         music.duck(600);
         const theme = now.level.letters;
         howto.start({ accent: now.level.accent, colours: theme.bar ?? [now.level.accent, now.level.accent], at: theme.dock?.intro ?? theme.intro,
-          vr: world.renderer.xr.isPresenting,
+          vr: world.renderer.xr.isPresenting, verb: WEAPON_VERB[now.level.id],
+          // skipped, its parts are cut up like emails, or burnt / melted where the level's weapon does that (2026-11-14)
+          breakApart: (parts, at, along, push) => letters.breakApart(parts, at, along, push, now.level.id === 'inferno' || now.level.id === 'lab' ? 'burn' : 'cut'),
           done: () => { if (!playing) return; music.restart(); music.duck(0.01, true); home.announce(now.level.id); } });
       } else home.announce(now.level.id);
     }

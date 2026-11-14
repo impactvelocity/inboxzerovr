@@ -64,6 +64,12 @@ const TITLE_Y = 0.43, FOOT_Y = -0.42, AHEAD = 1.6;      // (as far out as the ro
 const HIT_X = 0.62, HIT_Y = 0.56, HIT_SPEED = 1.6, REACH = 1.3;
 const ON_ORDER = 30;                    // drawn over the level and anything standing in it
 
+/**
+ * What each level's weapon does to an email, for the intro's words (2026-11-14: "make the intro how to play be "Slash, Burn, Chop,
+ * etc" based on the level"): the right card's SLASH TO CLEAR and the skip line in VR. A level not named here slashes.
+ */
+export const WEAPON_VERB: Record<string, string> = { kyoto: 'Slash', office2: 'Smash', castle: 'Slash', lab: 'Spray', space: 'Slash', inferno: 'Burn', lumber: 'Chop' };
+
 const CARDS: Record<'one' | 'two', Record<'left' | 'right', [string, string][]>> = {
   one: { left: [['Grab to read', 'left:0'], ['Throw to keep', 'left:2']], right: [['Grip to arm', 'right:0'], ['Slash to clear', 'right:1']] },
   two: { left: [['Move to choose', 'left:0'], ['Hold to send', 'left:1']], right: [['Bring to mic', 'right:0'], ['Say your reply', 'right:1']] },
@@ -81,6 +87,13 @@ interface Opts {
   at?: { up: number; nearer: number; size: number };
   /** In a headset: "slash to skip"; on a screen: "press X to skip". */
   vr: boolean;
+  /** The level's verb for its weapon (WEAPON_VERB): SLASH, BURN, CHOP... */
+  verb?: string;
+  /**
+   * Skipped: the parts given over to the game's letters to be cut (or burnt, melted) like an email (letters.breakApart). Without it
+   * the parts fly apart on their own, as before.
+   */
+  breakApart?(parts: BreakPart[], at: THREE.Vector3, along: THREE.Vector3, push: THREE.Vector3): void;
   /** It is over (seen or skipped): the game can begin. */
   done(): void;
 }
@@ -89,6 +102,8 @@ interface BladeLike { moving: boolean; tip: THREE.Vector3; base: THREE.Vector3; 
 /** A sprayer's nozzle and trigger (letters.ts SprayTool). */
 interface ToolLike { origin: THREE.Vector3; direction: THREE.Vector3; on: number; valid: boolean }
 interface Sounds { play(name: string, pitch?: number, volume?: number, at?: THREE.Vector3): void }
+/** One part of the panel as a picture, w by h metres, where `matrix` puts it in the world. */
+export interface BreakPart { canvas: HTMLCanvasElement; w: number; h: number; matrix: THREE.Matrix4 }
 
 /** A word in the pixel letters, in the level's label look (pixelLabel.ts), as a flat thing that can change its words. */
 function label(cell: number, colours: [string, string]) {
@@ -99,7 +114,7 @@ function label(cell: number, colours: [string, string]) {
   const holder = new THREE.Group(); holder.add(mesh);
   let text = '', size = cell, look = colours;
   return {
-    holder, material,
+    holder, material, canvas,
     get text() { return text; },
     set(next: string, nextCell = size, nextColours = look) {
       if (next === text && nextCell === size && nextColours === look) return;
@@ -210,8 +225,15 @@ export function createHowto(world: World, sounds: Sounds) {
   let scenes: { one: GuideScene; two: GuideScene } | null = null;
   let building: Promise<void> | null = null;
   const half = world.renderer.extensions.has('EXT_color_buffer_float') || world.renderer.extensions.has('EXT_color_buffer_half_float');
-  const target = () => new THREE.WebGLRenderTarget(512, Math.round(512 * 0.92), { type: half ? THREE.HalfFloatType : THREE.UnsignedByteType, samples: 4 });
+  // (8-bit and 2x MSAA, not half float and 4x, since 2026-11-14: on the Quest every pass into these costs frame time, and a dropped
+  //  frame shows as the held weapon lagging and jumping while the world is re-projected smoothly; "the weapon will change position
+  //  randomly" while the intro played)
+  void half;
+  const target = () => new THREE.WebGLRenderTarget(448, Math.round(448 * 0.92), { type: THREE.UnsignedByteType, samples: 2 });
   const targets = { one: { left: target(), right: target() }, two: { left: target(), right: target() } };
+  let paintTick = 0;
+  /** Each card's time when it was last drawn ('one:left' and so on), so a card that has not moved is not drawn again. */
+  const painted = new Map<string, number>();
   /** Draw a round's two cards into their textures with the game's renderer (outside VR's own cameras for the moment). */
   function paint(round: 'one' | 'two', tl: number, tr: number, which: 'left' | 'right' | 'both' = 'both') {
     const guide = scenes?.[round]; if (!guide) return;
@@ -254,10 +276,11 @@ export function createHowto(world: World, sounds: Sounds) {
   let hadBlade = false;
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), p0 = new THREE.Vector3(), p1 = new THREE.Vector3();
 
+  let verb = 'Slash';
   function setRound(round: 'one' | 'two', colours: [string, string]) {
     for (const card of cards) {
       const lines = CARDS[round][card.side];
-      card.words.forEach((word, i) => word.set(lines[i][0], wordCell(), colours));
+      card.words.forEach((word, i) => word.set(lines[i][0].replace(/^Slash\b/, verb), wordCell(), colours));      // (the level's own verb: BURN TO CLEAR, CHOP TO CLEAR)
       (card.view.material as THREE.MeshBasicMaterial).map = scenes ? targets[round][card.side].texture : null;
       (card.view.material as THREE.MeshBasicMaterial).needsUpdate = true;
     }
@@ -300,6 +323,7 @@ export function createHowto(world: World, sounds: Sounds) {
         spin: new THREE.Vector3((Math.random() - 0.5) * 3, (Math.random() - 0.5) * 3, side * (1.4 + Math.random())),
       });
     }
+    if (run.opts.breakApart) handOver(point, dir);
     streak.visible = true; streak.position.set(point.x, point.y, 0.03); streak.rotation.set(0, 0, Math.atan2(dir.y, dir.x)); streak.scale.set(0.01, 0.05, 1);
     v1.set(point.x, point.y, 0); root.localToWorld(v1);
     sounds.play('slash1', 1, 1, v1); sounds.play('swoosh2', 0.9, 0.55, v1);
@@ -309,6 +333,45 @@ export function createHowto(world: World, sounds: Sounds) {
       const pad = source.gamepad as (Gamepad & { hapticActuators?: { pulse?(value: number, duration: number): Promise<boolean> }[] }) | undefined;
       try { void pad?.hapticActuators?.[0]?.pulse?.(0.8, 60)?.catch(() => undefined); } catch { /* no rumble */ }
     }
+  }
+
+  /**
+   * The panel's parts as pictures, handed to the game's letters at the hit (2026-11-14: "would be fun if they could be cut up / burn
+   * like other things"): the title, each card (its box, its outline lit or not, its two lines of words; not the hands) and the skip
+   * plate with its words. Then the panel's own parts are hidden: the letters' pieces are what is seen.
+   */
+  function handOver(point: THREE.Vector2, dir: THREE.Vector2) {
+    if (!run?.opts.breakApart) return;
+    root.updateMatrixWorld(true);
+    const parts: BreakPart[] = [], sc = new THREE.Vector3(), ps = new THREE.Vector3(), qu = new THREE.Quaternion();
+    const size = (o: THREE.Object3D) => { o.matrixWorld.decompose(ps, qu, sc); return sc; };
+    // the title, as its own picture
+    if (title.material.opacity > 0.05) { const mesh = title.holder.children[0]; const k = size(mesh); parts.push({ canvas: title.canvas, w: k.x, h: k.y, matrix: mesh.matrixWorld.clone() }); }
+    // each card: its box, outline and words drawn into one picture
+    for (const card of cards) {
+      if (!card.face.visible || (card.face.material as THREE.MeshBasicMaterial).opacity < 0.05) continue;
+      const k = size(card.group), canvas = document.createElement('canvas'); canvas.width = FW; canvas.height = FH;
+      const g = canvas.getContext('2d')!;
+      g.fillStyle = '#' + (card.edge.material as THREE.MeshBasicMaterial).color.getHexString(); steppedBox(g, 0, 0, FW, FH, S);
+      g.fillStyle = '#0d0b14'; steppedBox(g, S, S, FW - 2 * S, FH - 2 * S, S);
+      card.words.forEach((word, i) => { const c = word.canvas; g.drawImage(c, (FW - c.width) / 2, FH / 2 + (i === 0 ? -1 : 1) * WORD_Y / PX - c.height / 2); });
+      parts.push({ canvas, w: CARD_W * k.x, h: CARD_H * k.y, matrix: card.group.matrixWorld.clone() });
+    }
+    // the skip plate and its words
+    if (foot.material.opacity > 0.05) {
+      const k = size(foot.holder), pw = Math.round(plate.w / PX), ph = Math.round(plate.h / PX), canvas = document.createElement('canvas'); canvas.width = pw; canvas.height = ph;
+      const g = canvas.getContext('2d')!;
+      g.fillStyle = run.opts.accent; steppedBox(g, 0, 0, pw, ph, 4); g.fillStyle = '#09080d'; steppedBox(g, 4, 4, pw - 8, ph - 8, 4);
+      g.drawImage(foot.canvas, (pw - foot.canvas.width) / 2, (ph - foot.canvas.height) / 2);
+      parts.push({ canvas, w: plate.w * k.x, h: plate.h * k.y, matrix: foot.holder.matrixWorld.clone() });
+    }
+    const at = new THREE.Vector3(point.x, point.y, 0); root.localToWorld(at);
+    const along = new THREE.Vector3(dir.x, dir.y, 0).transformDirection(root.matrixWorld);
+    const push = along.clone().multiplyScalar(4).add(new THREE.Vector3(0, 0.6, 0));
+    run.opts.breakApart(parts, at, along, push);
+    // the panel's own parts go at once (the shadow and the streak fade as before)
+    for (const piece of pieces) piece.visible = false;
+    pieceMotion.clear();
   }
 
   /** Did the weapon's line go through the panel this frame (fast enough to be a swing)? Its point and way across, in the panel's own plane. */
@@ -360,12 +423,14 @@ export function createHowto(world: World, sounds: Sounds) {
       run = { opts, t: 0, placed: false, said: VOICE.map(() => false), round: 'one', flipFrom: -1, titleText: '', titlePop: 0, skip: null, aimed: 0, demo: !mail.roundReady() };
       for (const scene of [scenes?.one, scenes?.two]) scene?.accent(opts.accent);
       const words: [string, string] = [opts.colours[0], opts.colours[1]];
-      title.set('How to Play', 13, words); foot.set(opts.vr ? 'Slash here to skip' : 'Press X to skip', 6, words); plate = fitPlate();
+      verb = opts.verb ?? 'Slash';
+      title.set('How to Play', 13, words); foot.set(opts.vr ? `${verb} here to skip` : 'Press X to skip', 6, words); plate = fitPlate();
       for (const m of [plateFace, plateEdge, plateSwipe]) (m.material as THREE.MeshBasicMaterial).color.set(m === plateFace ? '#ffffff' : opts.accent);
       setRound('one', words);
       for (const card of cards) { card.lit = 0; card.shown = 0; card.wordLit = [0, 0]; card.group.rotation.set(0, 0, 0); card.group.position.set(card.side === 'left' ? -CARD_X : CARD_X, 0, 0); card.group.scale.setScalar(0.001); }
       title.holder.position.set(0, 0, 0); title.holder.rotation.set(0, 0, 0); foot.holder.position.set(0, FOOT_Y, 0); foot.holder.rotation.set(0, 0, 0);
-      pieceMotion.clear(); streak.visible = false; hadBlade = false;
+      pieceMotion.clear(); streak.visible = false; hadBlade = false; painted.clear();
+      for (const piece of pieces) piece.visible = true;
       root.visible = false; panel.scale.setScalar(1);
     },
     /** Left before the end (the player left VR, or the menu): gone, nothing remembered. */
@@ -459,7 +524,15 @@ export function createHowto(world: World, sounds: Sounds) {
       if (scenes && T >= ROUND_ONE - 0.1 && T < READY + 0.35) {
         const round = run.round, loops = scenes[round].loops;
         const tl = Math.min(loops.left, Math.max(0, T - (round === 'one' ? ROUND_ONE : ROUND_TWO))), tr = Math.min(loops.right, Math.max(0, T - (round === 'one' ? RIGHT_ONE : RIGHT_TWO)));
-        paint(round, tl, tr);
+        // (only what changed, and the moving card at half the frame rate: a card resting at its start or end is not drawn again;
+        //  2026-11-14, to keep the Quest at its frame rate while the intro plays)
+        paintTick++;
+        for (const side of ['left', 'right'] as const) {
+          const t = side === 'left' ? tl : tr, key = `${round}:${side}`, lastT = painted.get(key);
+          if (lastT !== undefined && Math.abs(lastT - t) < 1e-4) continue;      // (still: its picture stands)
+          if (lastT !== undefined && (paintTick + (side === 'left' ? 0 : 1)) % 2) continue;      // (moving: every other frame, the two cards taking turns)
+          painted.set(key, t); paint(round, tl, tr, side);
+        }
         for (const card of cards) { const m = card.view.material as THREE.MeshBasicMaterial; if (m.map !== targets[round][card.side].texture) { m.map = targets[round][card.side].texture; m.needsUpdate = true; } }
       }
 

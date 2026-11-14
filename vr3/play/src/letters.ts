@@ -1064,7 +1064,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (clock - show.leaving > 1.1) { show.gone = game.timer; if (loose.includes(show.body)) remove(show.body); }
     }
     // the last word sung and a breath after: the logo comes, and smashes what is left
-    if (!lyrics.logoCalled && t >= lyrics.logoAt) { lyrics.logoCalled = true; void showLogo(); }
+    // (or by a deadline on the end's own clock, whatever the song's clock says: 2026-11-14, "the end scene should show the logo,
+    //  even if all the lyrics have been smashed": the logo is never missed for a song clock that stalled)
+    const deadline = (ANTHEM_SECONDS[theme.id] ?? 30) - 4;
+    if (!lyrics.logoCalled && (t >= lyrics.logoAt || game.timer >= deadline)) { lyrics.logoCalled = true; void showLogo(); }
     for (const show of shows) if (show.kind === 'word' && show.smashAt !== undefined && show.gone < 0 && clock >= show.smashAt) smashWord(show);
   }
   /** The logo lands: every word still there is hit, the nearest first, a ripple out from it. */
@@ -2806,7 +2809,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // (2026-11-13, latest: a level with an end song has an end its song's length, fixed, so the song is never cut off:
       // black a second and a half after it, the last half second of that the quick fade, whatever has been smashed)
       const songLength = ANTHEM_SECONDS[theme.id];
-      const over = songLength ? game.timer >= songLength + AFTER_SONG - OUTRO_BLACK
+      // (and the end waits for the logo: up 2.5 s, or smashed, before the fade; six seconds over the song at most)
+      const logoSeen = !lyrics.on || (logo.shownAt >= 0 && (game.timer - logo.shownAt > 2.5 || (!!logoNow && logoNow.gone >= 0)));
+      const over = songLength ? game.timer >= songLength + AFTER_SONG - OUTRO_BLACK && (logoSeen || game.timer >= songLength + 6)
         : lyrics.on ? game.timer > 75 || v2Over
         : game.timer > 60 || (endSongHeard ? !endSong : smashed || (!shows.length ? game.timer > 9 : !left ? cutUp : game.timer > 20));
       if (over && logo.outro < 0) logo.outro = 0;
@@ -3097,6 +3102,34 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       end: shows.map(x => (x.word ? `"${x.word.text}"` : x.kind) + (x.held ? '*' : '') + (x.free ? '~' : '') + (x.gone >= 0 ? 'x' : '')).join(' '),
       /** The end's version for this level (v1 the logo alone, v2 the song's words first: src/endlyrics.ts), and the song's clock as the words follow it. */
       ending: endingFor(theme.id), songTime: lyrics.on ? +songNow().toFixed(2) : -1 }),
+    /**
+     * The intro's panel (src/howto.ts), skipped: its parts given over to be done to as letters are (2026-11-14: "if possible the
+     * intro parts, would be fun if they could be cut up / burn like other things"). Each part is a picture `w` by `h` metres where
+     * `matrix` puts it; the hit is a world point, the way the cut ran and how hard. 'cut': each part is sliced along that line
+     * (or through its middle if the line misses it) and the halves hang and turn as cut paper does, cuttable again; 'burn': each
+     * catches and goes, in the level's own way (Inferno's fire, the lab's melt).
+     */
+    breakApart(parts: { canvas: HTMLCanvasElement; w: number; h: number; matrix: Matrix4 }[], at: Vector3, along: Vector3, push: Vector3, how: 'cut' | 'burn') {
+      const q = new Quaternion(), s3 = new Vector3();
+      parts.forEach((part, i) => {
+        const sheet = canvasSheet(part.canvas); endSheets.push(sheet);
+        dress(sheet, part.w, part.h);
+        const body = add(sheet, measure(slabSoup(part.w, part.h)), false);
+        part.matrix.decompose(body.mesh.position, q, s3); body.mesh.quaternion.copy(q);
+        body.mode = 'cut'; body.age = 0; body.life = 6; loose.push(body);
+        body.vel.copy(push).multiplyScalar(0.12).add(v1.set(rand(0.3), 0.25 + Math.random() * 0.3, 0.2));
+        body.spin.set(rand(1.5), rand(1.5), rand(2.5));
+        if (how === 'burn') { sheet.burnAt = clock + 0.05 + i * 0.08; sheet.cutAt = clock; return; }
+        body.mesh.updateMatrixWorld(true);
+        const local = v2.copy(at); body.mesh.worldToLocal(local);
+        const dir = v3.copy(along).applyQuaternion(q.clone().invert()); dir.z = 0;
+        if (dir.lengthSq() < 1e-6) dir.set(1, -0.3, 0);
+        dir.normalize();
+        const x = Math.max(-part.w / 2, Math.min(part.w / 2, local.x)), y = Math.max(-part.h / 2, Math.min(part.h / 2, local.y));
+        if (!slice(body, x, y, dir.x, dir.y, push, 1)) slice(body, 0, 0, dir.x, dir.y, push, 1);
+      });
+      hitStop = Math.max(hitStop, 0.06);
+    },
     /** For checks and the console: act on the letter in front of you without a controller. */
     debug: { cut: keyCut, keep: keyKeep, hold: keySend, round: (n: number) => beginIntro(n), end: () => { game.phase = 'play'; beginSummary(); },
       /** Write another email on the letter in front of you (a long one, to see it scroll). */
