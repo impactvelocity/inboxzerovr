@@ -64,3 +64,8 @@ dist/
 *.wav.meta
 __pycache__/
 *.py[cod]
+
+# Exception, 2026-11-13 ("for now"): the web game's and site's media are committed so Vercel can build
+# vr3 from GitHub. Remove these lines to go back to keeping them local.
+!/vr3/play/public/**
+!/vr3/public/site/**

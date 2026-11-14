@@ -1,4 +1,1 @@
-
-# User-supplied music stays local, consistent with repository media policy.
-/public/audio/*.m4a
-/public/audio/**/*.m4a
+# (the game's music used to stay local; since 2026-11-13 it is committed so Vercel can build from GitHub)
