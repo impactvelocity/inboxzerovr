@@ -12,9 +12,9 @@ Have you got 181 unread emails?  Tried filters, or reminders? [chuckles] ...But 
 
 ## How it works
 
-Here's how it works. [energetic] Connect your gmail, and your latest unread emails become a game! [excited] Grab an email with your left hand to read it — throw it to keep it, or take your right hand and cut it up into tiny little pieces.
+[happy]Here's how it works. Connect our MCP to your Muse agent and ask it to set up a game! It reads your newest unread emails and makes you a special link that opens right on your Meta Quest! Pick your level, and hit play! [energetic] Grab an email with your left hand to read it — [excited] throw it to keep it, or take your right hand and cut it up into tiny little pieces.
 
-Every email you keep comes back with two short replies. [energetic] Hold it up to the one you like, pull it close to say your own, or [chuckles] throw it away and leave it for tomorrow.
+Every email you keep comes back with two short replies from your agent. Hold it up to the one you like, pull it close to say your own, or [chuckles] throw it away and leave it for tomorrow.
 
 ## Why and levels
 
@@ -22,11 +22,11 @@ Every email you keep comes back with two short replies. [energetic] Hold it up t
 
 ## How it's built
 
-[excited] It's built with Meta's Immersive Web SDK, so it runs right in the browser, with nothing to download. [excited] It's made to play from your chair. Emails come to you, and your weapons do the stretching! [excited] And it really does clear your inbox.  AI tags each email and boils it down to a quick summary. The AI reads your mail, then forgets it, nothing is saved.
+[excited] It's built with Meta's Immersive Web SDK, so it runs right in the browser, with nothing to download!  It's made to play from your chair. Emails come to you, and your weapons do the stretching! [happy] And it really does clear your inbox. [happy]Your agent archives what you cut and sends your replies, after you say okay... [cheeky] The game never touches your inbox, and each round is deleted once it's done.
 
 ## Close
 
-[excited] Try it yourself at Inbox Zero VR .com and play the demo in all seven levels - [singing] become a hero with inbox zero!
+[excited] Try it yourself at Inbox Zero VR .com! Play the demo in all seven levels, or connect your agent and play your own inbox - [excited] become a hero with inbox zero!
 
 ---
 

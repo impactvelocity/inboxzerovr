@@ -23,8 +23,12 @@ export const leafTune = {
   reach: 0.42,             // the axe stirs leaves this near its head
   blast: 1.5,              // a chopped letter blows leaves this far from it
 };
-/** The air they fall through, metres from the seat's floor: left to right, floor to top, far to near. */
-const BOX = { x: [-4.6, 4.6], y: [0, 3.5], z: [-7.5, 0.4] };
+/** The air they fall through, metres from the seat's floor: left to right, floor to top, far to near. (Since the
+ * 2026-11-13 paintings the player sits under a porch roof 2.65 m up that reaches about 3.7 m out, and the maples
+ * stand across the yard, about 7 m off to either side: leaves fall in the yard, and some are blown in under the roof.) */
+const BOX = { x: [-6.6, 6.6], y: [0, 4.6], z: [-8.6, 0.6] };
+/** Where the porch roof ends, metres ahead, and how high it is: nothing falls from above it. */
+const PORCH = { edge: -3.7, roof: 2.5 };
 /** A maple leaf's outline, right half, tip up (lumbercard.ts draws the same one as the postmark). */
 const HALF: [number, number][] = [[0, 0.5], [0.07, 0.33], [0.16, 0.37], [0.12, 0.2], [0.3, 0.3], [0.5, 0.22], [0.4, 0.1], [0.46, 0.04], [0.3, -0.04], [0.4, -0.2], [0.22, -0.18], [0.05, -0.24], [0.02, -0.48]];
 const TINTS = ['#f6a81c', '#f3c53a', '#ee7a1a', '#ee7a1a', '#d9471c', '#c22f1c', '#f6a81c', '#a8601f'];
@@ -34,6 +38,8 @@ interface Leaf {
   size: number; fall: number; swing: number; rate: number; phase: number;
   /** Seconds until it comes again (it has reached the ground), or 0 while it is in the air. */
   wait: number; grow: number;
+  /** m/s it is carried in under the porch roof, towards the seat (0 for one falling in the yard). */
+  inward: number;
 }
 
 function leafGeometry() {
@@ -87,11 +93,25 @@ export function createLeaves(_context: StageContext): StageProps {
   const mesh = new THREE.InstancedMesh(geometry, material, N); mesh.name = `${N} maple leaves`; mesh.frustumCulled = false; mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   group.add(mesh);
 
-  /** A new place to fall from: mostly from under the two maples, some from anywhere. `anywhere`: at any height (the start). */
+  /**
+   * A new place to fall from: mostly out of the two maples across the yard, and a quarter blown in under the porch
+   * roof from its edge, drifting in towards the seat (where the axe can reach them). `anywhere`: at any height (the start).
+   */
   function launch(leaf: Leaf, anywhere = false, flurry = false) {
     const from = random();
-    const x = flurry || from < 0.5 ? -4.6 + random() * 3.4 : from < 0.72 ? 2.6 + random() * 2 : between(BOX.x);
-    leaf.p.set(x, anywhere ? 0.3 + random() * 3.1 : 2.7 + random() * 0.8, between(BOX.z));
+    leaf.inward = 0;
+    if (!flurry && from >= 0.75) {
+      // blown in: from the porch's edge, under the roof
+      leaf.p.set((random() - 0.5) * 7, anywhere ? 0.4 + random() * 1.9 : 1.1 + random() * 1.3, PORCH.edge + 0.3 - random() * 0.5);
+      if (anywhere) leaf.p.z += random() * 3;
+      leaf.inward = 0.25 + random() * 0.45;
+    } else {
+      const left = flurry || from < 0.52;
+      leaf.p.set(left ? -6.2 + random() * 3.8 : 3.8 + random() * 2.4, anywhere ? 0.3 + random() * 3.9 : 2.5 + random() * 1.9,
+        left ? -8.2 + random() * 3.6 : -7.6 + random() * 3.3);
+      // (a flurry comes across nearer, between the maple and the porch)
+      if (flurry) leaf.p.z = -5.2 + random() * 1.3;
+    }
     // (nearer ones are small, so that one passing the face is a leaf and not a blanket; far ones bigger, to be seen at all)
     leaf.size = (0.085 + random() * 0.055) * (1 + Math.min(1, Math.max(0, (-leaf.p.z - 2) / 5)) * 0.7);
     leaf.fall = between(leafTune.fall); leaf.swing = between(leafTune.swing); leaf.rate = 1.1 + random() * 1.3; leaf.phase = random() * 6.2832;
@@ -100,7 +120,7 @@ export function createLeaves(_context: StageContext): StageProps {
     leaf.kick.set(flurry ? 1.2 + random() * 1.6 : 0, 0, 0); leaf.wait = 0; leaf.grow = anywhere ? 1 : 0;
   }
   const leaves: Leaf[] = Array.from({ length: N }, () => {
-    const leaf: Leaf = { p: new THREE.Vector3(), kick: new THREE.Vector3(), turn: new THREE.Euler(), spin: new THREE.Vector3(), size: 0.1, fall: 0.4, swing: 0.3, rate: 1.5, phase: 0, wait: 0, grow: 1 };
+    const leaf: Leaf = { p: new THREE.Vector3(), kick: new THREE.Vector3(), turn: new THREE.Euler(), spin: new THREE.Vector3(), size: 0.1, fall: 0.4, swing: 0.3, rate: 1.5, phase: 0, wait: 0, grow: 1, inward: 0 };
     launch(leaf, true); return leaf;
   });
 
@@ -130,7 +150,9 @@ export function createLeaves(_context: StageContext): StageProps {
       const side = Math.cos(leaf.phase);
       // a falling leaf: quick across the middle of its swing and slow at the ends, where it drops
       leaf.p.x += (side * leaf.swing * leaf.rate + blow + leaf.kick.x) * step;
-      leaf.p.z += (Math.sin(leaf.phase * 0.63 + 1.3) * leaf.swing * 0.5 + leaf.kick.z) * step;
+      leaf.p.z += (Math.sin(leaf.phase * 0.63 + 1.3) * leaf.swing * 0.5 + leaf.inward * (0.6 + wind) + leaf.kick.z) * step;
+      // (the porch roof: one up by it that drifts in is kept outside, as if it had brushed the eaves)
+      if (leaf.p.y > PORCH.roof - 0.1 && leaf.p.z > PORCH.edge - 0.1) leaf.p.z = PORCH.edge - 0.1;
       leaf.p.y += (-leaf.fall * (0.55 + 0.75 * Math.abs(Math.sin(leaf.phase))) + leaf.kick.y) * step;
       leaf.kick.multiplyScalar(Math.exp(-step * 1.9));
       if (swung && blade) {

@@ -71,7 +71,7 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#fff;font-family
 .chiprow{position:absolute;left:0;right:0;top:944px;display:flex;justify-content:center;visibility:hidden}
 
 /* seated */
-#seated svg{overflow:visible}
+#seat-img{position:absolute;left:0;top:0;width:1920px;height:1080px}
 
 /* AI */
 .paper{width:900px;padding:36px 44px 40px;background:var(--paper);color:var(--paper-ink);border-radius:10px;box-shadow:0 0 0 2px #d9cba6,0 30px 60px -28px #2a211855;position:relative}

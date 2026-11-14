@@ -86,7 +86,7 @@ export const LEVELS: Level[] = [
   // LumberHack (asked for on 2026-11-12): a timber yard in autumn, the mail flung out of the barn's hatch, the weapon an axe. Its music is the user's to add (its sting is theirs: 2026-11-12).
   { id: 'lumber', number: '07', name: 'LumberHack', weapon: 'Axe', line: 'Timber post', art: lumberStage.art, card: ['levels/lumber/card-start.webp', 'levels/lumber/card-end.webp'],      // (the user's card art, 2026-11-12)
     accent: '#ffc440', ground: '#2a1a12',
-    phases: ['Golden hour', 'Dusk', 'Lamplight'], ends: ['GOLDEN HOUR', 'LAMPLIGHT'], letters: lumberLetters, fx: lumberFx, sound: lumberSound, music: null, stinger: 'audio/stingers/lumber.m4a', stage: lumberStage, held: buildAxe },
+    phases: ['Golden hour', 'Dusk', 'Lamplight'], ends: ['GOLDEN HOUR', 'LAMPLIGHT'], letters: lumberLetters, fx: lumberFx, sound: lumberSound, music: 'audio/lumber/music.m4a', anthem: 'audio/lumber/anthem.m4a', stinger: 'audio/stingers/lumber.m4a', stage: lumberStage, held: buildAxe },
 ];
 /** The levels to choose from: the home screen's cards and the menu in VR. */
 export const SHOWN: Level[] = LEVELS.filter(level => !level.hidden);

@@ -1,0 +1,1 @@
+[0]format=gbrap,geq=r='r(X\,Y)':g='min(g(X\,Y)\,max(r(X\,Y)\,b(X\,Y)))':b='b(X\,Y)':a='255*clip(1-(g(X\,Y)-max(r(X\,Y)\,b(X\,Y))-4)/12\,0\,1)'

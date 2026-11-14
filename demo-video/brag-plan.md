@@ -1,5 +1,14 @@
 # Inbox Zero VR demo film, plan
 
+## v6 (2026-11-13)
+
+- The chair drawing at 1:33 is replaced by the Higgsfield take (`work/seated/src/seated-take1.mp4`, 15 s, 1280x720, from `prompts/seated-player.md`).
+- Its background is a dark teal gradient, not a true chroma green, so `tools/seated_key.py` keys it against a clean background plate built from the take itself. Anything lighter than the background (the figure, its glow, the paper, the pink slash and its glow) is treated as light, so on white the glow becomes a soft tint instead of a teal or brown halo. Darker parts (chair, sword, visor) get a normal key.
+- Retimed from 15 s to 5.1 s on a smooth curve: the reach and grab land on "come to you", the reading and sword raise go by fast, and the slash lands on "stretching".
+- Sounds: a blip on the grab, a draw and a katana slash on the cut.
+- The "Play from your chair" line is gone: it sat on the player's legs, and the clip shows it.
+- Placeholder: the clip is a 720p render scaled up to fill the frame, so it's a little soft next to the rest.
+
 ## v5 (2026-11-12)
 
 - Level holds cut from 5 s to 3.5 s (`HOLD` in `tools/build_vo.py`).

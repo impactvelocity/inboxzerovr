@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inbox Zero VR demo film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Silkscreen:wght@400;700&display=block" rel="stylesheet">
+<link rel="stylesheet" href="film.css">
+</head>
+<body>
+<div id="stage">
+  <!-- backdrops -->
+  <div id="white" class="layer"></div>
+  <div id="night" class="layer"><img id="night-img" src="../work/footage/home/0001.jpg" alt=""></div>
+  <!-- real game footage, one frame at a time -->
+  <div id="foot" class="layer"><img id="foot-img" alt=""></div>
+
+  <!-- hook: the inbox -->
+  <div id="inbox-wrap" class="layer center">
+    <div id="tried" class="chips"><span class="chip" id="chip-filters"><svg viewBox="0 0 24 24"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>Filters<i class="strike"></i></span><span class="chip-slot" id="slot-rem"><span class="chip" id="chip-rem"><svg viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0-6 6v4l-2 3h16l-2-3V9a6 6 0 0 0-6-6zm-2 15a2 2 0 0 0 4 0"/></svg>Reminders<i class="strike"></i></span></span></div>
+    <div id="inbox" class="card inbox">
+      <div class="ihead"><span class="ititle">Inbox</span><span class="badge"><b id="count">181</b> unread</span></div>
+      <div class="rows" id="rows"></div>
+      <div class="empty" id="empty"><div class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div class="empty-t">Inbox zero</div></div>
+    </div>
+    <div id="slash" class="slash"></div>
+  </div>
+  <div id="half-a" class="layer center half"></div>
+  <div id="half-b" class="layer center half"></div>
+  <div id="flash" class="layer"></div>
+
+  <!-- the logo slam and the glide into the home screen -->
+  <img id="logo-slam" src="../work/assets/logos/kyoto.webp" alt="">
+
+  <!-- connect gmail -->
+  <div id="connect" class="layer center">
+    <div class="card dialog" id="dialog">
+      <div class="dtitle">Inbox</div>
+      <label class="opt on"><span class="radio"></span><span><b>Your Gmail</b><span class="dline">Your newest unread mail, sorted into cards by AI</span></span></label>
+      <div class="dactions"><span class="pix" id="connect-btn"><span id="connect-label">Connect Gmail</span></span></div>
+    </div>
+    <div class="flyrows" id="flyrows"></div>
+  </div>
+
+  <!-- built: the browser -->
+  <div id="browser" class="layer center">
+    <div class="win" id="win">
+      <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="addr">inboxzerovr.com</span></div>
+      <div class="shot"><img src="../work/assets/site-hero.png" alt=""><span class="hide-badge"></span></div>
+    </div>
+    <div class="chiprow" id="sdk-row"><span class="chip big" id="chip-sdk"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg>Meta Immersive Web SDK</span></div>
+    <div class="chiprow" id="nodl-row"><span class="chip big" id="chip-nodl"><svg viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Nothing to download</span></div>
+  </div>
+
+  <!-- seated -->
+  <div id="seated" class="layer center">
+    <img id="seat-img" alt="">      <!-- v6: the Higgsfield take, keyed (tools/seated_key.py) -->
+  </div>
+
+  <!-- AI tags and summarises -->
+  <div id="ai" class="layer center">
+    <div class="paper" id="paper">
+      <div class="prow"><span class="tag" id="tag"><svg viewBox="0 0 24 24"><path d="M4 8h16v11H4zM9 8V5h6v3"/></svg>Work</span><span class="ptime">7:17 am</span></div>
+      <div class="psub">Contract signed!</div>
+      <div class="pfrom"><span class="av">B</span>Biggest Client</div>
+      <div class="pbody" id="pbody">Thrilled to get started with you. Our team is free Monday or Tuesday for a kickoff. Which works better? I'll send the signed copy over to legal this afternoon so we can lock in the first review</div>
+      <div class="psum" id="psum"><span class="spark">✦</span><span id="psum-t"></span></div>
+    </div>
+    <div class="pixels" id="pixels"></div>
+    <div class="saved" id="saved"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Nothing is saved</div>
+  </div>
+
+  <!-- overlays on the footage -->
+  <img id="level-logo" class="level-logo" alt="">
+  <img id="hand-l" class="hand left" alt="">
+  <img id="hand-r" class="hand right" alt="">
+  <div id="phrases"></div>
+  <div id="mic" class="bubble"><span class="micdot"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span id="mic-t"></span></div>
+
+  <!-- the close -->
+  <div id="close" class="layer">
+    <img id="end-logo" src="../work/assets/logos/site.webp" alt="">
+    <div id="url" class="url"><span id="url-t"></span><i id="caret"></i></div>
+    <div id="cards" class="cards"></div>
+    <div id="credit" class="credit">Built for the Meta Start Hackathon</div>
+  </div>
+  <div id="petals" class="layer"></div>
+  <!-- the outro: gameplay, and what's in the game -->
+  <div id="outro" class="layer">
+    <div class="shade"></div>
+    <img id="out-logo" src="../work/assets/logos/site.webp" alt="">
+    <div id="badges" class="badges"></div>
+    <div id="out-url" class="url small">inboxzerovr.com</div>
+  </div>
+
+  <svg id="cursor" viewBox="0 0 32 32" width="44" height="44"><path d="M5 3l20 11-9 2-4 9z" fill="#17131f" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>
+  <div id="ripple"></div>
+</div>
+<script src="../work/cues.js"></script>
+<script src="../work/footage.js"></script>
+<script src="film.js"></script>
+</body>
+</html>

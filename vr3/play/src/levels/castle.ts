@@ -98,11 +98,11 @@ export const castleStage: StageDef = {
       // at the gallery's edge and another lying in the far hall, both drifting, so the mail coming out of it stands clear.
       vec3 haze=mix(vec3(.52,.46,.80),vec3(.30,.18,.62),blend);
       float hall=box(uv,vec2(.5,.47),vec2(.075,.10),.06);
-      col=mix(col,haze*(.8+.4*lum),hall*(.08+.04*blend));
+      col=mix(col,haze*(.8+.4*lum),hall*.07);
       float drift=softNoise(uv*vec2(60.,110.)+vec2(-time*.025,time*.006));
       float driftFar=softNoise(uv*vec2(80.,130.)+vec2(time*.012,0.));
       float mist=oval(uv,vec2(.5,.315),vec2(.13,.028))*(.05+.10*drift)+oval(uv,vec2(.5,.405),vec2(.10,.022))*(.10+.16*driftFar);
-      col=mix(col,haze,mist*(1.+.3*blend));
+      col=mix(col,haze,mist*(1.-.25*blend));      // (no thicker at night: 2026-11-12, "on night / round 2 reduce the fog even more")
       // The door: lavender light through the gap between its leaves, brightest in the dark, flaring as a frame
       // comes out; it hangs in the air round the door and spills down the carpet at its foot.
       vec3 spirit=mix(vec3(.82,.72,1.),vec3(.72,.46,1.),blend);
@@ -110,7 +110,7 @@ export const castleStage: StageDef = {
       float gap=box(uv,vec2(.5015,.465),vec2(.003,.062),.004);
       float carpet=(1.-smoothstep(-.006,.006,abs(uv.x-.5)-(.16-.38*uv.y)))*step(uv.y,.40);
       col+=spirit*gap*(.06+.22*blend+.6*pulse)*(.8+.2*breath);
-      col+=spirit*oval(uv,vec2(.5015,.46),vec2(.03,.08))*(.02+.07*blend+.4*pulse);
+      col+=spirit*oval(uv,vec2(.5015,.46),vec2(.03,.08))*(.02+.05*blend+.4*pulse);
       col+=spirit*oval(uv,vec2(.5,.395),vec2(.04,.012))*(.03+.09*blend+.3*pulse);
       col+=spirit*carpet*smoothstep(.12,.40,uv.y)*(.015+.035*blend+.1*pulse)*(.7+.3*breath);
       // the seal over the door answers the frames
@@ -134,7 +134,7 @@ export const castleStage: StageDef = {
   ],
   // Real mist, lying low in the far hall only (the gallery's floor stays clear), frames come out of it.
   // (faint, as asked on 2026-11-12: "tone down some of the fog / smoke ... so more of the background", and no thicker at night)
-  fog: { cards: 5, from: 5.5, to: 13, width: 6.5, height: 1.8, colour: ['#7a6ad0', '#7444d8'], opacity: [0.06, 0.07] },
+  fog: { cards: 5, from: 5.5, to: 13, width: 6.5, height: 1.8, colour: ['#7a6ad0', '#7444d8'], opacity: [0.06, 0.04] },
   // the fill light from the candles breathes; slowly (it had an 11 Hz flutter in it until 2026-11-13)
   flicker: time => 1 + 0.12 * Math.sin(time * 1.3 + 0.6) + 0.06 * Math.sin(time * 2.3 + 1.9),
 };

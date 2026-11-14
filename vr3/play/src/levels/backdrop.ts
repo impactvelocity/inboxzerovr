@@ -100,7 +100,25 @@ export interface StageDef {
    * the level's start and end lighting.
    */
   fog?: { cards: number; from: number; to: number; width: number; height: number; colour: [string, string]; opacity: [number, number] };
+  /**
+   * A room painted in front of the painting, with windows onto it (Super Space's deck, 2026-11-13: "this has a green
+   * screen to key out, and behind will be the space background and its particles"). The painting is then only what
+   * is seen through the windows. `art` is the room at start and end lighting, `windows` a mask of its windows (white
+   * where the painting shows through; tools/deckkey.py keys them out of the green), `rear` what fills the quarter
+   * turn behind. The room has its own depth, so as the head moves its window frames slide over the far painting.
+   * Its glsl (in the stage's) must define
+   *   float coverDepthAt(vec3 d, vec2 uv)      as inverseDepthAt, for the room
+   *   vec3 coverScene(vec3 col, vec2 uv, float glass)   the room's own lights; glass is how much of uv is window
+   * and may use coverAt(uv, lod) (the room, blurred by lod), windowAt(uv, lod) and skyAt(uv) (the painting, plain).
+   * It may also define vec3 coverGlass(vec3 sky, vec2 uv, float glass): what the glass adds to what is seen through it.
+   * The room also writes its depth, so real things beyond its walls (Super Space's flight) are hidden by them and
+   * seen only through its windows. Nothing nearer than COVER_NEAREST is ever hidden by it.
+   */
+  cover?: { art: [string, string]; windows: string; rear: [string, string] };
 }
+
+/** Metres: the room of a stage with a cover never hides anything nearer than this (the letters, the weapon, the end's dimmer at 2.7 m). */
+const COVER_NEAREST = 3;
 
 const helpers = /* glsl */ `
   float softNoise(vec2 p){ return .5+.22*sin(p.x+sin(p.y*1.3))+.16*sin(p.y*1.7+sin(p.x*.6))+.10*sin(p.x*2.3+p.y*.9); }
@@ -166,15 +184,48 @@ export async function createStage(def: StageDef, renderer: THREE.WebGLRenderer) 
   const loader = new THREE.TextureLoader(), base = import.meta.env.BASE_URL;
   const [startMap, endMap] = await Promise.all(def.art.map(path => loader.loadAsync(base + path)));
   for (const texture of [startMap, endMap]) { texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 4; }
+  // (a room in front, with windows: def.cover)
+  const cover = def.cover, blank = new THREE.Texture();
+  const [coverStart, coverEnd, windows] = cover ? await Promise.all([...cover.art, cover.windows].map(path => loader.loadAsync(base + path))) : [blank, blank, blank];
+  if (cover) { for (const texture of [coverStart, coverEnd]) { texture.colorSpace = THREE.SRGBColorSpace; texture.anisotropy = 4; } }
   const group = new THREE.Group(); group.name = def.name;
   const uniforms = { startMap: { value: startMap }, endMap: { value: endMap }, blend: { value: 0 }, time: { value: 0 }, breeze: { value: 0.35 }, depthScale: { value: 0.6 },
-    pulse: { value: 0 }, hot: { value: 0 }, lamp: { value: 0 }, spot: { value: new THREE.Vector3(0.5, 0.5, 0) }, dolly: { value: def.dolly ?? 0 }, headLean: { value: new THREE.Vector3() }, rearA: { value: new THREE.Color(def.rear[0]) }, rearB: { value: new THREE.Color(def.rear[1]) } };
+    pulse: { value: 0 }, hot: { value: 0 }, lamp: { value: 0 }, spot: { value: new THREE.Vector3(0.5, 0.5, 0) }, dolly: { value: def.dolly ?? 0 }, headLean: { value: new THREE.Vector3() }, rearA: { value: new THREE.Color(def.rear[0]) }, rearB: { value: new THREE.Color(def.rear[1]) },
+    coverStart: { value: coverStart }, coverEnd: { value: coverEnd }, windows: { value: windows },
+    coverRearA: { value: new THREE.Color(cover?.rear[0] ?? '#000') }, coverRearB: { value: new THREE.Color(cover?.rear[1] ?? '#000') } };
+  // The room in front: how much of a direction is window, what is drawn there, and how far off it is for the depth
+  // buffer (the window: as far as can be; the room: where the depth model puts it, never nearer than COVER_NEAREST).
+  // Its depth is worked out from two rows of the matrices handed down from the vertex shader, since in a headset
+  // (multiview) those differ per eye and are not to be had in the fragment shader.
+  const coverMain = /* glsl */ `
+        float cinv=coverDepthAt(d,painted);
+        vec3 cshift=lean*cinv;
+        cshift*=min(1.,.075/max(length(cshift),1e-5));
+        vec2 cuv=panoUv(normalize(d+cshift));
+        vec2 cgx=dFdx(cuv), cgy=dFdy(cuv), cin=clamp(cuv,0.,1.);
+        float csides=smoothstep(-.02,.012,cuv.x)*(1.-smoothstep(.988,1.02,cuv.x));
+        float cupright=smoothstep(-.03,.012,cuv.y)*(1.-smoothstep(.988,1.03,cuv.y));
+        float glass=textureGrad(windows,cin,cgx,cgy).r*csides*cupright;
+        vec3 room=coverScene(mix(textureGrad(coverStart,cin,cgx,cgy).rgb,textureGrad(coverEnd,cin,cgx,cgy).rgb,blend),cuv,glass);
+        float cbehind=smoothstep(0.,.16,max(-cuv.x,cuv.x-1.));
+        float cover_=smoothstep(0.,.5,max(-cuv.y,cuv.y-1.));
+        vec3 crest=mix(coverAt(cuv,6.)*(1.-.35*cover_),mix(coverRearA,coverRearB,blend),cbehind);
+        room=mix(crest,room,csides*cupright);
+        ${def.glsl.includes('vec3 coverGlass(') ? 'col=coverGlass(col,cuv,glass);       // (what the glass itself adds: sheen, the room in it)' : ''}
+        col=mix(room,col,glass);
+        float metres=glass>.5?1e4:max(${COVER_NEAREST.toFixed(1)},1./max(cinv,1e-4));
+        float viewZ=dot(zRow.xyz,d*metres)+zRow.w;
+        gl_FragDepth=glass>.5?1.:clamp(.5*(projZ.x*viewZ+projZ.y)/-viewZ+.5,0.,1.);`;
   const panorama = new THREE.Mesh(new THREE.SphereGeometry(45, 64, 32), new THREE.ShaderMaterial({
-    side: THREE.BackSide, depthWrite: false, uniforms,
+    side: THREE.BackSide, depthWrite: !!cover, depthFunc: THREE.AlwaysDepth, uniforms,
     vertexShader: /* glsl */ `
       varying vec3 direction; varying vec3 eyeShift;
+      ${cover ? 'varying vec4 zRow; varying vec2 projZ;' : ''}
       void main(){
         direction=position;
+        ${cover ? `// (the view-space z of a point in the sphere's own frame, and the projection's depth terms: see coverMain)
+        zRow=vec4(modelViewMatrix[0][2],modelViewMatrix[1][2],modelViewMatrix[2][2],modelViewMatrix[3][2]);
+        projZ=vec2(projectionMatrix[2][2],projectionMatrix[3][2]);` : ''}
         // Where this eye is from the sphere's centre (which follows the head): only its sideways
         // part, which is what gives the painting stereo depth. See ../garden.ts.
         mat3 toWorld=transpose(mat3(viewMatrix));
@@ -190,6 +241,11 @@ export async function createStage(def: StageDef, renderer: THREE.WebGLRenderer) 
       // (Every level the same, always: a painting sets its own perspective. 2026-11-13: "always the same degrees, so
       // that the image it self can set that, this way I can just generate new images".)
       vec2 panoUv(vec3 d){ return vec2(.5+atan(d.x,-d.z)/4.71238898,.48+asin(clamp(d.y,-1.,1.))/1.57079633); }
+      ${cover ? /* glsl */ `
+      uniform sampler2D coverStart,coverEnd,windows; uniform vec3 coverRearA,coverRearB; varying vec4 zRow; varying vec2 projZ;
+      vec3 coverAt(vec2 uv, float lod){ vec2 c=clamp(uv,vec2(.002),vec2(.998)); return mix(textureLod(coverStart,c,lod).rgb,textureLod(coverEnd,c,lod).rgb,blend); }
+      float windowAt(vec2 uv, float lod){ return textureLod(windows,clamp(uv,vec2(.002),vec2(.998)),lod).r; }
+      vec3 skyAt(vec2 uv){ vec2 c=clamp(uv,0.,1.); return mix(textureLod(startMap,c,0.).rgb,textureLod(endMap,c,0.).rgb,blend); }` : ''}
       ${def.glsl}
       vec3 paint(vec2 uv, vec2 gx, vec2 gy){ return mix(textureGrad(startMap,uv,gx,gy).rgb,textureGrad(endMap,uv,gx,gy).rgb,blend); }
       // What lies past the painting's edges: the edge itself, blurred right out, so floor and ceiling carry on.
@@ -211,7 +267,8 @@ export async function createStage(def: StageDef, renderer: THREE.WebGLRenderer) 
         }` : ''}
         float inv=inverseDepthAt(view,painted);
         ${def.dolly ? 'inv/=1.+dolly*inv;          // and from back there, everything is that much further for the eyes too' : ''}
-        vec3 shift=(headLean+eyeShift*depthScale)*inv;
+        vec3 lean=headLean+eyeShift*depthScale;
+        vec3 shift=lean*inv;
         shift*=min(1.,.075/max(length(shift),1e-5));
         vec2 uv=panoUv(normalize(view+shift));
         vec2 gx=dFdx(uv), gy=dFdy(uv);
@@ -222,7 +279,9 @@ export async function createStage(def: StageDef, renderer: THREE.WebGLRenderer) 
         float behind=smoothstep(0.,.16,max(-uv.x,uv.x-1.));
         float over=smoothstep(0.,.5,max(-uv.y,uv.y-1.));
         vec3 rest=mix(beyond(uv)*(1.-.35*over),mix(rearA,rearB,blend),behind);
-        gl_FragColor=vec4(mix(rest,col,sides*upright),1.);
+        col=mix(rest,col,sides*upright);
+        ${cover ? coverMain : ''}
+        gl_FragColor=vec4(col,1.);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
       }`,

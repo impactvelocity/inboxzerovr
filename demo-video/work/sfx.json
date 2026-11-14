@@ -452,9 +452,19 @@
    "gain": 0.7
   },
   {
-   "t": 97.726,
-   "file": "../../vr3/play/public/audio/kyoto/arm1.wav",
+   "t": 95.8,
+   "file": "../../vr3/play/public/audio/blip.wav",
    "gain": 0.7
+  },
+  {
+   "t": 97.05,
+   "file": "../../vr3/play/public/audio/kyoto/arm1.wav",
+   "gain": 0.5
+  },
+  {
+   "t": 97.77,
+   "file": "../../vr3/play/public/audio/kyoto/slash2.wav",
+   "gain": 1
   },
   {
    "t": 98.61,

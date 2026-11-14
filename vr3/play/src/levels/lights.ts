@@ -40,10 +40,10 @@ const RIGS: Record<Exclude<LevelId, 'kyoto'>, Rig> = {
   space: { sky: ['#ece8ff', '#a79ce6'], ground: ['#5a4f8c', '#1a1540'], ambient: [2.0, 1.25],
     key: { colour: ['#ffffff', '#e2dcff'], power: [1.9, 1.2], from: [0.4, 2.4, 1.6] },
     fill: { colour: ['#ff5fd0', '#35e8ff'], power: [1.4, 3], at: [-1.7, 1.8, -0.9], reach: 8 } },
-  // A low autumn sun over the yard, the earth throwing its warmth back up; then blue dusk, and the barn lamp from in front (its fill wavers a little: lumber.ts).
+  // A low autumn sun over the yard, the deck throwing its warmth back up; then blue night, and the porch lanterns up to the left (its fill wavers a little: lumber.ts).
   lumber: { sky: ['#fff1d6', '#5a66b8'], ground: ['#b8763f', '#1c1a3a'], ambient: [2.1, 1.0],
     key: { colour: ['#ffe1a8', '#aab8ff'], power: [2.2, 0.8], from: [-1.2, 2.2, 1.0] },
-    fill: { colour: ['#ffb24d', '#ffa23a'], power: [0.3, 3.6], at: [0.3, 1.9, -2.2], reach: 8 } },
+    fill: { colour: ['#ffb24d', '#ffa23a'], power: [0.3, 3.6], at: [-2.0, 2.3, -0.8], reach: 8 } },
   // Fight night: warm broadcast light with the blue canvas thrown back up; then the house goes dark and the ring floodlights come straight down, crimson from the red corner.
   knockout: { sky: ['#fff1d8', '#5a66c8'], ground: ['#4a63d0', '#1a2166'], ambient: [1.9, 0.85],
     key: { colour: ['#fff6e6', '#dbe7ff'], power: [2.0, 2.7], from: [0.25, 3, 0.9] },

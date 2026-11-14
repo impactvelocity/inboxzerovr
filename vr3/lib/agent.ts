@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { z } from 'zod';
-import { cancelRound, CodeAndKey, CreateRound, createRound, getResults, playInstructions, RoundError, type Results } from './rounds';
+import { cancelRound, CodeAndKey, CreateRound, createRound, getResults, playInstructions, questLink, RoundError, type Results } from './rounds';
 import { origin } from './session';
 import { store } from './store';
 
@@ -37,9 +37,11 @@ export async function agentCreate(input: unknown) {
   await limit('create', 60, 600);      // (agents on one platform share addresses: generous)
   const made = await createRound(parse(CreateRound, input));
   const site = await origin();
+  const play_url = `${site}/play/?code=${made.code}`;
   return {
     ...made,
-    play_url: `${site}/play/?code=${made.code}`,
+    play_url,
+    quest_url: questLink(play_url),
     play_instructions: playInstructions(made.code, site),
   };
 }

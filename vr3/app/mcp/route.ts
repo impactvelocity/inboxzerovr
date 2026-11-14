@@ -17,7 +17,7 @@ const VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26', '2024-11-05'];
 const INSTRUCTIONS = `Inbox Zero VR turns the user's unread email into a VR game: they slash what can be archived, keep what matters, and pick replies. You do the reading and the acting; the game only collects their decisions.
 
 1. When the user wants to play, read their newest unread emails (5 to 20 plays best) with your own email tools. For each, send a ref of your own (1, 2, 3...), the sender's name, the subject, a short summary (never the full body), a category, and for mail from a person who expects an answer, one or two short reply drafts. Call create_round.
-2. Tell the user the 4-digit code and the play_instructions. Keep the key: you need it for the results.
+2. Tell the user the 4-digit code, the quest_url (opens the game on their Meta Quest) and the play_instructions. Keep the key: you need it for the results.
 3. When the user says they are done, call get_results (wait_seconds lets you wait a little). Show them the plan in plain words ("archive these 6, reply to Sam with 'Thursday works', leave 3") and ask before acting.
 4. With their OK, do it with your own email tools: archive, send or save the replies as drafts (whichever the user prefers), and leave the rest unread. Map each ref back to the real email yourself; the game never sees real message ids.
 

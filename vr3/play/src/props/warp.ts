@@ -18,7 +18,9 @@ import type { RoundProgress, StageContext, StageProps } from '../levels/backdrop
  * round begins, a steady cruise through it (quicker in round two), a nudge with every cut.
  *
  * Nothing comes down the middle: there is a clear corridor round the seat and straight ahead of
- * it, which is where the mail is. Three draws, and a fourth while a comet is in the sky; all of the
+ * it, which is where the mail is. And since the deck (2026-11-13, levels/space.ts) nothing comes
+ * through the ship: inside the deck's room (ROOM) it fades away, and outside it the deck's walls and
+ * ceiling hide it (they write their depth), so it is seen only through the glass. Three draws, and a fourth while a comet is in the sky; all of the
  * flight is worked out in the shaders, from one number (how far the seat has travelled).
  * The Motion setting stops it.
  */
@@ -30,6 +32,8 @@ const COMETS = 3, TAIL = 11;
 /** How fast, by what the game is doing (1 is the cruise). */
 const PACE = { idle: 0.4, intro: 0.2, round1: 1, round2: 1.45, summary: 0.55 };
 const JUMP = 4.5;                                        // what a jump adds at its height, and it dies away in about a second
+/** The deck's room, metres from the seat's eye: the big window is 5 m ahead, the aisles run 15 m either side, floor 1.2 m down, ceiling 2.2 m up (with a little to spare). */
+const ROOM = { ahead: 5.4, across: 15, down: 1.5, up: 2.6 };
 
 export function createWarp(context: StageContext): StageProps {
   const group = new THREE.Group(); group.name = 'Warp: the flight through space';
@@ -67,7 +71,12 @@ export function createWarp(context: StageContext): StageProps {
     float along(float phase, float pace){ return mod(phase*RANGE+travel*pace,RANGE)-FAR; }
     // (It is not there at all until it is 'from' metres off: seen from the seat, everything far ahead is in
     // one small patch of sky dead ahead, which is where the mail is, and that patch is to stay quiet.)
-    float ends(float z, float from){ return smoothstep(-from,-from*.45,z)*(1.-smoothstep(BEHIND-5.,BEHIND,z)); }`;
+    float ends(float z, float from){ return smoothstep(-from,-from*.45,z)*(1.-smoothstep(BEHIND-5.,BEHIND,z)); }
+    // 0 inside the deck (fading out over the last 2 m before the glass), 1 outside it
+    float outside(vec3 p){
+      float within=step(abs(p.x),${ROOM.across.toFixed(1)})*step(-${ROOM.down.toFixed(1)},p.y)*step(p.y,${ROOM.up.toFixed(1)});
+      return 1.-within*smoothstep(-${(ROOM.ahead + 2).toFixed(1)},-${ROOM.ahead.toFixed(1)},p.z);
+    }`;
   const dustMaterial = new THREE.ShaderMaterial({
     transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: shared,
     vertexShader: /* glsl */ `
@@ -101,7 +110,7 @@ export function createWarp(context: StageContext): StageProps {
           tint=mix(vec3(1.),vec3(.72,.66,1.),fract(seed*5.));
           alpha=(.45+.4*glint)*mix(.8,1.,blend);
         }
-        alpha*=ends(z,kind>1.5?FAR:kind>.5?46.:60.);
+        alpha*=ends(z,kind>1.5?FAR:kind>.5?46.:60.)*outside(p);
       }`,
     fragmentShader: /* glsl */ `
       varying vec3 tint; varying float alpha; varying float star;
@@ -157,7 +166,7 @@ export function createWarp(context: StageContext): StageProps {
         float shown=step(seeds.y,clamp(.22+.5*(warp-.2),0.,1.));
         vec3 lit=seed>.7?vec3(.35,.95,1.):seed>.45?vec3(1.,.42,.88):vec3(.80,.74,1.);
         tint=mix(mix(vec3(.86,.82,1.),vec3(1.),step(.5,seed)),lit,.25+.6*blend);
-        alpha=ends(z,70.)*shown*mix(.5,.85,blend)*(.75+.5*min(1.,warp*.5));
+        alpha=ends(z,70.)*shown*mix(.5,.85,blend)*(.75+.5*min(1.,warp*.5))*min(outside(vec3(base.xy,z)),outside(vec3(base.xy,z-len)));
       }`,
     fragmentShader: /* glsl */ `
       varying float run; varying float alpha; varying vec3 tint;

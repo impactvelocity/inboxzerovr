@@ -243,6 +243,11 @@ export async function finishRound(code: string, outcomes: AgentOutcome[]) {
 
 // ---------------------------------------------------------------- the words agents read
 
+/** Meta's send-to-headset link: tapped on a phone or computer signed in to the user's Meta account, it opens `url` in their Quest's browser. */
+export function questLink(url: string) {
+  return `https://www.oculus.com/open_url/?url=${encodeURIComponent(url)}`;
+}
+
 export function playInstructions(code: string, site: string) {
-  return `Tell the user: "Your Inbox Zero game is ready. Open ${site}/play/?code=${code} in the browser on your Quest (or any browser) and press Clean Your Inbox. Or open ${site}/play/, press Enter Code and type ${code}. Tell me when you're done." When they say they're done, call get_results with this code and key, show them what they chose, and only after they agree do it with your own email tools: archive what says archive, send or draft the replies (expand a chosen reply into a proper email; a spoken one comes as reply_text, already written up from their words), and leave the rest unread. The round is deleted once played, and the results 10 minutes after you first read them.`;
+  return `Tell the user: "Your Inbox Zero game is ready. Tap ${questLink(`${site}/play/?code=${code}`)} to open it on your Meta Quest, or open ${site}/play/?code=${code} in the Quest's browser (or any browser), then press Clean Your Inbox. Or open ${site}/play/, press Enter Code and type ${code}. Tell me when you're done." When they say they're done, call get_results with this code and key, show them what they chose, and only after they agree do it with your own email tools: archive what says archive, send or draft the replies (expand a chosen reply into a proper email; a spoken one comes as reply_text, already written up from their words), and leave the rest unread. The round is deleted once played, and the results 10 minutes after you first read them.`;
 }

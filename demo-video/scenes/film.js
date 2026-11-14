@@ -98,7 +98,7 @@ const PHRASES = [
   ['Saved as a Gmail draft', W('pull', 'pull') + .15, E('pull') + .1],
   ['Leave it for tomorrow', W('later', 'leave') - .1, E('later') + .3],
   // (no line over the end screen: the game's own "Cleared 10 emails" sits there)
-  ['Play from your chair', C('chair'), Math.min(E('come') + .1, C('really') - .6), 'ink'],
+  // (no "Play from your chair" line since v6: the generated clip shows it, and the line sat on the player's legs)
 ];
 const phraseEls = PHRASES.map(([t, , , cls]) => { const d = document.createElement('div'); d.className = 'phrase' + (cls ? ' ' + cls : ''); d.textContent = t; $('phrases').appendChild(d); return d; });
 
@@ -346,24 +346,15 @@ function browser(T) {
 }
 
 function seated(T) {
+  // v6: the generated seated player, keyed and retimed so the grab lands on "come to you" and the slash on "stretching"
   const a = C('chair') - .05, b = C('really') - .3;
   const el = $('seated');
   if (T < a || T >= b + .3) return show(el, false);
-  const v = vis(T, a, b, { y: 40 });
-  show(el, !!v, v ? v.o : 0, v ? `translateY(${v.y - 40}px)` : '');
-  // the blade grows on "stretching"
-  const st = eo((T - W('come', 'stretching') + .1) / .5);
-  $('blade-g').setAttribute('transform', `scale(${lerp(.55, 1.55, st)} 1)`);
-  $('sword').setAttribute('transform', `translate(150 0) rotate(${lerp(-24, -10, st) + 4 * Math.sin(T * 2)})`);
-  // mail floats in to the player on "come to you"
-  const g = $('mails'); if (!g.childNodes.length) for (let i = 0; i < 3; i++) g.insertAdjacentHTML('beforeend', `<g><rect x="-80" y="-52" width="160" height="104" rx="8" fill="#efe4c8" stroke="#d9cba6" stroke-width="3"/><rect x="-58" y="-30" width="54" height="16" rx="4" fill="#ff2e93"/><rect x="-58" y="0" width="116" height="10" rx="5" fill="#8a7a62"/><rect x="-58" y="20" width="84" height="10" rx="5" fill="#b8a98d"/></g>`);
-  [...g.childNodes].forEach((m, i) => {
-    const t0 = W('come', 'come') - .2 + i * .45;
-    const p = eio((T - t0) / 1.2);
-    const x = lerp(1300, 880 - i * 10, p), y = lerp(150 + i * 120, 230 + i * 70, p) + 8 * Math.sin(T * 2.4 + i);
-    m.setAttribute('transform', `translate(${x} ${y}) rotate(${lerp(-12, -4, p) + i * 3})`);
-    m.setAttribute('opacity', clamp((T - t0) / .3));
-  });
+  const o = clamp((T - a) / .3) * (1 - clamp((T - b) / .3));
+  show(el, true, o, '');
+  const f = clamp(Math.round((T - a) * FPS) + 1, 1, FOOT.seated);
+  const src = `../work/footage/seated/${String(f).padStart(4, '0')}.png`;
+  if (!$('seat-img').src.endsWith(src.slice(2))) $('seat-img').src = src;
 }
 
 function ai(T) {
@@ -513,7 +504,10 @@ function buildSfx() {
   sfx(W('later', 'throw') + .15, 'kyoto/keep3.wav', .7);
   for (const [lvl, t] of LOGOS) sfx(t, `stingers/${lvl}.m4a`, .35);
   sfx(W('browser', 'browser'), 'blip.wav', .7);
-  sfx(W('come', 'stretching'), 'kyoto/arm1.wav', .7);
+  // the seated clip: the left hand takes the email at 2.5 s into the scene, the katana cuts at 4.45 s
+  sfx(C('chair') - .05 + 2.45, 'blip.wav', .7);
+  sfx(C('chair') - .05 + 3.7, 'kyoto/arm1.wav', .5);
+  sfx(C('chair') - .05 + 4.42, 'kyoto/slash2.wav', 1);
   for (let i = 0; i < 6; i++) sfx(T_REALLY + .25 + i * .085, 'sort.wav', .28);
   sfx(T_REALLY + .95, 'kyoto/keep1.wav', .6);
   sfx(W('tags', 'tags'), 'sort.wav', .6); sfx(W('tags', 'boils'), 'lab/melt2.wav', .35);
