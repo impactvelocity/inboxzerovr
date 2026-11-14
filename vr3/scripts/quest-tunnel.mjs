@@ -1,6 +1,6 @@
 // Keeps the Quest's USB tunnel to the game open while the dev servers run (started by dev-all.mjs).
 //
-// The headset reaches the game at http://localhost:5183 through `adb reverse`. That tunnel is wiped every time the
+// The headset reaches the game at http://localhost:5183 (and the site's built copy at localhost:3000/play/) through `adb reverse`. That tunnel is wiped every time the
 // headset's USB link resets (it sleeps when taken off, the cable moves, it reboots), and then the game looks as if the
 // server had stopped: "site can't be reached" (2026-11-13, "server keeps turning off"). So every few seconds this
 // checks the tunnel is there and puts it back if not. With no adb or no headset plugged in it just waits, quietly.
@@ -8,7 +8,7 @@ import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 
-const PORTS = [5183];
+const PORTS = [5183, 3000];      // the game's dev server, and the site with its built game (localhost:3000/play/), which the headset plays too (2026-11-14)
 const EVERY = 3000;
 const candidates = [
   process.env.ADB,

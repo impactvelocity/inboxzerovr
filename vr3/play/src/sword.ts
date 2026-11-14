@@ -1,4 +1,5 @@
 import { tweaks } from './tweak';
+import { controls } from './controls';
 import { AdditiveBlending, BufferAttribute, BufferGeometry, CanvasTexture, CylinderGeometry, DoubleSide, DynamicDrawUsage, EquirectangularReflectionMapping, Float32BufferAttribute, Group, InstancedMesh, Matrix4, Mesh, MeshStandardMaterial, Object3D, PMREMGenerator, RepeatWrapping, ShaderMaterial, SphereGeometry, SRGBColorSpace, Vector3, type World } from '@iwsdk/core';
 
 function canvasTexture(kind: 'cloth'|'ivory'|'steel') {
@@ -147,7 +148,8 @@ export function createSword(world:World) {
     clock+=dt;let valid=false;fitBlade();
     if(world.renderer.xr.isPresenting){
       const session=world.renderer.xr.getSession(),space=world.renderer.xr.getReferenceSpace();
-      if(frame&&space&&session)for(const source of session.inputSources){if(source.handedness==='right'&&source.gripSpace){const pose=frame.getPose(source.gripSpace,space);if(pose){root.matrixAutoUpdate=false;root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix()).multiply(hold);root.matrix.premultiply(world.player.matrixWorld);root.matrixWorldNeedsUpdate=true;valid=true;}break;}}
+      const pose=frame&&space&&session?controls.gripPose(session,frame,space,'right'):null;      // (src/controls: the right controller's grip)
+      if(pose){root.matrixAutoUpdate=false;root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix()).multiply(hold);root.matrix.premultiply(world.player.matrixWorld);root.matrixWorldNeedsUpdate=true;valid=true;}
     }else{
       root.matrixAutoUpdate=true;world.camera.getWorldPosition(root.position);root.position.add(currentBase.set(.32,-.30,-.65).applyQuaternion(world.camera.quaternion));root.quaternion.copy(world.camera.quaternion);root.rotateX(-.35);root.rotateZ(-.22);
       if(swingTime>=0){swingTime+=dt;const phase=Math.min(swingTime/.65,1);root.rotateZ(Math.sin(phase*Math.PI)*1.9);root.rotateX(-Math.sin(phase*Math.PI)*.45);if(phase===1)swingTime=-1;}

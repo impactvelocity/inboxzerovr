@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { tweaks } from '../tweak';
+import { controls } from '../controls';
 import type { World } from '@iwsdk/core';
 
 /**
@@ -201,15 +202,11 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
     let valid = false;
     if (world.renderer.xr.isPresenting) {
       const session = world.renderer.xr.getSession(), space = world.renderer.xr.getReferenceSpace();
-      if (frame && space && session) for (const source of session.inputSources) {
-        if (source.handedness !== 'right' || !source.gripSpace) continue;
-        const pose = frame.getPose(source.gripSpace, space);
-        if (pose) {
-          root.matrixAutoUpdate = false;
-          root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix()).multiply(spec.hold).premultiply(world.player.matrixWorld);      // (tweaks: weapon tuning, development only: src/tweak.ts)
-          root.matrixWorldNeedsUpdate = true; valid = true;
-        }
-        break;
+      const pose = frame && space && session ? controls.gripPose(session, frame, space, 'right') : null;      // (src/controls: the right controller's grip)
+      if (pose) {
+        root.matrixAutoUpdate = false;
+        root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix()).multiply(spec.hold).premultiply(world.player.matrixWorld);      // (tweaks: weapon tuning, development only: src/tweak.ts)
+        root.matrixWorldNeedsUpdate = true; valid = true;
       }
     } else {
       // On a monitor it is staged in front of the camera, not held.

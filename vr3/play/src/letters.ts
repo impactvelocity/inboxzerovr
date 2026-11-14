@@ -10,6 +10,7 @@ import * as PixelFont from './mail/pixelFont';
 import { createRoundUi, MARKS } from './roundui';
 import { dictate } from './dictate';
 import { thumb } from './thumbs';
+import { controls } from './controls';
 import { endingFor, lastSungAt, lastWordAt, lyricLayout, lyricWords, LYRICS_TUNE, type LyricWord } from './endlyrics';
 import { ANTHEM_SECONDS } from './levels/anthems';
 /** The word for one left for later in round two. */
@@ -864,7 +865,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   const SMASHED_TO_HOME = 2.5;  // seconds after the logo is smashed before the game fades out to the home screen (2026-11-12)
   // hits it takes: the last of them breaks it up. A boss to beat (2026-11-12: "many more cuts to beat, more like a boss
   // battle"): 12 for the logo and 8 for the bar and the line, then "make less hits for ending": 7 and 5, then "a bit less hits": 5 and 4. They were 4 and 3.
-  const LOGO_HITS = 5;
+  // (the logo 8 since 2026-11-14: "make the logo at end take a few more hits maybe 3 more")
+  const LOGO_HITS = 8;
   const STRIP_HITS = 4;         // (the progress bar and the line under the logo, the same way: 2026-11-12, "also need a few cuts to be done, so its more fun")
   /** Each hit before the last chips off this much of what is left, so a third of it is left for the last: smaller chips the more hits it takes. */
   const chipFor = (hits: number) => 1 - Math.pow(0.35, 1 / Math.max(1, hits - 1));
@@ -1714,14 +1716,12 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     hand.valid = false;
     const session = world.renderer.xr.getSession(), space = world.renderer.xr.getReferenceSpace();
     if (!world.renderer.xr.isPresenting || !frame || !session || !space) { hand.tracked = false; hand.pressed = false; return; }
-    for (const source of session.inputSources) {
-      if (source.handedness !== 'left' || !source.gripSpace) continue;
-      const pose = frame.getPose(source.gripSpace, space);
-      if (!pose) break;
+    // (the controller's reads are src/controls: the first left source with a grip, trigger or grip to close)
+    const source = controls.gripSource(session, 'left'), pose = source ? frame.getPose(source.gripSpace!, space) : null;
+    if (source && pose) {
       hand.matrix.fromArray(pose.transform.matrix).premultiply(world.player.matrixWorld);
       hand.pos.setFromMatrixPosition(hand.matrix);
-      const buttons = source.gamepad?.buttons;
-      const squeeze = Math.max(buttons?.[0]?.value ?? 0, buttons?.[1]?.value ?? 0);
+      const squeeze = controls.squeeze(source);
       const closed = hand.pressed ? squeeze > 0.25 : squeeze > 0.55;       // easy to close, easy to keep closed
       hand.pressAge = closed && !hand.pressed ? 0 : hand.pressAge + dt;
       if (!closed) hand.used = false;
@@ -1732,7 +1732,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       hand.far.copy(hand.pos);
       if (arm > 0.1) hand.far.addScaledVector(out, tune.reachLine / arm);
       // and the other line: where the controller itself points
-      const ray = source.targetRaySpace ? frame.getPose(source.targetRaySpace, space) : null;
+      const ray = controls.rayPose(source, frame, space);
       hand.pointing = !!ray;
       if (ray) {
         m1.fromArray(ray.transform.matrix).premultiply(world.player.matrixWorld);
@@ -1743,7 +1743,6 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       hand.bestAge += dt;
       if (hand.bestAge > 0.12 || hand.vel.lengthSq() >= hand.best.lengthSq()) { hand.best.copy(hand.vel); hand.bestAge = 0; }
       hand.last.copy(hand.pos); hand.tracked = true; hand.valid = true;
-      break;
     }
     if (!hand.valid) { hand.tracked = false; hand.pressed = false; }
   }
@@ -1769,11 +1768,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function buzz(side: 'left' | 'right', strength: number, ms: number) {
     const session = world.renderer.xr.getSession();
     if (!session) return;
-    for (const source of session.inputSources) {
-      if (source.handedness !== side) continue;
-      const pad = source.gamepad as (Gamepad & { hapticActuators?: { pulse?(value: number, duration: number): Promise<boolean> }[] }) | undefined;
-      try { void pad?.hapticActuators?.[0]?.pulse?.(strength, ms)?.catch(() => undefined); } catch { /* no rumble on this controller */ }
-    }
+    controls.buzz(session, side, strength, ms);
   }
   /**
    * How far a hand is from being able to take the sheet: 0 or less means it can. The hand need not
@@ -2574,8 +2569,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const session = world.renderer.xr.isPresenting ? world.renderer.xr.getSession() : null;
     if (spraying) trigger = tool && tool.valid ? tool.on : 0;         // a sprayer sprays only while its trigger is held, always
     else if (session && tune.triggerToCut && !punching) {
-      trigger = 0;
-      for (const source of session.inputSources) if (source.handedness === 'right') trigger = source.gamepad?.buttons?.[0]?.value ?? 0;
+      trigger = controls.trigger(session, 'right');
     }
     const live = trigger > 0.25;
     if (live && !armed && !punching && (spraying || (session && tune.triggerToCut))) {

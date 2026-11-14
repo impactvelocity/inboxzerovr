@@ -4,6 +4,7 @@ import * as PixelFont from './mail/pixelFont';
 import { labelEdge, labelGlow, labelGlowRoom, labelLetters } from './pixelLabel';
 import { mail } from './mail/source';
 import type { GuideScene } from './handguide';
+import { controls } from './controls';
 
 /**
  * How to Play, in VR, before a real game (2026-11-14, asked for: "when playing a "Real" game, we need a quick intro
@@ -105,8 +106,12 @@ interface Sounds { play(name: string, pitch?: number, volume?: number, at?: THRE
 /** One part of the panel as a picture, w by h metres, where `matrix` puts it in the world. */
 export interface BreakPart { canvas: HTMLCanvasElement; w: number; h: number; matrix: THREE.Matrix4 }
 
-/** A word in the pixel letters, in the level's label look (pixelLabel.ts), as a flat thing that can change its words. */
-function label(cell: number, colours: [string, string]) {
+/**
+ * A word in the pixel letters, in the level's label look (pixelLabel.ts), as a flat thing that can change its words.
+ * `plain`: solid white letters on a dark edge, no colour band or glow (the cards' words and the skip line, 2026-11-14:
+ * "make the text in the cards just solid white ( no gradient ) - same for smash to skip").
+ */
+function label(cell: number, colours: [string, string], plain = false) {
   const canvas = document.createElement('canvas'), texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace; texture.minFilter = THREE.LinearFilter; texture.generateMipmaps = false;
   const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthTest: false, depthWrite: false });
@@ -119,10 +124,14 @@ function label(cell: number, colours: [string, string]) {
     set(next: string, nextCell = size, nextColours = look) {
       if (next === text && nextCell === size && nextColours === look) return;
       text = next; size = nextCell; look = nextColours;
-      const upper = next.toUpperCase(), room = labelGlowRoom(size) + labelEdge(size);
+      const upper = next.toUpperCase(), room = (plain ? 0 : labelGlowRoom(size)) + labelEdge(size);
       canvas.width = Math.max(4, PixelFont.width(upper, size) + room * 2); canvas.height = PixelFont.Rows * size + room * 2 + labelEdge(size);
       const g = canvas.getContext('2d')!; g.clearRect(0, 0, canvas.width, canvas.height);
-      labelGlow(g, upper, room, room, size, look, 0.8); labelLetters(g, upper, room, room, size, look);
+      if (plain) {
+        const edge = labelEdge(size);
+        g.fillStyle = 'rgba(0,0,0,.75)'; PixelFont.cells(upper, room, room + edge, size, (x, y, w, h) => g.fillRect(x - edge, y - edge, w + 2 * edge, h + 2 * edge));
+        g.fillStyle = '#ffffff'; PixelFont.cells(upper, room, room, size, (x, y, w, h) => g.fillRect(x, y, w, h));
+      } else { labelGlow(g, upper, room, room, size, look, 0.8); labelLetters(g, upper, room, room, size, look); }
       texture.dispose(); texture.needsUpdate = true;
       mesh.scale.set(canvas.width * PX, canvas.height * PX, 1);
     },
@@ -200,12 +209,12 @@ export function createHowto(world: World, sounds: Sounds) {
     // the hands are drawn on a clear target (no backdrop), so its colours come premultiplied: blend them as such
     { const m = view.material as THREE.MeshBasicMaterial; m.blending = THREE.CustomBlending; m.blendSrc = THREE.OneFactor; m.blendDst = THREE.OneMinusSrcAlphaFactor; }
     group.add(glow, face, view, edge);
-    const words = [label(5, ['#f6b3cc', '#f6b3cc']), label(5, ['#f6b3cc', '#f6b3cc'])];
+    const words = [label(5, ['#f6b3cc', '#f6b3cc'], true), label(5, ['#f6b3cc', '#f6b3cc'], true)];
     words[0].holder.position.y = WORD_Y; words[1].holder.position.y = -WORD_Y; group.add(words[0].holder, words[1].holder);
     return { side, group, glow, face, edge, view, words, wordLit: [0, 0], lit: 0, shown: 0, vel: new THREE.Vector3(), spin: new THREE.Vector3() };
   });
   const title = label(11, ['#f6b3cc', '#f6b3cc']); title.holder.position.y = TITLE_Y; panel.add(title.holder);
-  const foot = label(4, ['#f6b3cc', '#f6b3cc']); foot.holder.position.y = FOOT_Y; panel.add(foot.holder);
+  const foot = label(4, ['#f6b3cc', '#f6b3cc'], true); foot.holder.position.y = FOOT_Y; panel.add(foot.holder);
   const plateFace = flat(plateFaceMap, 1, 1, ON_ORDER + 4), plateEdge = flat(plateEdgeMap, 1, 1, ON_ORDER + 4);
   const plateSwipe = flat(streakMap, 1, 1, ON_ORDER + 6, THREE.AdditiveBlending);
   plateFace.position.z = -0.002; plateEdge.position.z = -0.001; plateSwipe.position.z = 0.002;
@@ -328,11 +337,7 @@ export function createHowto(world: World, sounds: Sounds) {
     v1.set(point.x, point.y, 0); root.localToWorld(v1);
     sounds.play('slash1', 1, 1, v1); sounds.play('swoosh2', 0.9, 0.55, v1);
     const session = world.renderer.xr.getSession();
-    if (session) for (const source of session.inputSources) {
-      if (source.handedness !== 'right') continue;
-      const pad = source.gamepad as (Gamepad & { hapticActuators?: { pulse?(value: number, duration: number): Promise<boolean> }[] }) | undefined;
-      try { void pad?.hapticActuators?.[0]?.pulse?.(0.8, 60)?.catch(() => undefined); } catch { /* no rumble */ }
-    }
+    if (session) controls.buzz(session, 'right', 0.8, 60);
   }
 
   /**

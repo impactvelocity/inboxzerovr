@@ -9,6 +9,7 @@ import { createSwingFx } from './swingfx';
 import { createLetters, type SprayTool } from './letters';
 import { createLiveBlade } from './liveblade';
 import { fist, useControllerHands } from './hands';
+import { controls } from './controls';
 import { createFlame } from './flame';
 import { createMist } from './spray';
 import { createHome } from './home';
@@ -182,21 +183,29 @@ async function main() {
     remember('vr3.level', level.id);
     syncSound(); refresh();
   }
+  const LOAD_TRIES = 4, LOAD_RETRY_MS = 2500;      // (about 8 s in all: the tunnel keeper checks every 3 s)
   async function choose(level: Level) {
     home.select(level.id);
     const ticket = ++choosing;
     let next = made.get(level.id);
-    if (!next) {
-      home.busy(true);
+    home.busy(!next);      // (a pick of a level already made ends any earlier one's loading: it left Start greyed before)
+    // A level's files fetched as it is first picked. On the headset the USB tunnel to the Mac drops now and then
+    // (2026-11-14: "sometimes when it goes back to level select, its not letting me select the next level": every
+    // fetch was refused and the pick fell back to the level before). The tunnel keeper puts it back within seconds
+    // (vr3/scripts/quest-tunnel.mjs), so a failed load tries again a few times before giving up.
+    for (let attempt = 0; !next && attempt < LOAD_TRIES && ticket === choosing; attempt++) {
+      if (attempt) await new Promise(resolve => setTimeout(resolve, LOAD_RETRY_MS));
+      if (ticket !== choosing) break;
       try {
         const stage = await createStage(level.stage!, world.renderer);
         stage.hear.play = (name, pitch, volume, at) => sounds.play(name, pitch, volume, at);
+        const weapon = createHeld(world, level.held!(world.renderer));
         stage.group.visible = false; world.createTransformEntity(stage.group);
-        next = { level, place: stage, weapon: createHeld(world, level.held!(world.renderer)) };
+        next = { level, place: stage, weapon };
         made.set(level.id, next);
-      } catch (error) { console.error(error); next = undefined; }
-      if (ticket === choosing) home.busy(false);
+      } catch (error) { console.error(`loading ${level.id} (try ${attempt + 1} of ${LOAD_TRIES})`, error); }
     }
+    if (ticket === choosing) home.busy(false);
     if (ticket !== choosing) return;          // another was chosen while this one loaded
     if (next) enter(next); else home.select(now.level.id);
   }
@@ -275,17 +284,16 @@ async function main() {
     // (the song from the first moment, at full volume, with the name said over it: 2026-11-12; it waited for the countdown before)
     if (on) {
       stopStinger(); music.restart();
-      // Before a game from a code (always) or the demo's first, How to Play first (src/howto.ts, 2026-11-14): the song and the level's name
-      // wait for it, so the game starts as it always does once it is seen or slashed ("after skipping / watching, it
-      // starts the level with announcement").
+      // Before a game from a code (always) or the demo's first, How to Play first (src/howto.ts, 2026-11-14): the level's name
+      // waits for it ("after skipping / watching, it starts the level with announcement"), but the song plays from the
+      // start under it, softer while the voice talks ("play level music at start of level even when how to play intro", 2026-11-14).
       if (howto.wanted()) {
-        music.duck(600);
         const theme = now.level.letters;
         howto.start({ accent: now.level.accent, colours: theme.bar ?? [now.level.accent, now.level.accent], at: theme.dock?.intro ?? theme.intro,
           vr: world.renderer.xr.isPresenting, verb: WEAPON_VERB[now.level.id],
           // skipped, its parts are cut up like emails, or burnt / melted where the level's weapon does that (2026-11-14)
           breakApart: (parts, at, along, push) => letters.breakApart(parts, at, along, push, now.level.id === 'inferno' || now.level.id === 'lab' ? 'burn' : 'cut'),
-          done: () => { if (!playing) return; music.restart(); music.duck(0.01, true); home.announce(now.level.id); } });
+          done: () => { if (playing) home.announce(now.level.id); } });
       } else home.announce(now.level.id);
     }
     else { stopStinger(); howto.stop(); }
@@ -345,7 +353,7 @@ async function main() {
       letters.setBeat(music.pulse());      // the end of a game moves to the music
       letters.setEndSong(music.celebrating(), music.celebrationProgress(), music.celebrationTime());      // and waits for its song to end, going dark with it
       dictate.update(dt, letters.progress.recording);      // the real mic (dictate.ts): its take ends by itself, and stops if the game moves on
-      music.setSoft(letters.progress.recording ? (dictate.live ? 0.12 : 0.3) : 1);
+      music.setSoft(letters.progress.recording ? (dictate.live ? 0.12 : 0.3) : howto.running ? 0.5 : 1);      // (softer under How to Play's voice)
       sounds.setRecordSoft(letters.progress.recording ? (dictate.live ? 1 : 0.75) : howto.running ? 0.55 : 0);      // (How to Play's voice over the level's sounds too)      // (and the level's background steps back too: 2026-11-13)      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
       // the end of a game: a level with a celebration song crossfades into it as the last email is dealt with
       { const p = letters.progress, lastDone = p.phase === 'play' && p.round === 2 && p.total > 0 && p.marks.length >= p.total;
@@ -361,7 +369,7 @@ async function main() {
         tool.valid = aim.valid; tool.origin.copy(aim.origin); tool.direction.copy(aim.direction);
         let pull = now.weapon!.pressed();
         const xr = world.renderer.xr.isPresenting ? world.renderer.xr.getSession() : null;
-        if (xr) { pull = 0; for (const source of xr.inputSources) if (source.handedness === 'right') pull = source.gamepad?.buttons?.[0]?.value ?? 0; }
+        if (xr) pull = controls.trigger(xr, 'right');      // (src/controls)
         else {
           // on a monitor nobody is aiming: the staged sprayer's mist goes to the letter in front of it
           const target = letters.debug.current();
