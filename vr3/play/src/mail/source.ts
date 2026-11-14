@@ -225,6 +225,20 @@ function createMail() {
       remember(last.code); told(); return true;
     },
 
+    /**
+     * For checks (the MOCK button top left, dev builds only; 2026-11-14: "show the end screen of game with mock data so I can test it"):
+     * the results screen as if game 1234 had just been played, with three replies (A, B and the mic), the junk archived and the rest
+     * left unread. Play Again on it plays that inbox.
+     */
+    mockResults() {
+      const cards = mockRound(MOCK_CODE), title = "Today's inbox", line = (e: Email): ResultLine => ({ from: e.from, subject: e.subject });
+      last = { code: MOCK_CODE, title, cards, mock: true };
+      const real = cards.filter(e => e.kind === 'Real'), junk = cards.filter(e => e.kind !== 'Real');
+      const replies = real.slice(0, 3).map((e, i): ResultReply => i === 2 ? { ...line(e), text: dictation(e), how: 'mic' } : { ...line(e), text: e.replies[i] ?? '', how: i === 0 ? 'A' : 'B' });
+      state.results = { code: MOCK_CODE, title, mock: true, replay: false, archived: junk.map(line), replies, left: real.slice(3).map(line), sent: 'mock', error: '' };
+      told();
+    },
+
     /** The demo's emails, for letters.ts to shuffle. */
     demoEmails: (): Email[] => [...Emails],
 

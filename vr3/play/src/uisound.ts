@@ -3,7 +3,7 @@
  * buttton / select ( instead of the in game noises )", "also same for keypad noises and button clicks in ui"). Made by
  * tools/uisounds.py into public/audio/ui. They follow Settings: off with Sounds, as loud as Game sounds.
  */
-const VOLUME = { key: 0.4, confirm: 0.5, back: 0.4 } as const;      // (key: the user's own retro bip since 2026-11-14)
+const VOLUME = { key: 0.4, confirm: 0.5, back: 0.4, finding: 0.5, notfound: 0.45, found: 0.55 } as const;      // (key: the user's own soft UI click since 2026-11-14)
 export type UiSound = keyof typeof VOLUME;
 
 const clips = new Map<UiSound, HTMLAudioElement>();

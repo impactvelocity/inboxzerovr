@@ -24,7 +24,7 @@ html,body{margin:0;background:#06050a}
 <div id="scene" aria-label="The level. Drag or use arrow keys to look around." tabindex="0"></div>
 <div id="loading" role="status" aria-label="Loading"><div class="load-inner"><img class="load-logo" src="logos/site.webp" alt="Inbox Zero"><div class="load-bar" aria-hidden="true"><span></span></div><p class="load-text">LOADING</p></div></div>
 <section id="home" aria-label="Inbox Zero">
- <div class="home-top"><div class="home-corner left"><span class="mic-wrap"><button id="connect-mic" class="pix icon" aria-label="Connect mic"><canvas class="mic" aria-hidden="true"></canvas></button><span class="mic-meter" aria-hidden="true"><span></span></span></span></div><div class="home-corner right"><button id="code-badge" class="pix code-badge" hidden title="The game code from your AI agent: this is your inbox">Code</button><a id="hackathon" class="pix icon hack-link" target="_blank" rel="noopener" aria-label="The Meta VR Hackathon" title="The Meta VR Hackathon"><canvas class="loop" aria-hidden="true"></canvas></a></div></div>
+ <div class="home-top"><div class="home-corner left"><span class="mic-wrap"><button id="connect-mic" class="pix icon" aria-label="Connect mic"><canvas class="mic" aria-hidden="true"></canvas></button><span class="mic-meter" aria-hidden="true"><span></span></span></span><button id="mock-results" class="pix" hidden title="Dev: show the results screen with mock data">Mock</button></div><div class="home-corner right"><button id="code-badge" class="pix code-badge" hidden title="The game code from your AI agent: this is your inbox">Code</button><a id="hackathon" class="pix icon hack-link" target="_blank" rel="noopener" aria-label="The Meta VR Hackathon" title="The Meta VR Hackathon"><canvas class="loop" aria-hidden="true"></canvas></a></div></div>
  <div class="home-head"><canvas id="credit" class="credit" width="1100" height="40" role="img" aria-label="Built By Dylan Jones for Meta VR Hackathon"></canvas><h1 id="logo-stage" aria-label="Inbox Zero"><canvas class="logo-air" aria-hidden="true"></canvas><span class="logo-float"><span class="logo-shine" aria-hidden="true"></span></span></h1><canvas id="tagline" class="tagline" width="1100" height="56" role="img" aria-label="Slash the spam · save what matters"></canvas></div>
  <div id="levels" role="radiogroup" aria-label="Choose a level"></div>
  <div class="home-actions">
@@ -35,14 +35,12 @@ html,body{margin:0;background:#06050a}
  <!-- after a real game: what it came to, Play Again and Back (src/results.ts, 2026-11-14) -->
  <section id="results" aria-labelledby="results-title" hidden>
   <h2 id="results-title" class="results-title">Inbox Cleared</h2>
-  <p id="results-sub" class="results-sub"></p>
   <div id="results-tally" class="results-tally"></div>
   <div id="results-replies" class="results-replies"></div>
-  <div class="results-note pixbox">
-   <h3 id="results-note-title" class="results-h">Tell your agent you're done</h3>
+  <div class="results-note">
+   <!-- (simpler and centred since 2026-11-14: "Your Agent has Your Results" and one line; it was four, with the inbox untouched and the game deleted) -->
+   <h3 id="results-note-title" class="results-h">Your Agent has Your Results</h3>
    <p id="results-lead" class="lead"></p>
-   <p>Your inbox wasn't touched. This game never signs in to your email.</p>
-   <p>This game is deleted from our server as soon as your agent picks it up.</p>
    <p id="results-status" class="results-status" role="status" hidden></p>
   </div>
   <div class="results-actions"><button id="results-back" class="pix">Back</button><span class="start-wrap"><button id="results-again" class="pix">Play Again</button></span></div>

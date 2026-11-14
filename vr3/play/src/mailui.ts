@@ -94,8 +94,7 @@ export function bindMailUi() {
   dialog.addEventListener('click', e => { if (e.target === dialog) (view === 'pad' ? back : findBack).click(); });
   play.addEventListener('click', () => {
     if (digits.length !== 4 || view !== 'pad') return;
-    uiSound('confirm');
-    mail.useCode(digits);
+    mail.useCode(digits);      // (no confirm here: the searching bleeps start at once in finding())
     finding();
   });
 
@@ -112,6 +111,7 @@ export function bindMailUi() {
     pixelLabel(findTitle, 'Finding your game', 3, accent(), KEYPAD_SHADOW);
     findLine.textContent = '';
     setView('finding');
+    uiSound('finding');      // (retro searching bleeps, 2026-11-14; the keypad's move away stays silent, as asked before)
     since = performance.now();
     settle();
   }
@@ -128,6 +128,7 @@ export function bindMailUi() {
       pixelLabel(findTitle, 'Inbox Ready', 4, accent(), KEYPAD_SHADOW);
       pixelLabel(findLine, r.count === 1 ? 'Your 1 email is ready to play' : `Your ${r.count} emails are ready to play`, 1.5, '#ffffff', KEYPAD_SHADOW);
       setView('found');
+      uiSound('found');      // (a retro fanfare: the inbox is ready)
       requestAnimationFrame(() => findPlay.focus({ preventScroll: true }));
     } else {
       const busy = r.error === 'busy';
@@ -135,6 +136,7 @@ export function bindMailUi() {
       // (2026-11-14: "make it say "No Inbox Found" and make check code with your agent be pixel")
       pixelLabel(findLine, busy ? 'Wait a few minutes, then try again' : 'Check the code with your agent', 1.5, '#ffffff', KEYPAD_SHADOW);
       setView('missing');
+      uiSound('notfound');
       requestAnimationFrame(() => findRetry.focus({ preventScroll: true }));
     }
   }
@@ -169,9 +171,11 @@ export function bindMailUi() {
   const show = () => {
     const s = mail.state, r = s.round, on = codeOn();
     justPlay.hidden = on;
-    badge.hidden = !on;
-    if (on && r.code !== shownCode) pixelLabel(badge, `Code ${r.code}`, 2, '#ffffff');
-    shownCode = on ? r.code : '';
+    // the code top right: the one about to be played, or, on the results screen, the one just played (it is not said under INBOX CLEARED)
+    const code = on ? r.code : s.results?.code ?? '';
+    badge.hidden = !code;
+    if (code && code !== shownCode) pixelLabel(badge, `Code ${code}`, 2, '#ffffff');
+    shownCode = code;
     startButton.setLabel(on ? 'Clear Your Inbox' : 'Enter Code');
     if (dialog.open) settle();
     // (a code not found while the keypad was shut: forget it)

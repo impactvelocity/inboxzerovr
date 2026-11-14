@@ -508,11 +508,11 @@ export function pixelLabel(button: HTMLElement, text: string, cell: number, colo
  * A sentence in the pixel letters, a canvas a word, so it wraps like words do; `strong` parts in `accent`.
  * The words stay the element's name for screen readers.
  */
-export function pixelSentence(element: HTMLElement, parts: { text: string; strong: boolean }[], cell: number, colour: string, accent: string) {
+export function pixelSentence(element: HTMLElement, parts: { text: string; strong: boolean; colour?: string }[], cell: number, colour: string, accent: string) {
   const words: HTMLElement[] = [];
   for (const part of parts) for (const word of part.text.split(/\s+/).filter(Boolean)) {
     const span = document.createElement('span'); span.className = 'px-word';
-    pixelLabel(span, word, cell, part.strong ? accent : colour, 'rgba(0,0,0,.85)');
+    pixelLabel(span, word, cell, part.colour ?? (part.strong ? accent : colour), 'rgba(0,0,0,.85)');
     words.push(span);
     // (a line ends after a word with a colon: "One email at a time:" then the rest, not a lone word on a third line)
     if (word.endsWith(':')) { const cut = document.createElement('span'); cut.className = 'px-break'; words.push(cut); }

@@ -1,5 +1,5 @@
 import { mail, type GameResults } from './mail/source';
-import { pixelLabel } from './home';
+import { KEYPAD_SHADOW, pixelLabel, pixelSentence } from './home';
 import { MARKS } from './roundui';
 import { uiSound } from './uisound';
 
@@ -15,34 +15,56 @@ import { uiSound } from './uisound';
  * with no code. A mock round (code 1234, MOCK_CODE in src/mail/source.ts) shows the same screen.
  * The counts' colours are the progress bar's (roundui.ts MARKS): archived as cut, replies as sent, the rest as later.
  */
+/** The replies under the counts, each under who it goes to: off, the player reviews them with their agent. */
+const SHOW_REPLIES = false;
+
 export function bindResults() {
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-  const box = $('results'), title = $('results-title'), sub = $('results-sub'), tally = $('results-tally');
+  const box = $('results'), title = $('results-title'), tally = $('results-tally');
   const list = $('results-replies'), lead = $('results-lead'), status = $('results-status');
   const again = $<HTMLButtonElement>('results-again'), back = $<HTMLButtonElement>('results-back');
   const accent = () => getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#f6b3cc';
-  pixelLabel($('results-note-title'), "Tell your agent you're done", 2, '#ffffff');
+  pixelLabel($('results-note-title'), 'Your Agent has Your Results', 4, '#ffffff', KEYPAD_SHADOW);
   let shown: GameResults | null = null;
 
   const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+  /** A tile's number counting up from 0 to `n`, starting `delay` seconds from now, over at most 0.7 s. */
+  function countUp(el: HTMLElement, n: number, delay: number) {
+    const start = performance.now() + delay * 1000, span = Math.min(0.7, 0.08 * n) * 1000;
+    let shown = 0;
+    const step = (now: number) => {
+      if (!el.isConnected) return;
+      const k = span ? Math.min(1, Math.max(0, (now - start) / span)) : now >= start ? 1 : 0, value = Math.round(n * (1 - (1 - k) ** 2));
+      if (value !== shown) { shown = value; pixelLabel(el, String(value), 5, '#14121a'); }
+      if (k < 1) requestAnimationFrame(step);
+    };
+    if (n > 0) requestAnimationFrame(step);
+  }
   function render(r: GameResults) {
-    pixelLabel(title, 'Inbox Cleared', 5, accent());
-    pixelLabel(sub, `Game ${r.code}`, 2, '#ffffff');
+    // (the near-black drop, as on the keypad; no GAME 1234 under it: the code shows top right, 2026-11-14)
+    pixelLabel(title, 'Inbox Cleared', 5, accent(), KEYPAD_SHADOW);
     // the counts
     tally.replaceChildren();
     const counts: [number, string, string][] = [[r.archived.length, 'Archived', MARKS.cut], [r.replies.length, r.replies.length === 1 ? 'Reply' : 'Replies', MARKS.reply]];
     if (r.left.length) counts.push([r.left.length, 'Left Unread', MARKS.tomorrow]);
-    for (const [n, word, colour] of counts) {
-      const tile = document.createElement('div'); tile.className = 'tally pixbox'; tile.style.setProperty('--edge', `color-mix(in srgb, ${colour} 55%, #2b2735)`);
+    // full-colour tiles, number and word in a row in dark letters; each pops in after the one before and counts up to its number
+    counts.forEach(([n, word, colour], i) => {
+      const tile = document.createElement('div'); tile.className = 'tally pixbox';
+      tile.style.setProperty('--c', colour); tile.style.setProperty('--d', `${0.12 + i * 0.12}s`);
       const number = document.createElement('span'), name = document.createElement('span'); number.className = 'n'; name.className = 'w';
-      pixelLabel(number, String(n), 6, colour); pixelLabel(name, word, 2, '#ffffff');
+      // (room for the final number from the start, so the tile does not grow as it counts)
+      pixelLabel(number, String(n), 5, '#14121a'); number.style.minWidth = (number.firstElementChild as HTMLCanvasElement).style.width;
+      pixelLabel(number, '0', 5, '#14121a'); pixelLabel(name, word, 2.5, '#14121a');
       tile.setAttribute('role', 'group'); tile.setAttribute('aria-label', `${n} ${word}`);
       tile.append(number, name); tally.append(tile);
-    }
+      countUp(number, n, 0.2 + i * 0.12);
+    });
     // the replies, each under who it goes to
+    // (not shown since 2026-11-14: "hide the your replies, since that would be reviewed in the agent"; the agent shows them)
     list.replaceChildren();
-    list.hidden = !r.replies.length;
-    if (r.replies.length) {
+    list.hidden = true;
+    if (SHOW_REPLIES && r.replies.length) {
+      list.hidden = false;
       const heading = document.createElement('h3'); heading.className = 'results-h'; pixelLabel(heading, r.replies.length === 1 ? 'Your Reply' : 'Your Replies', 2, '#ffffff'); list.append(heading);
       for (const reply of r.replies) {
         const row = document.createElement('article'); row.className = 'reply-row';
@@ -55,8 +77,17 @@ export function bindResults() {
       }
     }
     // what happens now
-    const doing = [r.archived.length ? `archives ${plural(r.archived.length, 'email', 'emails')}` : '', r.replies.length ? `sends ${plural(r.replies.length, 'reply', 'replies')}` : ''].filter(Boolean);
-    lead.textContent = doing.length ? `It has your choices, and checks with you before it ${doing.join(' and ')}.` : 'It has your choices, and checks with you before it does anything.';
+    // (2026-11-14: "You can play again to retry, or go back to your Agent and approve the X archives, and 4 replies"; nothing on what was left)
+    // in the pixel letters, the counts in their tiles' colours (2026-11-14: "pixel the under text ( and larger )")
+    const parts: { text: string; strong: boolean; colour?: string }[] = [{ text: 'You can play again to retry, or go back to your agent', strong: false }];
+    const archives = r.archived.length ? plural(r.archived.length, 'archive', 'archives') : '', replies = r.replies.length ? plural(r.replies.length, 'reply', 'replies') : '';
+    if (archives || replies) {
+      parts.push({ text: ' and approve the ', strong: false });
+      if (archives) parts.push({ text: archives, strong: true, colour: MARKS.cut });
+      if (archives && replies) parts.push({ text: ' and ', strong: false });
+      if (replies) parts.push({ text: replies, strong: true, colour: MARKS.reply });
+    }
+    pixelSentence(lead, parts, 2.5, '#ffffff', accent());
   }
   function showStatus(r: GameResults) {
     status.textContent = r.sent === 'sending' ? 'Sending your choices to your agent...'
@@ -85,6 +116,12 @@ export function bindResults() {
   });
   back.addEventListener('click', () => { uiSound('back'); mail.dismissResults(); mail.clearCode(); refresh(); });
   mail.listen(refresh);
+  // MOCK, top left by the mic, in dev builds only (on 5183 and the headset through it): the results screen with mock data
+  if (import.meta.env.DEV) {
+    const mock = $<HTMLButtonElement>('mock-results');
+    mock.hidden = false;
+    mock.addEventListener('click', () => { uiSound('confirm'); mail.mockResults(); });
+  }
   refresh();
   return { refresh };
 }
