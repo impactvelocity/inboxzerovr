@@ -339,15 +339,18 @@ SETS = {
                         prompt='A single owl hooting twice at dusk from a tree some way off, soft hollow hoots with a little natural outdoor echo, calm, no wind, no low rumble, no other animals'),
             'arrive': dict(peak=-4, filter='highpass=f=220', longest=0.7,       # arrive-b (arrive-a is a thump under 150 Hz)
                            prompt='A paper envelope flung out of a small wooden mail hatch, one quick wooden clack of the flap followed by a short light papery whoosh, short, close, dry, a single event only'),
-            # slash-a, twice: slash-b came back at -50 dBFS, two events and mostly rumble. The second is the same
-            # chop played a little slower, so it is lower and heavier and two chops running do not sound the same.
-            'slash1': dict(peak=-4, filter='highpass=f=180', longest=0.8,
-                           prompt='An axe chopping clean through a dry wooden board in one hard blow, a sharp bright woody crack and split with splinters flying, short, punchy, close, dry, a single hit only, no echo'),
-            'slash2': dict(peak=-4, filter='asetrate=44100*0.86,aresample=44100,highpass=f=180', longest=0.8,
-                           prompt='(slash1, a little slower and lower)'),
-            # the axe made ready. arm-a: the ring of steel, a sixth of a second in
-            'arm': dict(peak=-5, filter='highpass=f=300', start=-18, longest=0.45,
-                        prompt='An axe pulled free from a wooden chopping block, one short woody creak and a quick bright ring of steel, short, close, dry, a single event only'),
+            # The chops, remade 2026-11-13 ("redo the chopping sounds, too light / soft"): the first ones were a thin crack
+            # (nearly all of it 600 Hz to 2.5 kHz). takes/v2: chopheavy-a and chopsplit-a, a thunk with weight in it
+            # (150-600 Hz) and the crack on top; only the rumble under 90 Hz off, and squeezed so they hit loud.
+            # (The old ones are in level-src/lumber/before-2026-11-13.)
+            'slash1': dict(peak=-2, filter='highpass=f=90,acompressor=threshold=-26dB:ratio=5:attack=3:release=140:makeup=6', longest=0.75,
+                           prompt='A heavy steel axe slamming into a thick hardwood log in one powerful blow, a deep meaty thunk with a loud sharp crack of splitting wood, hard punchy impact, loud, close, dry, a single hit only, no echo, no voices'),
+            'slash2': dict(peak=-2, filter='highpass=f=90,acompressor=threshold=-26dB:ratio=5:attack=3:release=140:makeup=6', longest=0.75,
+                           prompt='A big lumberjack axe chopping hard through a thick wooden plank, an aggressive crunchy splintering crack and a heavy woody thud at the same instant, powerful, punchy, loud, close, dry, a single hit only, no echo'),
+            # the axe made ready, remade 2026-11-13 ("can do like the blade / sharp sound"): armblade-a, a bright steel shing
+            # (it was the axe pulled from a block, a creak and a ring)
+            'arm': dict(peak=-4, filter='highpass=f=400', longest=0.6,
+                        prompt='A sharp steel blade drawn quickly, a bright metallic shing with a clean ringing edge, like a sword unsheathed, crisp, short, close, dry, a single event only'),
         },
         occasional=['crow', 'woodpecker', 'creak', 'chop'],
         hum=None,

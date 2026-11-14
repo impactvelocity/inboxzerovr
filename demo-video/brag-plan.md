@@ -1,5 +1,21 @@
 # Inbox Zero VR demo film, plan
 
+## v7 (2026-11-13), the agent (MCP) flow
+
+- Voice: three re-read parts replace the Gmail-era lines: `how-it-works-iz.mp3` (how it works, through round two), `builtwith-iz.mp3` (how it's built, through "deleted once it's done") and `try-it-yourself-iz.mp3` (the close, with the sung end; the old end take is no longer used). The hook, intro and levels are still take 1. The four takes are levelled to each other. Short beats follow each agent step (0.7 s after "set up a game", 0.9 s after "Meta Quest", 0.9 s after "say okay").
+- New scenes, the core of this pass:
+  - **Setup** (0:20 to 0:31): a Muse window rebuilt from your screenshot (rail, New side chat, Billbo, message bar). "Add a connector" with inboxzerovr.com/mcp, a click on Connect on "Muse", "Inbox Zero VR connected"; "Set up an Inbox Zero game" typed and sent on "ask it"; "Reading your newest unread emails" counting to 10 of 10; "Inbox Zero VR, create_round"; "Your game is ready, open it on your Quest" with the link inboxzerovr.com/play?code=4821, clicked on "Quest".
+  - **Pick and play** (0:31 to 0:34): the home screen with "Game 4821" top right; the cursor picks a level on "level" and hits the main button on "play".
+  - **Approval** (1:51 to 1:55): the same window: "Round done, here's what you chose", Archive 6 emails, Send 2 replies, Leave 2 for tomorrow; Okay is clicked on "okay" and the rows tick green.
+  - **Privacy** (1:56 to 2:00): Your inbox, Your agent, The game, built out from the centre with "your emails" and "round 4821" on the wires; a dashed path from the game to the inbox with a cross on it on "never touches your inbox"; the round chip breaks into pixels on "deleted".
+  - **Close**: a "Connect your agent, inboxzerovr.com/mcp" chip under the level cards on "connect your agent".
+- Gone: the Connect Gmail card, the AI tag-and-summary card, the "Saved as a Gmail draft" line.
+- Outro badges changed to match: "Your agent sorts each email and sums it up in a line", "Free demo to play, or connect your agent to play your own inbox".
+- All sound effects and level room tones are off (`SOUND = false` in `scenes/film.js`): the film is voice only, so the 20 s outro is silent. The voice still has its reverb and grain.
+- The seated clip was re-timed for the new read ("stretching" comes 0.4 s sooner).
+- Placeholders: the Muse window is my rebuild, not a recording; the code 4821, the tool name line, the 6/2/2 counts and the chat wording are illustrative; the home screen is the old capture (it now has Enter Code and Just Play), and all game footage is due to be redone.
+- The film is 2:33 (153 s).
+
 ## v6 (2026-11-13)
 
 - The chair drawing at 1:33 is replaced by the Higgsfield take (`work/seated/src/seated-take1.mp4`, 15 s, 1280x720, from `prompts/seated-player.md`).

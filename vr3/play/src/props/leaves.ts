@@ -9,19 +9,23 @@ import type { StageContext, StageProps } from '../levels/backdrop';
  * the big tree on the left.
  *
  * They answer the game: the axe swung through them knocks them aside, and a letter chopped among
- * them blows them outwards. They are never left lying (the yard under them is painted, and a real
+ * them blows them outwards and throws out a puff of leaves of its own. They are never left lying (the yard under them is painted, and a real
  * leaf on a painted floor would float in a headset): each fades out just above the ground.
  *
  * One instanced draw. The Motion setting stops them where they are.
  */
 export const leafTune = {
-  count: 110,              // (44 on Light detail)
+  count: 140,              // (56 on Light detail; 110 until 2026-11-13, "more leaves")
   fall: [0.26, 0.6],       // m/s, the slowest and the fastest
   swing: [0.16, 0.5],      // metres side to side
   drift: 0.55,             // m/s sideways at full Breeze
   gust: [9, 22],           // seconds between gusts
   reach: 0.42,             // the axe stirs leaves this near its head
   blast: 1.5,              // a chopped letter blows leaves this far from it
+  // (2026-11-13: "add more leaves particles when chopping") each chop also throws out a puff of leaves of its own
+  burst: 28,               // leaves thrown out of each chopped letter (14 on Light detail)
+  pool: 84,                // how many such leaves can be in the air at once (three chops' worth)
+  burstSpeed: [1.4, 3.4],  // m/s they leave the cut at
 };
 /** The air they fall through, metres from the seat's floor: left to right, floor to top, far to near. (Since the
  * 2026-11-13 paintings the player sits under a porch roof 2.65 m up that reaches about 3.7 m out, and the maples
@@ -40,6 +44,8 @@ interface Leaf {
   wait: number; grow: number;
   /** m/s it is carried in under the porch roof, towards the seat (0 for one falling in the yard). */
   inward: number;
+  /** One thrown out of a chopped letter: it falls once and is not sent round again. */
+  burst?: boolean;
 }
 
 function leafGeometry() {
@@ -58,14 +64,14 @@ function leafGeometry() {
 
 export function createLeaves(_context: StageContext): StageProps {
   const group = new THREE.Group(); group.name = 'LumberHack: falling leaves';
-  const N = leafTune.count;
+  const N = leafTune.count, B = leafTune.pool;
   let seed = 90417;
   const random = () => { seed = (1664525 * seed + 1013904223) >>> 0; return seed / 4294967296; };
   const between = (r: number[]) => r[0] + random() * (r[1] - r[0]);
 
   const geometry = leafGeometry();
-  const tints = new Float32Array(N * 3), colour = new THREE.Color();
-  for (let i = 0; i < N; i++) { colour.set(TINTS[Math.floor(random() * TINTS.length)]).offsetHSL((random() - 0.5) * 0.02, 0, (random() - 0.5) * 0.08).toArray(tints, i * 3); }
+  const tints = new Float32Array((N + B) * 3), colour = new THREE.Color();
+  for (let i = 0; i < N + B; i++) { colour.set(TINTS[Math.floor(random() * TINTS.length)]).offsetHSL((random() - 0.5) * 0.02, 0, (random() - 0.5) * 0.08).toArray(tints, i * 3); }
   geometry.setAttribute('tint', new THREE.InstancedBufferAttribute(tints, 3));
   const material = new THREE.ShaderMaterial({
     side: THREE.DoubleSide, uniforms: { blend: { value: 0 } },
@@ -90,7 +96,7 @@ export function createLeaves(_context: StageContext): StageProps {
         #include <colorspace_fragment>
       }`,
   });
-  const mesh = new THREE.InstancedMesh(geometry, material, N); mesh.name = `${N} maple leaves`; mesh.frustumCulled = false; mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+  const mesh = new THREE.InstancedMesh(geometry, material, N + B); mesh.name = `${N} maple leaves and ${B} for chops`; mesh.frustumCulled = false; mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
   group.add(mesh);
 
   /**
@@ -123,17 +129,39 @@ export function createLeaves(_context: StageContext): StageProps {
     const leaf: Leaf = { p: new THREE.Vector3(), kick: new THREE.Vector3(), turn: new THREE.Euler(), spin: new THREE.Vector3(), size: 0.1, fall: 0.4, swing: 0.3, rate: 1.5, phase: 0, wait: 0, grow: 1, inward: 0 };
     launch(leaf, true); return leaf;
   });
+  // the chop puffs: after the falling leaves in the one draw, waiting until a letter is chopped
+  const thrown: Leaf[] = Array.from({ length: B }, () => ({ p: new THREE.Vector3(), kick: new THREE.Vector3(), turn: new THREE.Euler(), spin: new THREE.Vector3(), size: 0.08, fall: 0.4, swing: 0.2, rate: 1.5, phase: 0, wait: Infinity, grow: 1, inward: 0, burst: true }));
+  let nextThrown = 0;
+  /** A puff of leaves out of a chopped letter (in the leaves' space): out every way, more up than down, spinning hard. */
+  function puff(at: THREE.Vector3, count: number) {
+    for (let k = 0; k < count; k++) {
+      const leaf = thrown[nextThrown]; nextThrown = (nextThrown + 1) % B;
+      leaf.p.set(at.x + (random() - 0.5) * 0.18, at.y + (random() - 0.5) * 0.18, at.z + (random() - 0.5) * 0.1);
+      const speed = between(leafTune.burstSpeed);
+      push.set(random() - 0.5, random() - 0.25, random() - 0.5).normalize();
+      leaf.kick.copy(push).multiplyScalar(speed); leaf.kick.y += 0.6 + random() * 1.1;
+      // (small: they start right in front of the player)
+      leaf.size = 0.055 + random() * 0.04;
+      leaf.fall = between(leafTune.fall); leaf.swing = between(leafTune.swing) * 0.6; leaf.rate = 1.4 + random() * 1.6; leaf.phase = random() * 6.2832;
+      leaf.turn.set(random() * 6.2832, random() * 6.2832, random() * 6.2832);
+      leaf.spin.set((random() - 0.5) * 7, (random() - 0.5) * 9, (random() - 0.5) * 4);
+      leaf.wait = 0; leaf.grow = 0.35; leaf.inward = 0;
+    }
+  }
 
   const dummy = new THREE.Object3D(), local = new THREE.Vector3(), tip = new THREE.Vector3(), push = new THREE.Vector3(), eyeLocal = new THREE.Vector3();
   let nextGust = 5 + random() * 8, gust = 0;
   const blasts: { at: THREE.Vector3; power: number }[] = [];
+  /** Chops whose puff of leaves comes out after this frame's blasts (so the blast does not throw them twice as far). */
+  const puffs: { at: THREE.Vector3; count: number }[] = [];
 
   function update(dt: number, c: Parameters<StageProps['update']>[1]) {
     // the leaves' own space: the seat's floor (the painting's ground is 1.2 m under where the player sat down)
     group.position.set(c.seat.x, c.seat.y - 1.2, c.seat.z);
     material.uniforms.blend.value = c.blend;
     const live = settings.quality === 'low' ? Math.ceil(N * 0.4) : N;
-    mesh.count = live;
+    mesh.count = N + B;
+    if (live < N) { dummy.scale.setScalar(0); dummy.updateMatrix(); for (let i = live; i < N; i++) mesh.setMatrixAt(i, dummy.matrix); }
     const step = settings.motion ? dt : 0, wind = settings.wind;
     // a gust: for a couple of seconds the air moves three times as fast, and whatever was waiting to fall comes at once
     if ((nextGust -= step) <= 0) { nextGust = between(leafTune.gust); gust = 2.6; for (const leaf of leaves) if (leaf.wait > 0 && random() < 0.7) launch(leaf, false, true); }
@@ -143,10 +171,11 @@ export function createLeaves(_context: StageContext): StageProps {
     // the axe's head, if it is moving: in the leaves' space
     const blade = c.blade, swung = !!blade && blade.moving && blade.speed > 1.4;
     if (swung && blade) tip.copy(blade.tip).sub(group.position);
-    for (let i = 0; i < live; i++) {
-      const leaf = leaves[i];
+    for (let n = 0; n < live + B; n++) {
+      const i = n < live ? n : N + n - live, leaf = n < live ? leaves[n] : thrown[n - live];
+      if (leaf.burst && leaf.wait > 0) { dummy.scale.setScalar(0); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); continue; }
       if (leaf.wait > 0) { if ((leaf.wait -= step) <= 0) launch(leaf); else { dummy.scale.setScalar(0); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); continue; } }
-      leaf.phase += leaf.rate * step; leaf.grow = Math.min(1, leaf.grow + step * 2);
+      leaf.phase += leaf.rate * step; leaf.grow = Math.min(1, leaf.grow + step * (leaf.burst ? 6 : 2));
       const side = Math.cos(leaf.phase);
       // a falling leaf: quick across the middle of its swing and slow at the ends, where it drops
       leaf.p.x += (side * leaf.swing * leaf.rate + blow + leaf.kick.x) * step;
@@ -170,21 +199,33 @@ export function createLeaves(_context: StageContext): StageProps {
       const turning = 1 + leaf.kick.length() * 1.5;
       leaf.turn.x += leaf.spin.x * turning * step; leaf.turn.y += leaf.spin.y * turning * step; leaf.turn.z = side * 0.9 + leaf.spin.z * 0.3;
       // gone at the ground (fading over its last 30 cm), or blown out of the air it falls through
-      if (leaf.p.y < 0.02 || leaf.p.x > BOX.x[1] + 1.5 || leaf.p.x < BOX.x[0] - 1.5 || leaf.p.z > BOX.z[1] + 1.2 || leaf.p.z < BOX.z[0] - 2) { leaf.wait = 0.2 + random() * 5; continue; }
+      if (leaf.p.y < 0.02 || leaf.p.x > BOX.x[1] + 1.5 || leaf.p.x < BOX.x[0] - 1.5 || leaf.p.z > BOX.z[1] + 1.2 || leaf.p.z < BOX.z[0] - 2) {
+        leaf.wait = leaf.burst ? Infinity : 0.2 + random() * 5;
+        if (leaf.burst) { dummy.scale.setScalar(0); dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix); }
+        continue;
+      }
       const low = Math.min(1, leaf.p.y / 0.3), top = Math.min(1, (BOX.y[1] + 0.3 - leaf.p.y) / 0.5);
       // (and never in the face: one that comes within arm's bend of the eye shrinks away)
-      const close = Math.min(1, Math.max(0, (local.copy(leaf.p).sub(eyeLocal).length() - 0.3) / 0.4));
+      // (a chop's leaves start at arm's length, so they are let nearer: only right at the face do they shrink away)
+      const close = leaf.burst ? Math.min(1, Math.max(0, (local.copy(leaf.p).sub(eyeLocal).length() - 0.16) / 0.2)) : Math.min(1, Math.max(0, (local.copy(leaf.p).sub(eyeLocal).length() - 0.3) / 0.4));
       dummy.position.copy(leaf.p); dummy.rotation.copy(leaf.turn); dummy.scale.setScalar(leaf.size * leaf.grow * Math.max(0, Math.min(low, top)) * close);
       dummy.updateMatrix(); mesh.setMatrixAt(i, dummy.matrix);
     }
     blasts.length = 0;
+    for (const p of puffs) puff(p.at, p.count);
+    puffs.length = 0;
     mesh.instanceMatrix.needsUpdate = true;
   }
 
   return {
     group, update,
     // a letter chopped: the leaves round it are blown outwards
-    onLetter(kind, at) { if (kind === 'cut') blasts.push({ at: at.clone().sub(group.position), power: 1 }); },
+    onLetter(kind, at) {
+      if (kind !== 'cut') return;
+      const here = at.clone().sub(group.position);
+      blasts.push({ at: here, power: 1 });
+      if (settings.motion) puffs.push({ at: here, count: settings.quality === 'low' ? Math.ceil(leafTune.burst / 2) : leafTune.burst });
+    },
     dispose() { geometry.dispose(); material.dispose(); },
   };
 }

@@ -70,8 +70,12 @@ for i, s in enumerate(fx['sfx']):
     ins += ['-i', path]
     ms = max(0, int(s['t'] * 1000))
     parts.append(f"[{i + len(amb)}]aformat=channel_layouts=stereo:sample_rates={SR},highpass=f=90,volume={s['gain'] * 10 ** (SFX_DB / 20):.4f},adelay={ms}|{ms}[s{i}]")
-graph = ';'.join(parts) + ';' + ''.join(f'[a{k}]' for k in range(len(amb))) + ''.join(f'[s{i}]' for i in range(len(fx['sfx']))) + f"amix=inputs={len(amb) + len(fx['sfx'])}:normalize=0:duration=longest,apad,atrim=0:{DUR:.3f}"
-run('ffmpeg', '-y', *ins, '-filter_complex', graph, '-c:a', 'pcm_s16le', wav('sfx.wav'))
+if parts:
+    graph = ';'.join(parts) + ';' + ''.join(f'[a{k}]' for k in range(len(amb))) + ''.join(f'[s{i}]' for i in range(len(fx['sfx']))) + f"amix=inputs={len(amb) + len(fx['sfx'])}:normalize=0:duration=longest,apad,atrim=0:{DUR:.3f}"
+    run('ffmpeg', '-y', *ins, '-filter_complex', graph, '-c:a', 'pcm_s16le', wav('sfx.wav'))
+
+else:      # no effects at all (v7): a silent stem, so the rest of the chain is unchanged
+    run('ffmpeg', '-y', '-f', 'lavfi', '-i', f'anullsrc=r={SR}:cl=stereo', '-t', f'{DUR:.3f}', '-c:a', 'pcm_s16le', wav('sfx.wav'))
 
 # 4. the mix, mastered to about -16 LUFS with a -1.5 dBTP ceiling
 stems = [wav('vo-fx.wav') if VOICE_FX else wav('vo.wav')] + ([wav('bed.wav')] if MUSIC else []) + [wav('sfx.wav')]

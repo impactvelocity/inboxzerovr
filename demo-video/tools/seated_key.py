@@ -13,7 +13,7 @@ S = os.path.join(ROOT, 'work', 'seated'); SRC = os.path.join(S, 'src', 'seated-t
 OUT = os.path.join(ROOT, 'work', 'footage', 'seated')
 W, H, GW, GH, SRC_FPS = 1280, 720, 64, 36, 24
 # (film seconds into the scene, source seconds): a smooth, monotone mapping between these
-TIMING = [(0.0, 0.8), (2.6, 3.6), (3.5, 7.2), (4.4, 8.7), (5.1, 11.2)]
+TIMING = [(0.0, 0.8), (2.5, 3.6), (3.3, 7.2), (4.1, 8.7), (5.2, 11.8)]      # v7's re-read: "stretching" comes 0.4 s sooner
 NOISE, SOFT = 14, 40     # darker-than-background parts: below NOISE is background, NOISE+SOFT is opaque
 LIGHT0, LIGHT0_BLUE, LIGHT_SOFT = 45, 20, 70   # lighter-than-background parts: weak added light stays a faint tint
 

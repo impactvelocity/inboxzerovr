@@ -31,121 +31,153 @@ it's a game to clear your inbox
 one round at a time
 
 9
-00:00:19,710 --> 00:00:20,830
+00:00:19,690 --> 00:00:20,910
 Here's how it works
 
 10
-00:00:20,850 --> 00:00:24,430
-Connect your Gmail, and your latest unread emails become a game!
+00:00:20,940 --> 00:00:23,100
+Connect our MCP to your Muse agent
 
 11
-00:00:24,450 --> 00:00:26,610
-Grab an email with your left hand to read it
+00:00:23,120 --> 00:00:24,710
+and ask it to set up a game!
 
 12
-00:00:26,630 --> 00:00:27,800
-throw it to keep it
+00:00:25,510 --> 00:00:28,130
+It reads your newest unread emails
 
 13
-00:00:27,820 --> 00:00:31,330
-or take your right hand and cut it up into tiny little pieces
+00:00:28,150 --> 00:00:30,580
+and makes you a special link that opens right on your Meta Quest!
 
 14
-00:00:31,350 --> 00:00:34,690
-Every email you keep comes back with two short replies
+00:00:31,560 --> 00:00:32,300
+Pick your level
 
 15
-00:00:34,710 --> 00:00:36,200
-Hold it up to the one you like
+00:00:32,320 --> 00:00:33,300
+and hit play!
 
 16
-00:00:36,220 --> 00:00:37,810
-pull it close to say your own
+00:00:33,860 --> 00:00:36,070
+Grab an email with your left hand to read it
 
 17
-00:00:37,830 --> 00:00:40,330
-or throw it away and leave it for tomorrow
+00:00:36,090 --> 00:00:37,280
+throw it to keep it
 
 18
-00:00:40,960 --> 00:00:43,930
-Just a few minutes a day to clear your email anxiety
+00:00:37,300 --> 00:00:40,800
+or take your right hand and cut it up into tiny little pieces
 
 19
-00:00:43,950 --> 00:00:47,230
-and you finally get to smash your monitor with your keyboard!
+00:00:41,210 --> 00:00:44,870
+Every email you keep comes back with two short replies from your agent
 
 20
-00:00:52,230 --> 00:00:54,660
-Defend your castle from haunted mail!
+00:00:44,990 --> 00:00:46,390
+Hold it up to the one you like
 
 21
-00:00:59,610 --> 00:01:02,060
-Disinfect toxic spam in the lab!
+00:00:46,410 --> 00:00:48,030
+pull it close to say your own
 
 22
-00:01:07,050 --> 00:01:09,780
-Torch your inbox in the Inferno mail room!
+00:00:48,050 --> 00:00:50,370
+or throw it away and leave it for tomorrow
 
 23
-00:01:14,770 --> 00:01:17,770
-Slice your worries away in a Kyoto zen garden!
+00:00:51,040 --> 00:00:54,010
+Just a few minutes a day to clear your email anxiety
 
 24
-00:01:22,730 --> 00:01:24,850
-Split your backlog with an axe!
+00:00:54,030 --> 00:00:57,310
+and you finally get to smash your monitor with your keyboard!
 
 25
-00:01:29,720 --> 00:01:30,250
-Or…
+00:01:00,810 --> 00:01:03,240
+Defend your castle from haunted mail!
 
 26
-00:01:30,270 --> 00:01:33,230
-slice through deep space with a laser sword!
+00:01:06,690 --> 00:01:09,140
+Disinfect toxic spam in the lab!
 
 27
-00:01:38,230 --> 00:01:40,820
-It's built with Meta's Immersive Web SDK
+00:01:12,630 --> 00:01:15,360
+Torch your inbox in the Inferno mail room!
 
 28
-00:01:40,840 --> 00:01:42,380
-so it runs right in the browser
+00:01:18,850 --> 00:01:21,850
+Slice your worries away in a Kyoto zen garden!
 
 29
-00:01:42,400 --> 00:01:43,880
-with nothing to download
+00:01:25,310 --> 00:01:27,430
+Split your backlog with an axe!
 
 30
-00:01:43,900 --> 00:01:45,750
-It's made to play from your chair
+00:01:30,800 --> 00:01:31,330
+Or…
 
 31
-00:01:45,770 --> 00:01:48,840
-Emails come to you, and your weapons do the stretching!
+00:01:31,350 --> 00:01:34,310
+slice through deep space with a laser sword!
 
 32
-00:01:48,860 --> 00:01:51,200
-And it really does clear your inbox
+00:01:37,740 --> 00:01:40,330
+It's built with Meta's Immersive Web SDK
 
 33
-00:01:51,220 --> 00:01:54,650
-AI tags each email and boils it down to a quick summary
+00:01:40,350 --> 00:01:41,910
+so it runs right in the browser
 
 34
-00:01:54,670 --> 00:01:57,040
-The AI reads your mail, then forgets it
+00:01:41,930 --> 00:01:43,420
+with nothing to download!
 
 35
-00:01:57,060 --> 00:01:58,360
-nothing is saved
+00:01:43,460 --> 00:01:45,200
+It's made to play from your chair
 
 36
-00:01:58,980 --> 00:02:01,940
-Try it yourself at InboxZeroVR.com
+00:01:45,260 --> 00:01:48,180
+Emails come to you, and your weapons do the stretching!
 
 37
-00:02:01,960 --> 00:02:04,220
-and play the demo in all seven levels
+00:01:48,580 --> 00:01:50,910
+And it really does clear your inbox
 
 38
-00:02:04,240 --> 00:02:07,730
+00:01:51,310 --> 00:01:52,840
+Your agent archives what you cut
+
+39
+00:01:52,860 --> 00:01:54,000
+and sends your replies
+
+40
+00:01:54,020 --> 00:01:55,300
+after you say okay
+
+41
+00:01:56,340 --> 00:01:58,240
+The game never touches your inbox
+
+42
+00:01:58,260 --> 00:02:00,430
+and each round is deleted once it's done
+
+43
+00:02:01,210 --> 00:02:04,560
+Try it yourself at InboxZeroVR.com!
+
+44
+00:02:04,580 --> 00:02:06,520
+Play the demo in all seven levels
+
+45
+00:02:06,540 --> 00:02:09,140
+or connect your agent and play your own inbox
+
+46
+00:02:09,170 --> 00:02:12,410
 Become a hero with inbox zero!

@@ -42,11 +42,6 @@ const rows = MAIL.map(([from, subj], i) => {
   r.innerHTML = `<span class="dot"></span><span class="from">${from}</span><span class="subj">${subj}</span><span class="time">${TIMES[i]}</span>`;
   $('rows').appendChild(r); return r;
 });
-// rows that fly into the game after connecting
-const flyrows = MAIL.slice(0, 4).map(([from, subj]) => {
-  const r = document.createElement('div'); r.className = 'flyrow';
-  r.innerHTML = `<span class="from">${from}</span><span class="subj">${subj}</span>`; $('flyrows').appendChild(r); return r;
-});
 const LEVELS = ['kyoto', 'office', 'castle', 'lab', 'space', 'inferno', 'lumber'];
 const cards = LEVELS.map(id => { const d = document.createElement('div'); d.className = 'lc'; d.innerHTML = `<img src="../work/assets/home/${id}.webp" alt="">`; $('cards').appendChild(d); return d; });
 const pixels = []; for (let y = 0; y < 9; y++) for (let x = 0; x < 14; x++) { const i = document.createElement('i'); $('pixels').appendChild(i); pixels.push({ i, x, y }); }
@@ -57,6 +52,9 @@ const T_SWORD = W('sword', 'sword'), T_SPLIT = T_SWORD + .02, T_GAME = T_SWORD +
 const T_INBOX = W('slash', 'inbox');
 const T_REALLY = C('really'), T_HERO = C('hero');
 const T_OUT = E('hero') + OUT_HOLD, T_END = T_OUT + OUT_LEN;
+// the agent flow (v7)
+const M_IN = C('connect') - .3, T_CONNECT = W('connect', 'muse'), T_OPEN = W('link', 'quest') + .15, T_HOME = T_OPEN + .75;
+const M2_IN = C('archives') - .35, T_OKAY = W('okay', 'okay') + .05, M2_OUT = C('never') - .55;
 const HOOK_COUNT = 181 + Math.floor(Math.max(0, T_SWORD - W('unread', '181') - .35) * 1.2);
 
 // footage: [clip, from, to, at, key] — clip frame `key` is shown at time `at`
@@ -66,8 +64,8 @@ const SEG = [
   ['kyoto-cut', C('slash'), W('slash', 'burn'), C('slash') + .15, 39],
   ['inferno', W('slash', 'burn'), W('slash', 'smash'), W('slash', 'burn') + .12, 36],
   ['office2', W('slash', 'smash'), T_INBOX, W('slash', 'smash') + .12, 39],
-  ['kyoto-intro', C('round'), C('connect') - .15, C('round'), 1],
-  ['kyoto-keep2', W('connect', 'game') + .25, C('cut'), W('throw', 'throw') + .12, 78],
+  ['kyoto-intro', C('round'), C('connect') - .25, C('round'), 1],
+  ['kyoto-keep2', C('grab') - .1, C('cut'), W('throw', 'throw') + .12, 78],
   ['kyoto-cut2', C('cut'), C('replies'), W('cut', 'cut') + .12, 66],
   ['kyoto-round2b', C('replies'), C('later'), W('pull', 'pull') + .05, 180],      // "SENT" lands as she says pull
   ['kyoto-round2b', C('later'), C('minutes'), W('later', 'throw') + .15, 249],
@@ -95,7 +93,7 @@ const PHRASES = [
   ['Grab to read', C('grab'), C('throw') - .05],
   ['Throw to keep', C('throw'), C('cut') - .05],
   ['Cut to archive', C('cut'), E('cut') + .1],
-  ['Saved as a Gmail draft', W('pull', 'pull') + .15, E('pull') + .1],
+  // (v7: no "Saved as a Gmail draft": the agent sends replies now, after you say okay, and the approval scene shows it)
   ['Leave it for tomorrow', W('later', 'leave') - .1, E('later') + .3],
   // (no line over the end screen: the game's own "Cleared 10 emails" sits there)
   // (no "Play from your chair" line since v6: the generated clip shows it, and the line sat on the player's legs)
@@ -113,8 +111,8 @@ const BADGES = [
   ['<svg viewBox="0 0 24 24"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6-5.3-3-5.3 3 1.2-6L3.4 9.3l6-.7z"/></svg>', '#7a4dff', 'Each with its own art, logo, 3D weapon and effects'],
   ['<svg viewBox="0 0 24 24"><path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/></svg>', '#ff8a3d', 'Original songs and a celebration anthem'],
   ['<svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>', '#ff2e93', 'Reply out loud, transcribed by ElevenLabs and tidied by AI'],
-  ['<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>', '#0a9a7a', 'AI sorts every email and sums it up in a line'],
-  ['<svg viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg>', '#3b4df0', 'Free demo to play, or host it from GitHub with your own inbox'],
+  ['<svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8zM19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>', '#0a9a7a', 'Your agent sorts each email and sums it up in a line'],
+  ['<svg viewBox="0 0 24 24"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></svg>', '#3b4df0', 'Free demo to play, or connect your agent to play your own inbox'],
 ];
 const badgeEls = BADGES.map(([ic, col, text]) => { const d = document.createElement('div'); d.className = 'badge-row'; d.innerHTML = `<span class="ic" style="background:${col}">${ic}</span><span class="bt">${text}</span>`; $('badges').appendChild(d); return d; });
 const BADGE_AT = BADGES.map((b, i) => T_OUT + 1.1 + i * 2.35);
@@ -139,7 +137,7 @@ function footage(T) {
 /* ---------- scenes ---------- */
 function inbox(T) {
   const wrap = $('inbox-wrap');
-  const hookOn = T < T_GAME, endOn = T >= T_REALLY - .05 && T < C('tags');
+  const hookOn = T < T_GAME, endOn = T >= T_REALLY - .05 && T < C('archives') - .4;
   if (!hookOn && !endOn) { show(wrap, false); show($('half-a'), false); show($('half-b'), false); return; }
   show(wrap, true, 1, '');
   let A, count;
@@ -172,7 +170,7 @@ function inbox(T) {
   $('empty').querySelector('.tick').style.transform = `scale(${endOn ? lerp(.4, 1, ep) + .12 * Math.sin(Math.PI * clamp((T - T_REALLY - .95) / .45)) : 1})`;
   // the card's own entrance / exit
   let cy = 0, co = 1;
-  if (endOn) { const v = vis(T, T_REALLY - .05, C('tags') - .32); cy = v ? v.y : 0; co = v ? v.o : 0; }
+  if (endOn) { const v = vis(T, T_REALLY - .05, C('archives') - .75); cy = v ? v.y : 0; co = v ? v.o : 0; }
   // chips: tried things
   const tried = $('tried');
   tried.style.visibility = hookOn ? 'visible' : 'hidden';
@@ -235,61 +233,102 @@ function slam(T) {
 }
 
 function homeScreen(T) {
-  // the real home screen under the glide, until "one round at a time"
-  if (T >= C('hack') && T < C('round')) {
-    const f = clamp(Math.round((T - C('hack')) * FPS) + 1, 1, FOOT.home);
-    const src = `../work/footage/home/${String(f).padStart(4, '0')}.jpg`;
-    if (src !== footSrc) { $('foot-img').src = src; footSrc = src; }
-    $('foot-img').style.transform = '';
-    show($('foot'), true, eio((T - C('hack') - .3) / .6), '');
-    return true;
-  }
-  return false;
+  // the real home screen: under the logo glide, and again when the agent's link opens on the Quest
+  const wins = [[C('hack'), C('round'), .3, .6], [T_HOME, C('grab') - .1, 0, .3]];
+  const w = wins.find(w => T >= w[0] && T < w[1]);
+  const code = $('home-code');
+  if (!w) { show(code, false); return false; }
+  const f = clamp(Math.round((T - w[0]) * FPS) + 1, 1, FOOT.home);
+  const src = `../work/footage/home/${String(f).padStart(4, '0')}.jpg`;
+  if (src !== footSrc) { $('foot-img').src = src; footSrc = src; }
+  $('foot-img').style.transform = '';
+  show($('foot'), true, eio((T - w[0] - w[2]) / w[3]), '');
+  // the round's code, where the game shows it
+  place(code, w[0] === T_HOME ? vis(T, T_HOME + .35, w[1] - .3, { y: -16, din: .4 }) : null);
+  return true;
 }
 
 function cursor(T) {
   const c = $('cursor'), r = $('ripple');
-  // [from, to, x0,y0, x1,y1, clickAt]
+  const mid = id => { const q = $(id).getBoundingClientRect(); return [q.left + q.width / 2, q.top + q.height / 2 + 6]; };
+  // [from, arrive, startX, startY, target (element id or point), clickAt]
   const moves = [
-    [C('hack') + .7, W('game', 'clear') - .05, 1500, 1000, 960, 765, W('game', 'clear')],
-    [C('connect') - .1, W('connect', 'gmail') + .05, 1460, 930, 990, 742, W('connect', 'gmail') + .1],
-    [C('browser') - .55, W('browser', 'browser') - .05, 1420, 980, 860, 724, W('browser', 'browser')],
+    [C('hack') + .7, W('game', 'clear') - .05, 1500, 1000, [960, 765], W('game', 'clear')],
+    [C('connect') + .15, T_CONNECT - .08, 1500, 900, 'c-btn', T_CONNECT],
+    [W('link', 'opens') - .2, T_OPEN - .08, 1400, 880, 'm-open', T_OPEN],
+    [T_HOME + .15, W('pick', 'level') - .05, 1500, 960, [1092, 452], W('pick', 'level')],
+    [W('pick', 'level') + .3, W('play', 'play') - .05, 1092, 452, [960, 765], W('play', 'play')],
+    [C('browser') - .55, W('browser', 'browser') - .05, 1420, 980, [860, 724], W('browser', 'browser')],
+    [C('sends') + .2, T_OKAY - .08, 1450, 900, 'm-ok', T_OKAY],
   ];
-  const m = moves.find(m => T >= m[0] && T < m[6] + .45);
+  const m = moves.find(m => T >= m[0] && T < m[5] + .45);
   if (!m) { show(c, false); show(r, false); return; }
+  const to = typeof m[4] === 'string' ? mid(m[4]) : m[4];
   const p = eio((T - m[0]) / (m[1] - m[0]));
-  const x = lerp(m[2], m[4], p), y = lerp(m[3], m[5], p);
-  const press = T >= m[6] && T < m[6] + .14 ? .86 : 1;
-  show(c, true, clamp((T - m[0]) / .2) * (1 - clamp((T - m[6] - .25) / .2)), `translate(${x}px,${y}px) scale(${press})`);
-  const rp = (T - m[6]) / .4;
+  const x = lerp(m[2], to[0], p), y = lerp(m[3], to[1], p);
+  const press = T >= m[5] && T < m[5] + .14 ? .86 : 1;
+  show(c, true, clamp((T - m[0]) / .2) * (1 - clamp((T - m[5] - .25) / .2)), `translate(${x}px,${y}px) scale(${press})`);
+  const rp = (T - m[5]) / .4;
   if (rp >= 0 && rp < 1) { r.style.left = x + 5 + 'px'; r.style.top = y + 3 + 'px'; show(r, true, 1 - rp, `scale(${lerp(.3, 1.2, eo(rp))})`); } else show(r, false);
 }
 
-function connect(T) {
-  const a = C('connect') - .15, b = W('connect', 'game') + .25;
-  const el = $('connect');
-  if (T < a || T >= b) return show(el, false);
+// A message in the agent's chat: it takes its place in the column when it arrives, then slides up into it.
+function msg(id, T, at, flex = 'block') {
+  const el = $(id);
+  if (T < at) { el.style.display = 'none'; return 0; }
+  const p = eo((T - at) / .4);
+  el.style.display = flex; el.style.opacity = p; el.style.transform = `translateY(${(1 - p) * 22}px)`;
+  return p;
+}
+function muse(T) {
+  // v7, the core of the film: the player's own agent (Muse) sets the game up over our MCP, and later acts on the results
+  const el = $('muse'), win = $('mwin');
+  const setup = T >= M_IN && T < T_HOME + .05, done = T >= M2_IN && T < M2_OUT + .35;
+  if (!setup && !done) return show(el, false);
   show(el, true, 1, '');
-  const click = W('connect', 'gmail') + .1;
-  const dOut = W('connect', 'latest') - .1;
-  place($('dialog'), vis(T, a, dOut, { y: 40 }));
-  const btn = $('connect-btn');
-  const done = T >= click + .12;
-  btn.classList.toggle('done', done);
-  $('connect-label').textContent = done ? 'Connected' : 'Connect Gmail';
-  btn.style.transform = `scale(${T >= click && T < click + .12 ? .94 : 1})`;
-  // the newest unread rows arrive, then fly at you
-  const fly = W('connect', 'game') - .25;
-  flyrows.forEach((r, i) => {
-    const t0 = dOut + .15 + i * .09;
-    const v = vis(T, t0, 99, { y: 30, din: .4 });
-    const top = (i - 1.5) * 104;
-    const fp = clamp((T - fly - i * .05) / .4);
-    if (!v) { r.style.opacity = 0; return; }
-    const s = 1 + 2.4 * fp * fp, o = v.o * (1 - clamp((fp - .5) / .5));
-    r.style.opacity = o;
-    r.style.transform = `translateY(${top + v.y + (i - 1.5) * 220 * fp * fp}px) scale(${s}) rotate(${(i - 1.5) * 6 * fp}deg)`;
-  });
+  place(win, setup ? vis(T, M_IN, T_OPEN + .4, { y: 50, din: .55 }) : vis(T, M2_IN, M2_OUT, { y: 50, din: .55 }));
+  const ids = ['m-ask', 'm-read', 'm-round', 'm-ready', 'm-done'];
+  if (setup) {
+    // 1. add our MCP as a connector
+    place($('mconnect'), vis(T, C('connect') - .05, T_CONNECT + .45, { y: 26, din: .4 }));
+    const on = T >= T_CONNECT + .1, btn = $('c-btn');
+    btn.textContent = on ? 'Connected' : 'Connect'; btn.classList.toggle('ok', on);
+    btn.style.transform = `scale(${T >= T_CONNECT && T < T_CONNECT + .12 ? .93 : 1})`;
+    place($('mconn'), vis(T, T_CONNECT + .6, 999, { y: 12, din: .35 }));
+    // 2. ask it for a game: typed in the message bar, then sent
+    const ask = 'Set up an Inbox Zero game', t0 = C('ask'), t1 = E('ask') - .3, sent = E('ask') - .08;
+    const n = T >= sent ? 0 : Math.round(ask.length * clamp((T - t0) / (t1 - t0)));
+    $('mtext').textContent = n ? ask.slice(0, n) : 'Message'; $('mtext').classList.toggle('typed', n > 0);
+    $('msend').classList.toggle('live', n > 0);
+    $('msend').style.transform = `scale(${T >= sent && T < sent + .14 ? .88 : 1})`;
+    msg('m-ask', T, sent);
+    // 3. it reads the newest unread mail, 4. makes a round, 5. hands back a link for the Quest
+    msg('m-read', T, C('reads') - .15, 'flex');
+    const cnt = Math.round(10 * clamp((T - C('reads')) / (E('reads') - .25 - C('reads'))));
+    $('m-count').textContent = T >= C('reads') ? ` ${cnt} of 10` : '';
+    $('t-read').classList.toggle('done', cnt >= 10);
+    msg('m-round', T, C('link') - .1, 'flex');
+    $('t-round').classList.toggle('done', T >= C('link') + .45);
+    msg('m-ready', T, W('link', 'special') - .1);
+    $('m-link').style.transform = `scale(${T >= T_OPEN && T < T_OPEN + .14 ? .97 : 1})`;
+    $('m-done').style.display = 'none';
+  } else {
+    // the round is over: the agent shows what you chose and waits for a yes before it touches anything
+    for (const id of ids.slice(0, 4)) $(id).style.display = 'none';
+    show($('mconnect'), false); show($('mconn'), true, 1, '');
+    $('mtext').textContent = 'Message'; $('mtext').classList.remove('typed'); $('msend').classList.remove('live'); $('msend').style.transform = '';
+    msg('m-done', T, M2_IN + .3);
+    const rows = [['r-arch', W('archives', 'archives') - .05], ['r-send', C('sends')], ['r-later', E('sends') - .15]];
+    rows.forEach(([id, at], i) => {
+      place($(id), vis(T, at, 999, { y: 18, din: .35 }));
+      $(id).querySelector('.tk').classList.toggle('done', T >= T_OKAY + .25 + i * .16);
+    });
+    place($('m-ok').parentElement, vis(T, C('okay') - .15, 999, { y: 18, din: .35 }));
+    const ok = T >= T_OKAY + .1, b = $('m-ok');
+    b.textContent = ok ? 'Done' : 'Okay'; b.classList.toggle('ok', ok);
+    b.style.transform = `scale(${T >= T_OKAY && T < T_OKAY + .12 ? .93 : 1})`;
+    $('m-edit').style.opacity = ok ? 0 : 1;
+  }
 }
 
 function overlays(T, seg) {
@@ -357,41 +396,48 @@ function seated(T) {
   if (!$('seat-img').src.endsWith(src.slice(2))) $('seat-img').src = src;
 }
 
-function ai(T) {
-  const a = C('tags') - .05, b = E('saved') + .5;
-  const el = $('ai');
+function flow(T) {
+  // "The game never touches your inbox": inbox, agent, game, built out from the centre; then the round is deleted
+  const a = C('never') - .25, b = C('try') - .4, el = $('flow');
   if (T < a || T >= b + .3) return show(el, false);
-  show(el, true, 1, '');
-  const dis = W('forgets', 'forgets');
-  const v = vis(T, a, 99, { y: 40, din: .55 });
-  const paper = $('paper');
-  const tagP = eo((T - W('tags', 'tags')) / .3);
-  $('tag').style.transform = `scale(${T < W('tags', 'tags') ? 0 : lerp(.6, 1, tagP) + .1 * Math.sin(Math.PI * clamp((T - W('tags', 'tags')) / .3))})`;
-  $('tag').style.opacity = tagP;
-  // the body boils down to a line
-  const bp = eio((T - W('tags', 'boils')) / .55);
-  const body = $('pbody'); body.style.maxHeight = lerp(190, 0, bp) + 'px'; body.style.opacity = 1 - bp;
-  const sum = $('psum'); sum.style.height = lerp(0, 46, bp) + 'px';
-  const line = 'Kickoff Monday or Tuesday, which works?';
-  $('psum-t').textContent = line.slice(0, Math.round(line.length * clamp((T - W('tags', 'boils') - .35) / .8)));
-  // then the AI forgets it: the card breaks into pixels and drifts away
-  const dp = clamp((T - dis) / 1.1);
-  if (T < dis) { show(paper, true, v ? v.o : 0, `translateY(${v ? v.y : 0}px)`); $('pixels').style.visibility = 'hidden'; }
-  else {
-    show(paper, true, 1 - clamp(dp * 6), '');
-    const r = paper.getBoundingClientRect(), sw = r.width / 14, sh = r.height / 9;
-    $('pixels').style.visibility = 'visible';
-    pixels.forEach(({ i, x, y }, k) => {
-      const d = clamp((dp - rnd(k) * .35) / .65);
-      i.style.width = sw + 1 + 'px'; i.style.height = sh + 1 + 'px';
-      i.style.left = (x - 7) * sw + 'px'; i.style.top = (y - 4.5) * sh + 'px';
+  const out = clamp((T - b) / .3);
+  show(el, true, 1 - out, `translateY(${-24 * eo(out)}px)`);
+  const NW = 440, STEP = 620;
+  const pA = eo((T - a) / .5), pG = eo((T - W('never', 'game') + .1) / .5), pI = eo((T - W('never', 'touches') + .05) / .5);
+  const width = NW + (pG + pI) * STEP, left = 960 - width / 2;
+  const xI = left, xA = left + pI * STEP, xG = xA + STEP;
+  const node = (id, x, p) => { const n = $(id); n.style.left = x + 'px'; show(n, p > 0, p, `translateY(${(1 - p) * 30}px)`); };
+  node('n-inbox', xI, pI); node('n-agent', xA, pA); node('n-game', xG, pG);
+  const wire = (id, chip, x0, p, gone = 0) => {
+    const w = $(id), c = $(chip), q = eo((p - .5) / .5);
+    w.style.left = x0 + NW + 22 + 'px'; w.style.width = STEP - NW - 44 + 'px';
+    show(w, q > 0, q * (1 - .75 * gone), `scaleX(${q})`);
+    c.style.left = x0 + NW + (STEP - NW) / 2 + 'px';
+    show(c, q > 0 && gone < 1, q * (1 - clamp(gone * 5)), `translateX(-50%) translateY(${(1 - q) * 14}px)`);
+  };
+  // the round goes when the game is done: its chip breaks into pixels
+  const dp = clamp((T - W('deleted', 'deleted')) / 1.0);
+  wire('w-ia', 'c-ia', xI, pI); wire('w-ag', 'c-ag', xA, pG, dp);
+  // no line from the game to the inbox: a dashed path with a cross on it
+  const xp = eo((T - W('never', 'inbox')) / .5), arc = $('arc');
+  arc.style.opacity = .9 * xp; arc.style.strokeDashoffset = 0;
+  $('flow-arc').style.clipPath = `inset(0 0 0 ${(1 - xp) * 100}%)`;
+  const xo = eo((T - W('never', 'inbox') - .3) / .3);
+  show($('nox'), xo > 0, xo, `scale(${lerp(.4, 1, xo) + .15 * Math.sin(Math.PI * clamp((T - W('never', 'inbox') - .3) / .3))})`);
+  const px = $('pixels');
+  if (dp > 0 && dp < 1) {
+    px.style.visibility = 'visible';
+    const cx = xA + NW + (STEP - NW) / 2, cy = 485, cw = 180, ch = 54, GX = 14, GY = 4;
+    pixels.forEach(({ i }, k) => {
+      if (k >= GX * GY) { i.style.opacity = 0; return; }
+      const gx = k % GX, gy = Math.floor(k / GX), d = clamp((dp - rnd(k) * .3) / .7);
+      i.style.width = cw / GX + 1 + 'px'; i.style.height = ch / GY + 1 + 'px';
+      i.style.left = cx - cw / 2 + gx * cw / GX + 'px'; i.style.top = cy - ch / 2 + gy * ch / GY + 'px';
       i.style.opacity = 1 - eo(d);
-      i.style.transform = `translate(${(rnd(k + 9) - .5) * 220 * eo(d)}px,${-260 * eo(d) * (.5 + rnd(k + 3))}px) scale(${1 - .7 * d})`;
-      i.style.background = rnd(k + 5) > .8 ? '#ff9ec8' : '#efe4c8';
+      i.style.transform = `translate(${(rnd(k + 9) - .5) * 160 * eo(d)}px,${-150 * eo(d) * (.5 + rnd(k + 3))}px) scale(${1 - .7 * d})`;
+      i.style.background = rnd(k + 5) > .6 ? '#ff9ec8' : '#d9d3e3';
     });
-  }
-  const sv = vis(T, C('saved') - .1, b, { y: 28 });
-  place($('saved'), sv);
+  } else px.style.visibility = 'hidden';
 }
 
 function closing(T) {
@@ -430,6 +476,10 @@ function closing(T) {
   const push = 1 + .03 * clamp((T - H - .6) / 4);
   if (lv) show($('end-logo'), true, lv.o, `translateY(${250 + lv.y}px) scale(${ls * push})`); else show($('end-logo'), false);
   place($('credit'), vis(T, H + 1.4, 999, { y: 20 }));
+  // "or connect your agent": a chip under the level cards, gone when the logo lands
+  const av = vis(T, W('agent', 'agent') - .1, H - .25, { y: 24 });
+  const chip = $('agent-chip'); chip.style.top = '740px';
+  if (av) show(chip, true, av.o, `translateX(-50%) translateY(${av.y}px)`); else show(chip, false);
   // petals burst on "hero"
   const pt = T - W('hero', 'hero') + .05;
   if (pt > 0) {
@@ -470,7 +520,7 @@ function outro(T) {
 
 function white(T) {
   // the clean white world: the hook, connect, built, chair, AI
-  const on = T < T_GAME || (T >= C('connect') - .15 && T < W('connect', 'game') + .25) || (T >= C('iwsdk') - .02 && T < C('try') - .3);
+  const on = T < T_GAME || (T >= M_IN + .05 && T < T_HOME + .35) || (T >= C('iwsdk') - .02 && T < C('try') - .3);
   show($('white'), on, 1, '');
 }
 
@@ -497,8 +547,7 @@ function buildSfx() {
   sfx(T_INBOX - .02, 'stingers/kyoto.m4a', .85);
   sfx(W('game', 'clear'), 'blip.wav', .7);
   sfx(C('round') - .05, 'arrive.wav', .5);
-  sfx(W('connect', 'gmail') + .1, 'blip.wav', .7); sfx(W('connect', 'gmail') + .25, 'kyoto/keep1.wav', .45);
-  sfx(W('connect', 'game') - .25, 'arrive.wav', .6);
+  sfx(T_CONNECT, 'blip.wav', .7); sfx(T_CONNECT + .2, 'kyoto/keep1.wav', .45); sfx(T_OPEN, 'blip.wav', .7); sfx(T_HOME, 'arrive.wav', .6);
   sfx(W('throw', 'throw') + .1, 'kyoto/keep2.wav', .8);
   sfx(W('pull', 'pull') + .05, 'reply.wav', .6);
   sfx(W('later', 'throw') + .15, 'kyoto/keep3.wav', .7);
@@ -510,13 +559,13 @@ function buildSfx() {
   sfx(C('chair') - .05 + 4.42, 'kyoto/slash2.wav', 1);
   for (let i = 0; i < 6; i++) sfx(T_REALLY + .25 + i * .085, 'sort.wav', .28);
   sfx(T_REALLY + .95, 'kyoto/keep1.wav', .6);
-  sfx(W('tags', 'tags'), 'sort.wav', .6); sfx(W('tags', 'boils'), 'lab/melt2.wav', .35);
-  sfx(W('forgets', 'forgets'), 'space/ping.wav', .45);
+  sfx(T_OKAY, 'blip.wav', .7); sfx(W('deleted', 'deleted'), 'space/ping.wav', .45);
   for (let i = 0; i < 7; i++) sfx(C("seven") + .25 + i * .11, 'blip.wav', .3);
   sfx(W('hero', 'hero') - .05, 'kyoto/stinger2.wav', .8);
   BADGE_AT.forEach((t, i) => sfx(t, i ? 'sort.wav' : 'kyoto/keep1.wav', .55));
 }
-buildSfx();
+const SOUND = false;      // v7: "remove all sound effects"
+if (SOUND) buildSfx();
 
 /* ---------- render ---------- */
 async function renderAt(T) {
@@ -525,11 +574,11 @@ async function renderAt(T) {
   homeScreen(T);
   slam(T);
   inbox(T);
-  connect(T);
+  muse(T);
   overlays(T, seg);
   browser(T);
   seated(T);
-  ai(T);
+  flow(T);
   closing(T);
   flash(T);
   outro(T);
