@@ -219,9 +219,9 @@ export const lumberFx: FxStyle = { bit: 'shard', bits: ['#d9933f', '#8a5a3a'], p
 export const lumberSound: LevelSound = {
   id: 'lumber',
   // round two begins with the user's own sting (2026-11-13; tools/level-src/lumber/lumber-stinger-wold.mp3, set to -3 dBFS)
-  // (the user's "lumber-string-loon" since 2026-11-13, "round 2 stinger for lumberhack replacement": tools/level-src/lumber/lumber-stinger-loon.mp3;
-  //  the one before is stinger2-wold-before-2026-11-13.wav there)
-  roundStinger: { name: 'stinger2', volume: 0.9 },
+  // No round-two stinger: the owl below is that moment (2026-11-13: "round 2 stinger for lumber, add back the owl sound instead of what I
+  // have"). The stingers tried are in tools/level-src/lumber (lumber-stinger-wold.mp3, lumber-stinger-loon.mp3); public/audio/lumber/stinger2.wav
+  // is the wold one, faded in, if it comes back: roundStinger: { name: 'stinger2', volume: 0.9 }.
   layers: [
     // the air of the yard: a breeze in the pines, all round
     // (down by about a third on 2026-11-13, "reduce the wind a bit": it was 0.5 + 0.3)

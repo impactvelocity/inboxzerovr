@@ -23,7 +23,11 @@
   "arm",
   "flyby",
   "ping",
-  "jump"
+  "jump",
+  "slash3",
+  "slash4",
+  "slash5",
+  "slash6"
  ],
  "occasional": [
   "ping"

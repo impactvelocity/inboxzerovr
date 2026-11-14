@@ -104,7 +104,7 @@ const spray = {
   // A moment's hold on it, not one touch (2026-11-13, the lab and Inferno: "a bit longer to destory, so its not just on first
   // touch, but like .3 ms of touching, so it feels a bit more holding to finish"; one touch did it from 2026-11-11). While
   // it is held on, froth (or scorch) grows where it lands; then it spreads over the whole sheet by itself and melts.
-  hold: 0.3,            // seconds of the jet on a letter before it is done (a gap longer than gap starts it again)
+  hold: 0.2,            // seconds of the jet on a letter before it is done (a gap longer than gap starts it again; 0.3 until 2026-11-13, Inferno: "make emails catch fire just a bit faster")
   // The lab's sprayer is back to one touch (2026-11-13: "make the spray more reactive like it was before, the new higher hit
   // or longer makes it not fun"); Inferno's flame keeps the hold.
   labHold: 0,
@@ -246,7 +246,7 @@ export const KYOTO_LETTERS: LetterTheme = { special: { colours: ['#ffd36b', '#ff
 /** What the right hand points with in a 'spray' level: the nozzle, and how hard the trigger is held. */
 export interface SprayTool { origin: Vector3; direction: Vector3; on: number; valid: boolean }
 
-interface Sounds { play(name: string, pitch?: number, volume?: number, at?: Vector3): void; swing(strength: number, at?: Vector3): void; note?(at?: Vector3): void }
+interface Sounds { play(name: string, pitch?: number, volume?: number, at?: Vector3): void; swing(strength: number, at?: Vector3): void; note?(at?: Vector3): void; has?(name: string): boolean }
 interface Fx { spray(from: Vector3, to: Vector3, push: Vector3, petals: number, sparks: number, paper?: boolean, scatter?: number): void }
 
 /** A drawing of one email and the paper that shows it. A letter and all the pieces cut from it share one. */
@@ -1557,7 +1557,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       const at = v3.set(x, y, 0); mesh.localToWorld(at);
       const thrown = push.clone().multiplyScalar(0.3);
       fx.spray(at, at, thrown, final ? 18 : 6, final ? 50 : 20, false, final ? 1.4 : 0.7);
-      sounds.play(Math.random() < 0.5 ? 'melt1' : 'melt2', 0.94 + Math.random() * 0.14, final ? 1 : 0.75, at);
+      meltSound(final ? 1 : 0.75, at);
       hitStop = final ? 0.06 : 0.03;
       remove(body);
       counts.pieces += pieces.length;
@@ -1585,7 +1585,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       fx.spray(at, at, hard, Math.round(3 + 7 * strength), Math.round(16 + 30 * strength), false, 1.3);
     }
     // (Kyoto has five takes of its own cut; the other levels two)
-    sounds.play(`slash${1 + Math.floor(Math.random() * (theme.id === 'kyoto' ? 5 : 2))}`, 0.94 + Math.random() * 0.14, 0.75 + 0.25 * strength, at);
+    slashSound(0.75 + 0.25 * strength, at);
     sounds.note?.(at);            // and the level's note, if it has one: the cuts play a tune
     hitStop = 0.05 + 0.06 * strength * Math.min(1, breaks);       // the hit lands: a moment longer for a hard one
     remove(body);
@@ -2031,7 +2031,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     mesh.updateMatrixWorld(true);
     const at = v3.set(x, y, 0.015); mesh.localToWorld(at);
     fx.spray(at, at, v4.set(0, 0.35, 0).addScaledVector(v1.set(0, 0, 1).applyQuaternion(mesh.quaternion), 0.6), body.hazard ? 10 : 6, body.hazard ? 34 : 22, false, 0.6);
-    sounds.play(Math.random() < 0.5 ? 'melt1' : 'melt2', 0.94 + Math.random() * 0.14, body.hazard ? 1 : 0.85, mesh.position);
+    meltSound(body.hazard ? 1 : 0.85, mesh.position);
     buzz('right', body.hazard ? 0.9 : 0.7, body.hazard ? 90 : 60); hitStop = 0.035;
     counts.cut++;
     const letter = current;
@@ -2161,6 +2161,37 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
 
   const GRAB_SETTLE = 0.45;      // seconds a taken letter takes to come to its held size
   const smooth01 = (t: number) => { const x = clamp01(t); return x * x * (3 - 2 * x); };
+  /**
+   * A cut's sound: one of the level's takes (slash1, slash2, ... as many as it has: Kyoto five, Super Space six), never the one
+   * just heard. Super Space's are pitched further apart (2026-11-13: "make for variety in noises for super space email smash
+   * noises"); the rest as they were, within 7%.
+   */
+  let lastSlash = -1;
+  function slashSound(volume: number, at: Vector3) {
+    const there = [1, 2, 3, 4, 5, 6].filter(n => (sounds.has ? sounds.has(`slash${n}`) : n <= (theme.id === 'kyoto' ? 5 : 2)));
+    if (!there.length) return;
+    let take = there[Math.floor(Math.random() * there.length)];
+    if (take === lastSlash && there.length > 1) take = there[(there.indexOf(take) + 1 + Math.floor(Math.random() * (there.length - 1))) % there.length];
+    lastSlash = take;
+    const pitch = theme.id === 'space' ? Math.pow(2, (Math.random() * 2 - 1) * 0.25) : 0.94 + Math.random() * 0.14;      // (Super Space: 0.84 to 1.19)
+    sounds.play(`slash${take}`, pitch, volume, at);
+  }
+  /**
+   * A melt's sizzle (the lab): one of its takes, never the one just heard, at a pitch anywhere from about a fifth lower to a
+   * fifth higher (2026-11-13: "its always the same sound, maybe make variations of that sound or pitch up and down randomly").
+   * It was melt1 or melt2 within 7% of their pitch.
+   */
+  const MELTS = ['melt1', 'melt2', 'melt3', 'melt4', 'melt5', 'melt6'];
+  let lastMelt = -1;
+  function meltSound(volume: number, at: Vector3) {
+    // (only the takes this level has: Inferno's burning and the lab's melting each have their own)
+    const there = MELTS.map((_, i) => i).filter(i => (sounds.has ? sounds.has(MELTS[i]) : i < 2));
+    if (!there.length) return;
+    let take = there[Math.floor(Math.random() * there.length)];
+    if (take === lastMelt && there.length > 1) take = there[(there.indexOf(take) + 1 + Math.floor(Math.random() * (there.length - 1))) % there.length];
+    lastMelt = take;
+    sounds.play(MELTS[take], Math.pow(2, (Math.random() * 2 - 1) * 0.3), volume, at);      // (±0.3 octave: 0.81 to 1.23)
+  }
   /** The left hand takes hold of it (or takes it back, falling away). */
   function take(letter: Current, head: Vector3) {
     const body = letter.body, mesh = body.mesh;

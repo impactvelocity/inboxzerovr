@@ -497,6 +497,8 @@ export class GardenSounds {
    * One of the letters' sounds ('arrive', 'slash1', 'slash2', 'sort', 'blip'), heard from `at` if
    * given. `pitch` is a playback rate, `volume` 0..1. Nothing happens until sound has been unlocked.
    */
+  /** Is there a sound of this name for the level (its own, or the game's)? */
+  has(name: string) { return this.levelShots.has(`${this.level}/${name}`) || this.shots.has(`${this.level}/${name}`) || this.shots.has(name); }
   play(name: string, pitch = 1, volume = 1, at?: Vector3) {
     // (a level's own take of it if it has one, else the garden's)
     const ctx = this.ctx, buffer = this.levelShots.get(`${this.level}/${name}`) ?? this.shots.get(`${this.level}/${name}`) ?? this.shots.get(name);

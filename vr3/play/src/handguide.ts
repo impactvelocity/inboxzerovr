@@ -28,7 +28,7 @@ export type Key = [time: number, values: number[], ease?: Ease];
 
 const LOOP = 5;                                   // seconds: the length of each hand's tracks
 /** How long each hand's loop is (its tracks have played and settled by then). */
-const TURN_LEFT = 4.6, TURN_RIGHT = 4.4;
+const TURN_LEFT = 3.55, TURN_RIGHT = 4.4;      // (the left 4.6 until its reading was shortened, 2026-11-13)
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 export const smooth: Ease = x => x * x * (3 - 2 * x), easeIn: Ease = x => x * x, easeOut: Ease = x => 1 - (1 - x) ** 3;
 export const ramp = (a: number, b: number, x: number) => smooth(clamp01((x - a) / (b - a)));
@@ -49,16 +49,16 @@ export const L_REST = [-0.045, -0.055, 0, 0.5, -0.3, 0.95];
 //  As in the game, the email hangs ahead of the hand on a thread of light, never in it: letters.ts reachLine, holdDistance, the thread.
 //  The hand barely moves: it closes, the thread lights, the email flies in and grows; then a small wind-up and a flick up and left.)
 const L_POSE: Key[] = [[0, L_REST], [0.88, L_REST], [1.0, [-0.045, -0.05, -0.012, 0.53, -0.3, 0.95]], [1.3, L_REST],
-  [1.8, [-0.044, -0.054, 0.008, 0.55, -0.28, 0.92]], [3.0, [-0.044, -0.054, 0.008, 0.55, -0.28, 0.92]],
-  [3.18, [-0.03, -0.072, 0.025, 0.36, -0.2, 1.05]],                                   // (the wind-up: down and to the right a touch)
-  [3.34, [-0.08, -0.025, -0.035, 0.85, -0.55, 0.72], easeIn],                         // (the flick, up and to the left)
-  [3.56, [-0.092, -0.016, -0.042, 0.92, -0.62, 0.66], easeOut], [4.4, L_REST], [LOOP, L_REST]];
-const L_CURL: Key[] = [[0, [0]], [0.86, [0]], [1.04, [1]], [3.28, [1]], [3.4, [0], easeOut], [LOOP, [0]]];
+  [1.8, [-0.044, -0.054, 0.008, 0.55, -0.28, 0.92]], [1.95, [-0.044, -0.054, 0.008, 0.55, -0.28, 0.92]],      // (read for less: 2026-11-13, "it holds on read a bit too long" (to 3.0 before, then 2.2), then "be .55, just a tad quicker": 0.55 s from fully grown, 1.7, to the throw)
+  [2.13, [-0.03, -0.072, 0.025, 0.36, -0.2, 1.05]],                                   // (the wind-up: down and to the right a touch)
+  [2.29, [-0.08, -0.025, -0.035, 0.85, -0.55, 0.72], easeIn],                         // (the flick, up and to the left)
+  [2.51, [-0.092, -0.016, -0.042, 0.92, -0.62, 0.66], easeOut], [3.35, L_REST], [LOOP, L_REST]];
+const L_CURL: Key[] = [[0, [0]], [0.86, [0]], [1.04, [1]], [2.23, [1]], [2.35, [0], easeOut], [LOOP, [0]]];
 /** Where the caught email hangs from the left hand (x y z), and its size: ahead of it on its thread, growing as it comes in to be read. */
-const L_HOLD: Key[] = [[0, [0.05, 0.16, -0.3, 1]], [1.0, [0.05, 0.16, -0.3, 1]], [1.7, [0.058, 0.172, -0.2, 1.45], easeOut], [3.0, [0.058, 0.172, -0.2, 1.45]],
-  [3.3, [0.055, 0.168, -0.22, 1.4]], [LOOP, [0.055, 0.168, -0.22, 1.4]]];
+const L_HOLD: Key[] = [[0, [0.05, 0.16, -0.3, 1]], [1.0, [0.05, 0.16, -0.3, 1]], [1.7, [0.058, 0.172, -0.2, 1.45], easeOut], [1.95, [0.058, 0.172, -0.2, 1.45]],
+  [2.25, [0.055, 0.168, -0.22, 1.4]], [LOOP, [0.055, 0.168, -0.22, 1.4]]];
 /** The fist closes on it (the thread lights and it starts in); it has arrived; it is let go, mid-flick. */
-const L_CATCH = 0.95, L_IN = 1.5, L_THROW = 3.3;
+const L_CATCH = 0.95, L_IN = 1.5, L_THROW = 2.25;
 /** Where the email waits, out of reach, until the fist closes. */
 const L_WAIT = new THREE.Vector3(0.05, 0.15, -0.55);
 
@@ -72,7 +72,7 @@ const R_POWER: Key[] = [[0, [0]], [1.02, [0]], [1.14, [1.6], easeOut], [1.4, [1]
 const R_LIT = 1.06, R_CUT = 2.145;      // (the cut: the moment the blade is seen to cross the email, measured)
 
 /** Which words light when, by half: [from, to] in that half's own seconds. */
-const STEPS: Record<string, [number, number]> = { 'left:0': [0.86, 3.0], 'left:2': [3.0, 4.1], 'right:0': [0.86, 1.6], 'right:1': [1.6, 3.0] };
+const STEPS: Record<string, [number, number]> = { 'left:0': [0.86, 1.95], 'left:2': [1.95, 3.05], 'right:0': [0.86, 1.6], 'right:1': [1.6, 3.0] };
 
 // ── the look: a rim that brightens where the surface turns away, as Meta's own hands do
 const VERTEX = /* glsl */ `

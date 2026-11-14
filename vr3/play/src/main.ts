@@ -297,7 +297,9 @@ async function main() {
     if (now.level.jet === 'flame') { if (kind === 'cut') flame.ignite(at); else if (kind === 'melt') flame.flare(at); }
     // the game is over (it has faded to black): in a headset, the menu in VR, to choose and play again
     // without taking it off; on a screen, the home screen
-    if (kind === 'home') { if (world.renderer.xr.isPresenting) void letters.showMenu(menuLevels(), now.level.id); else setPlaying(false); return; }
+    // the end over and black: out of VR, to the home screen (2026-11-13: "after a round, and it fades to black, exit the vr mode back to home
+    // screen"; until then it opened the menu inside VR, letters.showMenu, still there for the Menu button). Leaving VR comes home: 'sessionend'.
+    if (kind === 'home') { const xr = world.renderer.xr.getSession(); if (world.renderer.xr.isPresenting && xr) void xr.end().catch(() => setPlaying(false)); else setPlaying(false); return; }
     // in the menu: a level's card cut (its name said, then once the view is black the level changes and the
     // menu comes again), START cut (a game begins), EXIT cut (out of VR, to the home screen)
     if (kind === 'pick') { const level = levelById(id ?? null); if (level) { playStinger(level.stinger); void choose(level).then(() => { if (world.renderer.xr.isPresenting) void letters.showMenu(menuLevels(), now.level.id, true); }); } return; }

@@ -21,7 +21,11 @@
   "arrive",
   "melt1",
   "melt2",
-  "arm"
+  "arm",
+  "melt3",
+  "melt4",
+  "melt5",
+  "melt6"
  ],
  "occasional": [
   "alarm"
