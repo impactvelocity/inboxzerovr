@@ -149,7 +149,8 @@ export function createSword(world:World) {
     if(world.renderer.xr.isPresenting){
       const session=world.renderer.xr.getSession(),space=world.renderer.xr.getReferenceSpace();
       const pose=frame&&space&&session?controls.gripPose(session,frame,space,'right'):null;      // (src/controls: the right controller's grip)
-      if(pose){root.matrixAutoUpdate=false;root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix()).multiply(hold);root.matrix.premultiply(world.player.matrixWorld);root.matrixWorldNeedsUpdate=true;valid=true;}
+      if(pose){root.matrixAutoUpdate=false;root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix());if(controls.isHand(session,'right'))root.matrix.multiply(tweaks.handMatrix());root.matrix.multiply(hold);      // (a tracked hand: its own tweak on top, src/tweak.ts)
+      root.matrix.premultiply(world.player.matrixWorld);root.matrixWorldNeedsUpdate=true;valid=true;}
     }else{
       root.matrixAutoUpdate=true;world.camera.getWorldPosition(root.position);root.position.add(currentBase.set(.32,-.30,-.65).applyQuaternion(world.camera.quaternion));root.quaternion.copy(world.camera.quaternion);root.rotateX(-.35);root.rotateZ(-.22);
       if(swingTime>=0){swingTime+=dt;const phase=Math.min(swingTime/.65,1);root.rotateZ(Math.sin(phase*Math.PI)*1.9);root.rotateX(-Math.sin(phase*Math.PI)*.45);if(phase===1)swingTime=-1;}

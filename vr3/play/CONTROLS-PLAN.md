@@ -43,6 +43,8 @@ Hand tracking is off: `features:{handTracking:false}` in `src/main.ts:95`.
 
 ## Step 1: hands
 
+**Built 2026-11-14** (step 0 too), not yet played on the Quest. Your answers: a fist grabs and makes the weapon live (fist only: a pinch counted too until later the same day, "make it just fist only, not pinch"), more forgiving, the weapon always in the hand. In `src/controls/hand.ts`: hand tracking is on; a hand's closedness is its fist; a dropped hand is held for 0.2 s; the weapon grip is fitted from the wrist and knuckles to the drawn controller fist, lean included (a tracked hand's own grip pose pointed the katana back at the player in the emulator). The hand numbers are `handTune` in `letters.ts`, laid on only while that side is a hand. Weapon holds for hands were tuned on the headset for all seven levels (tune.html's Hands switch; saved as `<level>@hands` in `src/weapon-holds.json`, on top of the controller holds). Not built yet: the tick sound and rim flash in place of rumble, a Hands section in Settings, a hands switch in `tune.html`. The fist needs all four fingers curled (later the same day: "the fist is too senstive"), so a loose grip or a pointing hand does not count; it latches on and off and the grip is smoothed ("more jittery when hitting").
+
 **Telling them apart:** for each side, `source.hand` means a tracked hand, otherwise it's a controller. Check again whenever the session fires `inputsourceschange`, since people put controllers down mid-game. One of each is fine. `?controls=hands` forces it for checks.
 
 | Action | Controller (today) | Hands |

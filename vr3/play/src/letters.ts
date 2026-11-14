@@ -117,6 +117,34 @@ const spray = {
   hazardSpread: 0.85,   // and a radioactive one
   meltSeconds: 0.85,    // how long it takes to melt away once it is covered
 };
+/**
+ * Tracked hands: the same game with more room (2026-11-14: "more foriving"). Laid over `tune` while that side is a
+ * tracked hand; the controller numbers above come back the moment a controller is in that hand again, so they are
+ * never changed (CONTROLS-PLAN.md). First guesses, to be tuned on the headset.
+ */
+const handTune: Record<'left' | 'right', Partial<typeof tune>> = {
+  left: {
+    grabReach: 0.18,      // (controller 0.13) a hand this far off the sheet's edge can take it
+    grabDepth: 0.55,      // (0.45)
+    reachRadius: 0.26,    // (0.2) the reach line takes a letter it passes this close to
+    pointRadius: 0.18,    // (0.14) and the hand's pointing ray
+  },
+  right: {
+    hitDepth: 0.17,       // (0.12) the blade cuts a letter it passes this close to
+    hitMargin: 0.08,      // (0.05) and this far past its edges
+    cutSpeed: 0.7,        // (0.9) m/s at the blade
+    swordWiden: 0.24,     // (0.18) the reach past the tip widens this much a metre
+    swordReachSpeed: 1.6, // (2.0) m/s the tip must be moving for that reach to count
+  },
+};
+const controllerTune = { ...tune };
+/** Lay the hand numbers on, side by side, or put the controller numbers back. */
+function tuneForHands(left: boolean, right: boolean) {
+  for (const [side, on] of [['left', left], ['right', right]] as const) {
+    const set = handTune[side] as Record<string, number>, numbers = tune as unknown as Record<string, number>, saved = controllerTune as unknown as Record<string, number>;
+    for (const key in set) numbers[key] = on ? set[key] : saved[key];
+  }
+}
 const SHEETS = 5, STREAKS = 3, MAX_LOOSE = 24;
 /**
  * How a cut breaks a letter (asked for on 2026-11-11: "more dynamic, maybe smaller pieces"). A gentle
@@ -1717,7 +1745,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const session = world.renderer.xr.getSession(), space = world.renderer.xr.getReferenceSpace();
     if (!world.renderer.xr.isPresenting || !frame || !session || !space) { hand.tracked = false; hand.pressed = false; return; }
     // (the controller's reads are src/controls: the first left source with a grip, trigger or grip to close)
-    const source = controls.gripSource(session, 'left'), pose = source ? frame.getPose(source.gripSpace!, space) : null;
+    const source = controls.gripSource(session, 'left'), pose = source ? controls.poseOf(source, frame, space) : null;
     if (source && pose) {
       hand.matrix.fromArray(pose.transform.matrix).premultiply(world.player.matrixWorld);
       hand.pos.setFromMatrixPosition(hand.matrix);
@@ -2387,6 +2415,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function update(dt: number, frame: XRFrame | undefined, blade: BladeTracker, head: Vector3, night: number, tool?: SprayTool) {
     if (!active) return;
     clock += dt;
+    { const session = world.renderer.xr.isPresenting ? world.renderer.xr.getSession() : null; tuneForHands(controls.isHand(session, 'left'), controls.isHand(session, 'right')); }      // (hands get more room; src/controls)
     readHand(dt, frame, head);
     if (away) watchAway(dt, head);
     for (const sheet of sheets) { sheet.material.uniforms.night.value = night; sheet.material.uniforms.time.value = clock; }

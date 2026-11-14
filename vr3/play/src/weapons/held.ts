@@ -205,7 +205,9 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
       const pose = frame && space && session ? controls.gripPose(session, frame, space, 'right') : null;      // (src/controls: the right controller's grip)
       if (pose) {
         root.matrixAutoUpdate = false;
-        root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix()).multiply(spec.hold).premultiply(world.player.matrixWorld);      // (tweaks: weapon tuning, development only: src/tweak.ts)
+        root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix());      // (tweaks: weapon tuning, development only: src/tweak.ts)
+        if (controls.isHand(session, 'right')) root.matrix.multiply(tweaks.handMatrix());      // (a tracked hand: its own tweak on top)
+        root.matrix.multiply(spec.hold).premultiply(world.player.matrixWorld);
         root.matrixWorldNeedsUpdate = true; valid = true;
       }
     } else {

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { tweaks, ZERO, TWEAK_KEYS, type Tweak } from './tweak';
+import { tweaks, ZERO, TWEAK_KEYS, HANDS, type Tweak } from './tweak';
 import type { HeldSpec } from './weapons/held';
 
 /**
@@ -86,6 +86,18 @@ async function main() {
   for (const l of LEVELS) select.add(new Option(l.name, l.id));
   const built = new Map<string, Awaited<ReturnType<Entry['build']>>>();
   let current: Awaited<ReturnType<Entry['build']>> | null = null, level = LEVELS[0].id;
+  // Controllers or tracked hands (2026-11-14: "tune the weapons for the hands"): hands have tweaks of their own, kept
+  // as "<level>@hands" and laid on top of the controller's hold, so tuning one never moves the other (src/tweak.ts).
+  let mode: 'controller' | 'hands' = 'controller';
+  const tuneKey = () => (mode === 'hands' ? level + HANDS : level);
+  const label = () => NAMES[level] + (mode === 'hands' ? ' (hands)' : '');
+  const modeBar = document.getElementById('mode')!;
+  const setMode = (next: typeof mode) => {
+    mode = next;
+    for (const b of Array.from(modeBar.querySelectorAll('button'))) b.classList.toggle('on', (b as HTMLElement).dataset.m === mode);
+    fill();
+  };
+  for (const b of Array.from(modeBar.querySelectorAll('button'))) b.addEventListener('click', () => setMode((b as HTMLElement).dataset.m as typeof mode));
   async function show(id: string) {
     level = id; select.value = id;
     let got = built.get(id);
@@ -104,16 +116,16 @@ async function main() {
     document.getElementById(['right', 'up', 'forward'].includes(key) ? 'moves' : 'turns')!.append(row);
     const range = row.querySelector('input[type=range]') as HTMLInputElement, number = row.querySelector('input[type=number]') as HTMLInputElement;
     inputs.set(key, { range, number });
-    const commit = (v: number) => { const t = tweaks.get(level); t[key] = Math.round(v / s.step) * s.step; t[key] = +t[key].toFixed(2); tweaks.set(level, t); fill(); };
+    const commit = (v: number) => { const t = tweaks.get(tuneKey()); t[key] = Math.round(v / s.step) * s.step; t[key] = +t[key].toFixed(2); tweaks.set(tuneKey(), t); fill(); };
     range.addEventListener('input', () => commit(Number(range.value)));
     number.addEventListener('change', () => commit(Number(number.value)));
-    for (const b of Array.from(row.querySelectorAll("button"))) b.addEventListener('click', () => commit(tweaks.get(level)[key] + Number((b as HTMLElement).dataset.d) * (s.step < 1 ? 0.5 : 1)));
+    for (const b of Array.from(row.querySelectorAll("button"))) b.addEventListener('click', () => commit(tweaks.get(tuneKey())[key] + Number((b as HTMLElement).dataset.d) * (s.step < 1 ? 0.5 : 1)));
   }
   function fill() {
-    const t = tweaks.get(level);
+    const t = tweaks.get(tuneKey());
     // to the right of each input, where the weapon is set now: its saved default plus the slider (2026-11-13: "show the
     // numbers set for each weapon so can see angle, etc to the right of input")
-    const keptSet = tweaks.savedTotal(level);
+    const keptSet = tweaks.savedTotal(tuneKey());
     for (const key of TWEAK_KEYS) {
       const set = inputs.get(key)!.range.closest('.row')!.querySelector('.set') as HTMLElement, unit = ['right', 'up', 'forward'].includes(key) ? ' cm' : '°';
       const total = +(keptSet[key] + t[key]).toFixed(2), fmt = (v: number) => `${v > 0 ? '+' : ''}${v}${unit}`;
@@ -123,29 +135,29 @@ async function main() {
     }
     for (const [key, { range, number }] of inputs) { range.value = String(t[key]); if (document.activeElement !== number) number.value = String(t[key]); }
     const changed = TWEAK_KEYS.filter(k => t[k] !== 0).map(k => `${k}: ${t[k]}`).join(', ');
-    const kept = tweaks.savedCount(level), keptLine = kept ? ` · ${kept} change${kept === 1 ? '' : 's'} saved as its default` : '';
-    document.getElementById('out')!.textContent = (changed ? `${NAMES[level]} weapon tweak: { ${changed} }` : `${NAMES[level]}: sliders at zero`) + keptLine;
+    const kept = tweaks.savedCount(tuneKey()), keptLine = kept ? ` · ${kept} change${kept === 1 ? '' : 's'} saved as its default` : '';
+    document.getElementById('out')!.textContent = (changed ? `${label()} weapon tweak: { ${changed} }` : `${label()}: sliders at zero`) + keptLine;
     (document.getElementById('save') as HTMLButtonElement).disabled = !changed;
     (document.getElementById('unsave') as HTMLButtonElement).disabled = !kept;
   }
   tweaks.onChange(fill);
-  document.getElementById('reset')!.addEventListener('click', () => { tweaks.set(level, { ...ZERO }); fill(); });
+  document.getElementById('reset')!.addEventListener('click', () => { tweaks.set(tuneKey(), { ...ZERO }); fill(); });
   // Save as default: asked first, so a stray click cannot do it. The sliders go back to zero, and the weapon stays where they had it.
   document.getElementById('save')!.addEventListener('click', () => {
-    const t = tweaks.get(level), changed = TWEAK_KEYS.filter(k => t[k] !== 0).map(k => `${SLIDERS[k].label}: ${t[k]}`).join('\n');
+    const t = tweaks.get(tuneKey()), changed = TWEAK_KEYS.filter(k => t[k] !== 0).map(k => `${SLIDERS[k].label}: ${t[k]}`).join('\n');
     if (!changed) return;
-    if (!confirm(`Save this as the ${NAMES[level]} weapon's default?\n\n${changed}\n\nIt becomes how the weapon is held in the game, and the sliders go back to zero.`)) return;
-    tweaks.saveAsDefault(level);
+    if (!confirm(`Save this as the ${label()} weapon's default?\n\n${changed}\n\nIt becomes how the weapon is held in the game, and the sliders go back to zero.`)) return;
+    tweaks.saveAsDefault(tuneKey());
     // (the saved file reloads this page: the word that it was saved is kept for the page that comes back)
-    const note = `✓ Saved as the ${NAMES[level]} default`;
+    const note = `✓ Saved as the ${label()} default`;
     try { sessionStorage.setItem('tune.toast', JSON.stringify({ note, level, at: Date.now() })); } catch { /* private window */ }
     toast(note);
   });
   document.getElementById('unsave')!.addEventListener('click', () => {
-    const n = tweaks.savedCount(level); if (!n) return;
-    if (!confirm(`Undo the ${n} change${n === 1 ? '' : 's'} saved as the ${NAMES[level]} weapon's default?\n\nIt goes back to how its code holds it.`)) return;
-    tweaks.clearDefault(level);
-    const note = `↺ ${NAMES[level]} is back to how its code holds it`;
+    const n = tweaks.savedCount(tuneKey()); if (!n) return;
+    if (!confirm(`Undo the ${n} change${n === 1 ? '' : 's'} saved as the ${label()} weapon's default?\n\nIt goes back to how its code holds it.`)) return;
+    tweaks.clearDefault(tuneKey());
+    const note = `↺ ${label()} is back to how its code holds it`;
     try { sessionStorage.setItem('tune.toast', JSON.stringify({ note, level, at: Date.now() })); } catch { /* private window */ }
     toast(note);
   });
@@ -153,14 +165,15 @@ async function main() {
 
   // the headset, as the dev server last heard from it
   const status = document.getElementById('status')!;
-  let followed = false;
-  import.meta.hot?.on('vr3:tweak:pages', (pages: { kind: string; level: string; vr: boolean; headset: boolean; seen: number }[]) => {
+  let followed = false, handsFollowed = false;
+  import.meta.hot?.on('vr3:tweak:pages', (pages: { kind: string; level: string; vr: boolean; headset: boolean; hands?: boolean; seen: number }[]) => {
     Object.assign(window, { __pages: pages });
     const games = pages.filter(p => p.kind === 'game'), headset = games.find(p => p.headset) ?? null;
-    status.innerHTML = headset ? `<span class="ok">● Headset connected</span> · ${NAMES[headset.level] ?? headset.level ?? '…'}${headset.vr ? ' · in VR' : ''}`
+    status.innerHTML = headset ? `<span class="ok">● Headset connected</span> · ${NAMES[headset.level] ?? headset.level ?? '…'}${headset.vr ? ' · in VR' : ''}${headset.hands ? ' · playing with hands' : ''}`
       : games.length ? `<span class="no">● No headset</span> · ${games.length} game page${games.length === 1 ? '' : 's'} open here, they get every change too` : '<span class="no">● No game open</span> · open localhost:5183/play/ on the headset';
     const on = headset ?? games[0];
     if (on && !followed && on.level) { followed = true; void show(on.level); }      // (starts on the level the headset is playing)
+    if (on?.hands && !handsFollowed) { handsFollowed = true; setMode('hands'); }      // (and with hands, if that is how it is being played)
   });
 
   // a word that something was saved or undone, at the top for a few seconds (2026-11-12: "there is no feedback for saving as default")
@@ -182,7 +195,7 @@ async function main() {
     const w = view.clientWidth, h = view.clientHeight;
     if (renderer.domElement.width !== Math.round(w * renderer.getPixelRatio()) || renderer.domElement.height !== Math.round(h * renderer.getPixelRatio())) { renderer.setSize(w, h, false); camera.aspect = w / Math.max(1, h); camera.updateProjectionMatrix(); }
     if (current) {
-      holder.matrix.copy(GRIP).multiply(tweaks.matrix(level)).multiply(current.hold());
+      holder.matrix.copy(GRIP).multiply(tweaks.matrix(level)); if (mode === 'hands') holder.matrix.multiply(tweaks.handMatrix(level)); holder.matrix.multiply(current.hold());
       fist.matrix.copy(GRIP).multiply(m.makeRotationX(-current.tilt() * Math.PI / 180));      // (the drawn hand turns with the weapon's lean, as hands.ts has it)
       axes.matrix.copy(GRIP);
     }

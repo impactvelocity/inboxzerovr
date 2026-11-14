@@ -66,5 +66,75 @@
       "up": -0.5,
       "forward": 1
     }
+  ],
+  "kyoto@hands": [
+    {
+      "tipForward": 0,
+      "tipRight": 0,
+      "spin": -22,
+      "right": 0,
+      "up": -0.5,
+      "forward": 0
+    }
+  ],
+  "office2@hands": [
+    {
+      "tipForward": 0,
+      "tipRight": 0,
+      "spin": 0,
+      "right": 1.5,
+      "up": -5.5,
+      "forward": 2
+    }
+  ],
+  "castle@hands": [
+    {
+      "tipForward": -12,
+      "tipRight": -1,
+      "spin": -5,
+      "right": 1,
+      "up": 0.5,
+      "forward": 0.2
+    }
+  ],
+  "lab@hands": [
+    {
+      "tipForward": -16,
+      "tipRight": -4,
+      "spin": -15,
+      "right": 1,
+      "up": -1.5,
+      "forward": 1
+    }
+  ],
+  "space@hands": [
+    {
+      "tipForward": -6,
+      "tipRight": 3,
+      "spin": 10,
+      "right": 1,
+      "up": -1,
+      "forward": 1
+    }
+  ],
+  "inferno@hands": [
+    {
+      "tipForward": -4,
+      "tipRight": 0,
+      "spin": -13,
+      "right": 0.5,
+      "up": -1,
+      "forward": 0
+    }
+  ],
+  "lumber@hands": [
+    {
+      "tipForward": -50,
+      "tipRight": 4,
+      "spin": 38,
+      "right": 0.5,
+      "up": 3,
+      "forward": -1.1
+    }
   ]
 }

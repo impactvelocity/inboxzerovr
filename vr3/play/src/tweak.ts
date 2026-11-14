@@ -24,6 +24,13 @@ export interface Tweak { tipForward: number; tipRight: number; spin: number; rig
 export const TWEAK_KEYS = ['tipForward', 'tipRight', 'spin', 'right', 'up', 'forward'] as const;
 export const ZERO: Tweak = { tipForward: 0, tipRight: 0, spin: 0, right: 0, up: 0, forward: 0 };
 
+/**
+ * Tracked hands have tweaks of their own (2026-11-14: "tune the weapons for the hands"), kept under the level's id with
+ * this after it ("kyoto@hands"), saved and live alike. A hand's weapon is placed by the controller's hold and tweaks
+ * first, then the hand's on top, so tuning for hands never moves the controller holds.
+ */
+export const HANDS = '@hands';
+
 const RAD = Math.PI / 180;
 const all: Record<string, Tweak> = {};
 /**
@@ -65,6 +72,8 @@ export const tweaks = {
     let both = combined.get(id); if (!both) { both = new Matrix4(); combined.set(id, both); }
     return both.multiplyMatrices(kept, live);
   },
+  /** A tracked hand's own tweak for this level (saved and live), laid on after matrix() (identity when untouched). */
+  handMatrix(level?: string): Matrix4 { return tweaks.matrix((level ?? current.level) + HANDS); },
   /** How many tweaks have been saved as this level's default (src/weapon-holds.json). */
   savedCount(level: string): number { return saved[level]?.length ?? 0; },
   /** What has been saved as this level's default, each number added up (exact for one save; near enough for a few small ones). */

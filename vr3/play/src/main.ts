@@ -93,7 +93,7 @@ async function main() {
   }
   const garden = await createGarden();
   const world = await World.create($('scene'),{
-    xr:{ sessionMode:SessionMode.ImmersiveVR,offer:'none',launchOnSessionGranted:true,features:{handTracking:false} },
+    xr:{ sessionMode:SessionMode.ImmersiveVR,offer:'none',launchOnSessionGranted:true,features:{handTracking:{required:false}} },      // (hands as well as controllers since 2026-11-14: src/controls)
     render:{fov:85,near:.05,far:100,camera:{position:[0,1.6,0]}},
     input:{canvasPointerEvents:false},
     features:{locomotion:false,grabbing:false,physics:false,spatialUI:false,sceneUnderstanding:false,environmentRaycast:false},
@@ -107,6 +107,7 @@ async function main() {
   world.createTransformEntity(garden.group);
   const sword = createSword(world);
   useControllerHands(world);
+  controls.lean.tilt = () => fist.tilt();      // (a tracked hand holds the weapon as the drawn fist does, lean and all: src/controls/hand.ts)
   const music = new GardenMusic(message => { $('audio-status').textContent = message; });
   $('music').addEventListener('change', e => music.setEnabled((e.target as HTMLInputElement).checked));
   $('volume').addEventListener('input', e => music.setVolume(Number((e.target as HTMLInputElement).value)));
@@ -140,7 +141,7 @@ async function main() {
   // and whether it is in VR, so the tuning page can show the headset is listening.
   if (import.meta.hot) {
     const pageId = Math.random().toString(36).slice(2, 10), headset = /OculusBrowser|Quest|Pacific|Pico|Wolvic/i.test(navigator.userAgent);
-    const hello = () => announce({ id: pageId, kind: 'game', level: tweaks.level, vr: world.renderer.xr.isPresenting, headset });
+    const hello = () => announce({ id: pageId, kind: 'game', level: tweaks.level, vr: world.renderer.xr.isPresenting, headset, hands: controls.isHand(world.renderer.xr.getSession(), 'right') });
     hello(); setInterval(hello, 3000);
   }
   const made = new Map<string, Played>([['kyoto', { level: LEVELS[0], place: garden, weapon: null }]]);
@@ -345,6 +346,8 @@ async function main() {
   class LevelSystem extends createSystem({}) {
     update(delta:number) {
       const dt = document.hidden && !world.renderer.xr.isPresenting ? 0 : Math.min(delta,.25);
+      // tracked hands are read once, here, before anything asks after them (src/controls/hand.ts); controllers are read as asked
+      if (world.renderer.xr.isPresenting) controls.update(world.renderer.xr.getSession(), this.xrFrame, world.renderer.xr.getReferenceSpace(), performance.now() / 1000);
       if(playing) lightFromRounds();      // in a game, the light follows the rounds: day in round one, night falls through round two's intro
       else if(settings.playing){settings.elapsed=Math.min(settings.duration,settings.elapsed+dt);settings.blend=settings.elapsed/settings.duration;if(settings.elapsed===settings.duration)settings.playing=false;}
       world.camera.getWorldPosition(eye); garden.viewPosition.copy(eye);

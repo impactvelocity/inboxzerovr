@@ -37,6 +37,7 @@ pre{background:#0005;border-radius:8px;padding:9px;font-size:16px;white-space:pr
 .row .set{display:flex;flex-direction:column;align-items:flex-end;min-width:86px;line-height:1.15;text-align:right}
 .row .set b{font-size:20px;color:var(--accent)}.row .set.zero b{color:var(--dim)}
 .row .set i{font-style:normal;font-size:13px;color:var(--dim)}
+#mode{display:flex;align-items:center;gap:6px;margin:10px 0}#mode button{padding:5px 12px;border-radius:7px;border:1px solid #555a66;background:#24262c;color:#cfd3dc;cursor:pointer}#mode button.on{background:#e8eaf0;color:#15161a;border-color:#e8eaf0}
 </style></head>
 <body>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -45,6 +46,7 @@ pre{background:#0005;border-radius:8px;padding:9px;font-size:16px;white-space:pr
  <h1>Weapon tuning</h1>
  <p class="note">Turn and move a weapon about the fist. Every change goes straight to the game on the headset (this dev server only), in VR or not.</p>
  <div id="status">Looking for the headset…</div>
+ <div id="mode" class="pick">Tuning for <button type="button" data-m="controller" class="on">Controllers</button><button type="button" data-m="hands">Hands</button></div>
  <label class="pick">Level <select id="level"></select></label>
  <fieldset><legend>Turn (degrees)</legend><div id="turns"></div></fieldset>
  <fieldset><legend>Move (cm)</legend><div id="moves"></div></fieldset>
