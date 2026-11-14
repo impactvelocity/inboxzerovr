@@ -188,6 +188,8 @@ export interface LetterTheme {
   punch?: PunchFeel;
   /** The level's name on Kyoto's title letter, and its colour on the progress bar and the round's intro. */
   title: string;
+  /** How big its mail is when it has arrived (1 if not said): smaller where it comes from close by (the office's monitor, 2026-11-13). */
+  size?: number;
   accent?: string;
   /** The progress bar's two colours, left to right: vivid, the level's own. From `accent` if not given. */
   bar?: [string, string];
@@ -201,15 +203,22 @@ export interface LetterTheme {
     seconds?: number; ease?: number; sway?: number };
   /** Where the round's intro card goes, if something stands where it would be (as `dock.intro`), and the seconds between a round's last letter and what comes next (as `dock.pause`). */
   intro?: { up: number; nearer: number; size: number }; pause?: number;
+  /** The seconds between the game's very last letter and the end (the logo), if not `pause` (Keyboard Smash: none, so the logo comes with the monitor's jump, 2026-11-13). */
+  endPause?: number;
+  /** Seconds into the end before the logo comes (0.9 if not said). */
+  logoAfter?: number;
   /** Is this one dangerous (the lab's radioactive mail)? It takes more, and glows. */
   hazard?(email: Email): boolean;
   /**
    * How this level shows a special email (Email.special, 2026-11-13: "make each level have its own special email effect,
    * like it does for radioactive, so that the mcp / api can make something as important"): a glow round its edge in these
-   * two colours with a shimmer crossing it, a frame and a badge on the card, a chime as it comes and a burst when it is
-   * done with. A level with `hazard` (the lab, Inferno) shows it as its hazard instead.
+   * two colours with a shimmer crossing it, a chime as it comes and a burst when it is done with. A level with `hazard`
+   * (the lab, Inferno) shows it as its hazard instead. The glow is subtle, and only special mail has one (2026-11-13:
+   * "all normal emails have no glow, and special ones have a glow, but subtle"). Nothing is drawn on the card itself:
+   * its frame and ★ LABEL ★ badge went the same day ("drop the border and 'sealed' badge"); `label` only names it.
    */
-  special?: { colours: [string, string]; label: string };
+  special?: { colours: [string, string]; label: string; /** How strong its glow is (1 if not said). */ glow?: number;
+    /** The glow's own colours, if not the badge's (the office: green, 2026-11-13), and how much it stirs (0.7 if not said). */ aura?: [string, string]; wisps?: number };
   /**
    * The letters are not in the air: each is shown on something that stands in the level (the second
    * office's monitor) until it is dealt with. `place` is asked every frame where that is (world
@@ -419,10 +428,11 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
         c+=(hazardEdge*(1.-smoothstep(0.,.2,edge))*(.55+.45*sin(time*5.))*.9+hazardFill*.2)*hazard*(1.-wet*.6)*(burnStyle>2.5?.55:.45);      // (Inferno's toned down: "reduce a bit of the glow / fire around emails", 2026-11-13; the lab's, "make the radio active emails the glow effect more subtle", the same day: it was 1)
         // Special (the one that matters): the level's two colours glowing round its edge, beating, a band of light
         // running round the rim, and a slow shimmer crossing the face.
-        float around=fract(atan(vUv.y-.5,vUv.x-.5)/6.2832-time*.45);
+        // (subtle since 2026-11-13, "special ones have a glow, but subtle": the rim was .45+.35 beating at 4 with a .9 band, the shimmer .18)
+        float around=fract(atan(vUv.y-.5,vUv.x-.5)/6.2832-time*.3);
         vec3 specialC=mix(specialA,specialB,.5+.5*sin(time*2.6+vUv.x*4.));
-        c+=specialC*(1.-smoothstep(0.,.13,edge))*(.45+.35*sin(time*4.)+.9*exp(-pow(around-.5,2.)*90.))*special*(1.-wet*.6);
-        c+=specialB*exp(-pow(fract(vUv.x*.6+vUv.y*.4-time*.3)-.5,2.)*70.)*.18*special;
+        c+=specialC*(1.-smoothstep(0.,.1,edge))*(.18+.07*sin(time*2.5)+.25*exp(-pow(around-.5,2.)*90.))*special*(1.-wet*.6);
+        c+=specialB*exp(-pow(fract(vUv.x*.6+vUv.y*.4-time*.3)-.5,2.)*70.)*.05*special;
         // A hand close enough to take it warms its edge.
         c+=hoverColor*(1.-smoothstep(0.,.08,edge))*hover*.45;
         // Where the blade went through, it glows and cools.
@@ -466,6 +476,8 @@ function paperMaterial(washi: Texture, face: Texture, paint: boolean) {
  * above it than below, and stirred by slow rising noise (how much is the level's `spell.wisps`).
  * `spell.glow` sets how strong it is.
  */
+/** How strong a special email's glow is, before the level's own `special.glow` (2026-11-13: "a glow, but subtle"). */
+const SPECIAL_GLOW = 0.4;
 function auraMaterial() {
   return new ShaderMaterial({
     transparent: true, depthWrite: false, blending: AdditiveBlending, side: DoubleSide,
@@ -689,27 +701,11 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function drawEmail(sheet: Sheet, email: Email, still = false) {
     if (theme.paint) paintFace(sheet, email, isHazard(email), still);
     else setScroll(sheet, emailCard(painter, sheet.surface, email, !still));
-    if (isSpecial(email)) specialCard(sheet);
   }
   /** Is it this level's hazard (the lab's radioactive mail, Inferno's smoulder)? A special email is, in those levels. */
   const isHazard = (email: Email) => !!theme.hazard && (theme.hazard(email) || !!email.special);
   /** A special email shown this level's own way (not as a hazard). */
   const isSpecial = (email: Email | null | undefined) => !!email?.special && !theme.hazard && !!theme.special;
-  /** The card of a special email: a frame round it in the level's colours, and its badge on the bottom edge. */
-  function specialCard(sheet: Sheet) {
-    const look = theme.special!, s = sheet.surface, g = s.g, w = s.canvas.width, h = s.canvas.height;      // (in pixels: drawn with no transform)
-    g.save(); g.setTransform(1, 0, 0, 1, 0, 0);
-    const line = Math.round(w * 0.012), inset = Math.round(w * 0.018);
-    const across = g.createLinearGradient(0, 0, w, h); across.addColorStop(0, look.colours[0]); across.addColorStop(1, look.colours[1]);
-    g.strokeStyle = across; g.lineWidth = line; g.beginPath(); g.roundRect(inset, inset, w - 2 * inset, h - 2 * inset, line * 2); g.stroke();
-    const size = Math.round(w * 0.03); g.font = `800 ${size}px system-ui, sans-serif`;
-    const text = `\u2605 ${look.label} \u2605`, tw = g.measureText(text).width, bw = tw + size * 1.6, bh = size * 1.7;
-    const bx = (w - bw) / 2, by = h - inset - bh / 2;
-    g.fillStyle = across; g.beginPath(); g.roundRect(bx, by - bh / 2, bw, bh, bh / 2); g.fill();
-    g.fillStyle = '#ffffff'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(text, w / 2, by + size * 0.05);
-    g.restore();
-    if (s.texture) s.texture.needsUpdate = true;
-  }
   /** Done with a special one: a bigger burst, a rising chime, a harder thump in the hand. */
   function specialDone(body: Body) {
     if (!body.special) return;
@@ -789,6 +785,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       : face.clone().multiply(q1.setFromAxisAngle(v1.set(rand(0.3), 1, rand(0.3)).normalize(), rand(0.45)));
     const dock = theme.dock;
     if (dock) { body.size = dock.place(home, face); from.copy(home); via.copy(home); near.copy(home); start.copy(face); }
+    else body.size = theme.size ?? 1;
     body.mesh.position.copy(from); body.mesh.quaternion.copy(start); body.mesh.scale.setScalar(dock ? 0.001 : begin.scale);
     body.hazard = !!(email && isHazard(email)); sheet.material.uniforms.hazard.value = body.hazard ? 1 : 0;
     body.special = isSpecial(email); sheet.material.uniforms.special.value = body.special ? 1 : 0;
@@ -802,9 +799,10 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (email && game.round === 2) { game.stage = 'pick'; game.recording = false; game.aim = -1; game.keyAim = -1; mail.want(email); ui.replies(email.replies[0], email.replies[1]); }
     if (body.special) {
       // (its own glow, in the level's special colours, whether or not the level's letters have one)
-      specialAura.uniforms.a.value.set(theme.special!.colours[0]); specialAura.uniforms.b.value.set(theme.special!.colours[1]);
+      const auraColours = theme.special!.aura ?? theme.special!.colours;
+      specialAura.uniforms.a.value.set(auraColours[0]); specialAura.uniforms.b.value.set(auraColours[1]);
       const glow = new Mesh(auraGeometry, specialAura); glow.name = 'aura'; glow.frustumCulled = false; glow.renderOrder = 2; body.mesh.add(glow);
-    } else if (theme.look.aura && (!theme.hazard || body.hazard)) {
+    } else if (theme.look.aura && body.hazard) {      // (ordinary mail has no glow in any level since 2026-11-13, "all normal emails have no glow"; only the lab's and Inferno's hazard keeps one)
       const glow = new Mesh(auraGeometry, aura); glow.name = 'aura'; glow.frustumCulled = false; glow.renderOrder = 2; body.mesh.add(glow);
       if (theme.look.spell && theme.look.spell.sparkles > 0) { const motes = new Points(sparkleGeometry, sparkle); motes.name = 'spell'; motes.frustumCulled = false; motes.renderOrder = 3; body.mesh.add(motes); }
     }
@@ -841,7 +839,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   /** How far past the weapon's tip a swing reaches the end's pieces, how much wider it gets per metre out, and how fast the tip must move. */
   const END_REACH = { metres: 2.6, widen: 0.4, speed: 1.2 };
   const GRAB_LOOKS = 1.2;      // the end's pieces, held: how much bigger they look than where they floated, at most
-  const END_DARKEN_SECONDS = 20;      // the end of a game: how long the level takes to go dark behind the logo
+  const END_DARKEN_SECONDS = 20;      // the end of a game: how long the level takes to go all the way to black behind the logo, from the end's start
   const LOGO_DISTANCE = 0.95;   // how far in front of the seat it floats (2026-11-12: "make the logo a closer, it feels far away to smash"; it was 1.45 m. Then 1.0, then 1.2: "a bit further from the player", then 0.95: "make end logo and parts closer to player")
   const LOGO_SPREAD = LOGO_DISTANCE / 1.0;      // the bar above it and the line below it, spaced to stay at the same angles as at 1 m
   const OUTRO_BLACK = 0.5;      // seconds the last fade to black takes, once the end is over (2026-11-13: "quick")
@@ -2253,7 +2251,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (away) watchAway(dt, head);
     for (const sheet of sheets) { sheet.material.uniforms.night.value = night; sheet.material.uniforms.time.value = clock; }
     aura.uniforms.time.value = clock; aura.uniforms.level.value = 1;
-    specialAura.uniforms.time.value = clock; specialAura.uniforms.level.value = 1; specialAura.uniforms.wisps.value = 0.7; specialAura.uniforms.strength.value = 0.85 + 0.25 * Math.sin(clock * 4);
+    specialAura.uniforms.time.value = clock; specialAura.uniforms.level.value = 1; specialAura.uniforms.wisps.value = theme.special?.wisps ?? 0.5; specialAura.uniforms.strength.value = SPECIAL_GLOW * (theme.special?.glow ?? 1) * (0.92 + 0.08 * Math.sin(clock * 2.5));      // (subtle: it was the level's glow times .85+.25 beating at 4, until 2026-11-13)
     sparkle.uniforms.time.value = clock; sparkle.uniforms.pixelRatio.value = world.renderer.getPixelRatio();
 
     // ---- the letter in front of you
@@ -2289,7 +2287,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
         // out of the garden along a curve, turning to face you as it slows
         mesh.position.copy(letter.from).multiplyScalar(back * back).addScaledVector(letter.via, 2 * back * e).addScaledVector(letter.home, e * e);
         mesh.quaternion.slerpQuaternions(letter.start, letter.face, e);
-        mesh.scale.setScalar(letter.startScale + (1 - letter.startScale) * e);
+        mesh.scale.setScalar(letter.startScale + (body.size - letter.startScale) * e);      // (to its full size: the level's `size`)
         if (letter.sway > 0) {
           // a haunted thing does not come straight: it drifts from side to side and rocks, less and less
           mesh.position.x += Math.sin(letter.t * 8.5 + body.seed) * 4 * letter.sway * back;
@@ -2599,7 +2597,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     } else if (game.phase === 'summary') {
       game.timer += dt;
       // the end comes in once the line under the title has settled
-      if (!logo.started && game.timer > 0.9) { logo.started = true; if (END_PARTS) handBar(['bar']); else ui.dismissBar(); void showLogo(); }
+      if (!logo.started && game.timer > (theme.logoAfter ?? 0.9)) { logo.started = true; if (END_PARTS) handBar(['bar']); else ui.dismissBar(); void showLogo(); }
       // The line under it (CLEARED 10 EMAILS) only once the logo is in (2026-11-12: "load in the logo first and then after
       // thats in, load the subtitle badge after"): it pops in as a title's line does, then becomes something to cut.
       if (endLine.introAt >= 0 && clock >= endLine.introAt) { endLine.introAt = -1; ui.intro('', endLine.text); endLine.handAt = clock + 0.75; }
@@ -2655,7 +2653,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // (a level that shows its letters on something gives that thing its moment first: the monitor switching off;
       // what is left of the last letter does not hang about through it)
       if (theme.dock && game.timer > 0.7) for (const sheet of sheets) if (sheet.cutAt < Infinity && sheet.burnAt === Infinity) sheet.burnAt = clock;
-      if ((game.timer += dt) > (theme.dock?.pause ?? theme.pause ?? 1.1)) {
+      const last = game.round === 2 || !game.kept.length;      // (the game's last letter: the end comes next, not round two)
+      if ((game.timer += dt) > (last && theme.endPause !== undefined ? theme.endPause : theme.dock?.pause ?? theme.pause ?? 1.1)) {
         // (nothing kept, demo or real mail: nothing to answer, so straight to the ending: 2026-11-12)
         if (game.round === 1 && game.kept.length) beginIntro(2);
         else { if (game.round === 1) game.cutInRoundOne = 0; beginSummary(); }      // (round one's own marks are what the summary counts then)
@@ -2665,12 +2664,11 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     stepBeat(dt);
     {
       if (game.phase === 'menu') updateMenu(dt, head);
-      // The end of a game, every level (2026-11-13: "go dark 75% way through the ending song, so the last 25% are 90% dark and
-      // then quick 10% dark before in app level select"): a little dim from the start, then 90% dark by three quarters of the way
-      // through the end song (coming down over the 5% before it), held there to the song's end; then black, quickly, and the menu.
-      // With no end song, the same over its twenty seconds. (Before: down to 92% steadily over twenty seconds.)
-      const through = endSongAt >= 0 ? endSongAt : endSong ? 0 : endSongHeard ? 1 : clamp01(game.timer / END_DARKEN_SECONDS);      // (playing but its length not known yet: the start)
-      const fall = clamp01((through - 0.7) / 0.05), darkening = 0.35 + 0.55 * fall * fall * (3 - 2 * fall);
+      // The end of a game, every level (2026-11-13, latest: "make end scene dim to complete black in 20 seconds from start of
+      // end"): a little dim at once, then steadily down to black over twenty seconds from the end's start, whatever the song.
+      // The logo and what floats near it stay lit (the dimmer is a shell round the head, behind them). (Until now it was
+      // 90% dark three quarters through the end song, and black only once the end was over.)
+      const through = clamp01(game.timer / END_DARKEN_SECONDS), darkening = 0.35 + 0.65 * through * through * (3 - 2 * through);
       const m = dimmer.material as MeshBasicMaterial, want = game.phase === 'summary' ? Math.max(darkening, logo.outro >= 0 ? 0.9 : 0) : game.phase === 'menu' ? 0.55 : 0;
       m.opacity += (want - m.opacity) * (1 - Math.exp(-dt * (want > m.opacity ? 4 : 2.5)));
       dimmer.visible = m.opacity > 0.005; dimmer.position.copy(head);
@@ -2774,7 +2772,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    */
   function answer(dt: number) {
     const letter = current;
-    ui.demo(!dictate.possible || (game.stage === 'recording' && dictate.engine === 'mock'));      // (no approved mic, nothing to write the words, or the mic would not open: the mock, with DEMO under the mic)
+    ui.demo(!dictate.possible || (game.stage === 'recording' && dictate.engine === 'mock'));      // (DEMO only with no connected mic, or one that would not open: 2026-11-13)
     if (!letter || !letter.email) { if (game.aim >= 0) { game.aim = -1; ui.aim(-1, 0); } return; }
     if (game.stage === 'recording') {
       // The mic for real (dictate.ts, 2026-11-12): the words as they are said, until a pause ends the take.
@@ -2782,7 +2780,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (dictate.engine !== 'mock') {
         ui.live(dictate.text, dictate.level);
         if (dictate.phase !== 'done') return;
-        const said = dictate.text.trim();
+        // (a real take with nothing to write it down: the voice was heard, so the made-up words stand for it)
+        const said = dictate.text.trim() || (dictate.engine === 'voice' && dictate.spoke ? game.heard : '');
         game.recording = false; ui.live(said, -1);
         if (said) { game.heard = said; game.stage = 'choose'; ui.choose(); sounds.play('blip', 1.2, 0.45, ui.targets[2]); buzz('left', 0.3, 25); }
         else { game.stage = 'pick'; ui.replies(letter.email.replies[0], letter.email.replies[1]); ui.say('TRY AGAIN', MARKS.mic, ui.targets[2]); sounds.play('blip', 0.8, 0.45, ui.targets[2]); buzz('left', 0.3, 25); }
@@ -2853,7 +2852,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const body = letter.body, mesh = body.mesh;
     letter.state = 'arriving'; letter.t = 0; letter.flick = -1;
     letter.from.copy(mesh.position); letter.via.lerpVectors(mesh.position, letter.home, 0.5); letter.via.y += 0.05;
-    letter.start.copy(mesh.quaternion); letter.startScale = body.size; body.size = 1;
+    letter.start.copy(mesh.quaternion); letter.startScale = body.size; body.size = theme.dock ? 1 : theme.size ?? 1;
     letter.arriveSeconds = 0.55; letter.arriveEase = 2.5; letter.sway = 0;
     body.sheet.material.uniforms.hover.value = 0;
     sounds.play('blip', 1.0, 0.3, mesh.position);

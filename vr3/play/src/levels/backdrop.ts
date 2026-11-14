@@ -82,7 +82,7 @@ export interface StageDef {
   rear: [string, string];
   motes: MoteDef[];
   /** Flat things adrift in the far air (the office's loose paper): how many, and their colours. */
-  sheets?: { count: number; colour: [string, string] };
+  sheets?: { count: number; colour: [string, string]; /** Extra wind on them, on top of the Breeze setting (0 if not said). */ wind?: number };
   /** How the level's fill light wavers (a flame, a failing tube), about 1. */
   flicker?(time: number, blend: number): number;
   /** Seconds the painting's pulse (a letter arriving, a melt) takes to swell up; 0 or not given, it is there at once. */
@@ -375,13 +375,14 @@ export async function createStage(def: StageDef, renderer: THREE.WebGLRenderer) 
       layer.geometry.setDrawRange(0, light ? Math.ceil(layer.count * 0.4) : layer.count);
     }
     if (sheets) {
-      const t = animationTime, wind = settings.wind;
+      const t = animationTime, wind = settings.wind + (def.sheets?.wind ?? 0);
       for (let i = 0; i < SHEETS; i++) {
         const s = sheetSeeds[i], wide = 26, tall = 3.4;
         const across = (s.x * wide + t * (0.05 + wind * 0.22) * (0.6 + s.z)) % wide, down = (s.y * tall + t * (0.02 + s.z * 0.03)) % tall;
         const edge = Math.min(1, across / (wide * 0.06), (wide - across) / (wide * 0.06), down / (tall * 0.1), (tall - down) / (tall * 0.1));
         dummy.position.set(across - wide / 2 + Math.sin(t * 0.4 + s.spin) * 0.3, 3.3 - down + Math.sin(t * 0.7 + s.spin * 2) * 0.12, -4.5 - s.z * 11);
-        dummy.rotation.set(s.spin + t * 0.5 * (0.5 + s.x), s.spin * 1.7 + t * 0.33, Math.sin(t * 0.6 + s.spin) * 0.9);
+        const tumble = 1 + (def.sheets?.wind ?? 0) * 1.5;      // (a level's extra wind turns them over faster too; others as they were)
+        dummy.rotation.set(s.spin + t * 0.5 * tumble * (0.5 + s.x), s.spin * 1.7 + t * 0.33 * tumble, Math.sin(t * 0.6 * tumble + s.spin) * 0.9);
         dummy.scale.setScalar(Math.max(0, edge) * 1.25); dummy.updateMatrix(); sheets.setMatrixAt(i, dummy.matrix);
       }
       sheets.count = light ? Math.ceil(SHEETS / 2) : SHEETS; sheets.instanceMatrix.needsUpdate = true;

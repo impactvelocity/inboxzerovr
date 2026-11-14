@@ -318,7 +318,8 @@ async function main() {
       letters.setBeat(music.pulse());      // the end of a game moves to the music
       letters.setEndSong(music.celebrating(), music.celebrationProgress());      // and waits for its song to end, going dark with it
       dictate.update(dt, letters.progress.recording);      // the real mic (dictate.ts): its take ends by itself, and stops if the game moves on
-      music.setSoft(letters.progress.recording ? (dictate.live ? 0.12 : 0.3) : 1);      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
+      music.setSoft(letters.progress.recording ? (dictate.live ? 0.12 : 0.3) : 1);
+      sounds.setRecordSoft(letters.progress.recording ? (dictate.live ? 1 : 0.75) : 0);      // (and the level's background steps back too: 2026-11-13)      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
       // the end of a game: a level with a celebration song crossfades into it as the last email is dealt with
       { const p = letters.progress, lastDone = p.phase === 'play' && p.round === 2 && p.total > 0 && p.marks.length >= p.total;
         if (playing && (p.phase === 'summary' || lastDone) && now.level.anthem) music.celebrate(now.level.anthem); else music.endCelebration();

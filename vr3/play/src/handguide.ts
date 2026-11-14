@@ -12,7 +12,8 @@ import { AnimatedControllerHand, DEFAULT_PROFILES_PATH } from '@iwsdk/core';
  * in the level's colour, and a soft halo around it.
  *
  * Two cards, one hand each, drawn into one canvas laid under them (each card's .hand-view is where its hand is drawn).
- * They take turns ("two cards, one at a time highlight", 2026-11-13): the left card lights and plays, then the right.
+ * One plays at a time, over and over: the first by itself as the card opens, then whichever is clicked or chosen with
+ * the keys (2026-11-13: "dont start animation until clicking / selecting the card, but auto start the first on open").
  *   left    an email flies in · the thread finds it · the fist closes and it flies in · read · thrown away, gold: kept
  *   right   the hand closes on the hilt and the blade lights · it swings · the email falls in two
  *
@@ -26,7 +27,7 @@ export type Ease = (x: number) => number;
 export type Key = [time: number, values: number[], ease?: Ease];
 
 const LOOP = 5;                                   // seconds: the length of each hand's tracks
-/** How long each hand has the light, in turn (its tracks have played and settled by then). */
+/** How long each hand's loop is (its tracks have played and settled by then). */
 const TURN_LEFT = 4.6, TURN_RIGHT = 4.4;
 export const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 export const smooth: Ease = x => x * x * (3 - 2 * x), easeIn: Ease = x => x * x, easeOut: Ease = x => 1 - (1 - x) ** 3;
@@ -245,7 +246,14 @@ export function sparks(count: number, colour: THREE.ColorRepresentation, map: TH
     } };
 }
 
-export interface HandGuide { start(): void; stop(): void; /** The level's colour, as CSS. */ accent(colour: string): void; /** One moment: each hand's own seconds, and which card is lit. */ frame(left: number, right: number, lit?: 'left' | 'right' | 'both'): void }
+/** Cards that play when clicked, or chosen with Enter or Space. */
+export function pickable(cards: Record<'left' | 'right', HTMLElement>, pick: (side: 'left' | 'right') => void) {
+  for (const side of ['left', 'right'] as const) {
+    cards[side].addEventListener('click', () => pick(side));
+    cards[side].addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); pick(side); } });
+  }
+}
+export interface HandGuide { start(): void; stop(): void; /** Play one card (and only it). */ pick(side: 'left' | 'right'): void; /** The level's colour, as CSS. */ accent(colour: string): void; /** One moment: each hand's own seconds, and which card is lit. */ frame(left: number, right: number, lit?: 'left' | 'right' | 'both'): void }
 
 /**
  * The hands, in the canvas inside `host`. Words in it marked data-step="left:0" (and so on) light as their part plays.
@@ -434,7 +442,7 @@ export async function createHandGuide(host: HTMLElement): Promise<HandGuide> {
 
   // ── running
   const still = matchMedia('(prefers-reduced-motion: reduce)');
-  let moving = false, frame = 0, began = 0;
+  let moving = false, frame = 0, began = 0, active: Side = 'left';
   const fit = () => {
     const box = canvas.getBoundingClientRect(); if (box.width < 2) return false;
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(box.width, box.height, false); return true;
@@ -442,16 +450,17 @@ export async function createHandGuide(host: HTMLElement): Promise<HandGuide> {
   const tick = (now: number) => {
     frame = requestAnimationFrame(tick);
     if (!fit()) return;
-    const t = ((now - began) / 1000) % (TURN_LEFT + TURN_RIGHT);
+    const t = ((now - began) / 1000) % (active === 'left' ? TURN_LEFT : TURN_RIGHT);      // (the picked card plays, over and over)
     host.classList.toggle('still', still.matches);
     if (still.matches) { moving = false; draw(2.3, 1.45); }      // (asked for no motion: the email held up, the blade alight)
-    else if (t < TURN_LEFT) draw(t, 0, 'left');                  // (the other hand waits, open, at the start of its own loop)
-    else draw(0, t - TURN_LEFT, 'right');
+    else if (active === 'left') draw(t, 0, 'left');              // (the other hand waits, open, at the start of its own loop)
+    else draw(0, t, 'right');
     canvas.classList.add('ready');
   };
   const guide: HandGuide = {
-    start() { if (frame) return; moving = true; began = performance.now(); frame = requestAnimationFrame(tick); },
+    start() { if (frame) return; moving = true; guide.pick('left'); frame = requestAnimationFrame(tick); },      // (opening, the first card plays by itself)
     stop() { cancelAnimationFrame(frame); frame = 0; moving = false; for (const step of steps) step.classList.remove('on'); cards.left.classList.remove('on'); cards.right.classList.remove('on'); },
+    pick(side) { active = side; began = performance.now(); cards.left.setAttribute('aria-pressed', String(side === 'left')); cards.right.setAttribute('aria-pressed', String(side === 'right')); },
     accent(colour) {
       const css = colour.trim() || '#f6b3cc';
       tint.value.set(css); hot.value.copy(tint.value).lerp(new THREE.Color('#ffffff'), 0.35);
@@ -464,6 +473,7 @@ export async function createHandGuide(host: HTMLElement): Promise<HandGuide> {
     frame(tl, tr, lit) { if (fit()) { moving = true; draw(tl, tr, lit); canvas.classList.add('ready'); } },
   };
   guide.accent(getComputedStyle(host).getPropertyValue('--accent'));
+  pickable(cards, side => { if (frame) guide.pick(side); });
   if (import.meta.env.DEV) Object.assign(window, { __guide: { ...guide, left, right, cameraL, cameraR, blade, bladeBase, bladeTip, FOCUS_R, tracks: { L_POSE, L_CURL, L_HOLD, R_POSE, R_CURL, R_POWER } } });
   return guide;
 }

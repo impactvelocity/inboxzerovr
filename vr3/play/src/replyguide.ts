@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import * as PixelFont from './mail/pixelFont';
 import {
-  buildHand, cardPiece, clamp01, dotTexture, easeIn, easeOut, glowing, paintCard, ramp, sample, smooth, sparks,
+  buildHand, cardPiece, pickable, clamp01, dotTexture, easeIn, easeOut, glowing, paintCard, ramp, sample, smooth, sparks,
   CARD_H, CARD_W, L_REST, type HandGuide, type Key,
 } from './handguide';
 
@@ -14,7 +14,7 @@ import {
  *                a pixel loading ring low right of the hand fills, and the reply is sent: the email goes into it. Always the left reply.
  *   right card   the mic, low beside it (roundui.ts: low and close); the email is held near, the mic's spokes move with
  *                a voice and its ring fills; the message is recorded: the email goes into the mic.
- * The cards take turns, as Round One's do. Everything is a function of time: `__reply.frame(left, right, 'left')`.
+ * One card plays at a time, the picked one, as in Round One. Everything is a function of time: `__reply.frame(left, right, 'left')`.
  */
 
 type Side = 'left' | 'right';
@@ -260,7 +260,7 @@ export async function createReplyGuide(host: HTMLElement): Promise<HandGuide> {
 
   // ── running: card one, then card two
   const still = matchMedia('(prefers-reduced-motion: reduce)');
-  let moving = false, frame = 0, began = 0;
+  let moving = false, frame = 0, began = 0, active: Side = 'left';
   const fit = () => {
     const box = canvas.getBoundingClientRect(); if (box.width < 2) return false;
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(box.width, box.height, false); return true;
@@ -268,15 +268,16 @@ export async function createReplyGuide(host: HTMLElement): Promise<HandGuide> {
   const tick = (now: number) => {
     frame = requestAnimationFrame(tick);
     if (!fit()) return;
-    const t = ((now - began) / 1000) % (2 * TURN);
+    const t = ((now - began) / 1000) % TURN;      // (the picked card plays, over and over)
     host.classList.toggle('still', still.matches);
     if (still.matches) { moving = false; draw(2.2, 2.2); }
-    else if (t < TURN) draw(t, 0, 'left');
-    else draw(0, t - TURN, 'right');
+    else if (active === 'left') draw(t, 0, 'left');
+    else draw(0, t, 'right');
     canvas.classList.add('ready');
   };
   const guide: HandGuide = {
-    start() { if (frame) return; moving = true; began = performance.now(); frame = requestAnimationFrame(tick); },
+    start() { if (frame) return; moving = true; guide.pick('left'); frame = requestAnimationFrame(tick); },      // (shown, the first card plays by itself)
+    pick(side) { active = side; began = performance.now(); cards.left.setAttribute('aria-pressed', String(side === 'left')); cards.right.setAttribute('aria-pressed', String(side === 'right')); },
     stop() { cancelAnimationFrame(frame); frame = 0; moving = false; for (const step of steps) step.classList.remove('on'); cards.left.classList.remove('on'); cards.right.classList.remove('on'); },
     accent(colour) {
       accentCss = colour.trim() || '#f6b3cc';
@@ -293,6 +294,7 @@ export async function createReplyGuide(host: HTMLElement): Promise<HandGuide> {
     frame(ta, tb, lit) { if (fit()) { moving = true; draw(ta, tb, lit); canvas.classList.add('ready'); } },
   };
   guide.accent(getComputedStyle(host).getPropertyValue('--accent'));
+  pickable(cards, side => { if (frame) guide.pick(side); });
   if (import.meta.env.DEV) Object.assign(window, { __reply: { ...guide, cameraA, cameraB, bubbles, mic, setSide: (s: number) => { side = s; } } });
   void easeIn; void smooth; void CARD_W;
   return guide;

@@ -13,12 +13,15 @@
  *              server (/api/scribe-token in the Next app, vr3/app/api; the key stays on the server)
  *   'browser'  the browser's own SpeechRecognition, where there is one (desktop Chrome; the Quest
  *              browser is unknown)
- *   'mock'     no mic or neither of the above: letters.ts types out the made-up words, as before
+ *   'voice'    the mic is connected but nothing can write the words down: it still listens for real (the bars
+ *              follow the voice, a pause ends it), and letters.ts puts the made-up words to what was said
+ *   'mock'     only when there is no connected mic (2026-11-13: "the mic should ALWAYS use the real mic if the mic is
+ *              connected, only use the demo recording if mic is NOT connected"): the made-up words typed out
  *
  * The mic needs a secure page (https or localhost). Permission is asked only on the home page, from
  * Connect mic (beside Setup) or Allow mic (on the Setup card): a click of its own, so Enter VR keeps
  * its click. In VR it is never asked (2026-11-12: on the Quest the prompt took the player out of
- * VR). Without an approved mic, or with no speech service, the mic is a demo: the made-up words,
+ * VR). Without a connected (approved) mic, the mic is a demo: the made-up words,
  * and DEMO under it.
  */
 
@@ -32,7 +35,7 @@ export const tune = {
 };
 
 type Phase = 'idle' | 'opening' | 'listening' | 'finishing' | 'done';
-type Engine = 'pending' | 'scribe' | 'browser' | 'mock';
+type Engine = 'pending' | 'scribe' | 'browser' | 'voice' | 'mock';
 type Permission = 'unknown' | 'granted' | 'denied' | 'unavailable';
 
 const RATE = 16000;
@@ -198,12 +201,13 @@ function createDictate() {
 
   /** A token and a socket to Scribe (null if there is no Scribe here). */
   async function connect(): Promise<WebSocket | null> {
-    if (d.scribe === false) return null;
+    // (tried even if the last check said no: that check may have been a server still starting)
     let token = '';
     try {
       const reply = await fetch('/api/scribe-token', { cache: 'no-store' });
-      if (!reply.ok) { if (reply.status !== 501) d.trouble = `token: ${reply.status}`; return null; }
+      if (!reply.ok) { if (reply.status !== 501) d.trouble = `token: ${reply.status}`; d.scribe = false; return null; }
       token = ((await reply.json()) as { token?: string }).token ?? '';
+      if (token) d.scribe = true;
     } catch { return null; }
     if (!token) return null;
     return new WebSocket(`wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&audio_format=pcm_${RATE}&commit_strategy=manual&token=${encodeURIComponent(token)}`);      // (no language_code: Scribe works it out)
@@ -265,12 +269,17 @@ function createDictate() {
     if (r) { r.onend = null; r.onresult = null; try { r.abort(); } catch { /* gone */ } }
   }
 
-  /** A real take can happen: the mic approved already (so nothing is asked in VR), and something to write the words. */
-  const possible = () => canMic && (d.permission === 'granted' || (d.permission === 'unknown' && remembered()) || !!stream) && (d.hasDevice || !!stream) && (d.scribe !== false || !!Speech);
+  /**
+   * A real take happens whenever the mic is connected: approved already (so nothing is asked in VR) and there. Whether
+   * anything can write the words down no longer decides it (2026-11-13: "ALWAYS use the real mic if the mic is connected").
+   */
+  const possible = () => canMic && (d.permission === 'granted' || (d.permission === 'unknown' && remembered()) || !!stream) && (d.hasDevice || !!stream);
   let testing: ReturnType<typeof setTimeout> | null = null;
   const extra = {
     /** Whether real words are on their way (not the mock), for the music to go softer. */
     get live() { return d.engine !== 'mock' && (d.phase === 'opening' || d.phase === 'listening' || d.phase === 'finishing'); },
+    /** The last take heard someone speak. */
+    get spoke() { return spoke; },
     /**
      * Never asked yet (2026-11-13: "make the mic always record the reply even in just play demo, so anyone can see it
      * work"): the home page asks on the first click there, and Start / Just Play ask before going in, never in VR.
@@ -322,7 +331,8 @@ function createDictate() {
         if (mine !== take) return;
         pending = []; outN = 0;
         if (browser(mine)) { d.engine = 'browser'; return; }
-        d.engine = 'mock'; d.phase = 'done';
+        // (nothing to write the words: still a real take, the mic heard and the bars moving, never the demo)
+        d.engine = 'voice'; d.trouble ||= 'no speech service: the voice is heard, its words are made up';
       })();
     },
     /** End the take now (the last words still come in). */
@@ -380,7 +390,7 @@ export function bindHomeMic() {
   if (!button || !wrap) return;
   let shown = '';
   function show() {
-    const p = dictate.permission, words = dictate.scribe ? 'ElevenLabs Scribe writes down what you say.' : dictate.hasBrowserSpeech ? 'This browser writes down what you say.' : 'No speech service here, so round two\'s mic is a demo.';
+    const p = dictate.permission, words = dictate.scribe ? 'ElevenLabs Scribe writes down what you say.' : dictate.hasBrowserSpeech ? 'This browser writes down what you say.' : 'Round two hears you; nothing here writes the words down yet.';
     const [label, tone, title] = p === 'unavailable' ? ['Mic needs https', 'off', 'The mic only works on a secure page (https).']
       : !dictate.hasDevice ? ['No mic found', 'off', 'No microphone is connected.']
       : p === 'denied' ? ['Mic blocked', 'off', 'The mic is blocked for this site: allow it in the browser\'s site settings, then come back. Until then round two\'s mic is a demo.']
@@ -409,7 +419,7 @@ export function bindSetupMic() {
   if (!button || !line) return;
   function show() {
     const p = dictate.permission, scribe = dictate.scribe;
-    const how = scribe ? 'Words by ElevenLabs Scribe.' : dictate.hasBrowserSpeech ? 'Words by this browser (no ElevenLabs key on the server).' : scribe === false ? 'No speech service here: replies stay the mock.' : '';
+    const how = scribe ? 'Words by ElevenLabs Scribe.' : dictate.hasBrowserSpeech ? 'Words by this browser (no ElevenLabs key on the server).' : scribe === false ? 'Nothing here writes the words down yet: your voice is heard, the words are made up.' : '';
     line!.className = 'mic-state ' + (p === 'granted' ? 'on' : p === 'unknown' ? '' : 'off');
     line!.textContent = p === 'granted' ? `Mic on. ${how}` : p === 'denied' ? 'Mic is blocked for this site: allow it in the browser\'s site settings.'
       : p === 'unavailable' ? 'The mic needs a secure page (https).' : !dictate.hasDevice ? 'No microphone is connected.' : `Mic not allowed yet: round two's mic is a demo until it is. ${how}`;

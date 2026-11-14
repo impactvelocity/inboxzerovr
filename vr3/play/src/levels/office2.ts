@@ -2,7 +2,6 @@ import * as THREE from 'three';
 import type { Vector3 } from 'three';
 import type { LetterTheme } from '../letters';
 import { createCrt, type Crt } from '../props/crt';
-import { createDeskThings } from '../props/desk';
 import type { StageContext, StageDef, StageProps } from './backdrop';
 import { officeCard } from './cards';
 import { officeFx, officeLetters, officeSound } from './office';
@@ -11,7 +10,7 @@ import type { FxStyle, LevelSound } from './types';
 
 /**
  * Keyboard Smash: the office, second version (asked for on 2026-11-11). What stands on the desk is real: a CRT
- * monitor, a stapler, paper (../props). Each email comes out of the monitor's screen and floats like the other
+ * monitor (../props; the stapler and paper went on 2026-11-13: "remove the paper and stapler models from desk"). Each email comes out of the monitor's screen and floats like the other
  * levels' (2026-11-12: "make the emails fly out of the monitor so they float like others but make it feel right").
  * Hitting the monitor itself still cracks and dents it, and when the last email of a round is gone it switches off.
  *
@@ -44,11 +43,65 @@ export const office2Tune = {
 /** The monitor, once the stage has made it: the letters come out of it (see `origin` below). */
 let crt: Crt | null = null;
 
+/**
+ * Papers knocked loose (2026-11-13: "add a few papers sometimes randomly when hitting email too"): now and then a cut
+ * email throws a few sheets of paper, which flutter down, turning over, and are gone in a few seconds.
+ */
+function createLoosePapers() {
+  const geometry = new THREE.BufferGeometry();      // (a sheet with a little bend in it, as the far ones are: backdrop.ts)
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute([-.105,-.148,0, .105,-.148,.012, 0,0,.03,  .105,-.148,.012, .105,.148,0, 0,0,.03,  .105,.148,0, -.105,.148,.012, 0,0,.03,  -.105,.148,.012, -.105,-.148,0, 0,0,.03], 3));
+  const material = new THREE.MeshBasicMaterial({ color: '#ffffff', side: THREE.DoubleSide, transparent: true });
+  const day = new THREE.Color('#ffffff'), night = new THREE.Color('#9fb4d8');
+  const papers = Array.from({ length: 12 }, () => {
+    const mesh = new THREE.Mesh(geometry, material); mesh.visible = false; mesh.name = 'Loose paper';
+    return { mesh, speed: new THREE.Vector3(), spin: new THREE.Vector3(), life: 0, seed: Math.random() * 6.283, size: 1 };
+  });
+  const group = new THREE.Group(); group.name = 'Papers knocked loose'; for (const p of papers) group.add(p.mesh);
+  const rand = (spread: number) => (Math.random() - 0.5) * 2 * spread;
+  let next = 0;
+  return {
+    group,
+    /** A cut there: sometimes (about half the time) two to four sheets burst out of it. */
+    burst(at: THREE.Vector3) {
+      if (Math.random() > 0.5) return;
+      for (let i = 0, n = 2 + Math.floor(Math.random() * 3); i < n; i++) {
+        const p = papers[next++ % papers.length];
+        p.mesh.visible = true; p.life = 2.6 + Math.random() * 1.6; p.size = 0.55 + Math.random() * 0.3;
+        p.mesh.position.copy(at).add(new THREE.Vector3(rand(0.12), rand(0.08), rand(0.05)));
+        p.mesh.rotation.set(rand(3), rand(3), rand(3));
+        p.speed.set(rand(1.6), 0.6 + Math.random() * 1.3, rand(0.8) - 0.3);
+        p.spin.set(rand(5), rand(5), rand(5));
+      }
+    },
+    update(dt: number, time: number, blend: number) {
+      material.color.copy(day).lerp(night, blend);
+      for (const p of papers) {
+        if (!p.mesh.visible) continue;
+        p.life -= dt;
+        // paper: the air holds it up, it drifts and rocks as it falls, and slows its turning
+        p.speed.y -= 2.6 * dt; p.speed.multiplyScalar(Math.exp(-1.6 * dt));
+        p.mesh.position.addScaledVector(p.speed, dt);
+        p.mesh.position.x += Math.sin(time * 3 + p.seed) * 0.25 * dt;
+        p.spin.multiplyScalar(Math.exp(-0.5 * dt));
+        p.mesh.rotation.x += p.spin.x * dt; p.mesh.rotation.y += p.spin.y * dt; p.mesh.rotation.z += (p.spin.z + Math.sin(time * 4 + p.seed) * 0.8) * dt;
+        p.mesh.scale.setScalar(p.size * Math.min(1, p.life / 0.6));
+        if (p.life <= 0) p.mesh.visible = false;
+      }
+    },
+    dispose() { geometry.dispose(); material.dispose(); },
+  };
+}
+
 function office2Props(context: StageContext): StageProps {
-  const group = new THREE.Group(); group.name = 'The office desk: monitor, stapler, paper';
-  const monitor = createCrt(context), desk = createDeskThings(context, { near: office2Tune.deskFront, far: office2Tune.deskBack, floor: office2Tune.deskDrop - 1.2, width: 2.1 });
+  const group = new THREE.Group(); group.name = 'The office desk: monitor';
+  const monitor = createCrt(context);
   crt = monitor;
-  group.add(monitor.group, desk.group);
+  if (import.meta.env.DEV) Object.assign(window, { __crt: monitor });      // (for checks in the console)
+  // on a monitor, the weapon key (X or Space) hits it too, when it is up behind the logo at the end
+  const onKey = (e: KeyboardEvent) => { if (!e.repeat && (e.key.toLowerCase() === 'x' || e.key === ' ') && !(e.target as HTMLElement).matches?.('input,select,button,summary,textarea')) monitor.hitByKey(); };
+  window.addEventListener('keydown', onKey);
+  const papers = createLoosePapers();
+  group.add(monitor.group, papers.group);
   const origin = new THREE.Vector3();
   let step = 1 / 72;
   // every email dealt with breaks the monitor a little more (crt.wear): how many of this round's it has counted
@@ -61,19 +114,19 @@ function office2Props(context: StageContext): StageProps {
       origin.set(c.seat.x, c.seat.y - office2Tune.deskDrop, c.seat.z);
       monitor.root.position.set(origin.x, origin.y, origin.z - office2Tune.monitorAhead);
       monitor.update(dt, c);
-      // the keyboard brought down on the monitor itself
-      if (monitor.contact(c.blade)) desk.hop(monitor.strike());
-      desk.update(dt, origin, c.blend, c.blade);
+      // the keyboard brought down on the monitor itself (up behind the logo at the end, it is hit from far off: crt.ts)
+      if (!monitor.flying() && monitor.contact(c.blade)) monitor.strike();
       context.lamp.value = monitor.glow();
+      papers.update(dt, c.time, c.blend);
     },
-    onLetter(kind) { if (kind === 'arrive') monitor.launch(); },
+    onLetter(kind, at) { if (kind === 'arrive') monitor.launch(); else if (kind === 'cut') papers.burst(at); },
     game(progress) {
       monitor.game(progress, step);
       if (progress.round !== wornRound || progress.marks.length < worn) { wornRound = progress.round; worn = 0; }
-      if (progress.phase === 'play') while (worn < progress.marks.length) { worn++; desk.hop(monitor.wear() * 0.6); }
+      if (progress.phase === 'play') while (worn < progress.marks.length) { worn++; monitor.wear(); }
       else worn = progress.marks.length;
     },
-    dispose() { monitor.dispose(); desk.dispose(); crt = null; },
+    dispose() { window.removeEventListener('keydown', onKey); monitor.dispose(); papers.dispose(); crt = null; },
   };
 }
 
@@ -177,16 +230,21 @@ export const office2Stage: StageDef = {
   ],
   // Haze lying over the hall's floor beyond the rails: hardly there by day, low and blue by night.
   fog: { cards: 5, from: 4.2, to: 11, width: 10, height: 1.0, colour: ['#e6e2f2', '#6f7fc8'], opacity: [0.03, 0.12] },
-  sheets: { count: 10, colour: ['#ffffff', '#9fb4d8'] },
+  // (more of them, on more of a wind, since 2026-11-13: "add a bit more flying paper and increase wind a bit"; it was 10 on the Breeze alone)
+  sheets: { count: 16, colour: ['#ffffff', '#9fb4d8'], wind: 0.3 },
   // the real lights' fill is the monitor's screen: it follows what the screen is doing
   flicker: () => (crt ? crt.glow() : 0),
 };
 
 const launchTurn = new THREE.Quaternion(), outward = new THREE.Vector3();
 export const office2Letters: LetterTheme = {
-  // (special: urgent, alarm red to amber)
-  special: { colours: ['#ff3b30', '#ffb020'], label: 'URGENT' },
   ...officeLetters, id: 'office2', paint: officeCard, shape: paneSoup, title: 'Keyboard Smash',
+  // (special: urgent, its badge alarm red to amber; its glow the green every email had until 2026-11-13,
+  //  "make normals no glow, and only green glow ( like normal glow now ) on special emails")
+  special: { colours: ['#ff3b30', '#ffb020'], label: 'URGENT', aura: ['#27c98e', '#a8ffe0'], wisps: 0.12, glow: 0.8 },
+  look: { ...officeLetters.look, aura: null, spell: undefined },
+  // smaller: they come out of the monitor, only a metre or so away (2026-11-13: "make emails smaller here since they are coming from a closer distance")
+  size: 0.72,
   // Out of the screen: it starts as the picture on the glass (the screen's size, turned as the screen is),
   // springs up out of it in an arc and settles just over the monitor, growing to full size as it comes.
   origin(head: Vector3, home: Vector3, from: Vector3, via: Vector3) {
@@ -197,8 +255,10 @@ export const office2Letters: LetterTheme = {
     via.lerpVectors(from, home, 0.45); via.y += office2Tune.arc;
     return { scale: size, pose: 'face' as const, turn: launchTurn, seconds: office2Tune.seconds, ease: office2Tune.ease };
   },
-  // after a round's last email: INBOX ZERO on the screen, the screen closing, and a moment of it dark
+  // after round one's last email: INBOX ZERO on the screen for a moment before round two
   pause: 3.4,
+  // after the game's last: the end at once, so the logo comes as the monitor jumps up (2026-11-13: "make the logo show at the same time as the monitor jump")
+  endPause: 0, logoAfter: 0,
   // the round's intro card would be inside the monitor: it floats just in front of and over it instead, smaller
   // (as wide to the eye as it is in the other levels, and clear of the progress bar above)
   intro: { up: 0.2, nearer: 0.65, size: 0.5 },

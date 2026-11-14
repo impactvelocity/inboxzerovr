@@ -61,8 +61,8 @@ html,body{margin:0;background:#06050a}
    <!-- (2026-11-13: "grab To read above the animation, then Throw To Keep under it, same with the right side") -->
     <div id="hand-guide" class="hand-guide">
     <canvas aria-hidden="true"></canvas>
-    <div class="hand-card pixbox" data-hand="left"><span class="px-words" data-step="left:0">Grab to read</span><div class="hand-view"></div><span class="px-words" data-step="left:2">Throw to keep</span></div>
-    <div class="hand-card pixbox" data-hand="right"><span class="px-words" data-step="right:0">Grip to arm</span><div class="hand-view"></div><span class="px-words" data-step="right:1">Slash to clear</span></div>
+    <div class="hand-card pixbox" data-hand="left" role="button" tabindex="0" aria-pressed="false"><span class="px-words" data-step="left:0">Grab to read</span><div class="hand-view"></div><span class="px-words" data-step="left:2">Throw to keep</span></div>
+    <div class="hand-card pixbox" data-hand="right" role="button" tabindex="0" aria-pressed="false"><span class="px-words" data-step="right:0">Grip to arm</span><div class="hand-view"></div><span class="px-words" data-step="right:1">Slash to clear</span></div>
    </div>
    <p class="guide-lede">One email at a time: <b>keep</b> it for round two, or <b>slash</b> it to archive</p>
   </div>
@@ -71,8 +71,8 @@ html,body{margin:0;background:#06050a}
         "then under say throw or cut to leave unread for tomorrow": src/replyguide.ts) -->
    <div id="reply-guide" class="hand-guide">
     <canvas aria-hidden="true"></canvas>
-    <div class="hand-card pixbox" data-hand="left"><span class="px-words" data-step="left:0">Move to choose</span><div class="hand-view"></div><span class="px-words" data-step="left:1">Hold to send</span></div>
-    <div class="hand-card pixbox" data-hand="right"><span class="px-words" data-step="right:0">Bring to mic</span><div class="hand-view"></div><span class="px-words" data-step="right:1">Say your reply</span></div>
+    <div class="hand-card pixbox" data-hand="left" role="button" tabindex="0" aria-pressed="false"><span class="px-words" data-step="left:0">Move to choose</span><div class="hand-view"></div><span class="px-words" data-step="left:1">Hold to send</span></div>
+    <div class="hand-card pixbox" data-hand="right" role="button" tabindex="0" aria-pressed="false"><span class="px-words" data-step="right:0">Bring to mic</span><div class="hand-view"></div><span class="px-words" data-step="right:1">Say your reply</span></div>
    </div>
    <p class="guide-lede"><b>Throw</b> or <b>cut</b> to leave it unread for tomorrow</p>
   </div>

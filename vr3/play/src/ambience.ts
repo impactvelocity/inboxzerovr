@@ -68,6 +68,8 @@ const drift = (t: number, seed: number) =>
 
 /** While the end song plays: the level's background at this share of its volume, and the game's sounds at this. */
 const END_BACKGROUND = 0.25, END_EFFECTS = 0.45;
+/** While round two records a reply: the level's background at this share of its volume (2026-11-13: "when recording, the background sound effects also should be less"). */
+const RECORD_BACKGROUND = 0.15;
 
 export class GardenSounds {
   private ctx: AudioContext | null = null;
@@ -237,6 +239,10 @@ export class GardenSounds {
    */
   private endSoft = 0;
   setEndSoft(amount: number) { this.endSoft = clamp01(amount); }
+  private recordSoft = 0;
+  /** Round two is recording a reply: 1 brings the background right down (RECORD_BACKGROUND), 0 not at all. */
+  setRecordSoft(amount: number) { this.recordSoft = clamp01(amount); }
+  private get recordShare() { return 1 - (1 - RECORD_BACKGROUND) * this.recordSoft; }
 
   /** The garden is heard while a VR session is showing. */
   setActive(active: boolean) {
@@ -365,8 +371,8 @@ export class GardenSounds {
       ears.setPosition(m[12], m[13], m[14]);
       ears.setOrientation(-m[8], -m[9], -m[10], m[4], m[5], m[6]);
     }
-    const backSoft = 1 - (1 - END_BACKGROUND) * this.endSoft, gameSoft = 1 - (1 - END_EFFECTS) * this.endSoft;
-    this.nature.gain.setTargetAtTime(this.active && this.enabled ? this.volume * backSoft : 0, now, this.active ? (this.endSoft > 0 ? 0.6 : 0.9) : 0.15);
+    const backSoft = (1 - (1 - END_BACKGROUND) * this.endSoft) * this.recordShare, gameSoft = 1 - (1 - END_EFFECTS) * this.endSoft;
+    this.nature.gain.setTargetAtTime(this.active && this.enabled ? this.volume * backSoft : 0, now, this.active ? (this.recordSoft > 0 ? 0.25 : this.endSoft > 0 ? 0.6 : 0.9) : 0.15);      // (quick to step back when recording starts)
     if (this.effects) this.effects.gain.setTargetAtTime(this.enabled ? this.effectsVolume * gameSoft : 0, now, this.endSoft > 0 ? 0.4 : 0.05);
 
     // The wind comes and goes on its own, and the leaves answer it a moment later.
@@ -398,7 +404,7 @@ export class GardenSounds {
         if ((set.next[i] -= dt) > 0) return;
         set.next[i] = o.every[0] + Math.random() * (o.every[1] - o.every[0]);
         const r = o.region, at = { x: r[0] + Math.random() * (r[1] - r[0]), y: 1.6 + r[2] + Math.random() * (r[3] - r[2]), z: r[4] + Math.random() * (r[5] - r[4]) };
-        this.play(o.name, 0.96 + Math.random() * 0.08, o.volume * this.volume / 0.7, at as Vector3);      // (background: as loud as the loops are, against the 0.7 they were set at)
+        this.play(o.name, 0.96 + Math.random() * 0.08, o.volume * this.volume / 0.7 * this.recordShare, at as Vector3);      // (background: as loud as the loops are, against the 0.7 they were set at)
       });
     }
   }

@@ -102,11 +102,11 @@ export const castleStage: StageDef = {
       // at the gallery's edge and another lying in the far hall, both drifting, so the mail coming out of it stands clear.
       vec3 haze=mix(vec3(.52,.46,.80),vec3(.30,.18,.62),blend);
       float hall=box(uv,vec2(.5,.47),vec2(.075,.10),.06);
-      col=mix(col,haze*(.8+.4*lum),hall*.07);
+      col=mix(col,haze*(.8+.4*lum),hall*.035);      // (halved 2026-11-13: less fog)
       float drift=softNoise(uv*vec2(60.,110.)+vec2(-time*.025,time*.006));
       float driftFar=softNoise(uv*vec2(80.,130.)+vec2(time*.012,0.));
       float mist=oval(uv,vec2(.5,.315),vec2(.13,.028))*(.05+.10*drift)+oval(uv,vec2(.5,.405),vec2(.10,.022))*(.10+.16*driftFar);
-      col=mix(col,haze,mist*(1.-.25*blend));      // (no thicker at night: 2026-11-12, "on night / round 2 reduce the fog even more")
+      col=mix(col,haze,mist*.5*(1.-.25*blend));      // (no thicker at night: 2026-11-12, "on night / round 2 reduce the fog even more"; half as thick again, 2026-11-13)
       // The door: lavender light through the gap between its leaves, brightest in the dark, flaring as a frame
       // comes out; it hangs in the air round the door and spills down the carpet at its foot.
       vec3 spirit=mix(vec3(.82,.72,1.),vec3(.72,.46,1.),blend);
@@ -138,19 +138,20 @@ export const castleStage: StageDef = {
   ],
   // Real mist, lying low in the far hall only (the gallery's floor stays clear), frames come out of it.
   // (faint, as asked on 2026-11-12: "tone down some of the fog / smoke ... so more of the background", and no thicker at night)
-  fog: { cards: 5, from: 5.5, to: 13, width: 6.5, height: 1.8, colour: ['#7a6ad0', '#7444d8'], opacity: [0.06, 0.04] },
+  // (thinner again on 2026-11-13, "reduce the fog atmosphere on this level": it was 5 cards at 0.06 and 0.04)
+  fog: { cards: 3, from: 6, to: 13, width: 6.5, height: 1.6, colour: ['#7a6ad0', '#7444d8'], opacity: [0.03, 0.02] },
   // the fill light from the candles breathes; slowly (it had an 11 Hz flutter in it until 2026-11-13)
   flicker: time => 1 + 0.12 * Math.sin(time * 1.3 + 0.6) + 0.06 * Math.sin(time * 2.3 + 1.9),
 };
 
 export const castleLetters: LetterTheme = {
   // (special: cursed, in ghost-light violet and witch-fire green)
-  special: { colours: ['#b06bff', '#6dffb0'], label: 'CURSED' },
+  // (its glow is softer than other levels': 2026-11-13, "make the glow around emails less, and no glow on non-special ones")
+  special: { colours: ['#b06bff', '#6dffb0'], label: 'CURSED', glow: 0.45 },
   id: 'castle', face: 'paint', paint: castleCard, shape: () => frameSoup(FRAME / W * 0.5), mechanic: 'cut', title: 'The Haunted Hall', accent: '#b79cff', bar: ['#8a4dff', '#2dffc8'],
   look: { sheet: '#f1dfb8', ink: '#34190f', back: '#3d2113', selfLit: 0.22, night: '#cdbfe8',
     hover: '#c9ffe9', cutWide: '#a98bff', cutHot: '#f4f0ff', mark: '#ffd978', flash: '#fff3cf', gold: '#ffe29a',
-    burn: '#7dffc8', burnStyle: 0, streak: ['#b79cff', '#ffffff'], thread: ['#9dffd6', '#f2fff9'], aura: ['#35ff96', '#9a5cff'],
-    spell: { wisps: 0.2, sparkles: 3, trail: false, glow: 0.1 } },      // (softer since 2026-11-12, "reduce the glow / magic effect on the edges": it was wisps 0.35, 6 sparkles, glow 0.22)
+    burn: '#7dffc8', burnStyle: 0, streak: ['#b79cff', '#ffffff'], thread: ['#9dffd6', '#f2fff9'], aura: null },      // (no glow round ordinary mail since 2026-11-13, "no glow on non-special ones"; it had aura ['#35ff96', '#9a5cff'] with spell { wisps 0.2, 3 sparkles, glow 0.1 })
   // Out of the far door: it starts as a speck in the lavender gap between its leaves and glides up the carpet at its
   // real size, rocking and drifting a little. (Until 2026-11-13 it came from the vanishing point of the long hall, 15 m.)
   origin(head: Vector3, home: Vector3, from: Vector3, via: Vector3) {

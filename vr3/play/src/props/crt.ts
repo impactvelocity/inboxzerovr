@@ -41,6 +41,15 @@ export const crtTune = {
   hitSpeed: 1.4,                 // m/s the keyboard must be going for touching the monitor to count as a blow
   launchKick: 1.3,               // how far an email leaving the screen rocks it back
   zeroSeconds: 1.0,              // INBOX ZERO stays up this long before it switches off
+  // At night the beige goes down to this (2026-11-13: "the day version feels good, but night time less fitting"): the
+  // case dimmer and warmer, like the desk under the lamps, and the daylight it reflected mostly gone.
+  nightTint: '#d9b493', nightReflect: 0.14,
+  // The end of a game (2026-11-13: "when round over, throw the monitor up in the air behind logo and allow the user to
+  // smash / cut it up ( take a few attempts )"): it is flung up off the desk to hang behind the logo, and comes apart
+  // on the last of these hits. Where it hangs is from the seated eye: right, up, ahead (the logo is 0.95 m ahead).
+  // (closer since 2026-11-13, "move monitor closer and allow hits from a far": it hung 1.75 m out, and a swing had to pass within 0.3 m of it)
+  flyHits: 5, flyAt: [0.05, 0.27, -1.1] as P3,      // (1.1 m out since 2026-11-13, "move monitor closer on end": just behind the logo at 0.95)
+  flySeconds: 1.25, flyReach: 3.5, flySpeed: 1.0, flyNear: 0.38, flyWiden: 0.4,
 };
 
 const rect8 = (w: number, h: number, c: number, cy: number, z: number): P3[] => [
@@ -274,6 +283,17 @@ export function createCrt(context: StageContext) {
   let clock = 0, hits = 0, damage = 0, glitch = 0, flash = 0, on = false, collapse = 1, warm = 0, zero = 0, drawn = '', smokeDue = 0, crackle = 2, nextCrack = 0;
   let phase: RoundProgress['phase'] = 'ready', round = 1, blade: BladeTracker | undefined, cooling = 0;
   const v1 = new THREE.Vector3(), v2 = new THREE.Vector3(), v3 = new THREE.Vector3(), m1 = new THREE.Matrix4(), tint = new THREE.Color();
+  const DAY_TINT = new THREE.Color('#ffffff'), nightTint = new THREE.Color(crtTune.nightTint);
+  // ---- the end: flung up behind the logo, to be smashed apart
+  const flight = { on: false, t: 0, hp: 0, gone: false, from: new THREE.Vector3(), at: new THREE.Vector3(), knock: new THREE.Vector3(), knockSpeed: new THREE.Vector3(),
+    turn: new THREE.Euler(), spin: new THREE.Vector3(), cool: 0, seat: new THREE.Vector3() };
+  const chunkMaterial = new THREE.MeshStandardMaterial({ color: '#e9c8a2', flatShading: true, roughness: 0.82, metalness: 0, envMap: environment.texture, envMapIntensity: 0.3 });
+  const chunks = Array.from({ length: 14 }, (_, i) => {
+    const w = 0.05 + Math.random() * 0.11, h = 0.04 + Math.random() * 0.09, d = 0.015 + Math.random() * 0.04;
+    const mesh = new THREE.Mesh(i < 3 ? new THREE.BoxGeometry(w * 0.9, h * 0.7, 0.008) : new THREE.BoxGeometry(w, h, d), i < 3 ? new THREE.MeshBasicMaterial({ color: '#17312a' }) : chunkMaterial);
+    mesh.name = 'Monitor chunk'; mesh.visible = false; group.add(mesh);
+    return { mesh, speed: new THREE.Vector3(), spin: new THREE.Vector3(), life: 0 };
+  });
   const rand = (spread: number) => (Math.random() - 0.5) * 2 * spread;
   const world = (x: number, y: number, z: number, out: THREE.Vector3) => out.set(x, y, z).applyMatrix4(head.matrixWorld);
 
@@ -287,7 +307,7 @@ export function createCrt(context: StageContext) {
     on = next;
     head.updateWorldMatrix(true, false);
     const at = world(0, SY, FRONT, v1);
-    context.play(next ? 'crton' : 'crtoff', 0.97 + Math.random() * 0.06, 0.7, at);
+    if (next) context.play('crton', 0.97 + Math.random() * 0.06, 0.7, at);      // (no sound going off: "the round 2 stinger is already enough", 2026-11-13)
     if (next) warm = 0;
     else if (damage > 0.25) {
       // a battered one goes out with a bang
@@ -298,9 +318,71 @@ export function createCrt(context: StageContext) {
   /** A new day, a new monitor. */
   function repair() {
     hits = 0; damage = 0; nextCrack = 0; glitch = 0;
+    land();
     for (const crack of gu.cracks.value as THREE.Vector4[]) crack.set(0, 0, 0, 0);
     (points.array as Float32Array).set(newPoints); (colours.array as Float32Array).set(newColours); points.needsUpdate = true; colours.needsUpdate = true;
     swing.rest.set(0, 0, 0);
+  }
+
+  /** Back on the desk, whole and still (a new game). */
+  function land() {
+    flight.on = false; flight.gone = false; flight.t = 0; root.visible = true; root.quaternion.identity(); shadow.visible = true;
+    for (const chunk of chunks) chunk.mesh.visible = false;
+  }
+  /** The end of a game: up off the desk, tumbling, to hang behind the logo. */
+  function fly() {
+    if (flight.on) return;
+    flight.on = true; flight.gone = false; flight.t = 0; flight.hp = crtTune.flyHits; flight.cool = 0;
+    flight.from.copy(root.position); flight.knock.set(0, 0, 0); flight.knockSpeed.set(0, 0, 0);
+    flight.spin.set(2.2 + Math.random(), rand(2.5), rand(1.5)); flight.turn.set(0, 0, 0);
+    shadow.visible = false;
+    power(true); show('zero', 0, 0, 0);
+    head.updateWorldMatrix(true, false);
+    const at = world(0, SY, FRONT, v1);
+    context.play('zap', 0.8, 0.4, at); context.play('glass', 0.6, 0.3, at);      // (not 'arm': that is the keyboard made ready, a PC switching on since 2026-11-13)
+    for (let i = 0; i < 16; i++) smoke.emit(v2.copy(root.position).add(v3.set(rand(0.2), 0.02, rand(0.15))), v3.set(rand(0.3), 0.2 + Math.random() * 0.3, rand(0.3)), 1 + Math.random(), 0.6 + Math.random() * 0.5);
+  }
+  /** Is a swing reaching it where it hangs (from far off, as the logo is: the weapon's line goes on past its tip)? */
+  function reached(b?: BladeTracker) {
+    if (!b?.moving || b.speed < crtTune.flySpeed || flight.cool > 0) return false;
+    head.updateWorldMatrix(true, false);
+    const centre = world(0, BH / 2, FRONT - DEPTH / 2, v1), dir = v2.subVectors(b.tip, b.base); const length = dir.length(); if (length < 1e-4) return false; dir.divideScalar(length);
+    const along = Math.max(0, Math.min(length + crtTune.flyReach, v3.subVectors(centre, b.base).dot(dir)));
+    const near = v3.copy(b.base).addScaledVector(dir, along);
+    const beyond = Math.max(0, along - length);
+    return near.distanceTo(centre) < crtTune.flyNear + crtTune.flyWiden * beyond;      // (wider the further out: as the logo's reach)
+  }
+  /** A hit where it hangs: it cracks and dents as on the desk, is knocked back and spun; the last one breaks it apart. */
+  function smack(velocity: THREE.Vector3, byBlade = true) {
+    flight.cool = 0.45; flight.hp--;
+    const strength = strike(byBlade, 0.8);
+    flight.knockSpeed.addScaledVector(v1.copy(velocity).clampLength(0, 6), 0.12 + 0.08 * strength);
+    flight.spin.add(v2.set(rand(3) + velocity.y * 0.6, rand(3) + velocity.x * 0.8, rand(2)));
+    flash = 1; glitch = 1;
+    if (flight.hp <= 0) burst(velocity);
+  }
+  /** On a monitor (no controller): the weapon key hits it where it hangs, as it cuts the logo. */
+  function hitByKey() {
+    if (!flight.on || flight.gone || flight.t < crtTune.flySeconds * 0.6 || flight.cool > 0) return;
+    smack(v1.set(rand(4), rand(2), -2), false);
+  }
+  /** The last hit: it comes apart, plastic and glass and sparks and smoke everywhere. */
+  function burst(velocity: THREE.Vector3) {
+    const push = new THREE.Vector3().copy(velocity).clampLength(0, 5).multiplyScalar(0.35);
+    head.updateWorldMatrix(true, false);
+    const centre = world(0, BH / 2, FRONT - DEPTH / 2, v1).clone();
+    flight.gone = true; root.visible = false; power(false);
+    for (const chunk of chunks) {
+      chunk.mesh.visible = true; chunk.life = 2.6 + Math.random() * 1.2;
+      chunk.mesh.position.copy(centre).add(v3.set(rand(0.2), rand(0.18), rand(0.18)));
+      chunk.mesh.quaternion.setFromEuler(new THREE.Euler(rand(3), rand(3), rand(3)));
+      chunk.speed.set(rand(2.4), 0.8 + Math.random() * 2.2, rand(2.4)).add(push);
+      chunk.spin.set(rand(14), rand(14), rand(14));
+    }
+    for (let i = 0; i < 70; i++) sparks.emit(centre, v3.set(rand(3.2), rand(2.4) + 1, rand(3.2)), 0.3 + Math.random() * 0.6, 0.8 + Math.random() * 1.2);
+    for (let i = 0; i < 40; i++) shards.emit(centre, v3.set(rand(2.6), rand(2) + 1, rand(2.6)), 0.7 + Math.random() * 0.8, 0.8 + Math.random());
+    for (let i = 0; i < 22; i++) smoke.emit(centre, v3.set(rand(0.6), 0.2 + Math.random() * 0.5, rand(0.6)), 1.8 + Math.random() * 1.2, 1 + Math.random() * 0.8);
+    context.play('glass', 0.7, 0.9, centre); context.play('zap', 0.6, 0.6, centre); context.play('crtoff', 0.8, 0.6, centre);
   }
 
   /**
@@ -391,8 +473,36 @@ export function createCrt(context: StageContext) {
     return false;
   }
 
-  function update(dt: number, c: { blend: number; pixelRatio: number; blade?: BladeTracker }) {
+  function update(dt: number, c: { blend: number; pixelRatio: number; blade?: BladeTracker; seat?: THREE.Vector3 }) {
     clock += dt; blade = c.blade; cooling = Math.max(0, cooling - dt);
+    if (flight.on) {
+      flight.t += dt; flight.cool = Math.max(0, flight.cool - dt);
+      if (c.seat) flight.seat.copy(c.seat);
+      const [ax, ay, az] = crtTune.flyAt;
+      flight.at.set(flight.seat.x * 0.7 + ax, flight.seat.y + ay - BH / 2 - PIVOT, flight.seat.z + az);
+      // up off the desk in an arc, tumbling, slowing as it comes to hang there
+      const k = Math.min(1, flight.t / crtTune.flySeconds), e = 1 - Math.pow(1 - k, 3);
+      root.position.lerpVectors(flight.from, flight.at, e); root.position.y += Math.sin(Math.PI * Math.min(1, k * 1.1)) * 0.55;
+      // knocked by the hits, springing back to where it hangs; it bobs
+      flight.knockSpeed.addScaledVector(flight.knock, -38 * dt).multiplyScalar(Math.exp(-4 * dt));
+      flight.knock.addScaledVector(flight.knockSpeed, dt).clampLength(0, 0.45);
+      root.position.add(flight.knock); root.position.y += Math.sin(clock * 1.7) * 0.025 * k;
+      // it turns over and over at first, then slowly, facing the player more and more; a hit sets it spinning again
+      flight.spin.multiplyScalar(Math.exp(-(0.6 + 1.6 * k) * dt));
+      flight.turn.x += flight.spin.x * dt; flight.turn.y += flight.spin.y * dt; flight.turn.z += flight.spin.z * dt;
+      const settle = Math.exp(-2.2 * k * dt * 4);
+      flight.turn.x *= settle; flight.turn.y = flight.turn.y * settle + Math.sin(clock * 0.8) * 0.004; flight.turn.z *= settle;
+      root.quaternion.setFromEuler(flight.turn);
+      if (!flight.gone && k > 0.6 && c.blade && reached(c.blade)) smack(c.blade.velocity);
+    }
+    for (const chunk of chunks) {
+      if (!chunk.mesh.visible) continue;
+      chunk.life -= dt; chunk.speed.y -= 6.5 * dt; chunk.speed.multiplyScalar(Math.exp(-0.4 * dt));
+      chunk.mesh.position.addScaledVector(chunk.speed, dt);
+      chunk.mesh.quaternion.multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(chunk.spin.x * dt, chunk.spin.y * dt, chunk.spin.z * dt)));
+      const s = Math.min(1, chunk.life / 0.5); chunk.mesh.scale.setScalar(Math.max(0.001, s));
+      if (chunk.life <= 0) chunk.mesh.visible = false;
+    }
     // the head on its stand: a spring back to where it has been left, and a shove back along the desk
     const s = swing;
     s.speed.addScaledVector(v1.copy(s.angle), -crtTune.spring * dt).multiplyScalar(Math.exp(-crtTune.damping * dt));
@@ -413,6 +523,9 @@ export function createCrt(context: StageContext) {
     tint.set(!lit ? '#3a3a30' : damage < 0.45 ? '#7dff5a' : damage < 0.8 ? '#ffb23a' : Math.sin(clock * 14) > 0 ? '#ff4630' : '#5a1810');
     lightMaterial.color.copy(tint);
     shadowMaterial.opacity = 0.42 - 0.14 * c.blend;
+    // the case by night: dimmer and warmer, the day's reflections gone (the day stays exactly as it was)
+    plastic.color.lerpColors(DAY_TINT, nightTint, c.blend);
+    plastic.envMapIntensity = 0.3 + (crtTune.nightReflect - 0.3) * c.blend;
     // smoke out of the vents once it is hurt, and now and then a crackle by itself
     head.updateWorldMatrix(true, false);
     if (damage > 0.35 && (smokeDue -= dt) < 0) {
@@ -432,20 +545,28 @@ export function createCrt(context: StageContext) {
   function game(p: RoundProgress, dt: number) {
     const fresh = p.phase !== phase; phase = p.phase; round = p.round;
     const left = Math.max(0, p.total - p.marks.length);
-    if (p.phase === 'ready' || p.phase === 'summary') { power(false); zero = 0; return; }
+    if (p.phase === 'summary') { if (fresh) fly(); zero = 0; return; }      // (the end: up it goes, behind the logo)
+    if (p.phase === 'ready') { if (fresh && (flight.on || hits > 0)) repair(); power(false); zero = 0; return; }
     if (p.phase === 'intro') {
       if (fresh && p.round === 1) repair();
       show('boot', p.total, p.total, p.beat); power(true); zero = 0;
     } else if (left > 0 || p.total === 0) { show('inbox', p.total, left, 0); power(true); zero = 0; }
-    else {
-      // the last one is gone: it says so, and then it goes out
+    else if (round === 2 || !p.marks.includes('kept')) {
+      // the game's last one is gone (round two's, or round one's with nothing kept for a second): up it goes at once,
+      // not after the pause before the end (2026-11-13: "make jump sooner, right at end")
+      fly(); zero = 0;
+    } else {
+      // round one's last one is gone: it says so, and stays on through to round two (2026-11-13: "dont turn off the
+      // monitor screen during round 2 transition"; it used to switch itself off)
       if (zero === 0) show('zero', p.total, 0, 0);
-      if ((zero += dt) > crtTune.zeroSeconds) power(false);
+      zero += dt; power(true);
     }
   }
 
   return {
-    group, root, update, game, strike, wear, launch, contact,
+    group, root, update, game, strike, wear, launch, contact, fly, hitByKey,
+    /** Up behind the logo (the end of a game), and not on the desk. */
+    flying: () => flight.on,
     /** Where the picture on the screen is (world space) and which way it faces; returns its size (a letter is 1). */
     pose(position: THREE.Vector3, quaternion: THREE.Quaternion) {
       head.updateWorldMatrix(true, false);
@@ -455,8 +576,8 @@ export function createCrt(context: StageContext) {
     /** How much light the screen is giving just now, 0 to about 1.5. */
     glow: () => (0.25 + 0.75 * warm * warm) * (1 - Math.min(1, collapse * 1.4)) * (1 - 0.5 * Math.min(1, glitch)) + flash,
     damage: () => damage,
-    diagnostics: () => ({ on, collapse: +collapse.toFixed(2), hits, damage: +damage.toFixed(2), screen: drawn }),
-    dispose() { shapes.head.dispose(); shapes.stand.dispose(); plastic.dispose(); environment.dispose(); glassGeometry.dispose(); glass.dispose(); faceGeometry.dispose(); face.dispose(); ui.dispose(); light.geometry.dispose(); lightMaterial.dispose(); shadow.geometry.dispose(); shadowMaterial.dispose(); blotMap.dispose(); sparks.dispose(); shards.dispose(); smoke.dispose(); },
+    diagnostics: () => ({ on, collapse: +collapse.toFixed(2), hits, damage: +damage.toFixed(2), screen: drawn, flying: flight.on, hp: flight.hp, gone: flight.gone }),
+    dispose() { shapes.head.dispose(); shapes.stand.dispose(); plastic.dispose(); environment.dispose(); glassGeometry.dispose(); glass.dispose(); faceGeometry.dispose(); face.dispose(); ui.dispose(); light.geometry.dispose(); lightMaterial.dispose(); shadow.geometry.dispose(); shadowMaterial.dispose(); blotMap.dispose(); sparks.dispose(); shards.dispose(); smoke.dispose(); chunkMaterial.dispose(); for (const chunk of chunks) { chunk.mesh.geometry.dispose(); if (chunk.mesh.material !== chunkMaterial) (chunk.mesh.material as THREE.Material).dispose(); } },
   };
 }
 export type Crt = ReturnType<typeof createCrt>;
