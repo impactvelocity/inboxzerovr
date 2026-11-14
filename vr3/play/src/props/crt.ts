@@ -50,8 +50,8 @@ export const crtTune = {
   // on the last of these hits. Where it hangs is from the seated eye: right, up, ahead (the logo is 0.95 m ahead).
   // (closer since 2026-11-13, "move monitor closer and allow hits from a far": it hung 1.75 m out, and a swing had to pass within 0.3 m of it)
   // (centred in front at eye level since 2026-11-13, "make the monitor jump out at end center": the logo goes above it, office2.ts)
-  // (9 hits since 2026-11-14, "make monitor at end, take more maybe 4 more hits": it was 5)
-  flyHits: 9, flyAt: [0, -0.04, -1.1] as P3,      // (1.1 m out since 2026-11-13, "move monitor closer on end": just behind the logo at 0.95)
+  // (9 hits since 2026-11-14, "make monitor at end, take more maybe 4 more hits": it was 5; then 12, "take a few more hites mybe 3 more")
+  flyHits: 12, flyAt: [0, -0.04, -1.1] as P3,      // (1.1 m out since 2026-11-13, "move monitor closer on end": just behind the logo at 0.95)
   flySeconds: 1.25, flyReach: 3.5, flySpeed: 1.0, flyNear: 0.38, flyWiden: 0.4,
 };
 

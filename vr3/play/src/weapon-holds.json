@@ -136,5 +136,15 @@
       "up": 3,
       "forward": -1.1
     }
+  ],
+  "space": [
+    {
+      "tipForward": 5,
+      "tipRight": 9,
+      "spin": 0,
+      "right": 1,
+      "up": -9,
+      "forward": 3
+    }
   ]
 }

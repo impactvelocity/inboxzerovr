@@ -172,8 +172,9 @@ export const castleSound: LevelSound = {
     { name: 'ghosts', at: null, level: c => (0.12 + 0.43 * c.blend) * (0.35 + 0.65 * c.drift(c.t * 0.18, 6.4)) },
   ],
   occasional: [{ name: 'creak', every: [26, 60], volume: 0.5, region: [-2.5, 2.5, 0, 1, -11, -8] }],
-  // The user's power-up sound, while the trigger is held: in from nothing to full quickly, held, and out (asked for on 2026-11-11).
-  hum: { level: 0.45, swing: false, fadeIn: 0.15, fadeOut: 0.25 },        // (was 1: the user asked for it subtler)
+  // (no held hum since 2026-11-14: "just make the the knife active sound, drop the sustained sound"; it was
+  // { level: 0.45, swing: false, fadeIn: 0.15, fadeOut: 0.25 }, castle/hum.mp3. The knife's arm sound stays.)
+  hum: null,
   // (The user's organ note played on every cut for a while, wandering a minor scale; taken out at their asking the same day.
   // To bring it back: cutNote: { name: 'organ', scale: [-2, 0, 2, 3, 5, 7, 8, 10, 12, 14, 15], volume: 0.8 }.)
   // The first round over: witches laugh (the user's sounds, asked for on 2026-11-11). A door slammed far down the

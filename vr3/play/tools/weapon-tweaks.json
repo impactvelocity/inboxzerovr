@@ -8,12 +8,12 @@
     "forward": 0
   },
   "space": {
-    "tipForward": 5,
-    "tipRight": 9,
+    "tipForward": 0,
+    "tipRight": 0,
     "spin": 0,
-    "right": 1,
-    "up": -9,
-    "forward": 3
+    "right": 0,
+    "up": 0,
+    "forward": 0
   },
   "castle": {
     "tipForward": 0,

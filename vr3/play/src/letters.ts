@@ -893,8 +893,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   const SMASHED_TO_HOME = 2.5;  // seconds after the logo is smashed before the game fades out to the home screen (2026-11-12)
   // hits it takes: the last of them breaks it up. A boss to beat (2026-11-12: "many more cuts to beat, more like a boss
   // battle"): 12 for the logo and 8 for the bar and the line, then "make less hits for ending": 7 and 5, then "a bit less hits": 5 and 4. They were 4 and 3.
-  // (the logo 8 since 2026-11-14: "make the logo at end take a few more hits maybe 3 more")
-  const LOGO_HITS = 8;
+  // (the logo 8 since 2026-11-14: "make the logo at end take a few more hits maybe 3 more"; then 6, "make end logo need 2 less hits")
+  const LOGO_HITS = 6;
   const STRIP_HITS = 4;         // (the progress bar and the line under the logo, the same way: 2026-11-12, "also need a few cuts to be done, so its more fun")
   /** Each hit before the last chips off this much of what is left, so a third of it is left for the last: smaller chips the more hits it takes. */
   const chipFor = (hits: number) => 1 - Math.pow(0.35, 1 / Math.max(1, hits - 1));
