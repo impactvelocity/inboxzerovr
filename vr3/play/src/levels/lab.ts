@@ -150,6 +150,8 @@ export const labFx: FxStyle = { bit: 'drop', bits: ['#8dff6a', '#5dff9a'], mix: 
 
 export const labSound: LevelSound = {
   id: 'lab',
+  // round two begins with the user's own sting (2026-11-13; tools/level-src/lab/lab-stinger.mp3, set to -3 dBFS)
+  roundStinger: { name: 'stinger2', volume: 0.9 },
   layers: [
     { name: 'vent', at: null, level: () => 0.8 },
     { name: 'bubbles', at: [-2.8, 0, -1.1], level: c => 0.4 + 0.25 * c.drift(c.t * 0.25, 2.9) },

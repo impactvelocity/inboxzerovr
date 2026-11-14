@@ -73,9 +73,10 @@ export const LEVELS: Level[] = [
     accent: '#8dff6a', ground: '#0c1f2a',
     phases: ['Lights on', 'Lockdown', 'Blackout'], ends: ['LIGHTS ON', 'BLACKOUT'], letters: labLetters, fx: labFx, sound: labSound, music: 'audio/lab/music.m4a', anthem: 'audio/lab/anthem.m4a', stinger: 'audio/stingers/lab.m4a', stage: labStage, held: buildSprayer },
   // Super Space (asked for on 2026-11-12): a flight through pixel-art space, the mail incoming transmissions, the weapon a saber. Its music is the user's to add (its sting is theirs: 2026-11-12).
+  // (Its song is the user's "Galactic Run", 2026-11-13: tools/level-src/space/music-source.m4a, at the other songs' -20 LUFS.)
   // (Its cards are the user's own art since 2026-11-13, "super space level select images": the bridge, day and night. Before, a piece cut from the side of the painting: tools/level-src/space/*-before-2026-11-13.webp.)
   { id: 'space', number: '05', name: 'Super Space', weapon: 'Saber', line: 'Incoming transmissions', art: spaceStage.art, card: ['levels/space/card-start.webp', 'levels/space/card-end.webp'], accent: '#35e8ff', ground: '#0a0820',
-    phases: ['Cruising', 'The jump', 'Deep space'], ends: ['CRUISING', 'DEEP SPACE'], letters: spaceLetters, fx: spaceFx, sound: spaceSound, music: null, stinger: 'audio/stingers/space.m4a', stage: spaceStage, held: buildSaber },
+    phases: ['Cruising', 'The jump', 'Deep space'], ends: ['CRUISING', 'DEEP SPACE'], letters: spaceLetters, fx: spaceFx, sound: spaceSound, music: 'audio/space/music.m4a', stinger: 'audio/stingers/space.m4a', stage: spaceStage, held: buildSaber },
   // Inferno (asked for on 2026-11-12): the furnace hall, the mail down a chute, the weapon a flame thrower. Its music is the user's to add (its sting is theirs: 2026-11-12).
   { id: 'inferno', number: '06', name: 'Inferno', weapon: 'Flame thrower', line: 'Burn after reading', art: infernoStage.art, card: ['levels/inferno/card-start.webp', 'levels/inferno/card-end.webp'],      // (the user's card art, 2026-11-12)
     accent: '#ff8a3d', ground: '#1a0f12',

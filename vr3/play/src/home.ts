@@ -360,11 +360,47 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
   // How to Play: a card over the home screen. (Setup, with Allow mic and Adjust weapon, was here too
   // until 2026-11-13: setting up moves to the main site. The mic button top left and the gear still do both.)
   const guide = document.getElementById('guide') as HTMLDialogElement;
+  guide.querySelectorAll<HTMLElement>('.px-words').forEach(pixelWords);      // (its tabs, the hands' words and Reply's steps: 2026-11-13, "use the pixel font")
   for (const dialog of [guide]) {
     dialog.querySelectorAll('.close-dialog').forEach(button => button.addEventListener('click', () => dialog.close()));
     dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });        // (a click outside the card)
   }
-  document.getElementById('open-guide')!.addEventListener('click', () => guide.showModal());
+  // Its hands (src/handguide.ts for Round One, src/replyguide.ts for Round Two, 2026-11-13) are built the first time
+  // their tab shows, and move only while it does. If they cannot be fetched the tab is its words alone.
+  type Guide = import('./handguide').HandGuide;
+  const handHost = document.getElementById('hand-guide')!, replyHost = document.getElementById('reply-guide')!;
+  let hands: Promise<Guide | null> | undefined, replies: Promise<Guide | null> | undefined;
+  const run = (made: Promise<Guide | null>, host: HTMLElement, on: boolean) =>
+    void made.then(guideMade => { if (!guideMade) return; if (on && guide.open) { guideMade.accent(getComputedStyle(host).getPropertyValue('--accent')); guideMade.start(); } else guideMade.stop(); });
+  const play = (round: 'sort' | 'reply') => {
+    if (round === 'sort') hands ??= import('./handguide').then(m => m.createHandGuide(handHost)).catch(() => { handHost.classList.add('failed'); return null; });
+    else replies ??= import('./replyguide').then(m => m.createReplyGuide(replyHost)).catch(() => { replyHost.classList.add('failed'); return null; });
+    if (hands) run(hands, handHost, round === 'sort');
+    if (replies) run(replies, replyHost, round === 'reply');
+  };
+  document.getElementById('open-guide')!.addEventListener('click', () => {
+    guide.showModal(); guide.focus();      // (the card takes the focus, so no tab wears a focus ring on opening)
+    play('sort');
+  });
+  guide.addEventListener('close', () => { void hands?.then(made => made?.stop()); void replies?.then(made => made?.stop()); });
+  // Its two tabs, Round One and Round Two (2026-11-13).
+  const tabs = Array.from(guide.querySelectorAll<HTMLButtonElement>('[role=tab]'));
+  const showTab = (chosen: HTMLButtonElement, focus = false) => {
+    for (const tab of tabs) {
+      const on = tab === chosen; tab.setAttribute('aria-selected', String(on)); tab.tabIndex = on ? 0 : -1;
+      document.getElementById(tab.getAttribute('aria-controls')!)!.hidden = !on;
+    }
+    if (focus) chosen.focus();
+    if (guide.open) play(chosen.id === 'tab-sort' ? 'sort' : 'reply');
+  };
+  tabs.forEach((tab, i) => {
+    tab.addEventListener('click', () => showTab(tab));
+    tab.addEventListener('keydown', event => {
+      const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+      if (step) { event.preventDefault(); showTab(tabs[(i + step + tabs.length) % tabs.length], true); }
+    });
+  });
+  guide.addEventListener('close', () => showTab(tabs[0]));      // (it opens on Round One next time)
 
   return {
     /** Mark a level's card as the chosen one, and show its logo. */
@@ -417,6 +453,21 @@ function drawName(canvas: HTMLCanvasElement, name: string, cell: number) {
  * A button's words in the game's pixel letters: a canvas at twice the size it is shown, `cell` CSS
  * pixels to a font pixel, with a one-pixel drop under it. The words stay the button's name for screen readers.
  */
+/**
+ * Words in the game's pixel letters that stay words: the text is kept for screen readers, and shown as a mask of
+ * the lit pixels (an SVG, so it stays sharp at any size) over the element's own colour, so CSS colours and lights it.
+ * Its size is --cell in CSS (px-words in style.css).
+ */
+export function pixelWords(element: HTMLElement) {
+  const text = (element.textContent ?? '').trim(), upper = text.toUpperCase(), across = PixelFont.widthCells(upper);
+  let path = '';
+  PixelFont.cells(upper, 0, 0, 1, (x, y) => { path += `M${x} ${y}h1v1h-1z`; });
+  const mask = `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${across} ${PixelFont.Rows}" shape-rendering="crispEdges"><path d="${path}"/></svg>`)}")`;
+  const said = document.createElement('span'); said.className = 'sr-only'; said.textContent = text;
+  const shown = document.createElement('span'); shown.className = 'px'; shown.setAttribute('aria-hidden', 'true'); shown.style.setProperty('--w', String(across));
+  shown.style.maskImage = mask; shown.style.setProperty('-webkit-mask-image', mask);
+  element.replaceChildren(said, shown);
+}
 export function pixelLabel(button: HTMLElement, text: string, cell: number, colour: string) {
   const upper = text.toUpperCase(), scale = 2, c = cell * scale, drop = Math.max(2, Math.round(c * 0.5));
   const canvas = document.createElement('canvas');

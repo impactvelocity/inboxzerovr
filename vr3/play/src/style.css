@@ -102,6 +102,54 @@ button.link:hover{background:none;opacity:1}
 .card-dialog p{margin:0}
 .card-dialog ol{margin:0;padding-left:20px;display:grid;gap:8px}
 .card-dialog b{color:#fff}
+/* How to Play (2026-11-13): two tabs, Round One · Sort and Round Two · Reply, at the top of the card. Under Sort, the
+   hands as two cards (src/handguide.ts draws both into the one canvas laid under them, and lights one card at a time). */
+.guide-card{width:min(94vw,620px);max-height:none;overflow:visible;padding:0;border:0;border-radius:0;background:none;box-shadow:none}      /* (the card is .guide-box inside; Close sits under it, outside the card) */
+.guide-box{padding:0 4px}      /* (no panel of its own: the tabs, cards and words float over the blurred page, 2026-11-13: "drop the modal background, border, etc so its more floating feeling") */
+.guide-close{display:flex;justify-content:center;margin-top:24px}
+#home .guide-close .pix{min-width:140px;padding:14px 26px 16px}
+/* the tabs: a segmented control in the pixel buttons' shape (#home .pix), the chosen round filled with the level's colour */
+#home .guide-tabs.pix{--s:3px;--edge:color-mix(in srgb,var(--accent,#f6b3cc) 45%,#2a2733);--face:#0f0d14;display:grid;grid-template-columns:1fr 1fr;place-items:stretch;gap:4px;width:100%;margin:6px 0 18px;padding:7px;cursor:default}
+#home .guide-tabs.pix:hover,#home .guide-tabs.pix:active{transform:none;filter:none}
+#home .guide-tabs.pix::before{box-shadow:inset 0 3px 0 0 #0000004d}
+.guide-tab{position:relative;display:grid;place-items:center;padding:11px 10px 13px;border:0;border-radius:0;background:none;color:#f3eef880;clip-path:inherit;transition:color .2s,background .2s}
+.guide-tab:hover{background:#ffffff0c;color:#f3eef8cc}
+.guide-tab[aria-selected=true]{background:var(--accent,#f6b3cc);color:#14121a;box-shadow:inset 0 -4px 0 0 #00000038,inset 0 3px 0 0 #ffffff70}
+.guide-tab[aria-selected=true] .px-words{--drop:#ffffff59}
+.guide-tab:focus-visible{outline:none;filter:brightness(1.25)}
+/* words in the game's pixel letters (home.ts pixelWords): a mask of the lit pixels over the text's own colour, --cell CSS px to a pixel */
+.px-words{--cell:2px;--drop:#0000008c;display:inline-flex;filter:drop-shadow(0 calc(var(--cell) * .5) 0 var(--drop))}
+.px-words .px{display:block;width:calc(var(--w) * var(--cell));height:calc(7 * var(--cell));background:currentColor;mask-size:100% 100%;mask-repeat:no-repeat;-webkit-mask-size:100% 100%;-webkit-mask-repeat:no-repeat}
+.guide-panels{display:grid}
+.guide-panel{grid-area:1/1;display:flex;flex-direction:column;justify-content:center}      /* (both in one cell: the card keeps its size whichever tab shows) */
+.guide-panel[hidden]{display:flex;visibility:hidden}
+.card-dialog .reply-steps{list-style:none;counter-reset:step;margin:0;padding:0;display:grid;gap:10px}
+.reply-steps li{isolation:isolate;display:grid;grid-template-columns:auto 1fr;column-gap:14px;align-items:center;padding:15px 17px}
+.step-n{grid-row:span 2;display:grid;place-items:center;width:34px;height:34px;font-style:normal;color:var(--accent,#f6b3cc);--cell:2.5px;--drop:#0000008c}
+.card-dialog .reply-steps b{color:#fff;margin-bottom:6px}
+.reply-steps span{font-size:13px;color:#f3eef899}
+.guide-card:focus{outline:none}      /* (it takes the focus itself on opening, so no tab wears a focus ring then) */
+.card-dialog .guide-lede{max-width:28em;margin:26px auto 4px;font-size:20px;line-height:1.4;color:#f3eef8e6;text-shadow:0 2px 14px #000,0 0 3px #000;text-align:center;text-wrap:balance}      /* (balanced lines, no full stop at the end: 2026-11-13) */
+.hand-guide{position:relative;isolation:isolate;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.hand-guide canvas{position:absolute;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .5s}
+.hand-guide canvas.ready{opacity:1}
+/* cards in the pixel buttons' shape (2026-11-13: "make each card the pixel style"): corners rounded in two steps of --s, an
+   outline (::before) and a face one step in (::after), both behind the card's own content. No clip on the card itself:
+   that would make it a layer of its own, under the hands' canvas, and the dimming of the waiting card would go under it too. */
+.pixbox{--s:3px;--edge:#2b2735;--face:#141219;--shape:polygon(0 calc(var(--s) * 2),var(--s) calc(var(--s) * 2),var(--s) var(--s),calc(var(--s) * 2) var(--s),calc(var(--s) * 2) 0,calc(100% - calc(var(--s) * 2)) 0,calc(100% - calc(var(--s) * 2)) var(--s),calc(100% - var(--s)) var(--s),calc(100% - var(--s)) calc(var(--s) * 2),100% calc(var(--s) * 2),100% calc(100% - calc(var(--s) * 2)),calc(100% - var(--s)) calc(100% - calc(var(--s) * 2)),calc(100% - var(--s)) calc(100% - var(--s)),calc(100% - calc(var(--s) * 2)) calc(100% - var(--s)),calc(100% - calc(var(--s) * 2)) 100%,calc(var(--s) * 2) 100%,calc(var(--s) * 2) calc(100% - var(--s)),var(--s) calc(100% - var(--s)),var(--s) calc(100% - calc(var(--s) * 2)),0 calc(100% - calc(var(--s) * 2)));position:relative}
+.pixbox::before,.pixbox::after{content:'';position:absolute;inset:0;z-index:-1;clip-path:var(--shape);background:var(--edge);transition:background .3s}
+.pixbox::after{inset:var(--s);background:var(--face);box-shadow:inset 0 -4px 0 0 #00000040,inset 0 3px 0 0 #ffffff12}
+.hand-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;padding:15px 8px 15px;text-align:center}
+.hand-card{--face:#09080d}      /* (the colour at the edge of the hands' backdrop: the card and its window run together, 2026-11-13) */
+.hand-card.on{--edge:var(--accent,#f6b3cc)}
+.hand-view{position:relative;z-index:2;align-self:stretch;aspect-ratio:1/.92;pointer-events:none}
+.hand-view::before{content:'';position:absolute;inset:0;background:#0b0a0f;opacity:.6;transition:opacity .35s}
+.hand-card.on .hand-view::before,.hand-guide.still .hand-view::before{opacity:0}
+.hand-view::after{content:'';position:absolute;inset:0;--p:3px;background:linear-gradient(var(--face),var(--face)) 0 0/var(--p) var(--p),linear-gradient(var(--face),var(--face)) 100% 0/var(--p) var(--p),linear-gradient(var(--face),var(--face)) 0 100%/var(--p) var(--p),linear-gradient(var(--face),var(--face)) 100% 100%/var(--p) var(--p);background-repeat:no-repeat;transition:background .3s}      /* (a pixel off each corner of the canvas's window) */
+.hand-guide.failed canvas{display:none}
+.hand-card [data-step]{color:#f3eef88c;background:linear-gradient(var(--accent,#f6b3cc),var(--accent,#f6b3cc)) 0 100%/0 2px no-repeat;padding-bottom:5px;transition:color .18s,filter .18s,background-size .3s ease}
+.hand-card [data-step].on{color:#fff;filter:drop-shadow(0 1px 0 #0000008c) drop-shadow(0 0 6px var(--accent,#f6b3cc));background-size:100% 2px}
+@media(max-width:480px){.guide-box{padding:0}.hand-card .px-words,.guide-tab .px-words{--cell:1.5px}.hand-guide{gap:8px}.card-dialog .guide-lede{font-size:17px}}
 .dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;flex-wrap:wrap}
 /* Connect mic on the home page (src/dictate.ts): its edge says the mic's state, a meter under it while it listens */
 .mic-wrap{position:relative;display:inline-grid}
@@ -116,8 +164,8 @@ button.link:hover{background:none;opacity:1}
 .mic-state{display:block;margin-top:4px;font-size:12px;opacity:.75}
 .mic-state.on{color:#7dffc9;opacity:1}
 .mic-state.off{color:#ff8fa3;opacity:1}
-#home .dialog-actions .pix.close-dialog{--face:var(--accent,#f6b3cc);--edge:color-mix(in srgb,var(--accent,#f6b3cc) 45%,#000)}
-#home .dialog-actions .pix.close-dialog::before{box-shadow:inset 0 -4px 0 0 #00000038,inset 0 3px 0 0 #ffffff70}
+#home .dialog-actions .pix.close-dialog,#home .guide-close .pix.close-dialog{--face:var(--accent,#f6b3cc);--edge:color-mix(in srgb,var(--accent,#f6b3cc) 45%,#000)}
+#home .dialog-actions .pix.close-dialog::before,#home .guide-close .pix.close-dialog::before{box-shadow:inset 0 -4px 0 0 #00000038,inset 0 3px 0 0 #ffffff70}
 #start{min-width:210px;padding:16px 34px;border:0;border-radius:99px;background:var(--accent);color:#14121a;font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 10px 40px -10px var(--accent);transition:transform .2s,box-shadow .2s,background .3s}
 #start:not(:disabled):hover{transform:translateY(-2px) scale(1.03);box-shadow:0 16px 50px -10px var(--accent)}
 #start:not(:disabled){animation:beat 2.6s ease-in-out infinite}

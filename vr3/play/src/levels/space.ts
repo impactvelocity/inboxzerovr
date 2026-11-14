@@ -174,6 +174,8 @@ export const spaceFx: FxStyle = { bit: 'cap', bits: ['#35e8ff', '#ff4fd8'], pape
 
 export const spaceSound: LevelSound = {
   id: 'space',
+  // round two begins with the user's own sting (2026-11-13; tools/level-src/space/ss-stinger.mp3, set to -3 dBFS), with the jump to hyperspace (../props/warp.ts)
+  roundStinger: { name: 'stinger2', volume: 0.9 },
   layers: [
     { name: 'void', at: null, level: c => 0.6 + 0.3 * c.drift(c.t * 0.2, 1.3) },
     // the rush of the flight: more of it in the dark, when it is going faster

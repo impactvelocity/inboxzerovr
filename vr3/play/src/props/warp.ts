@@ -229,7 +229,8 @@ export function createWarp(context: StageContext): StageProps {
   function update(dt: number, c: { time: number; blend: number; seat: THREE.Vector3; eye: THREE.Vector3; pixelRatio: number }) {
     group.position.copy(c.seat);
     const moving = settings.motion, low = settings.quality === 'low';
-    const want = phase === 'intro' ? PACE.intro : phase === 'play' ? (round >= 2 ? PACE.round2 : PACE.round1) : phase === 'summary' ? PACE.summary : PACE.idle;
+    // (round two's count-in is already at speed: it jumped as the transition began, 2026-11-13)
+    const want = phase === 'intro' ? (round >= 2 ? PACE.round2 : PACE.intro) : phase === 'play' ? (round >= 2 ? PACE.round2 : PACE.round1) : phase === 'summary' ? PACE.summary : PACE.idle;
     pace += (want - pace) * (1 - Math.exp(-dt * 1.6));
     surge *= Math.exp(-dt * 1.5); flash *= Math.exp(-dt * 4);
     const speed = pace + surge * JUMP;
@@ -270,8 +271,15 @@ export function createWarp(context: StageContext): StageProps {
     game(progress: RoundProgress) {
       const next = progress.phase as string;
       if (next === phase && progress.round === round) return;
-      // the round begins: the jump
-      if (next === 'play' && phase === 'intro') { surge = 1; flash = 1; context.play('jump', 1, 0.55); }
+      // The jump. Round one: as it begins, after its count-in. Round two: the moment the transition starts, with its
+      // sting (2026-11-13: "make it go to hyperspace fast at the start of transition - right now it happens after the
+      // 5 seconds"), and it stays at speed through the count-in; as play begins then, only a nudge.
+      const transition = next === 'intro' && progress.round >= 2 && (phase !== 'intro' || round !== progress.round);
+      if (transition) { surge = 1; flash = 1; pace = Math.max(pace, PACE.round1); context.play('jump', 1, 0.55); }
+      else if (next === 'play' && phase === 'intro') {
+        if (progress.round >= 2) { surge = Math.max(surge, 0.35); flash = Math.max(flash, 0.5); }
+        else { surge = 1; flash = 1; context.play('jump', 1, 0.55); }
+      }
       phase = next; round = progress.round;
     },
     dispose() { dustGeometry.dispose(); dustMaterial.dispose(); streakGeometry.dispose(); streakMaterial.dispose(); cometGeometry.dispose(); cometMaterial.dispose(); },

@@ -218,6 +218,8 @@ export const lumberFx: FxStyle = { bit: 'shard', bits: ['#d9933f', '#8a5a3a'], p
 
 export const lumberSound: LevelSound = {
   id: 'lumber',
+  // round two begins with the user's own sting (2026-11-13; tools/level-src/lumber/lumber-stinger-wold.mp3, set to -3 dBFS)
+  roundStinger: { name: 'stinger2', volume: 0.9 },
   layers: [
     // the air of the yard: a breeze in the pines, all round
     // (down by about a third on 2026-11-13, "reduce the wind a bit": it was 0.5 + 0.3)

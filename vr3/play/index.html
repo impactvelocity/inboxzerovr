@@ -47,15 +47,39 @@ html,body{margin:0;background:#06050a}
   </div>
   <div class="dialog-actions"><button id="code-cancel" class="pix">Back</button><button id="code-play" class="pix close-dialog" disabled>Play</button></div>
  </dialog>
- <dialog id="guide" class="card-dialog" aria-labelledby="guide-title">
-  <h2 id="guide-title">How to Play</h2>
-  <h3>Round 1 · Sort</h3>
-  <p>Emails fly at you. <b>Slash the junk</b> with your weapon (in Toxic Danger, spray it). <b>Grab the ones that matter</b> with your left hand and throw them anywhere to save them.</p>
-  <h3>Round 2 · Answer</h3>
-  <p>The emails you saved come back. <b>Hold one against a reply</b> until its ring fills to send it, or <b>hold it to the mic</b> to say your own, then keep it or redo it. Throw one away to leave it for later.</p>
-  <h3>Inbox zero</h3>
-  <p>Clear them all. The bar at the top shows how far you have got.</p>
-  <div class="dialog-actions"><button class="pix close-dialog">Let's go</button></div>
+ <dialog id="guide" class="card-dialog guide-card" aria-label="How to Play" tabindex="-1">
+  <div class="guide-box">
+  <!-- (2026-11-13: "Round One - Sort", "Round Two - Reply", "make them a tab at top", "maybe dropping how to play";
+       the hands are "two cards, one at a time highlight": src/handguide.ts plays the left, then the right) -->
+  <!-- (2026-11-13: "make the tab look like a segmented control with pixel font button styling", "and just Round One and Round Two") -->
+  <div class="guide-tabs pix" role="tablist" aria-label="How to Play">
+   <button class="guide-tab" role="tab" id="tab-sort" aria-selected="true" aria-controls="round-sort"><span class="px-words">Round One</span></button>
+   <button class="guide-tab" role="tab" id="tab-reply" aria-selected="false" aria-controls="round-reply" tabindex="-1"><span class="px-words">Round Two</span></button>
+  </div>
+  <div class="guide-panels">
+  <div class="guide-panel" id="round-sort" role="tabpanel" aria-labelledby="tab-sort">
+   <!-- (2026-11-13: "grab To read above the animation, then Throw To Keep under it, same with the right side") -->
+    <div id="hand-guide" class="hand-guide">
+    <canvas aria-hidden="true"></canvas>
+    <div class="hand-card pixbox" data-hand="left"><span class="px-words" data-step="left:0">Grab to read</span><div class="hand-view"></div><span class="px-words" data-step="left:2">Throw to keep</span></div>
+    <div class="hand-card pixbox" data-hand="right"><span class="px-words" data-step="right:0">Grip to arm</span><div class="hand-view"></div><span class="px-words" data-step="right:1">Slash to clear</span></div>
+   </div>
+   <p class="guide-lede">One email at a time: <b>keep</b> it for round two, or <b>slash</b> it to archive</p>
+  </div>
+  <div class="guide-panel" id="round-reply" role="tabpanel" aria-labelledby="tab-reply" hidden>
+   <!-- (2026-11-13: "make two cards for the reply - move to either side to reply", "right side card - hold near to record message",
+        "then under say throw or cut to leave unread for tomorrow": src/replyguide.ts) -->
+   <div id="reply-guide" class="hand-guide">
+    <canvas aria-hidden="true"></canvas>
+    <div class="hand-card pixbox" data-hand="left"><span class="px-words" data-step="left:0">Move to choose</span><div class="hand-view"></div><span class="px-words" data-step="left:1">Hold to send</span></div>
+    <div class="hand-card pixbox" data-hand="right"><span class="px-words" data-step="right:0">Bring to mic</span><div class="hand-view"></div><span class="px-words" data-step="right:1">Say your reply</span></div>
+   </div>
+   <p class="guide-lede"><b>Throw</b> or <b>cut</b> to leave it unread for tomorrow</p>
+  </div>
+  </div>
+  </div>
+  <!-- (2026-11-13: "move the Lets Go button out of the main model and put it under - centered and saying Close") -->
+  <div class="guide-close"><button class="pix close-dialog">Close</button></div>
  </dialog>
 </section>
 <header id="hud"><span id="hud-level"></span><button id="menu" class="quiet">Menu</button><button id="hud-settings" class="quiet">Settings</button></header>
