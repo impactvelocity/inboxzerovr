@@ -371,8 +371,38 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
   type Guide = import('./handguide').HandGuide;
   const handHost = document.getElementById('hand-guide')!, replyHost = document.getElementById('reply-guide')!;
   let hands: Promise<Guide | null> | undefined, replies: Promise<Guide | null> | undefined;
+  // The voice (2026-11-14: "add voice over for how to play pop up", "see if you can match up each card"): each round's line from the
+  // in-game How to Play (public/audio/howto, with its digital effect) plays as its tab shows. The left card plays first, as the line
+  // starts; at RIGHT_AT seconds into the line (the same mark the game's intro uses: "...or use your right hand", "...or pull close")
+  // the right card takes over. Picking a card by hand, changing tab or closing stops the voice; the cards go on as before.
+  const RIGHT_AT = 2.6;
+  const roundVoices = { sort: new Audio(`${base}audio/howto/round-one.mp3`), reply: new Audio(`${base}audio/howto/round-two.mp3`) };
+  for (const clip of Object.values(roundVoices)) clip.preload = 'auto';
+  let narrating: { clip: HTMLAudioElement; watch: number } | null = null;
+  const hush = () => { if (!narrating) return; window.clearInterval(narrating.watch); narrating.clip.pause(); narrating = null; };
+  const narrate = (round: 'sort' | 'reply', made: Guide) => {
+    hush();
+    const on = document.getElementById('sounds') as HTMLInputElement | null;
+    if (on && !on.checked) return;
+    const fx = Number((document.getElementById('effects-volume') as HTMLInputElement | null)?.value ?? 1);
+    const clip = roundVoices[round];
+    try { clip.currentTime = 0; } catch { /* not loaded yet */ }
+    clip.volume = Math.max(0, Math.min(1, 0.9 * (Number.isFinite(fx) ? fx : 1)));
+    let turned = false;
+    // (the right card follows the line itself, not a clock: a voice that starts late still meets its card)
+    const watch = window.setInterval(() => {
+      if (!turned && clip.currentTime >= RIGHT_AT) { turned = true; made.pick('right'); }
+      if (clip.ended) hush();
+    }, 40);
+    narrating = { clip, watch };
+    void clip.play().catch(() => hush());      // (no voice allowed: the cards play as before)
+  };
   const run = (made: Promise<Guide | null>, host: HTMLElement, on: boolean) =>
-    void made.then(guideMade => { if (!guideMade) return; if (on && guide.open) { guideMade.accent(getComputedStyle(host).getPropertyValue('--accent')); guideMade.start(); } else guideMade.stop(); });
+    void made.then(guideMade => {
+      if (!guideMade) return;
+      if (on && guide.open) { guideMade.accent(getComputedStyle(host).getPropertyValue('--accent')); guideMade.start(); narrate(host === handHost ? 'sort' : 'reply', guideMade); }
+      else guideMade.stop();
+    });
   const play = (round: 'sort' | 'reply') => {
     if (round === 'sort') hands ??= import('./handguide').then(m => m.createHandGuide(handHost)).catch(() => { handHost.classList.add('failed'); return null; });
     else replies ??= import('./replyguide').then(m => m.createReplyGuide(replyHost)).catch(() => { replyHost.classList.add('failed'); return null; });
@@ -392,7 +422,7 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
     guide.showModal(); guide.focus();      // (the card takes the focus, so no tab wears a focus ring on opening)
     play('sort');
   });
-  guide.addEventListener('close', () => { void hands?.then(made => made?.stop()); void replies?.then(made => made?.stop()); });
+  guide.addEventListener('close', () => { hush(); void hands?.then(made => made?.stop()); void replies?.then(made => made?.stop()); });
   // Its two tabs, Round One and Round Two (2026-11-13).
   const tabs = Array.from(guide.querySelectorAll<HTMLButtonElement>('[role=tab]'));
   const showTab = (chosen: HTMLButtonElement, focus = false) => {
@@ -412,8 +442,8 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
   // Super Space's, then "better UI noises / retro game ... instead of the in game noises": src/uisound.ts)
   const pickCard = () => uiSound('key', { pitch: 0.96 + Math.random() * 0.1 });      // (the keypad's tick, cards and tabs alike: 2026-11-14)
   guide.querySelectorAll<HTMLElement>('.hand-card').forEach(card => {
-    card.addEventListener('click', pickCard);
-    card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') pickCard(); });
+    card.addEventListener('click', event => { if (event.isTrusted) hush(); pickCard(); });      // (a card picked by hand: the voice stops)
+    card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') { hush(); pickCard(); } });
   });
   tabs.forEach((tab, i) => {
     tab.addEventListener('click', () => { if (tab.getAttribute('aria-selected') !== 'true') uiSound('key', { pitch: 1.12 }); showTab(tab); });
