@@ -127,16 +127,6 @@
       "forward": 0
     }
   ],
-  "lumber@hands": [
-    {
-      "tipForward": -50,
-      "tipRight": 4,
-      "spin": 38,
-      "right": 0.5,
-      "up": 3,
-      "forward": -1.1
-    }
-  ],
   "space": [
     {
       "tipForward": 5,
@@ -145,6 +135,16 @@
       "right": 1,
       "up": -9,
       "forward": 3
+    }
+  ],
+  "lumber@hands": [
+    {
+      "tipForward": -15,
+      "tipRight": 0,
+      "spin": -20,
+      "right": 1,
+      "up": 1.5,
+      "forward": 1.1
     }
   ]
 }
