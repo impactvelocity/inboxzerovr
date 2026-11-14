@@ -48,7 +48,8 @@ export const crtTune = {
   // smash / cut it up ( take a few attempts )"): it is flung up off the desk to hang behind the logo, and comes apart
   // on the last of these hits. Where it hangs is from the seated eye: right, up, ahead (the logo is 0.95 m ahead).
   // (closer since 2026-11-13, "move monitor closer and allow hits from a far": it hung 1.75 m out, and a swing had to pass within 0.3 m of it)
-  flyHits: 5, flyAt: [0.05, 0.27, -1.1] as P3,      // (1.1 m out since 2026-11-13, "move monitor closer on end": just behind the logo at 0.95)
+  // (centred in front at eye level since 2026-11-13, "make the monitor jump out at end center": the logo goes above it, office2.ts)
+  flyHits: 5, flyAt: [0, -0.04, -1.1] as P3,      // (1.1 m out since 2026-11-13, "move monitor closer on end": just behind the logo at 0.95)
   flySeconds: 1.25, flyReach: 3.5, flySpeed: 1.0, flyNear: 0.38, flyWiden: 0.4,
 };
 
@@ -339,7 +340,7 @@ export function createCrt(context: StageContext) {
     power(true); show('zero', 0, 0, 0);
     head.updateWorldMatrix(true, false);
     const at = world(0, SY, FRONT, v1);
-    context.play('zap', 0.8, 0.4, at); context.play('glass', 0.6, 0.3, at);      // (not 'arm': that is the keyboard made ready, a PC switching on since 2026-11-13)
+    context.play('zap', 0.8, 0.4, at); context.play('glass', 0.6, 0.3, at);      // (not 'arm': that is the keyboard made ready, key clicks since 2026-11-13)
     for (let i = 0; i < 16; i++) smoke.emit(v2.copy(root.position).add(v3.set(rand(0.2), 0.02, rand(0.15))), v3.set(rand(0.3), 0.2 + Math.random() * 0.3, rand(0.3)), 1 + Math.random(), 0.6 + Math.random() * 0.5);
   }
   /** Is a swing reaching it where it hangs (from far off, as the logo is: the weapon's line goes on past its tip)? */

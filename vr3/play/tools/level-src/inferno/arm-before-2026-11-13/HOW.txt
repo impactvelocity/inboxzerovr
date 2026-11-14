@@ -1,0 +1,7 @@
+arm.wav (the default):
+  highpass=f=35,equalizer=f=90:t=o:w=1.2:g=7,equalizer=f=260:t=o:w=1:g=3,volume=7dB,asoftclip=type=tanh:threshold=0.6:output=1,equalizer=f=3200:t=o:w=1.2:g=2,volume=-2dB,alimiter=limit=0.84:attack=1:release=40:level=false
+arm-a..d (the alternates):
+  highpass=f=35,equalizer=f=90:t=o:w=1.2:g=7,equalizer=f=260:t=o:w=1:g=3,volume=2dB,asoftclip=type=tanh:threshold=0.6:output=1,equalizer=f=3200:t=o:w=1.2:g=2,volume=-5dB,alimiter=limit=0.84:attack=1:release=40:level=false
+(2026-11-13: louder and crunchier, then "reduce the gain on the flame thrower volume, too noticable": 4.5 dB down on the default, 4 on the others)
+
+(2026-11-13, later: "make the flamethrower back its default sound": public/audio/inferno/arm*.wav are these originals again; the louder, crunchier versions are not kept.)

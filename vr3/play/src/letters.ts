@@ -190,6 +190,8 @@ export interface LetterTheme {
   title: string;
   /** How big its mail is when it has arrived (1 if not said): smaller where it comes from close by (the office's monitor, 2026-11-13). */
   size?: number;
+  /** How much bigger a held letter is than tune.holdGrow makes it (1.15 if not said: 2026-11-13, "for the rest, make grab email be 15% larger"; the office keeps 1). */
+  grab?: number;
   accent?: string;
   /** The progress bar's two colours, left to right: vivid, the level's own. From `accent` if not given. */
   bar?: [string, string];
@@ -203,10 +205,12 @@ export interface LetterTheme {
     seconds?: number; ease?: number; sway?: number };
   /** Where the round's intro card goes, if something stands where it would be (as `dock.intro`), and the seconds between a round's last letter and what comes next (as `dock.pause`). */
   intro?: { up: number; nearer: number; size: number }; pause?: number;
-  /** The seconds between the game's very last letter and the end (the logo), if not `pause` (Keyboard Smash: none, so the logo comes with the monitor's jump, 2026-11-13). */
+  /** The seconds between the game's very last letter and the end (0.4 if not said; Keyboard Smash: none, so the logo comes with the monitor's jump, 2026-11-13). */
   endPause?: number;
-  /** Seconds into the end before the logo comes (0.9 if not said). */
+  /** Seconds into the end before the logo comes (0.3 if not said). */
   logoAfter?: number;
+  /** Where the end's logo floats, if not at eye level just below: this far up from the eye, this far ahead (Keyboard Smash: above its monitor). */
+  logoAt?: { up: number; ahead?: number };
   /** Is this one dangerous (the lab's radioactive mail)? It takes more, and glows. */
   hazard?(email: Email): boolean;
   /**
@@ -985,7 +989,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (!logo.wanted || game.phase !== 'summary' || shows.some(x => x.kind === 'logo')) return;
     if (END_PARTS) endLine.introAt = clock + LINE_AFTER_LOGO;      // (the line under it, once it is in: it pops in over 0.8 s)
     const h = LOGO_WIDTH * sheet.surface.height / sheet.surface.width, bar = theme.bar ?? [theme.accent ?? '#f6b3cc', theme.accent ?? '#f6b3cc'];
-    logo.home.set(seat.x * 0.7, seat.y - 0.06 * LOGO_SPREAD, seat.z - LOGO_DISTANCE);      // (a little lower too, in the swing)
+    logo.home.set(seat.x * 0.7, seat.y + (theme.logoAt?.up ?? -0.06 * LOGO_SPREAD), seat.z - (theme.logoAt?.ahead ?? LOGO_DISTANCE));      // (a little lower too, in the swing; a level may put it elsewhere)
     look3.position.copy(logo.home); look3.up.set(0, 1, 0); look3.lookAt(seat.x, seat.y - 0.04, seat.z);
     const show = putOut(sheet, LOGO_WIDTH, h, 'logo', logo.home, look3.quaternion);
     sheet.material.uniforms.flash.value = 1;
@@ -2162,6 +2166,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const body = letter.body, mesh = body.mesh;
     hand.used = true;
     letter.state = 'held'; letter.heldFor = 0; letter.flick = -1; letter.grabbedAt.copy(hand.pos);
+    // (its size as seen: in the office, where the mail is smaller, it is smaller in the hand too, 28%: 2026-11-13, "make
+    // office level email grab be the 28% smaller - that was good")
     letter.seen = body.size / Math.max(0.3, head.distanceTo(mesh.position)); letter.holdSize = body.size;
     letter.grip.copy(hand.matrix).invert().multiply(m1.compose(mesh.position, mesh.quaternion, v1.set(1, 1, 1)));      // (where it is and how it is turned, not its size)
     letter.free.copy(mesh.position); letter.docked = 0; letter.dockedAt = -1;
@@ -2370,8 +2376,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           // while it was still far off, and the size lagged behind it coming in. Now the extra comes in with it, and
           // the size follows the distance exactly until it has settled, so it only ever grows, smoothly.)
           if (letter.heldFor < GRAB_SETTLE) {
-            const grow = 1 + (tune.holdGrow - 1) * smooth01(letter.heldFor / GRAB_SETTLE);
-            letter.holdSize = Math.max(0.25, Math.min(1.6, letter.seen * grow * head.distanceTo(mesh.position)));      // (up to 1.6 times its own size: the 1 it was capped at would hide a bigger holdGrow)
+            const grow = 1 + (tune.holdGrow * (theme.grab ?? 1.15) - 1) * smooth01(letter.heldFor / GRAB_SETTLE);      // (15% bigger in the hand in every level but the office, 2026-11-13)
+            letter.holdSize = Math.max(0.25, Math.min(1.85, letter.seen * grow * head.distanceTo(mesh.position)));      // (up to 1.6 times its own size: the 1 it was capped at would hide a bigger holdGrow)
             body.size = letter.holdSize;
           } else body.size += (letter.holdSize - body.size) * (1 - Math.exp(-dt * 12));
           mesh.scale.setScalar(body.size * (1 - tune.dockShrink * letter.docked));      // (smaller at a target, so the reply still shows)
@@ -2597,7 +2603,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     } else if (game.phase === 'summary') {
       game.timer += dt;
       // the end comes in once the line under the title has settled
-      if (!logo.started && game.timer > (theme.logoAfter ?? 0.9)) { logo.started = true; if (END_PARTS) handBar(['bar']); else ui.dismissBar(); void showLogo(); }
+      // (the logo 0.3 s into the end; 0.9 s until 2026-11-13: "make the end show the logo sooner")
+      if (!logo.started && game.timer > (theme.logoAfter ?? 0.3)) { logo.started = true; if (END_PARTS) handBar(['bar']); else ui.dismissBar(); void showLogo(); }
       // The line under it (CLEARED 10 EMAILS) only once the logo is in (2026-11-12: "load in the logo first and then after
       // thats in, load the subtitle badge after"): it pops in as a title's line does, then becomes something to cut.
       if (endLine.introAt >= 0 && clock >= endLine.introAt) { endLine.introAt = -1; ui.intro('', endLine.text); endLine.handAt = clock + 0.75; }
@@ -2654,7 +2661,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // what is left of the last letter does not hang about through it)
       if (theme.dock && game.timer > 0.7) for (const sheet of sheets) if (sheet.cutAt < Infinity && sheet.burnAt === Infinity) sheet.burnAt = clock;
       const last = game.round === 2 || !game.kept.length;      // (the game's last letter: the end comes next, not round two)
-      if ((game.timer += dt) > (last && theme.endPause !== undefined ? theme.endPause : theme.dock?.pause ?? theme.pause ?? 1.1)) {
+      // (the game's last: the end soon, 0.4 s, in every level unless it says otherwise: 2026-11-13, "make the end show the logo sooner")
+      if ((game.timer += dt) > (last ? theme.endPause ?? 0.4 : theme.dock?.pause ?? theme.pause ?? 1.1)) {
         // (nothing kept, demo or real mail: nothing to answer, so straight to the ending: 2026-11-12)
         if (game.round === 1 && game.kept.length) beginIntro(2);
         else { if (game.round === 1) game.cutInRoundOne = 0; beginSummary(); }      // (round one's own marks are what the summary counts then)

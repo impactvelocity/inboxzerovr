@@ -160,5 +160,5 @@ export const labSound: LevelSound = {
   ],
   occasional: [{ name: 'alarm', every: [34, 80], volume: 0.4, region: [-6, 6, 0.5, 1.5, -12, -7] }],
   // the hiss of the spray, for as long as the trigger is held
-  hum: { level: 1, swing: false },      // (full: it was 0.42; 2026-11-13, "make louder in game for spray sound")
+  hum: { level: 0.42, swing: false },      // (0.42; full on 2026-11-13, "make louder in game for spray sound"; 0.65, "make spray noise less loud"; then "try back to 42%")
 };

@@ -77,10 +77,12 @@ export const LEVELS: Level[] = [
   // (Its cards are the user's own art since 2026-11-13, "super space level select images": the bridge, day and night. Before, a piece cut from the side of the painting: tools/level-src/space/*-before-2026-11-13.webp.)
   { id: 'space', number: '05', name: 'Super Space', weapon: 'Saber', line: 'Incoming transmissions', art: spaceStage.art, card: ['levels/space/card-start.webp', 'levels/space/card-end.webp'], accent: '#35e8ff', ground: '#0a0820',
     phases: ['Cruising', 'The jump', 'Deep space'], ends: ['CRUISING', 'DEEP SPACE'], letters: spaceLetters, fx: spaceFx, sound: spaceSound, music: 'audio/space/music.m4a', anthem: 'audio/space/anthem.m4a', stinger: 'audio/stingers/space.m4a', stage: spaceStage, held: buildSaber },      // (its end song: the user's, 2026-11-13, "super space end song")
-  // Inferno (asked for on 2026-11-12): the furnace hall, the mail down a chute, the weapon a flame thrower. Its music is the user's to add (its sting is theirs: 2026-11-12).
+  // Inferno (asked for on 2026-11-12): the furnace hall, the mail down a chute, the weapon a flame thrower. Its music is the user's
+  // ("Molten Minor Pentatonic", 2026-11-13: sent as Opus, made 160 kbps AAC at the other songs' loudness; tools/level-src/inferno/music-source.m4a), its sting too (2026-11-12).
   { id: 'inferno', number: '06', name: 'Inferno', weapon: 'Flame thrower', line: 'Burn after reading', art: infernoStage.art, card: ['levels/inferno/card-start.webp', 'levels/inferno/card-end.webp'],      // (the user's card art, 2026-11-12)
     accent: '#ff8a3d', ground: '#1a0f12',
-    phases: ['Stoked', 'Banked', 'Lights out'], ends: ['STOKED', 'LIGHTS OUT'], letters: infernoLetters, fx: infernoFx, sound: infernoSound, music: null, stinger: 'audio/stingers/inferno.m4a', stage: infernoStage, held: buildFlameThrower, jet: 'flame' },
+    phases: ['Stoked', 'Banked', 'Lights out'], ends: ['STOKED', 'LIGHTS OUT'], letters: infernoLetters, fx: infernoFx, sound: infernoSound, music: 'audio/inferno/music.m4a', anthem: 'audio/inferno/anthem.m4a', stinger: 'audio/stingers/inferno.m4a',      // (its end song: the user's "Inbox Zero", 2026-11-13)
+    stage: infernoStage, held: buildFlameThrower, jet: 'flame' },
   // Knockout (asked for on 2026-11-12): the main event from inside the ring, the mail the evening paper flung in over the ropes, the weapon a boxing glove: it is punched, not cut (letters.ts, "the punch"). Its music is the user's to add (its sting is theirs: 2026-11-12).
   { id: 'knockout', number: '08', hidden: true, name: 'Knockout', weapon: 'Glove', line: 'The main event', art: knockoutStage.art, accent: '#ffcf4a', ground: '#0d1030',
     phases: ['Main event', 'Lights down', 'Final round'], ends: ['MAIN EVENT', 'FINAL ROUND'], letters: knockoutLetters, fx: knockoutFx, sound: knockoutSound, music: null, stinger: 'audio/stingers/knockout.m4a', stage: knockoutStage, held: buildGlove },

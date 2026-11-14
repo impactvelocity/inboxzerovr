@@ -245,6 +245,8 @@ export const office2Letters: LetterTheme = {
   look: { ...officeLetters.look, aura: null, spell: undefined },
   // smaller: they come out of the monitor, only a metre or so away (2026-11-13: "make emails smaller here since they are coming from a closer distance")
   size: 0.72,
+  // and in the hand as it was: 28% smaller than elsewhere ("that was good"), without the 15% the other levels' held mail got (2026-11-13)
+  grab: 1,
   // Out of the screen: it starts as the picture on the glass (the screen's size, turned as the screen is),
   // springs up out of it in an arc and settles just over the monitor, growing to full size as it comes.
   origin(head: Vector3, home: Vector3, from: Vector3, via: Vector3) {
@@ -259,6 +261,8 @@ export const office2Letters: LetterTheme = {
   pause: 3.4,
   // after the game's last: the end at once, so the logo comes as the monitor jumps up (2026-11-13: "make the logo show at the same time as the monitor jump")
   endPause: 0, logoAfter: 0,
+  // its logo above the monitor, which jumps up into the middle (2026-11-13: "make logo on that end sequence go above it, different than the others")
+  logoAt: { up: 0.35, ahead: 1.0 },
   // the round's intro card would be inside the monitor: it floats just in front of and over it instead, smaller
   // (as wide to the eye as it is in the other levels, and clear of the progress bar above)
   intro: { up: 0.2, nearer: 0.65, size: 0.5 },
