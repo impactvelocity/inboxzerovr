@@ -844,7 +844,14 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   /** The progress bar and the CLEARED line at the end, as things to cut too: off since 2026-11-12, "drop the end subtitle and progress bar, just logo" (the bar swells and floats away instead). */
   const END_PARTS = false;
   /** How far past the weapon's tip a swing reaches the end's pieces, how much wider it gets per metre out, and how fast the tip must move. */
-  const END_REACH = { metres: 2.6, widen: 0.4, speed: 1.2 };
+  const END_REACH = { metres: 2.6, widen: 0.4, speed: 1.2, pad: 0 };
+  /**
+   * The end song's words (v2), hit from further off still and with more room round each (2026-11-14: "make the song lyrics
+   * at end allow to be hit from a distance, so can be easier cut, this would be just for the lyrics"): the line past the
+   * tip runs further and widens faster, a slower swing is enough, and `pad` metres round a word count even at the blade
+   * itself (they float just past its tip, where the widening has not started).
+   */
+  const LYRIC_REACH = { metres: 3.6, widen: 0.5, speed: 0.8, pad: 0.1 };
   const GRAB_LOOKS = 1.2;      // the end's pieces, held: how much bigger they look than where they floated, at most
   /** How dark the end gets by the song's end: nearly black, not quite; the last of it is OUTRO_BLACK's quick fade as the game leaves (2026-11-13: "90% dark nearly, and then just a quick fade to black before exiting"). */
   const END_DARKEST = 0.9;
@@ -1372,7 +1379,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
 
   /**
    * Choosing a level without leaving the headset (asked for on 2026-11-11: "cut to select"): the levels as
-   * cards in an arc at arm's reach, CLEAN YOUR INBOX under them, EXIT VR off to the right, and the chosen
+   * cards in an arc at arm's reach, CLEAR YOUR INBOX under them, EXIT VR off to the right, and the chosen
    * level's logo floating above with a line saying what to do. Every card is cut like a letter: a level's
    * shatters and the view goes to black while main.ts changes level (then the menu comes again); START's
    * begins a game; EXIT's leaves VR. It is where a game ends, in VR.
@@ -1466,7 +1473,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (ticket !== menuTicket || game.phase !== 'menu') return;
     const level = levels.find(l => l.id === chosen) ?? levels[0];
     // Rows of four in an arc (room for eight, as on the flat home screen), the last row filled out with
-    // blanks for levels still to come; CLEAN YOUR INBOX under them, EXIT VR off to the right, the logo above.
+    // blanks for levels still to come; CLEAR YOUR INBOX under them, EXIT VR off to the right, the logo above.
     const perRow = 4, rows = Math.max(1, Math.ceil(levels.length / perRow)), step = 19, cardW = 0.3, cardH = cardW * 400 / 640, rowDrop = 0.215;
     const pop = (i: number) => (quick ? -1 : 0.15 + i * 0.06);
     for (let i = 0; i < rows * perRow; i++) {
@@ -1477,7 +1484,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       show.pointed = true; noCut.add(show.body);
     }
     const under = 0.03 + rows * rowDrop + 0.06;
-    { const at = arc(0, 1.0, under), sheet = canvasSheet(wordCard('Clean your inbox', 'cut to start', 900, 220, level.accent, '#14121a')); menu.sheets.push(sheet);
+    { const at = arc(0, 1.0, under), sheet = canvasSheet(wordCard('Clear your inbox', 'cut to start', 900, 220, level.accent, '#14121a')); menu.sheets.push(sheet);
       const show = putOut(sheet, 0.46, 0.46 * 220 / 900, 'start', at, facing(at)); show.delay = quick ? -1 : 0.6; show.body.mesh.scale.setScalar(quick ? 1 : 0.001); }
     { const at = arc(48, 1.0, under), sheet = canvasSheet(wordCard('Exit VR', '', 420, 150, '#2a2638', '#ffffff')); menu.sheets.push(sheet);
       const show = putOut(sheet, 0.2, 0.2 * 150 / 420, 'exit', at, facing(at)); show.delay = quick ? -1 : 0.7; show.body.mesh.scale.setScalar(quick ? 1 : 0.001);
@@ -1786,7 +1793,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
    * Does the blade's sweep since last frame pass through this body? If so, cut it. With `reach`
    * the blade counts on past its tip as a line (tune.swordReach), its hit box widening as it goes.
    */
-  function tryBlade(body: Body, blade: BladeTracker, dt: number, reach: boolean, dock?: LetterTheme['dock'], crowded = false, far = false): boolean {
+  function tryBlade(body: Body, blade: BladeTracker, dt: number, reach: boolean, dock?: LetterTheme['dock'], crowded = false, far: typeof END_REACH | false = false): boolean {
     const mesh = body.mesh;
     mesh.updateMatrixWorld(true);
     m1.copy(mesh.matrixWorld).invert();
@@ -1795,11 +1802,11 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     // (shown on something: the whole of that thing can be hit, behind the letter and round it)
     const back = dock ? dock.behind / body.size : depth, margin = tune.hitMargin + (dock ? dock.margin / body.size : 0);
     const length = blade.tip.distanceTo(blade.base);
-    // (far: the end's logo, bar and line, hit from a long way off: END_REACH)
-    const span = reach && length > 0.05 && blade.speed >= (far ? END_REACH.speed : tune.swordReachSpeed) ? 1 + (far ? END_REACH.metres : tune.swordReach) / length : 1;
+    // (far: the end's logo, bar and line, hit from a long way off: END_REACH; its song's words further still: LYRIC_REACH)
+    const span = reach && length > 0.05 && blade.speed >= (far ? far.speed : tune.swordReachSpeed) ? 1 + (far ? far.metres : tune.swordReach) / length : 1;
     for (let s = Math.ceil(8 * span); s >= 1; s--) {
       // f runs along the blade: 1 is its tip, more than 1 is out on the line past it
-      const f = s / 8, wide = (far ? END_REACH.widen : tune.swordWiden) * Math.max(0, f - 1) * length;
+      const f = s / 8, wide = (far ? far.widen : tune.swordWiden) * Math.max(0, f - 1) * length + (far ? far.pad : 0);
       was.lerpVectors(lastBase, lastTip, f); now.lerpVectors(blade.base, blade.tip, f);
       bladeVel.copy(now).sub(was).divideScalar(dt);
       if (bladeVel.length() < tune.cutSpeed) continue;
@@ -2610,8 +2617,8 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           // of them a hit bursts the piece rather than splitting it (tryBlade).
           if (body.age < 0.06 || body.mode === 'sent' || body.melting || body.sheet.burn > 0.93 || noCut.has(body)) continue;
           const kept = body.mode === 'kept';
-          const endPiece = game.phase === 'summary' && shows.some(x => x.body === body && (x.kind === 'logo' || x.kind === 'bar' || x.kind === 'line' || x.kind === 'word'));
-          if (!tryBlade(body, blade, dt, true, undefined, loose.length >= MAX_LOOSE, endPiece)) continue;
+          const end = game.phase === 'summary' ? shows.find(x => x.body === body && (x.kind === 'logo' || x.kind === 'bar' || x.kind === 'line' || x.kind === 'word')) : undefined;
+          if (!tryBlade(body, blade, dt, true, undefined, loose.length >= MAX_LOOSE, end ? (end.kind === 'word' ? LYRIC_REACH : END_REACH) : false)) continue;
           if (kept) {
             // cut out of the air: what falls is only paper. Saved in round one, it stays saved (2026-11-12: "when an
             // email is thrown and its marked as saved, make it so you can still cut it, but its still saved");
@@ -2703,7 +2710,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (game.phase === 'ready') {
       // A game starts straight on its countdown (there was a title letter to cut first; taken out on
       // 2026-11-11). A moment first, for the headset to say where the player's head is.
-      if ((game.timer += dt) > 0.8) beginIntro(1);
+      // (Before a real game the first time, How to Play holds it here: src/howto.ts, 2026-11-14.)
+      if (hold?.()) game.timer = 0;
+      else if ((game.timer += dt) > 0.8) beginIntro(1);
     } else if (game.phase === 'intro') {
       // The round's name and how much there is, which come in and then stay still; under them a ring
       // that fills over the ready seconds, a tick each second; then GO, and the first letter.
@@ -3059,9 +3068,13 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   setTheme(KYOTO_LETTERS);
   /** Off while the home screen is up: nothing in the air, nothing arriving. On: the title letter comes. */
   function setActive(on: boolean) { if (on === active) return; active = on; root.visible = on; clear(); }
+  /** While this says so, a game waits at its start, before round one's intro. */
+  let hold: (() => boolean) | null = null;
 
   return {
     update, tune, spray, setTheme, setActive, events, showMenu, leaveMenu,
+    /** Hold a game at its start while this says so (How to Play before a real game: src/howto.ts). */
+    setHold(f: (() => boolean) | null) { hold = f; },
     /** The music's beat now, 0 to 1 (-1: none to go by), for the end to move to. */
     setBeat(v: number) { beatIn = v; },
     /** Is the end song (a level's anthem) playing? The end waits for it. */

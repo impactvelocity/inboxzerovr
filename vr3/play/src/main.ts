@@ -14,6 +14,9 @@ import { createMist } from './spray';
 import { createHome } from './home';
 import { bindHomeMic, bindSetupMic, dictate } from './dictate';
 import { bindMailUi } from './mailui';
+import { mail } from './mail/source';
+import { createHowto } from './howto';
+import { bindResults } from './results';
 import { LEVELS, SHOWN, levelById, shownById, type Level } from './levels';
 import { createStage, type RoundProgress } from './levels/backdrop';
 import { createHeld, type Weapon } from './weapons/held';
@@ -121,6 +124,9 @@ async function main() {
   const liveBlade = createLiveBlade();      // the katana's glow while its trigger is held (src/liveblade.ts)
   const mist = createMist(world);           // the sprayer's (src/spray.ts)
   const flame = createFlame(world);         // the flame thrower's, and the fire on what it lights (src/flame.ts)
+  // How to Play in VR before every game from a code, and the demo's first (src/howto.ts): the game waits at its start while it runs.
+  const howto = createHowto(world, sounds);
+  letters.setHold(() => howto.running);
   const triggerCut = $<HTMLInputElement>('trigger-cut');
   triggerCut.checked = letters.tune.triggerToCut;
   triggerCut.addEventListener('change',()=>{letters.tune.triggerToCut=triggerCut.checked;remember('vr3.hold.triggerCut',triggerCut.checked?'1':'0');});
@@ -262,12 +268,25 @@ async function main() {
   function setPlaying(on: boolean) {
     playing = on;
     document.body.classList.toggle('at-home', !on); document.body.classList.toggle('playing', on);
+    results.refresh();      // (back home after a real game: its results)
     if (on) { toggleSettings(false); settings.elapsed = 0; settings.blend = 0; settings.playing = true; }
     // A level starts its song from the top, at full volume, as round one's countdown begins (the 'ready' moment and the intro's lead-in first)
     // (a game begins with its level's name said; its sting plays as it is chosen: 2026-11-12)
     // (the song from the first moment, at full volume, with the name said over it: 2026-11-12; it waited for the countdown before)
-    if (on) { stopStinger(); music.restart(); home.announce(now.level.id); }
-    else stopStinger();
+    if (on) {
+      stopStinger(); music.restart();
+      // Before a game from a code (always) or the demo's first, How to Play first (src/howto.ts, 2026-11-14): the song and the level's name
+      // wait for it, so the game starts as it always does once it is seen or slashed ("after skipping / watching, it
+      // starts the level with announcement").
+      if (howto.wanted()) {
+        music.duck(600);
+        const theme = now.level.letters;
+        howto.start({ accent: now.level.accent, colours: theme.bar ?? [now.level.accent, now.level.accent], at: theme.dock?.intro ?? theme.intro,
+          vr: world.renderer.xr.isPresenting,
+          done: () => { if (!playing) return; music.restart(); music.duck(0.01, true); home.announce(now.level.id); } });
+      } else home.announce(now.level.id);
+    }
+    else { stopStinger(); howto.stop(); }
     letters.setActive(on);
     syncSound(); refresh();
   }
@@ -287,6 +306,10 @@ async function main() {
   // (and on the first click anywhere on the home page, so round two hears real words in the demo too: 2026-11-13)
   { const home = $('home') ?? document.body; const first = (e: Event) => { if ((e.target as HTMLElement | null)?.closest?.('#start, #just-play')) return; home.removeEventListener('pointerdown', first, true); if (dictate.unasked && !world.renderer.xr.isPresenting) void dictate.ask(); }; home.addEventListener('pointerdown', first, true); }
   bindMailUi();        // Enter Code / Just Play: an agent's game code, or the demo (mailui.ts, mail/source.ts)
+  // A real game is ready (a code is in): its How to Play hands are fetched and made now, so they are there in VR.
+  { const ready = () => { if (mail.roundReady()) void howto.prepare(); }; mail.listen(ready); ready(); }      // (the hands fetched as a code is found; the demo's first fetches them as it starts)
+  // After a real game, its results instead of the level select (src/results.ts); Play Again shows How to Play again.
+  const results = bindResults();
   $('menu').addEventListener('click', () => setPlaying(false));
   const useWeapon = () => { sounds.unlock(); if (now.weapon) now.weapon.previewSwing(); else sword.previewSwing(); };
   $('swing').addEventListener('click', useWeapon);
@@ -321,7 +344,7 @@ async function main() {
       letters.setEndSong(music.celebrating(), music.celebrationProgress(), music.celebrationTime());      // and waits for its song to end, going dark with it
       dictate.update(dt, letters.progress.recording);      // the real mic (dictate.ts): its take ends by itself, and stops if the game moves on
       music.setSoft(letters.progress.recording ? (dictate.live ? 0.12 : 0.3) : 1);
-      sounds.setRecordSoft(letters.progress.recording ? (dictate.live ? 1 : 0.75) : 0);      // (and the level's background steps back too: 2026-11-13)      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
+      sounds.setRecordSoft(letters.progress.recording ? (dictate.live ? 1 : 0.75) : howto.running ? 0.55 : 0);      // (How to Play's voice over the level's sounds too)      // (and the level's background steps back too: 2026-11-13)      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
       // the end of a game: a level with a celebration song crossfades into it as the last email is dealt with
       { const p = letters.progress, lastDone = p.phase === 'play' && p.round === 2 && p.total > 0 && p.marks.length >= p.total;
         if (playing && (p.phase === 'summary' || lastDone) && now.level.anthem) music.celebrate(now.level.anthem); else music.endCelebration();
@@ -345,6 +368,7 @@ async function main() {
         tool.on = pull;
       }
       letters.update(dt,this.xrFrame,blade,eye,settings.blend,aim?tool:undefined);
+      howto.update(dt,eye,blade,aim?tool:null);      // (How to Play before a real game: a swing through it skips it)
       now.place.setGame?.(letters.progress as RoundProgress);      // (its 'menu' phase, the in-VR menu, is none of a level's business: it compares only the others)
       sounds.watchRound(letters.progress);      // a level's sounds for the end of a round (the castle's door slam and witches)
       const live=letters.live();
@@ -372,6 +396,7 @@ async function main() {
     if(e.key.toLowerCase()==='h')toggleSettings();
     if(world.renderer.xr.isPresenting)return;
     if(e.key==='Escape'&&playing)setPlaying(false);
+    if(howto.running&&(e.key.toLowerCase()==='x'||e.key===' '||e.key==='Enter')){e.preventDefault();howto.skip();return;}      // (How to Play: skip it)
     if(e.key===' '&&playing){e.preventDefault();if(!e.repeat)useWeapon();}
     if(e.key.startsWith('Arrow')){e.preventDefault();if(e.key==='ArrowLeft')yaw+=.08;if(e.key==='ArrowRight')yaw-=.08;if(e.key==='ArrowUp')pitch=Math.min(1.2,pitch+.06);if(e.key==='ArrowDown')pitch=Math.max(-1.2,pitch-.06);look();}
   });
@@ -406,7 +431,7 @@ async function main() {
   else if(query.get('play')==='1') setPlaying(true);            // straight in, for checks
   { const loading=$('loading'); loading.classList.add('gone'); setTimeout(()=>loading.remove(),700); } refresh();      // (the loading screen fades out)
   // Read-only diagnostics for verification and tuning, no per-frame DOM work.
-  if (import.meta.env.DEV) Object.assign(window,{__vr3:{world,garden,blade,letters,liveBlade,sounds,made,choose:(id:string)=>choose(levelById(id)??LEVELS[0]),setPlaying,flame,get now(){return now;},
+  if (import.meta.env.DEV) Object.assign(window,{__vr3:{world,garden,blade,letters,liveBlade,sounds,made,howto,mail,choose:(id:string)=>choose(levelById(id)??LEVELS[0]),setPlaying,flame,get now(){return now;},
     // run the game forward by hand, for checks where the page gets few animation frames (a hidden or background pane)
     step:(seconds:number,rate=60)=>{let t=performance.now()/1000;for(let i=Math.round(seconds*rate);i>0;i--){t+=1/rate;world.update(1/rate,t);}world.renderer.render(world.scene,world.camera);}}});   // for poking at from the console while developing
   Object.assign(window,{gardenDiagnostics:()=>({level:now.level.id,playing,blend:settings.blend,elapsed:settings.elapsed,duration:settings.duration,depth:settings.depth,motion:settings.motion,quality:settings.quality,calls:world.renderer.info.render.calls,triangles:world.renderer.info.render.triangles,textures:world.renderer.info.memory.textures,xr:world.renderer.xr.isPresenting,music:music.diagnostics(),sounds:sounds.diagnostics(),swingFx:swingFx.diagnostics(),letters:letters.diagnostics(),sword:now.weapon?now.weapon.diagnostics():sword.diagnostics(),mist:mist.diagnostics(),dictate:dictate.diagnostics()})});

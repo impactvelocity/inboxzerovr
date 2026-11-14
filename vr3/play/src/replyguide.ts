@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as PixelFont from './mail/pixelFont';
 import {
   buildHand, cardPiece, pickable, clamp01, dotTexture, easeIn, easeOut, glowing, paintCard, ramp, sample, smooth, sparks,
-  CARD_H, CARD_W, L_REST, type HandGuide, type Key,
+  CARD_H, CARD_W, L_REST, type GuideScene, type HandGuide, type Key,
 } from './handguide';
 
 /**
@@ -20,7 +20,8 @@ import {
 type Side = 'left' | 'right';
 const TURN = 4.4;                 // seconds each card has the light
 /** Which words light when: [from, to] in that card's own seconds. */
-const STEPS: Record<string, [number, number]> = { 'left:0': [0.45, 1.4], 'left:1': [1.4, 2.85], 'right:0': [0.45, 1.3], 'right:1': [1.3, 3.3] };
+// (the top words light sooner, from 0.45 s: 2026-11-14, as in handguide.ts)
+const STEPS: Record<string, [number, number]> = { 'left:0': [0.15, 1.4], 'left:1': [1.4, 2.85], 'right:0': [0.15, 1.3], 'right:1': [1.3, 3.3] };
 
 // The hand holds an email from the start (it was grabbed in round one); it barely moves.
 const HOLD = new THREE.Vector3(0.05, 0.135, -0.3);           // where the email hangs from the hand
@@ -112,16 +113,10 @@ function ringMaterial(colour: { value: THREE.Color }, cells = 21) {
       }` });
 }
 
-export async function createReplyGuide(host: HTMLElement): Promise<HandGuide> {
-  const canvas = host.querySelector('canvas')!;
-  const steps = Array.from(host.querySelectorAll<HTMLElement>('[data-step]'));
-  const cards = { left: host.querySelector<HTMLElement>('[data-hand=left]')!, right: host.querySelector<HTMLElement>('[data-hand=right]')! };
-  const views = { left: cards.left.querySelector<HTMLElement>('.hand-view')!, right: cards.right.querySelector<HTMLElement>('.hand-view')! };
+/** Round Two's hands (see GuideScene in handguide.ts): card one answers with a reply, card two with the mic. */
+export async function buildReplyScene(): Promise<GuideScene> {
   const tint = { value: new THREE.Color('#f6b3cc') }, hot = { value: new THREE.Color() };
   const [handA, handB] = await Promise.all([buildHand('left', tint), buildHand('left', tint)]);
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
-  renderer.setClearColor(0x000000, 0); renderer.toneMapping = THREE.NoToneMapping; renderer.setScissorTest(true);
   const scene = new THREE.Scene();
   const backdrop = document.createElement('canvas'); backdrop.width = backdrop.height = 256;
   const backing = new THREE.CanvasTexture(backdrop); backing.colorSpace = THREE.SRGBColorSpace; scene.background = backing;
@@ -197,8 +192,8 @@ export async function createReplyGuide(host: HTMLElement): Promise<HandGuide> {
     kitted.email.position.lerpVectors(at, goal, k); kitted.email.scale.setScalar(size);
   }
 
-  function draw(ta: number, tb: number, lit: Side | 'both' = 'both') {
-    cards.left.classList.toggle('on', lit !== 'right'); cards.right.classList.toggle('on', lit !== 'left');
+  /** Both cards, each at its own time. */
+  function pose(ta: number, tb: number) {
     // ── card one: to a reply at one side; its ring fills; sent
     const s = side, chosen = bubbles.find(b => b.s === s)!, other = bubbles.find(b => b.s !== s)!;
     to.copy(chosen.group.position); to.z += 0.012; to.x -= 0.06 * s; to.y -= 0.026;      // (over the reply's inner, lower part: in it, but most of the reply still shows, 2026-11-13)      // (beside the reply, over its inner edge: the reply still shows, as in the game)
@@ -247,7 +242,39 @@ export async function createReplyGuide(host: HTMLElement): Promise<HandGuide> {
     B.burst.at(MIC, tb - SENT, 0.6, 0.45);
     B.hand.lit.value = Math.max(0, 1 - Math.abs(tb - SENT) / 0.25) * 0.6;
 
-    for (const step of steps) { const [card] = step.dataset.step!.split(':'), span = STEPS[step.dataset.step!], t = card === 'left' ? ta : tb; step.classList.toggle('on', !!span && moving && t >= span[0] && t < span[1]); }
+  }
+  function accent(colour: string) {
+    accentCss = colour.trim() || '#f6b3cc';
+    tint.value.set(accentCss); hot.value.copy(tint.value).lerp(new THREE.Color('#ffffff'), 0.25);
+    A.burst.points.material.color.copy(hot.value); B.burst.points.material.color.copy(hot.value);
+    paintCard(cardArt, accentCss); cardMap.needsUpdate = true;
+    for (const [where, looks] of Object.entries(bubbleArt)) for (const sent of [false, true]) {
+      const one = sent ? looks.sent : looks.plain; paintBubble(one.a, accentCss, sent, where === 'left', where === 'left' ? 'A' : 'B'); one.map.needsUpdate = true;
+    }
+    const g = backdrop.getContext('2d')!, pool = g.createRadialGradient(128, 138, 0, 128, 138, 180);
+    pool.addColorStop(0, `color-mix(in srgb, ${accentCss} 16%, #17141f)`); pool.addColorStop(0.55, '#110f18'); pool.addColorStop(1, '#09080d');
+    g.fillStyle = '#110f18'; g.fillRect(0, 0, 256, 256); g.fillStyle = pool; g.fillRect(0, 0, 256, 256); backing.needsUpdate = true;
+  }
+  accent('#f6b3cc');
+  void easeIn; void smooth; void CARD_W;
+  return { scene, cameras: { left: cameraA, right: cameraB }, pose, accent, loops: { left: TURN, right: TURN }, steps: STEPS,
+    debug: { cameraA, cameraB, bubbles, mic, setSide: (s: number) => { side = s; } } };
+}
+
+export async function createReplyGuide(host: HTMLElement): Promise<HandGuide> {
+  const canvas = host.querySelector('canvas')!;
+  const steps = Array.from(host.querySelectorAll<HTMLElement>('[data-step]'));
+  const cards = { left: host.querySelector<HTMLElement>('[data-hand=left]')!, right: host.querySelector<HTMLElement>('[data-hand=right]')! };
+  const views = { left: cards.left.querySelector<HTMLElement>('.hand-view')!, right: cards.right.querySelector<HTMLElement>('.hand-view')! };
+  const built = await buildReplyScene(), { scene } = built, cameraA = built.cameras.left, cameraB = built.cameras.right;
+  scene.background = null;      // (see-through on the page, as in handguide.ts; the dark backdrop stays for VR)
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
+  renderer.setClearColor(0x000000, 0); renderer.toneMapping = THREE.NoToneMapping; renderer.setScissorTest(true);
+
+  function draw(ta: number, tb: number, lit: Side | 'both' = 'both') {
+    cards.left.classList.toggle('on', lit !== 'right'); cards.right.classList.toggle('on', lit !== 'left');
+    built.pose(ta, tb);
+    for (const step of steps) { const [card] = step.dataset.step!.split(':'), span = built.steps[step.dataset.step!], t = card === 'left' ? ta : tb; step.classList.toggle('on', !!span && moving && t >= span[0] && t < span[1]); }
 
     const box = canvas.getBoundingClientRect();
     renderer.setScissorTest(false); renderer.clear(); renderer.setScissorTest(true);
@@ -279,23 +306,11 @@ export async function createReplyGuide(host: HTMLElement): Promise<HandGuide> {
     start() { if (frame) return; moving = true; guide.pick('left'); frame = requestAnimationFrame(tick); },      // (shown, the first card plays by itself)
     pick(side) { active = side; began = performance.now(); cards.left.setAttribute('aria-pressed', String(side === 'left')); cards.right.setAttribute('aria-pressed', String(side === 'right')); },
     stop() { cancelAnimationFrame(frame); frame = 0; moving = false; for (const step of steps) step.classList.remove('on'); cards.left.classList.remove('on'); cards.right.classList.remove('on'); },
-    accent(colour) {
-      accentCss = colour.trim() || '#f6b3cc';
-      tint.value.set(accentCss); hot.value.copy(tint.value).lerp(new THREE.Color('#ffffff'), 0.25);
-      A.burst.points.material.color.copy(hot.value); B.burst.points.material.color.copy(hot.value);
-      paintCard(cardArt, accentCss); cardMap.needsUpdate = true;
-      for (const [where, looks] of Object.entries(bubbleArt)) for (const sent of [false, true]) {
-        const one = sent ? looks.sent : looks.plain; paintBubble(one.a, accentCss, sent, where === 'left', where === 'left' ? 'A' : 'B'); one.map.needsUpdate = true;
-      }
-      const g = backdrop.getContext('2d')!, pool = g.createRadialGradient(128, 138, 0, 128, 138, 180);
-      pool.addColorStop(0, `color-mix(in srgb, ${accentCss} 16%, #17141f)`); pool.addColorStop(0.55, '#110f18'); pool.addColorStop(1, '#09080d');
-      g.fillStyle = '#110f18'; g.fillRect(0, 0, 256, 256); g.fillStyle = pool; g.fillRect(0, 0, 256, 256); backing.needsUpdate = true;
-    },
+    accent(colour) { built.accent(colour); },
     frame(ta, tb, lit) { if (fit()) { moving = true; draw(ta, tb, lit); canvas.classList.add('ready'); } },
   };
   guide.accent(getComputedStyle(host).getPropertyValue('--accent'));
   pickable(cards, side => { if (frame) guide.pick(side); });
-  if (import.meta.env.DEV) Object.assign(window, { __reply: { ...guide, cameraA, cameraB, bubbles, mic, setSide: (s: number) => { side = s; } } });
-  void easeIn; void smooth; void CARD_W;
+  if (import.meta.env.DEV) Object.assign(window, { __reply: { ...guide, ...built.debug } });
   return guide;
 }

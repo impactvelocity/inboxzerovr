@@ -1,4 +1,5 @@
 import type { Level } from './levels';
+import { uiSound } from './uisound';
 import * as PixelFont from './mail/pixelFont';
 import { thumbBackground } from './thumbs';
 
@@ -42,6 +43,9 @@ const ANNOUNCE: Record<string, string> = { lumber: 'audio/lumber/announce.mp3', 
  * sets them. With no agent code it says ENTER CODE and opens the code card instead of starting.
  */
 const startControl = { label: 'Enter Code', gate: null as null | (() => boolean), apply: () => {} };
+/** The keypad's pixel words drop a near-black shadow (2026-11-14: "have a dark black text shadow, it appears to be white"). */
+export const KEYPAD_SHADOW = 'rgba(0,0,0,.9)';
+
 export const startButton = {
   /** The main button's words (shown once the VR check is done). */
   setLabel(text: string) { startControl.label = text; startControl.apply(); },
@@ -338,14 +342,15 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
   }
 
   let vr = false;
-  start.addEventListener('click', () => { if (startControl.gate && !startControl.gate()) return; options.start(vr ? 'vr' : 'screen'); });
+  // (a retro confirm on the player's own press: src/uisound.ts; Just Play, Play Again and Inbox Ready's Play press it for them, with their own)
+  start.addEventListener('click', event => { if (event.isTrusted) uiSound('confirm'); if (startControl.gate && !startControl.gate()) return; options.start(vr ? 'vr' : 'screen'); });
   startControl.apply = () => { if (!start.disabled) pixelLabel(start, startControl.label, 3, '#14121a'); };
   here.addEventListener('click', () => options.start('screen'));
   document.getElementById('open-settings')!.addEventListener('click', options.settings);
   // The buttons' words in the pixel letters (the main one bigger, dark on the level's colour)
   pixelLabel(start, start.textContent ?? '', 3, '#14121a');
   document.querySelectorAll<HTMLButtonElement>('#home button.pix:not(#start):not(.icon)').forEach(button =>
-    pixelLabel(button, button.textContent ?? '', 2, button.classList.contains('close-dialog') ? '#14121a' : '#ffffff'));
+    pixelLabel(button, button.textContent ?? '', 2, button.matches('.close-dialog, .go') ? '#14121a' : '#ffffff', button.closest('#code') && !button.matches('.go') ? KEYPAD_SHADOW : undefined));
   drawGear(document.querySelector<HTMLCanvasElement>('#open-settings canvas.gear')!);
   // top right: a loop like Meta's, to the hackathon
   const hackathon = document.getElementById('hackathon') as HTMLAnchorElement;
@@ -357,8 +362,9 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
   const guide = document.getElementById('guide') as HTMLDialogElement;
   guide.querySelectorAll<HTMLElement>('.px-words').forEach(pixelWords);      // (its tabs, the hands' words and Reply's steps: 2026-11-13, "use the pixel font")
   for (const dialog of [guide]) {
-    dialog.querySelectorAll('.close-dialog').forEach(button => button.addEventListener('click', () => dialog.close()));
-    dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });        // (a click outside the card)
+    dialog.querySelectorAll('.close-dialog').forEach(button => button.addEventListener('click', () => { uiSound('back'); dialog.close(); }));
+    dialog.addEventListener('click', event => { if (event.target === dialog) { uiSound('back'); dialog.close(); } });        // (a click outside the card)
+    dialog.addEventListener('cancel', () => uiSound('back'));      // (Escape)
   }
   // Its hands (src/handguide.ts for Round One, src/replyguide.ts for Round Two, 2026-11-13) are built the first time
   // their tab shows, and move only while it does. If they cannot be fetched the tab is its words alone.
@@ -373,7 +379,16 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
     if (hands) run(hands, handHost, round === 'sort');
     if (replies) run(replies, replyHost, round === 'reply');
   };
+  // the line under each round's cards in the pixel letters, its bold words in the level's colour (2026-11-14: "make the round text
+  // ie: one email at a time - pixel font"); drawn on opening, so the colour is the level chosen now
+  const ledes = Array.from(guide.querySelectorAll<HTMLElement>('.guide-lede')).map(p => ({ p, parts: Array.from(p.childNodes).map(n => ({ text: n.textContent ?? '', strong: n.nodeName === 'B' })) }));
+  const drawLedes = () => {
+    const accent = getComputedStyle(guide).getPropertyValue('--accent').trim() || '#f6b3cc';
+    for (const { p, parts } of ledes) pixelSentence(p, parts, 2, '#ffffff', accent);
+  };
   document.getElementById('open-guide')!.addEventListener('click', () => {
+    uiSound('confirm');      // (the same as Enter Code: 2026-11-14)
+    drawLedes();
     guide.showModal(); guide.focus();      // (the card takes the focus, so no tab wears a focus ring on opening)
     play('sort');
   });
@@ -382,20 +397,32 @@ export function createHome(options: { levels: Level[]; pick(level: Level): void;
   const tabs = Array.from(guide.querySelectorAll<HTMLButtonElement>('[role=tab]'));
   const showTab = (chosen: HTMLButtonElement, focus = false) => {
     for (const tab of tabs) {
-      const on = tab === chosen; tab.setAttribute('aria-selected', String(on)); tab.tabIndex = on ? 0 : -1;
-      document.getElementById(tab.getAttribute('aria-controls')!)!.hidden = !on;
+      const on = tab === chosen, panel = document.getElementById(tab.getAttribute('aria-controls')!)!;
+      // (a tab chosen while it is open: its cards and words pop in, as on opening; 2026-11-14, "same when switching tabs")
+      const fresh = on && panel.hidden && guide.open;
+      tab.setAttribute('aria-selected', String(on)); tab.tabIndex = on ? 0 : -1;
+      panel.hidden = !on;
+      panel.classList.remove('pop');
+      if (fresh) { void panel.offsetWidth; panel.classList.add('pop'); }
     }
     if (focus) chosen.focus();
     if (guide.open) play(chosen.id === 'tab-sort' ? 'sort' : 'reply');
   };
+  // a sound as a card or a tab is picked (2026-11-14: "make a sound when slecting a card and changing the tabs here"; Kyoto's hits, then
+  // Super Space's, then "better UI noises / retro game ... instead of the in game noises": src/uisound.ts)
+  const pickCard = () => uiSound('key', { pitch: 0.96 + Math.random() * 0.1 });      // (the keypad's tick, cards and tabs alike: 2026-11-14)
+  guide.querySelectorAll<HTMLElement>('.hand-card').forEach(card => {
+    card.addEventListener('click', pickCard);
+    card.addEventListener('keydown', event => { if (event.key === 'Enter' || event.key === ' ') pickCard(); });
+  });
   tabs.forEach((tab, i) => {
-    tab.addEventListener('click', () => showTab(tab));
+    tab.addEventListener('click', () => { if (tab.getAttribute('aria-selected') !== 'true') uiSound('key', { pitch: 1.12 }); showTab(tab); });
     tab.addEventListener('keydown', event => {
       const step = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
-      if (step) { event.preventDefault(); showTab(tabs[(i + step + tabs.length) % tabs.length], true); }
+      if (step) { event.preventDefault(); uiSound('key', { pitch: 1.12 }); showTab(tabs[(i + step + tabs.length) % tabs.length], true); }
     });
   });
-  guide.addEventListener('close', () => showTab(tabs[0]));      // (it opens on Round One next time)
+  guide.addEventListener('close', () => window.setTimeout(() => { if (!guide.open) showTab(tabs[0]); }, 320));      // (it opens on Round One next time: once it has faded out)
 
   return {
     /** Mark a level's card as the chosen one, and show its logo. */
@@ -438,9 +465,10 @@ function drawName(canvas: HTMLCanvasElement, name: string, cell: number) {
   g.clearRect(0, 0, w, h);
   const tall = (PixelFont.Rows + 3) * cell, top0 = h - lines.length * tall + 3 * cell, drop = Math.max(2, Math.round(cell * 0.45));
   lines.forEach((line, i) => {
-    const top = top0 + i * tall;
-    g.fillStyle = 'rgba(0,0,0,.75)'; PixelFont.cells(line, 4, top + drop, cell, (x, y, cw, ch) => g.fillRect(x, y, cw, ch));
-    g.fillStyle = '#ffffff'; PixelFont.cells(line, 4, top, cell, (x, y, cw, ch) => g.fillRect(x, y, cw, ch));
+    // (centred on the card: 2026-11-14, "make level select titles center text align")
+    const top = top0 + i * tall, left = Math.max(0, Math.round((w - PixelFont.width(line, cell)) / 2));
+    g.fillStyle = 'rgba(0,0,0,.75)'; PixelFont.cells(line, left, top + drop, cell, (x, y, cw, ch) => g.fillRect(x, y, cw, ch));
+    g.fillStyle = '#ffffff'; PixelFont.cells(line, left, top, cell, (x, y, cw, ch) => g.fillRect(x, y, cw, ch));
   });
 }
 
@@ -463,17 +491,35 @@ export function pixelWords(element: HTMLElement) {
   shown.style.maskImage = mask; shown.style.setProperty('-webkit-mask-image', mask);
   element.replaceChildren(said, shown);
 }
-export function pixelLabel(button: HTMLElement, text: string, cell: number, colour: string) {
+/** `shadow`: the drop under the letters (by default dark under white, light under a colour). */
+export function pixelLabel(button: HTMLElement, text: string, cell: number, colour: string, shadow?: string) {
   const upper = text.toUpperCase(), scale = 2, c = cell * scale, drop = Math.max(2, Math.round(c * 0.5));
   const canvas = document.createElement('canvas');
   canvas.width = PixelFont.width(upper, c) + 2; canvas.height = PixelFont.Rows * c + drop;
   canvas.style.width = `${canvas.width / scale}px`; canvas.style.height = `${canvas.height / scale}px`;
   const g = canvas.getContext('2d');
   if (g) {
-    g.fillStyle = colour === '#ffffff' ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.35)'; PixelFont.cells(upper, 1, drop, c, (x, y, w, h) => g.fillRect(x, y, w, h));
+    g.fillStyle = shadow ?? (colour === '#ffffff' ? 'rgba(0,0,0,.55)' : 'rgba(255,255,255,.35)'); PixelFont.cells(upper, 1, drop, c, (x, y, w, h) => g.fillRect(x, y, w, h));
     g.fillStyle = colour; PixelFont.cells(upper, 1, 0, c, (x, y, w, h) => g.fillRect(x, y, w, h));
   }
   button.setAttribute('aria-label', text); button.replaceChildren(canvas);
+}
+/**
+ * A sentence in the pixel letters, a canvas a word, so it wraps like words do; `strong` parts in `accent`.
+ * The words stay the element's name for screen readers.
+ */
+export function pixelSentence(element: HTMLElement, parts: { text: string; strong: boolean }[], cell: number, colour: string, accent: string) {
+  const words: HTMLElement[] = [];
+  for (const part of parts) for (const word of part.text.split(/\s+/).filter(Boolean)) {
+    const span = document.createElement('span'); span.className = 'px-word';
+    pixelLabel(span, word, cell, part.strong ? accent : colour, 'rgba(0,0,0,.85)');
+    words.push(span);
+    // (a line ends after a word with a colon: "One email at a time:" then the rest, not a lone word on a third line)
+    if (word.endsWith(':')) { const cut = document.createElement('span'); cut.className = 'px-break'; words.push(cut); }
+  }
+  element.setAttribute('aria-label', parts.map(p => p.text).join('').replace(/\s+/g, ' ').trim());
+  element.classList.add('px-sentence');
+  element.replaceChildren(...words);
 }
 /** A gear for Settings, drawn in pixels to go with the pixel words. */
 function drawGear(canvas: HTMLCanvasElement) {

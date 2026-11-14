@@ -32,20 +32,48 @@ html,body{margin:0;background:#06050a}
   <div class="start-pair"><button id="open-guide" class="pix">How to Play</button><span class="start-wrap"><button id="start" class="pix" disabled>Checking VR…</button></span><button id="just-play" class="pix" title="Play the demo inbox: made-up emails">Just Play</button></div>
   <button id="open-settings" class="pix icon" aria-label="Settings" title="Settings" hidden><canvas class="gear" aria-hidden="true"></canvas></button>
  </div>
+ <!-- after a real game: what it came to, Play Again and Back (src/results.ts, 2026-11-14) -->
+ <section id="results" aria-labelledby="results-title" hidden>
+  <h2 id="results-title" class="results-title">Inbox Cleared</h2>
+  <p id="results-sub" class="results-sub"></p>
+  <div id="results-tally" class="results-tally"></div>
+  <div id="results-replies" class="results-replies"></div>
+  <div class="results-note pixbox">
+   <h3 id="results-note-title" class="results-h">Tell your agent you're done</h3>
+   <p id="results-lead" class="lead"></p>
+   <p>Your inbox wasn't touched. This game never signs in to your email.</p>
+   <p>This game is deleted from our server as soon as your agent picks it up.</p>
+   <p id="results-status" class="results-status" role="status" hidden></p>
+  </div>
+  <div class="results-actions"><button id="results-back" class="pix">Back</button><span class="start-wrap"><button id="results-again" class="pix">Play Again</button></span></div>
+ </section>
  <p id="mail-status" role="status"></p>
  <p id="xr-status" role="status"></p><button id="start-here" class="link" hidden>or play on this screen</button>
  <dialog id="code" class="card-dialog code-card" aria-labelledby="code-title">
-  <h2 id="code-title">Enter Code</h2>
+  <!-- (2026-11-14: "animate the keypad away - top part goes up and away, and bottom down and away / then show the loading
+       state with text / then after found - show the play button": the top and bottom fly apart, then .code-find shows) -->
+  <div class="code-top">
+  <h2 id="code-title">Enter Inbox Code</h2>
   <!-- (its subtitle, "The 4-digit code from your AI agent", dropped 2026-11-13) -->
   <div class="code-slots" role="img" aria-label="No digits yet"><span></span><span></span><span></span><span></span></div>
   <p class="code-state" id="code-state" role="status"></p>
+  </div>
+  <div class="code-bottom">
   <div class="code-pad" role="group" aria-label="Keypad">
    <button class="pix" data-key="1">1</button><button class="pix" data-key="2">2</button><button class="pix" data-key="3">3</button>
    <button class="pix" data-key="4">4</button><button class="pix" data-key="5">5</button><button class="pix" data-key="6">6</button>
    <button class="pix" data-key="7">7</button><button class="pix" data-key="8">8</button><button class="pix" data-key="9">9</button>
    <button class="pix" data-key="clear">Clr</button><button class="pix" data-key="0">0</button><button class="pix" data-key="back">Del</button>
   </div>
-  <div class="dialog-actions"><button id="code-cancel" class="pix">Back</button><button id="code-play" class="pix close-dialog" disabled>Play</button></div>
+  <div class="dialog-actions"><button id="code-cancel" class="pix">Back</button><button id="code-play" class="pix go" disabled>Play</button></div>
+  </div>
+  <div class="code-find" id="code-find" data-state="pad" aria-live="polite">
+   <p class="find-code" id="find-code"></p>
+   <h2 class="find-title" id="find-title"></h2>
+   <div class="find-dots" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+   <p class="find-line" id="find-line"></p>
+   <div class="find-actions"><button id="find-back" class="pix">Back</button><button id="find-retry" class="pix">Try Again</button><span class="start-wrap"><button id="find-play" class="pix go">Play</button></span></div>
+  </div>
  </dialog>
  <dialog id="guide" class="card-dialog guide-card" aria-label="How to Play" tabindex="-1">
   <div class="guide-box">
@@ -64,7 +92,7 @@ html,body{margin:0;background:#06050a}
     <div class="hand-card pixbox" data-hand="left" role="button" tabindex="0" aria-pressed="false"><span class="px-words" data-step="left:0">Grab to read</span><div class="hand-view"></div><span class="px-words" data-step="left:2">Throw to keep</span></div>
     <div class="hand-card pixbox" data-hand="right" role="button" tabindex="0" aria-pressed="false"><span class="px-words" data-step="right:0">Grip to arm</span><div class="hand-view"></div><span class="px-words" data-step="right:1">Slash to clear</span></div>
    </div>
-   <p class="guide-lede">One email at a time: <b>keep</b> it for round two, or <b>slash</b> it to archive</p>
+   <p class="guide-lede">One email at a time: <b>keep</b> it or <b>slash</b> to archive</p>
   </div>
   <div class="guide-panel" id="round-reply" role="tabpanel" aria-labelledby="tab-reply" hidden>
    <!-- (2026-11-13: "make two cards for the reply - move to either side to reply", "right side card - hold near to record message",

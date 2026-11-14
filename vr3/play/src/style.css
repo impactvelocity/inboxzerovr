@@ -30,11 +30,11 @@ body:not(.at-home) #home{opacity:0;visibility:hidden;pointer-events:none}
 .logo-img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transform:scale(.96);transition:opacity .45s ease,transform .6s cubic-bezier(.2,1.4,.4,1)}
 .logo-img.on{opacity:1;transform:none}
 .logo-shine{position:absolute;inset:0;z-index:2;pointer-events:none;-webkit-mask-size:contain;mask-size:contain;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-position:center;mask-position:center;
-  background:linear-gradient(105deg,#fff0 40%,#ffffffd9 48%,#fff 50%,#ffffffd9 52%,#fff0 60%) no-repeat;background-size:250% 100%;background-position:130% 0;opacity:0;mix-blend-mode:screen}
+  background:linear-gradient(105deg,#fff0 38%,#ffffff8c 47%,#ffffffe6 50%,#ffffff8c 53%,#fff0 62%) no-repeat;background-size:250% 100%;background-position:130% 0;opacity:0;mix-blend-mode:screen}
 .logo-shine.go{animation:logo-shine .9s cubic-bezier(.4,0,.2,1)}
 .logo-air{position:absolute;left:-12%;top:-35%;width:124%;height:170%;pointer-events:none;z-index:3}
 @keyframes logo-float{0%,100%{transform:translateY(0) rotate(-.4deg)}50%{transform:translateY(-7px) rotate(.4deg)}}
-@keyframes logo-shine{0%{opacity:1;background-position:130% 0}100%{opacity:1;background-position:-30% 0}}
+@keyframes logo-shine{0%{opacity:.5;background-position:130% 0}100%{opacity:.5;background-position:-30% 0}}      /* (2026-11-14: "a bit more subtle, less opacity, so its not so obvious": half strength, a softer peak) */
 .credit{display:block;width:min(70vw,360px);height:auto;image-rendering:pixelated;filter:drop-shadow(0 1px 6px #000) drop-shadow(0 0 2px #000)}
 .tagline{display:none;margin-top:clamp(-10px,-1vh,-4px);width:min(74vw,440px);height:auto;image-rendering:pixelated;filter:drop-shadow(0 2px 10px #000)}      /* (dropped from the home screen 2026-11-12, asked for; home.ts still draws it) */
 #levels{--gap:clamp(8px,1.2vw,16px);--across:4;display:flex;flex-wrap:wrap;justify-content:center;gap:var(--gap);width:min(100%,1040px,125vh)}
@@ -104,6 +104,36 @@ button.link:hover{background:none;opacity:1}
 /* Setup and How to Play: a card over the home screen */
 .card-dialog{width:min(92vw,460px);max-height:84vh;overflow:auto;padding:24px 26px 20px;border:1px solid color-mix(in srgb,var(--accent,#f6b3cc) 55%,transparent);border-radius:16px;background:#14121af2;color:#f3eef8;box-shadow:0 30px 90px -20px #000,0 0 40px -18px var(--accent,#f6b3cc);font:14px/1.5 'Helvetica Neue',Arial,sans-serif}
 .card-dialog::backdrop{background:#06050acc;backdrop-filter:blur(4px)}
+/* How to Play and the keypad open and close in parts (2026-11-14: "a subtle open and close animation", then "make load in and out
+   animation a bit more fun in parts / And same when switching tabs"). The window and its dark backdrop fade; its parts pop in one after
+   another, each from a little below and a little small with a bounce (--d: when), and drop out quickly in turn as it closes (--o).
+   A tab's cards and words pop in again as it is shown (its panel comes back from display:none, so @starting-style applies again).
+   The hands' canvas draws into each card where it is, so the hands ride along with their card. Browsers without @starting-style just snap. */
+#guide,#code{opacity:1;transition:opacity .16s ease-out,overlay .3s allow-discrete,display .3s allow-discrete}
+#guide:not([open]),#code:not([open]){opacity:0;transition:opacity .14s ease-in .14s,overlay .3s allow-discrete,display .3s allow-discrete}
+#guide::backdrop,#code::backdrop{opacity:1;transition:opacity .22s ease-out,overlay .3s allow-discrete,display .3s allow-discrete}
+#guide:not([open])::backdrop,#code:not([open])::backdrop{opacity:0;transition:opacity .26s ease-in,overlay .3s allow-discrete,display .3s allow-discrete}
+@starting-style{#guide[open],#code[open]{opacity:0}#guide[open]::backdrop,#code[open]::backdrop{opacity:0}}
+#guide .guide-tabs,#guide .hand-card,#guide .guide-lede,#guide .guide-close,#code #code-title,#code .code-slots,#code .code-pad,#code .dialog-actions{
+  transition:opacity .2s ease-out var(--d,0s),transform .5s cubic-bezier(.2,1.6,.4,1) var(--d,0s)}
+#guide:not([open]) :is(.guide-tabs,.hand-card,.guide-lede,.guide-close),#code:not([open]) :is(#code-title,.code-slots,.code-pad,.dialog-actions){
+  opacity:0;transform:translateY(12px) scale(.94);transition:opacity .14s ease-in var(--o,0s),transform .16s cubic-bezier(.5,0,.8,.4) var(--o,0s)}
+@starting-style{#guide[open] :is(.guide-tabs,.hand-card,.guide-lede,.guide-close),#code[open] :is(#code-title,.code-slots,.code-pad,.dialog-actions){opacity:0;transform:translateY(18px) scale(.86)}}
+#guide .guide-tabs{--d:0s;--o:.12s}
+#guide .hand-card[data-hand=left]{--d:.06s;--o:.08s}
+#guide .hand-card[data-hand=right]{--d:.12s;--o:.06s}
+#guide .guide-lede{--d:.18s;--o:.03s}
+#guide .guide-close{--d:.23s;--o:0s}
+#code #code-title{--d:0s;--o:.12s}
+#code .code-slots{--d:.06s;--o:.08s}
+#code .code-pad{--d:.12s;--o:.04s}
+#code .dialog-actions{--d:.18s;--o:0s}
+@keyframes part-pop{from{opacity:0;transform:translateY(18px) scale(.86)}}
+#guide[open] .guide-panel.pop :is(.hand-card,.guide-lede){animation:part-pop .5s cubic-bezier(.2,1.6,.4,1) both}
+#guide[open] .guide-panel.pop .hand-card[data-hand=left]{animation-delay:0s}
+#guide[open] .guide-panel.pop .hand-card[data-hand=right]{animation-delay:.06s}
+#guide[open] .guide-panel.pop .guide-lede{animation-delay:.12s}
+@media(prefers-reduced-motion:reduce){#guide .guide-panel.pop :is(.hand-card,.guide-lede){animation:none}#guide :is(.guide-tabs,.hand-card,.guide-lede,.guide-close),#code :is(#code-title,.code-slots,.code-pad,.dialog-actions){transform:none!important}}
 .card-dialog h2{margin:0 0 12px;font-size:13px;letter-spacing:.24em;text-transform:uppercase;color:var(--accent,#f6b3cc)}
 .card-dialog h3{margin:14px 0 4px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.8}
 .card-dialog p{margin:0}
@@ -113,7 +143,7 @@ button.link:hover{background:none;opacity:1}
    hands as two cards (src/handguide.ts draws both into the one canvas laid under them, and lights one card at a time). */
 .guide-card{width:min(94vw,620px);max-height:none;overflow:visible;padding:0;border:0;border-radius:0;background:none;box-shadow:none}      /* (the card is .guide-box inside; Close sits under it, outside the card) */
 .guide-box{padding:0 4px}      /* (no panel of its own: the tabs, cards and words float over the blurred page, 2026-11-13: "drop the modal background, border, etc so its more floating feeling") */
-.guide-close{display:flex;justify-content:center;margin-top:24px}
+.guide-close{display:flex;justify-content:center;margin-top:10px}      /* (closer to the words, easier to reach on the Quest: 2026-11-14, was 24px) */
 #home .guide-close .pix{min-width:140px;padding:14px 26px 16px}
 /* the tabs: a segmented control in the pixel buttons' shape (#home .pix), the chosen round filled with the level's colour */
 #home .guide-tabs.pix{--s:3px;--edge:color-mix(in srgb,var(--accent,#f6b3cc) 45%,#2a2733);--face:#0f0d14;display:grid;grid-template-columns:1fr 1fr;place-items:stretch;gap:4px;width:100%;margin:6px 0 18px;padding:7px;cursor:default}
@@ -136,6 +166,10 @@ button.link:hover{background:none;opacity:1}
 .card-dialog .reply-steps b{color:#fff;margin-bottom:6px}
 .reply-steps span{font-size:13px;color:#f3eef899}
 .guide-card:focus{outline:none}      /* (it takes the focus itself on opening, so no tab wears a focus ring then) */
+.card-dialog .guide-lede.px-sentence{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;column-gap:10px;row-gap:0;max-width:600px;line-height:0;filter:drop-shadow(0 2px 10px #000)}      /* (in the pixel letters since 2026-11-14: src/home.ts pixelSentence) */
+.guide-lede .px-word{padding:8px 0}      /* (lines a little further apart: 2026-11-14) */
+.guide-lede .px-word canvas{display:block;image-rendering:pixelated}
+.guide-lede .px-break{flex-basis:100%;height:0}
 .card-dialog .guide-lede{max-width:28em;margin:26px auto 4px;font-size:20px;line-height:1.4;color:#f3eef8e6;text-shadow:0 2px 14px #000,0 0 3px #000;text-align:center;text-wrap:balance}      /* (balanced lines, no full stop at the end: 2026-11-13) */
 .hand-guide{position:relative;isolation:isolate;display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .hand-guide canvas{position:absolute;inset:0;z-index:1;width:100%;height:100%;pointer-events:none;opacity:0;transition:opacity .5s}
@@ -147,15 +181,20 @@ button.link:hover{background:none;opacity:1}
 .pixbox::before,.pixbox::after{content:'';position:absolute;inset:0;z-index:-1;clip-path:var(--shape);background:var(--edge);transition:background .3s}
 .pixbox::after{inset:var(--s);background:var(--face);box-shadow:inset 0 -4px 0 0 #00000040,inset 0 3px 0 0 #ffffff12}
 .hand-card{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px;padding:15px 8px 15px;text-align:center}
-.hand-card{--face:#09080d}      /* (the colour at the edge of the hands' backdrop: the card and its window run together, 2026-11-13) */
+.hand-card{--face:#09080d8c}      /* (see-through, the level select showing through, blurred: 2026-11-14, "have the card for each part have a transparent ish background") */
+.hand-card.pixbox::after{-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.hand-card.pixbox::before{transition:none;clip-path:polygon(evenodd,0px calc(var(--s) * 2),var(--s) calc(var(--s) * 2),var(--s) var(--s),calc(var(--s) * 2) var(--s),calc(var(--s) * 2) 0px,calc(100% - calc(var(--s) * 2)) 0px,calc(100% - calc(var(--s) * 2)) var(--s),calc(100% - var(--s)) var(--s),calc(100% - var(--s)) calc(var(--s) * 2),calc(100% - 0px) calc(var(--s) * 2),calc(100% - 0px) calc(100% - calc(var(--s) * 2)),calc(100% - var(--s)) calc(100% - calc(var(--s) * 2)),calc(100% - var(--s)) calc(100% - var(--s)),calc(100% - calc(var(--s) * 2)) calc(100% - var(--s)),calc(100% - calc(var(--s) * 2)) calc(100% - 0px),calc(var(--s) * 2) calc(100% - 0px),calc(var(--s) * 2) calc(100% - var(--s)),var(--s) calc(100% - var(--s)),var(--s) calc(100% - calc(var(--s) * 2)),0px calc(100% - calc(var(--s) * 2)),0px calc(var(--s) * 2),var(--s) calc(var(--s) * 3),calc(var(--s) * 2) calc(var(--s) * 3),calc(var(--s) * 2) calc(var(--s) * 2),calc(var(--s) * 3) calc(var(--s) * 2),calc(var(--s) * 3) var(--s),calc(100% - calc(var(--s) * 3)) var(--s),calc(100% - calc(var(--s) * 3)) calc(var(--s) * 2),calc(100% - calc(var(--s) * 2)) calc(var(--s) * 2),calc(100% - calc(var(--s) * 2)) calc(var(--s) * 3),calc(100% - var(--s)) calc(var(--s) * 3),calc(100% - var(--s)) calc(100% - calc(var(--s) * 3)),calc(100% - calc(var(--s) * 2)) calc(100% - calc(var(--s) * 3)),calc(100% - calc(var(--s) * 2)) calc(100% - calc(var(--s) * 2)),calc(100% - calc(var(--s) * 3)) calc(100% - calc(var(--s) * 2)),calc(100% - calc(var(--s) * 3)) calc(100% - var(--s)),calc(var(--s) * 3) calc(100% - var(--s)),calc(var(--s) * 3) calc(100% - calc(var(--s) * 2)),calc(var(--s) * 2) calc(100% - calc(var(--s) * 2)),calc(var(--s) * 2) calc(100% - calc(var(--s) * 3)),var(--s) calc(100% - calc(var(--s) * 3)),var(--s) calc(var(--s) * 3))}      /* (the outline a ring, not a whole card under a see-through face: the lit card's colour stayed on the edge) */
+.hand-view{background:radial-gradient(70% 70% at 50% 54%,color-mix(in srgb,var(--accent,#f6b3cc) 18%,transparent),transparent 75%)}      /* (the colour's pool the 3D backdrop drew, now under a see-through canvas) */
 .hand-card.on{--edge:var(--accent,#f6b3cc)}
 .hand-view{position:relative;z-index:2;align-self:stretch;aspect-ratio:1/.92;pointer-events:none}
-.hand-view::before{content:'';position:absolute;inset:0;background:#0b0a0f;opacity:.6;transition:opacity .35s}
+.hand-view::before{content:'';position:absolute;inset:0;background:#0b0a0f;opacity:.45;transition:opacity .35s}
 .hand-card.on .hand-view::before,.hand-guide.still .hand-view::before{opacity:0}
 .hand-view::after{content:'';position:absolute;inset:0;--p:3px;background:linear-gradient(var(--face),var(--face)) 0 0/var(--p) var(--p),linear-gradient(var(--face),var(--face)) 100% 0/var(--p) var(--p),linear-gradient(var(--face),var(--face)) 0 100%/var(--p) var(--p),linear-gradient(var(--face),var(--face)) 100% 100%/var(--p) var(--p);background-repeat:no-repeat;transition:background .3s}      /* (a pixel off each corner of the canvas's window) */
 .hand-guide.failed canvas{display:none}
 .hand-card [data-step]{color:#f3eef88c;transform-origin:50% 50%;transition:color .2s,filter .2s,transform .3s cubic-bezier(.2,1.5,.4,1)}
 .hand-card [data-step].on{color:#fff;transform:scale(1.25);filter:drop-shadow(0 1px 0 #0000008c) drop-shadow(0 0 6px var(--accent,#f6b3cc))}      /* (it grows as its part plays, rather than an underline: 2026-11-13) */
+.hand-card [data-step].on:first-child{transform:translateY(5px) scale(1.25)}
+.hand-card [data-step].on:last-child{transform:translateY(-5px) scale(1.25)}      /* (lit, a title steps in from the card's edge: down at the top, up at the bottom, 2026-11-14) */
 /* a card plays when picked (2026-11-13: "dont start animation until clicking / selecting the card") */
 .hand-card{cursor:pointer;outline:none}
 .hand-card:not(.on):hover{--edge:color-mix(in srgb,var(--accent,#f6b3cc) 45%,#2b2735)}
@@ -175,8 +214,8 @@ button.link:hover{background:none;opacity:1}
 .mic-state{display:block;margin-top:4px;font-size:12px;opacity:.75}
 .mic-state.on{color:#7dffc9;opacity:1}
 .mic-state.off{color:#ff8fa3;opacity:1}
-#home .dialog-actions .pix.close-dialog,#home .guide-close .pix.close-dialog{--face:var(--accent,#f6b3cc);--edge:color-mix(in srgb,var(--accent,#f6b3cc) 45%,#000)}
-#home .dialog-actions .pix.close-dialog::before,#home .guide-close .pix.close-dialog::before{box-shadow:inset 0 -4px 0 0 #00000038,inset 0 3px 0 0 #ffffff70}
+#home .dialog-actions .pix.close-dialog,#home .guide-close .pix.close-dialog,#home .pix.go{--face:var(--accent,#f6b3cc);--edge:color-mix(in srgb,var(--accent,#f6b3cc) 45%,#000)}
+#home .dialog-actions .pix.close-dialog::before,#home .guide-close .pix.close-dialog::before,#home .pix.go::before{box-shadow:inset 0 -4px 0 0 #00000038,inset 0 3px 0 0 #ffffff70}
 #start{min-width:210px;padding:16px 34px;border:0;border-radius:99px;background:var(--accent);color:#14121a;font-size:15px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;box-shadow:0 10px 40px -10px var(--accent);transition:transform .2s,box-shadow .2s,background .3s}
 #start:not(:disabled):hover{transform:translateY(-2px) scale(1.03);box-shadow:0 16px 50px -10px var(--accent)}
 #start:not(:disabled){animation:beat 2.6s ease-in-out infinite}
@@ -239,5 +278,70 @@ summary{font-size:10px;opacity:.65;cursor:pointer;padding:6px 0}
 #home .code-pad .pix{width:100%;padding:13px 0 15px}
 .code-card .dialog-actions{justify-content:center;gap:12px;margin-top:24px}
 #home .code-card .dialog-actions .pix{min-width:125px}
-#home .dialog-actions .pix.close-dialog:disabled{opacity:.4;cursor:default;filter:none;transform:none}
+#home .dialog-actions .pix.close-dialog:disabled,#home .pix.go:disabled{opacity:.4;cursor:default;filter:none;transform:none}
 @media(max-width:600px){.start-pair{flex-direction:column;align-items:stretch}}
+/* Play on the keypad (2026-11-14): the top (ENTER CODE and the digits) bounces up and fades, the bottom (the keys) bounces down and fades
+   ("more subtle, just bounce a way nicely"), and FINDING YOUR GAME shows where they were; then INBOX READY and the Play button, or NO INBOX FOUND. Try Again brings the keypad back. */
+.code-card{position:relative}
+.code-card.snap .code-top,.code-card.snap .code-bottom,.code-card.snap .code-find{transition:none!important}      /* (opening or closing: no fly-in) */
+.code-top,.code-bottom{transition:transform .45s cubic-bezier(.3,1.5,.5,1),opacity .3s ease-out}
+.code-card.away .code-top,.code-card.away .code-bottom{opacity:0;pointer-events:none;transition:transform .45s cubic-bezier(.5,-.6,.7,.4),opacity .3s ease-in .12s}
+.code-card.away .code-top{transform:translateY(-56px)}
+.code-card.away .code-bottom{transform:translateY(56px)}
+.code-find{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;opacity:0;transform:scale(.92);visibility:hidden;pointer-events:none;transition:opacity .2s,transform .2s,visibility 0s .2s}
+.code-card.away .code-find{opacity:1;transform:none;visibility:visible;pointer-events:auto;transition:opacity .3s .25s,transform .4s cubic-bezier(.2,1.4,.4,1) .25s,visibility 0s .25s}
+.code-find p,.code-find h2{margin:0;line-height:0;filter:drop-shadow(0 2px 12px #000)}
+.code-find canvas{display:block;margin:0 auto;image-rendering:pixelated}
+.find-code{opacity:.7}
+.find-line{min-height:20px;line-height:20px!important;font:15px 'Helvetica Neue',Arial,sans-serif;color:#f3eef8;text-shadow:0 1px 8px #000;white-space:nowrap}
+.find-line:empty{display:none}
+.find-line canvas{margin-top:2px}
+.code-find .find-line{margin-top:-12px}      /* (the line under INBOX READY / NO INBOX FOUND sits closer to it: 2026-11-14) */
+.find-dots{display:flex;gap:10px;height:14px}
+.find-dots i{width:14px;height:14px;background:color-mix(in srgb,var(--accent,#f6b3cc) 80%,#fff);opacity:.55;box-shadow:0 2px 0 #000c;animation:find-step 1s steps(1) infinite}      /* (2026-11-14: "more solid brighter color") */
+.find-dots i:nth-child(2){animation-delay:.2s}.find-dots i:nth-child(3){animation-delay:.4s}.find-dots i:nth-child(4){animation-delay:.6s}.find-dots i:nth-child(5){animation-delay:.8s}
+@keyframes find-step{0%{opacity:1;transform:translateY(-4px)}20%{opacity:.8;transform:none}40%{opacity:.55}}
+.find-actions{display:flex;justify-content:center;align-items:center;gap:14px;margin-top:10px}
+.code-find:not([data-state=found]) .find-actions .start-wrap,.code-find:not([data-state=missing]) #find-retry,.code-find[data-state=finding] .find-actions,.code-find:not([data-state=finding]) .find-dots{display:none}
+#home #find-play.pix{--s:4px;padding:18px 34px 21px}
+#home #find-play.pix::before{box-shadow:inset 0 -5px 0 0 #00000038,inset 0 4px 0 0 #ffffff70}
+.code-find[data-state=found] .find-title,.code-find[data-state=missing] .find-title{animation:find-pop .45s cubic-bezier(.2,1.6,.4,1)}
+.code-find[data-state=found] .start-wrap{animation:find-pop .5s cubic-bezier(.2,1.6,.4,1) .12s both,pix-beat 2.6s ease-in-out .7s infinite}
+.code-find[data-state=missing] .find-title{animation:find-shake .4s steps(6)}
+@keyframes find-pop{from{transform:scale(.4);opacity:0}}
+@keyframes find-shake{20%{transform:translateX(-8px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(3px)}}
+@media(prefers-reduced-motion:reduce){.code-top,.code-bottom,.code-find{transition:opacity .2s!important;transform:none!important}.find-dots i,.code-find .find-title,.code-find .start-wrap{animation:none!important}}
+
+/* ---------------------------------------------------------------- the results of a real game (src/results.ts, 2026-11-14) */
+/* (in the level select's place: the level's picture and logo stay, everything to choose and start goes) */
+#results{display:none;flex-direction:column;align-items:center;gap:clamp(12px,2.2vh,20px);width:min(100%,720px);isolation:isolate}
+body.show-results #results{display:flex}
+body.show-results #home{justify-content:safe center}
+body.show-results #levels,body.show-results .home-actions,body.show-results #mail-status,body.show-results #xr-status,body.show-results #start-here,body.show-results #credit,body.show-results #tagline{display:none!important}
+body.show-results #logo-stage{width:min(42vw,250px,30vh)}
+body.show-results .home-head{margin-bottom:0}
+.results-title,.results-sub{margin:0;line-height:0;filter:drop-shadow(0 4px 18px #000)}
+.results-title canvas,.results-sub canvas,.results-h canvas,.tally canvas,.reply-tag canvas{display:block;image-rendering:pixelated}
+.results-sub{opacity:.75;margin-top:-6px}
+.results-tally{display:flex;justify-content:center;gap:12px;width:100%;flex-wrap:wrap}
+.tally{--face:#120f18eb;isolation:isolate;flex:1 1 150px;max-width:220px;display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 12px 14px}
+.results-h{margin:0;line-height:0}
+.results-replies{display:grid;gap:12px;width:100%}
+.results-replies[hidden]{display:none}
+.results-replies .results-h{justify-self:center;margin:6px 0 2px}
+.reply-row{display:grid;gap:7px;text-align:left}
+.reply-to{margin:0 0 0 4px;font:14px/1.3 'Helvetica Neue',Arial,sans-serif;color:#f3eef8a6;text-shadow:0 1px 8px #000;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.reply-to b{color:#fff;font-weight:600}
+.reply-text{--edge:color-mix(in srgb,var(--accent,#f6b3cc) 65%,#2b2735);--face:#15121cf2;isolation:isolate;margin:0;padding:15px 18px 16px;display:flex;gap:14px;align-items:baseline;font:17px/1.42 'Helvetica Neue',Arial,sans-serif;color:#f3eef8;text-wrap:pretty}
+.reply-tag{flex:none;transform:translateY(1px)}
+.results-note{--face:#120f18eb;isolation:isolate;width:100%;padding:20px 22px 21px;display:grid;gap:9px;text-align:left}
+.results-note .results-h{margin-bottom:4px}
+.results-note p{margin:0;font:15px/1.45 'Helvetica Neue',Arial,sans-serif;color:#f3eef8b8}
+.results-note p.lead{color:#fff}
+.results-status{color:#ffd24a!important}
+/* (the buttons stay in view at the bottom however long the replies run: the Quest's browser window is short) */
+.results-actions{position:sticky;bottom:calc(-1 * clamp(14px,3vh,40px));z-index:3;display:flex;justify-content:center;align-items:center;gap:14px;width:calc(100% + 40px);margin-top:4px;padding:18px 0 clamp(14px,3vh,40px);background:linear-gradient(180deg,#0d0b1200,#0d0b12d9 38%)}
+#home #results-again.pix{--s:4px;--edge:color-mix(in srgb,var(--accent) 45%,#000);--face:var(--accent);padding:18px 30px 21px}
+#home #results-again.pix::before{box-shadow:inset 0 -5px 0 0 #00000038,inset 0 4px 0 0 #ffffff70}
+#home #results-back.pix{padding:16px 24px 18px}
+@media(max-width:480px){.tally{flex-basis:100px;padding:14px 8px 12px}.reply-text{font-size:15px;padding:12px 14px 13px}}

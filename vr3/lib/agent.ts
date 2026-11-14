@@ -15,10 +15,17 @@ export async function callerIp(): Promise<string> {
   return (h.get('x-forwarded-for') ?? h.get('x-real-ip') ?? 'local').split(',')[0].trim();
 }
 
-/** Counts a hit for this caller; throws 429 past `n` in `seconds`. */
+/**
+ * In `next dev` every limit is 25 times as generous, so the keypad's wrong codes can be tried over and over
+ * (2026-11-14: "reduce the rate limit in dev mode so I can test more"; 8 misses in 10 minutes becomes 200).
+ * A production build keeps the real limits.
+ */
+const DEV_LIMIT_SCALE = process.env.NODE_ENV === 'development' ? 25 : 1;
+
+/** Counts a hit for this caller; throws 429 past `n` in `seconds` (`n` times DEV_LIMIT_SCALE). */
 export async function limit(name: string, n: number, seconds: number) {
   const count = await store.hit(`izvr:rl:${name}:${await callerIp()}`, seconds);
-  if (count > n) throw new RoundError('Too many tries: wait a few minutes.', 429);
+  if (count > n * DEV_LIMIT_SCALE) throw new RoundError('Too many tries: wait a few minutes.', 429);
 }
 
 export class InputError extends RoundError {

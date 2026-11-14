@@ -17,6 +17,12 @@ import type { AgentCard, AgentOutcome, AgentResultsResponse, AgentRoundResponse 
  * Gmail sign-in, reading the inbox and the models that sorted it and wrote replies were here
  * until 2026-11-13; the agent does all of that now.
  *
+ * Mock rounds (2026-11-14, "allow any number to "play" a real game until we make that real, it will load demo
+ * emails, but act as if it was real"): a code with no agent round behind it (or no server to ask) plays a round
+ * made from the demo inbox, picked by the code so the same code is the same inbox. It acts as a real game does:
+ * the How to Play intro first (src/howto.ts), and at the end the results screen (src/results.ts), but nothing is
+ * sent anywhere. Just Play is still the plain demo.
+ *
  * letters.ts calls deck(), arrived(), settled(), repliesReady(), want(), mockWords(), sent(),
  * abandon() and finish(); the home screen (src/mailui.ts) shows the state.
  */
@@ -26,7 +32,38 @@ const ROUND_KEY = 'vr3.round';
 const remember = (code: string) => { try { if (code) sessionStorage.setItem(ROUND_KEY, code); else sessionStorage.removeItem(ROUND_KEY); } catch { /* private window */ } };
 const remembered = () => { try { return sessionStorage.getItem(ROUND_KEY) ?? ''; } catch { return ''; } };
 
-interface Outcome { cut: boolean; reply?: number; said?: string }
+interface Outcome { cut: boolean; reply?: number; said?: string; words?: string }
+
+/** One email in the results, as the player saw it. */
+export interface ResultLine { from: string; subject: string }
+export interface ResultReply extends ResultLine { text: string; how: 'A' | 'B' | 'mic' }
+/**
+ * What a real game (an agent round, or a mock one) came to, for the results screen (src/results.ts):
+ * what was archived, the replies and their words, what was left. `sent` is how giving it to the agent went.
+ */
+export interface GameResults {
+  code: string; title: string; mock: boolean; replay: boolean;
+  archived: ResultLine[]; replies: ResultReply[]; left: ResultLine[];
+  sent: 'mock' | 'sending' | 'ok' | 'failed' | 'already'; error: string;
+}
+
+/**
+ * The one code that finds a game while agent rounds are mocked (2026-11-14: "for now lets mock 1234 as the only real
+ * game code, the rest can produce not found so we can try that"). A real agent round, by its own code, still plays.
+ */
+export const MOCK_CODE = '1234';
+
+/** A mock round's emails: the demo inbox, picked and ordered by the code (the same code, the same inbox). */
+function mockRound(code: string): Email[] {
+  let seed = (parseInt(code, 10) || 1) * 2654435761 % 4294967296;
+  const dice = () => { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; };
+  const mix = <T,>(list: T[]) => { for (let i = list.length - 1; i > 0; i--) { const j = Math.floor(dice() * (i + 1)); [list[i], list[j]] = [list[j], list[i]]; } return list; };
+  const n = 10 + Math.floor(dice() * 5), real = Math.round(n * 0.4);      // 10 to 14 emails, about four in ten worth keeping
+  const keep = mix(Emails.filter(e => e.kind === 'Real')).slice(0, real), junk = mix(Emails.filter(e => e.kind === 'Junk')).slice(0, n - real);
+  const deck = mix([...keep, ...junk]).map((e, i): Email => ({ ...e, replies: [e.replies[0], e.replies[1]], id: `m${i + 1}`, needsReply: e.kind === 'Real', special: false }));
+  const special = deck.find(e => e.kind === 'Real'); if (special) special.special = true;      // (one that matters, as an agent marks it)
+  return deck;
+}
 
 function createMail() {
   const listeners = new Set<() => void>();
@@ -39,43 +76,86 @@ function createMail() {
     notice: '',
     /** Is the game being played on an agent round just now? */
     playing: false,
-    /** An agent round, by its code: the next game plays it when it is ready. */
-    round: { code: '', title: '', state: 'idle' as 'idle' | 'loading' | 'ready' | 'failed' | 'sending', count: 0, error: '' },
+    /** An agent round, by its code: the next game plays it when it is ready. `mock`: no agent sent it; it is made from the demo inbox (MOCK_CODE).
+     *  'missing': no game has that code (typed on the keypad, which says so). */
+    round: { code: '', title: '', state: 'idle' as 'idle' | 'loading' | 'ready' | 'missing' | 'failed' | 'sending', count: 0, error: '', mock: false },
+    /** The last real game's results, for the results screen, until the player leaves it. */
+    results: null as GameResults | null,
   };
 
   let roundCards: Email[] = [];
   let roundTicket = 0;
   const outcomes = new Map<Email, Outcome>();
+  /** The emails as dealt to the game (letters.ts holds these copies), in order, for the results. */
+  let dealt: Email[] = [];
+  /** The last real game, kept so Play Again on the results screen can play it again. */
+  let last: { code: string; title: string; cards: Email[]; mock: boolean } | null = null;
+  /** This game is a Play Again of the last one. */
+  let replaying = false;
+  const idle = () => ({ code: '', title: '', state: 'idle' as const, count: 0, error: '', mock: false });
 
   function clearCode() {
-    roundTicket++; roundCards = []; remember('');
-    if (state.round.code || state.round.state !== 'idle') { state.round = { code: '', title: '', state: 'idle', count: 0, error: '' }; told(); }
+    roundTicket++; roundCards = []; remember(''); replaying = false;
+    if (state.round.code || state.round.state !== 'idle') { state.round = idle(); told(); }
   }
 
-  /** Fetches an agent round by its code. */
-  async function loadRound(code: string) {
+  /** Fetches an agent round by its code. `link`: the code came in the address (or this tab kept it), not from the keypad. */
+  async function loadRound(code: string, link = false) {
     const mine = ++roundTicket;
     roundCards = [];
-    state.round = { code, title: '', state: 'loading', count: 0, error: '' }; told();
+    state.round = { code, title: '', state: 'loading', count: 0, error: '', mock: false }; told();
     try {
       const r = await fetch(`/api/rounds/${encodeURIComponent(code)}`, { credentials: 'same-origin', cache: 'no-store' });
       const body = await r.json().catch(() => ({})) as AgentRoundResponse & { error?: string };
       if (mine !== roundTicket) return;
       if (!r.ok) throw new Error(body.error || `the server said ${r.status}`);
       roundCards = body.emails.map((c: AgentCard): Email => ({ ...c, id: c.ref, replies: [c.replies[0], c.replies[1]] }));
-      state.round = { code, title: body.title, state: roundCards.length ? 'ready' : 'failed', count: roundCards.length, error: roundCards.length ? '' : 'That round has no emails.' };
-      state.notice = '';
-      remember(code);
+      state.round = { code, title: body.title, state: roundCards.length ? 'ready' : 'failed', count: roundCards.length, error: roundCards.length ? '' : 'That round has no emails.', mock: false };
     } catch (e) {
       if (mine !== roundTicket) return;
-      state.round = { code, title: '', state: 'failed', count: 0, error: (e as Error).message };
-      remember('');
+      if (code !== MOCK_CODE) {
+        // (the server allows 8 misses in 10 minutes from one address: past that it says so, which is not "not found")
+        const busy = /too many tries/i.test((e as Error).message);
+        // no game with that code: the keypad says so; a link's code is dropped, with a line on the home screen
+        roundCards = []; remember('');
+        if (link) { state.round = idle(); state.notice = busy ? 'Too many tries: wait a few minutes, then enter your code.' : `No inbox found for code ${code}. Check it with your agent.`; }
+        else state.round = { code, title: '', state: 'missing', count: 0, error: busy ? 'busy' : 'No game has that code.', mock: false };
+        told(); return;
+      }
+      // the mock code: a round from the demo inbox, played as if real
+      roundCards = mockRound(code);
+      state.round = { code, title: "Today's inbox", state: 'ready', count: roundCards.length, error: '', mock: true };
     }
+    state.notice = '';
+    remember(code);
     told();
+  }
+
+  /** What the game came to, email by email, in the order they were dealt (for the results screen). */
+  function tally(): GameResults {
+    const r = state.round, out: GameResults = { code: r.code, title: r.title, mock: r.mock, replay: replaying, archived: [], replies: [], left: [], sent: r.mock ? 'mock' : 'sending', error: '' };
+    for (const email of dealt) {
+      const o = outcomes.get(email), line = { from: email.from, subject: email.subject };
+      if (o?.cut) out.archived.push(line);
+      // (in an agent's round the mock mic's words are not the player's: the agent asks them instead, and so says this)
+      else if (o?.words !== undefined) out.replies.push({ ...line, text: !r.mock && o.said === '' ? 'Your agent will ask you what you want to say.' : o.words, how: 'mic' });
+      else if (o?.reply !== undefined) out.replies.push({ ...line, text: email.replies[o.reply] ?? '', how: o.reply === 1 ? 'B' : 'A' });
+      else out.left.push(line);
+    }
+    return out;
   }
 
   /** The end of an agent round: what was done with each email goes to the agent (through the server). */
   async function finishRound() {
+    const results = state.results = tally();
+    last = { code: state.round.code, title: state.round.title, cards: roundCards, mock: state.round.mock };
+    if (state.round.mock) {
+      // a mock round: nothing to send; it is over, as a real one is once its results are given
+      outcomes.clear(); dealt = []; replaying = false;
+      roundTicket++; roundCards = []; remember('');
+      state.round = idle();
+      told(); return;
+    }
     const outs: AgentOutcome[] = [];
     for (const [email, o] of outcomes) {
       if (!email.id) continue;
@@ -83,20 +163,23 @@ function createMail() {
       else if (o.said !== undefined) outs.push({ ref: email.id, action: 'reply', dictated: o.said });
       else if (o.reply !== undefined) outs.push({ ref: email.id, action: 'reply', reply_index: o.reply });
     }
-    outcomes.clear();
+    outcomes.clear(); dealt = []; replaying = false;
     const code = state.round.code;
     state.round.state = 'sending'; told();
     try {
       const r = await fetch(`/api/rounds/${code}/results`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ outcomes: outs }), credentials: 'same-origin', cache: 'no-store' });
       const body = await r.json().catch(() => ({})) as AgentResultsResponse & { error?: string };
       if (!r.ok) throw new Error(body.error || `the server said ${r.status}`);
-      const bits = [body.archive ? `${body.archive} to archive` : '', body.reply ? `${body.reply} ${body.reply === 1 ? 'reply' : 'replies'}` : '', body.leave ? `${body.leave} left as they are` : ''].filter(Boolean);
-      state.notice = `Game ${code} sent to your agent: ${bits.join(', ') || 'nothing to do'}. Tell your agent you're done.`;
+      void body;
+      results.sent = 'ok';
       roundTicket++; roundCards = []; remember('');
-      state.round = { code: '', title: '', state: 'idle', count: 0, error: '' };
+      state.round = idle();
     } catch (e) {
-      state.notice = `Game ${code}: the results could not be sent (${(e as Error).message}).`;
-      state.round.state = 'failed'; state.round.error = (e as Error).message;
+      // (a Play Again of a round already played: the server keeps the first game's choices, and says so with a 409)
+      const message = (e as Error).message;
+      results.sent = /already played/i.test(message) ? 'already' : 'failed'; results.error = message;
+      if (results.sent === 'already') { roundTicket++; roundCards = []; remember(''); state.round = idle(); }
+      else { state.round.state = 'failed'; state.round.error = message; }
     }
     told();
   }
@@ -110,7 +193,7 @@ function createMail() {
     async init() {
       const url = new URL(location.href);
       const access = url.searchParams.get('access'), round = url.searchParams.get('code') ?? remembered();
-      if (round && /^\d{4}$/.test(round.trim())) void loadRound(round.trim());
+      if (round && /^\d{4}$/.test(round.trim())) void loadRound(round.trim(), true);
       if (access !== null || url.searchParams.has('code')) {
         url.searchParams.delete('access'); url.searchParams.delete('code');
         history.replaceState(history.state, '', url.pathname + (url.search === '?' ? '' : url.search) + url.hash);
@@ -130,8 +213,17 @@ function createMail() {
       void loadRound(c);
     },
     clearCode,
-    /** Is the next game an agent round? */
+    /** Is the next game an agent round (a real one, or a mock one)? */
     roundReady: () => state.round.state === 'ready' && roundCards.length > 0,
+    /** The results screen is done with: forget them. */
+    dismissResults() { if (state.results || state.notice) { state.results = null; state.notice = ''; told(); } },
+    /** Play Again, from the results screen: the last real game's emails, once more. False if there is none. */
+    replay(): boolean {
+      if (!last) return false;
+      roundTicket++; roundCards = last.cards; replaying = true; state.results = null; state.notice = '';
+      state.round = { code: last.code, title: last.title, state: 'ready', count: last.cards.length, error: '', mock: last.mock };
+      remember(last.code); told(); return true;
+    },
 
     /** The demo's emails, for letters.ts to shuffle. */
     demoEmails: (): Email[] => [...Emails],
@@ -141,8 +233,8 @@ function createMail() {
       outcomes.clear();
       state.playing = state.round.state === 'ready' && roundCards.length > 0;
       told();
-      if (!state.playing) return null;
-      return roundCards.map(c => ({ ...c, replies: [c.replies[0], c.replies[1]] as [string, string] }));
+      if (!state.playing) { dealt = []; return null; }
+      return dealt = roundCards.map(c => ({ ...c, replies: [c.replies[0], c.replies[1]] as [string, string] }));
     },
     /** An email has come in. (Agent rounds come with their replies written: nothing to start.) */
     arrived(_email: Email) { /* nothing */ },
@@ -167,7 +259,8 @@ function createMail() {
       const o = outcomes.get(email) ?? { cut: false };
       o.cut = false;
       // (words the mock mic made up are not the player's: the agent is told to ask them instead)
-      if ('reply' in how) { o.reply = how.reply; o.said = undefined; } else { o.said = how.said === dictation(email) ? '' : how.said; o.reply = undefined; }
+      // (for an agent; the words themselves, mock or not, are kept for the results screen)
+      if ('reply' in how) { o.reply = how.reply; o.said = undefined; o.words = undefined; } else { o.said = how.said === dictation(email) ? '' : how.said; o.words = how.said; o.reply = undefined; }
       outcomes.set(email, o);
     },
 
@@ -175,7 +268,7 @@ function createMail() {
     abandon() {
       if (!state.playing) return;
       state.playing = false;
-      outcomes.clear(); told();
+      outcomes.clear(); dealt = []; told();
     },
 
     /** The game is over: an agent round's results go to the agent. */

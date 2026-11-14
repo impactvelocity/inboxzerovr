@@ -72,7 +72,8 @@ const R_POWER: Key[] = [[0, [0]], [1.02, [0]], [1.14, [1.6], easeOut], [1.4, [1]
 const R_LIT = 1.06, R_CUT = 2.145;      // (the cut: the moment the blade is seen to cross the email, measured)
 
 /** Which words light when, by half: [from, to] in that half's own seconds. */
-const STEPS: Record<string, [number, number]> = { 'left:0': [0.86, 1.95], 'left:2': [1.95, 3.05], 'right:0': [0.86, 1.6], 'right:1': [1.6, 3.0] };
+// (the top words light sooner, from 0.86 s: 2026-11-14, "make the grab to read ( top titles of cards ) start sooner, it feels a bit delayed")
+const STEPS: Record<string, [number, number]> = { 'left:0': [0.25, 1.95], 'left:2': [1.95, 3.05], 'right:0': [0.25, 1.6], 'right:1': [1.6, 3.0] };
 
 // ── the look: a rim that brightens where the surface turns away, as Meta's own hands do
 const VERTEX = /* glsl */ `
@@ -256,20 +257,29 @@ export function pickable(cards: Record<'left' | 'right', HTMLElement>, pick: (si
 export interface HandGuide { start(): void; stop(): void; /** Play one card (and only it). */ pick(side: 'left' | 'right'): void; /** The level's colour, as CSS. */ accent(colour: string): void; /** One moment: each hand's own seconds, and which card is lit. */ frame(left: number, right: number, lit?: 'left' | 'right' | 'both'): void }
 
 /**
- * The hands, in the canvas inside `host`. Words in it marked data-step="left:0" (and so on) light as their part plays.
- * Nothing moves until start(). Rejects if the hands cannot be fetched.
+ * A guide's 3D: its scene, a camera for each card, and every moment of it as a function of time (pose). Nothing in
+ * it touches the page, so it can be drawn anywhere: the How to Play card on the home screen (createHandGuide, its
+ * own canvas) or panels in VR before a real game (src/howto.ts, the game's own renderer into render targets).
  */
-export async function createHandGuide(host: HTMLElement): Promise<HandGuide> {
-  const canvas = host.querySelector('canvas')!;
-  const steps = Array.from(host.querySelectorAll<HTMLElement>('[data-step]'));
-  const cards = { left: host.querySelector<HTMLElement>('[data-hand=left]')!, right: host.querySelector<HTMLElement>('[data-hand=right]')! };
-  const views = { left: cards.left.querySelector<HTMLElement>('.hand-view')!, right: cards.right.querySelector<HTMLElement>('.hand-view')! };
+export interface GuideScene {
+  scene: THREE.Scene;
+  cameras: { left: THREE.PerspectiveCamera; right: THREE.PerspectiveCamera };
+  /** Everything where it is with each card at its own time, in seconds. */
+  pose(left: number, right: number): void;
+  /** The level's colour, as CSS. */
+  accent(colour: string): void;
+  /** Each card's loop, in seconds. */
+  loops: { left: number; right: number };
+  /** When each card's words light ('left:0' and so on): [from, to] in that card's own seconds. */
+  steps: Record<string, [number, number]>;
+  /** For the console (dev builds). */
+  debug: Record<string, unknown>;
+}
+
+/** Round One's hands: the left catches, reads and throws; the right lights its blade and cuts. */
+export async function buildSortScene(): Promise<GuideScene> {
   const tint = { value: new THREE.Color('#f6b3cc') }, lightless = { value: 0 };
   const [left, right] = await Promise.all([buildHand('left', tint), buildHand('right', tint)]);
-
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
-  renderer.setClearColor(0x000000, 0);      // (between and around the cards: see-through)
-  renderer.toneMapping = THREE.NoToneMapping; renderer.setScissorTest(true);
   const scene = new THREE.Scene();
   // each half is a pool of the level's colour in the dark
   const backdrop = document.createElement('canvas'); backdrop.width = backdrop.height = 256;
@@ -369,9 +379,8 @@ export async function createHandGuide(host: HTMLElement): Promise<HandGuide> {
   };
   const fade = (mesh: THREE.Mesh, opacity: number) => { (mesh.material as THREE.MeshBasicMaterial).opacity = opacity; mesh.visible = opacity > 0.01; };
 
-  /** Draw both hands, each at its own time. `lit` says which card has the light (both, when nothing moves). */
-  function draw(tl: number, tr: number, lit: Side | 'both' = 'both') {
-    cards.left.classList.toggle('on', lit !== 'right'); cards.right.classList.toggle('on', lit !== 'left');
+  /** Both hands, each at its own time. */
+  function pose(tl: number, tr: number) {
     // left: caught, read, thrown
     place(left.root, L_POSE, tl, 0); left.curl(sample(L_CURL, tl, w)[0]);
     left.lit.value = Math.max(0, 1 - Math.abs(tl - (L_CATCH + 0.1)) / 0.22) * 0.7;
@@ -428,7 +437,43 @@ export async function createHandGuide(host: HTMLElement): Promise<HandGuide> {
     trailGeometry.attributes.position.needsUpdate = true; trailGeometry.attributes.age.needsUpdate = true;
     trailLook.uniforms.strength.value = clamp01(on) * clamp01((fast - 1.2) / 2.5) * 0.45; trail.visible = trailLook.uniforms.strength.value > 0.01;
 
-    for (const step of steps) { const [side] = step.dataset.step!.split(':'), span = STEPS[step.dataset.step!], t = side === 'left' ? tl : tr; step.classList.toggle('on', !!span && moving && t >= span[0] && t < span[1]); }
+  }
+  function accent(colour: string) {
+    const css = colour.trim() || '#f6b3cc';
+    tint.value.set(css); hot.value.copy(tint.value).lerp(new THREE.Color('#ffffff'), 0.35);
+    (ring.material as THREE.MeshBasicMaterial).color.copy(hot.value); (lightRing.material as THREE.MeshBasicMaterial).color.copy(hot.value); chips.points.material.color.copy(hot.value);
+    paintCard(cardArt, css); cardMap.needsUpdate = true;
+    const g = backdrop.getContext('2d')!, pool = g.createRadialGradient(128, 138, 0, 128, 138, 180);
+    pool.addColorStop(0, `color-mix(in srgb, ${css} 16%, #17141f)`); pool.addColorStop(0.55, '#110f18'); pool.addColorStop(1, '#09080d');
+    g.fillStyle = '#110f18'; g.fillRect(0, 0, 256, 256); g.fillStyle = pool; g.fillRect(0, 0, 256, 256); backing.needsUpdate = true;
+  }
+  accent('#f6b3cc');
+  return { scene, cameras: { left: cameraL, right: cameraR }, pose, accent, loops: { left: TURN_LEFT, right: TURN_RIGHT }, steps: STEPS,
+    debug: { left, right, cameraL, cameraR, blade, bladeBase, bladeTip, FOCUS_R, tracks: { L_POSE, L_CURL, L_HOLD, R_POSE, R_CURL, R_POWER } } };
+}
+
+/**
+ * The hands, in the canvas inside `host`. Words in it marked data-step="left:0" (and so on) light as their part plays.
+ * Nothing moves until start(). Rejects if the hands cannot be fetched.
+ */
+export async function createHandGuide(host: HTMLElement): Promise<HandGuide> {
+  const canvas = host.querySelector('canvas')!;
+  const steps = Array.from(host.querySelectorAll<HTMLElement>('[data-step]'));
+  const cards = { left: host.querySelector<HTMLElement>('[data-hand=left]')!, right: host.querySelector<HTMLElement>('[data-hand=right]')! };
+  const views = { left: cards.left.querySelector<HTMLElement>('.hand-view')!, right: cards.right.querySelector<HTMLElement>('.hand-view')! };
+  const built = await buildSortScene(), { scene } = built, cameraL = built.cameras.left, cameraR = built.cameras.right;
+  // on the page the hands float on a see-through card, the level select showing through (2026-11-14: "have the card for each part
+  // have a transparent ish background"); the colour's pool is the card's CSS. (In VR, src/howto.ts keeps the dark backdrop.)
+  scene.background = null;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'low-power' });
+  renderer.setClearColor(0x000000, 0);      // (between and around the cards: see-through)
+  renderer.toneMapping = THREE.NoToneMapping; renderer.setScissorTest(true);
+
+  /** Draw both hands, each at its own time. `lit` says which card has the light (both, when nothing moves). */
+  function draw(tl: number, tr: number, lit: Side | 'both' = 'both') {
+    cards.left.classList.toggle('on', lit !== 'right'); cards.right.classList.toggle('on', lit !== 'left');
+    built.pose(tl, tr);
+    for (const step of steps) { const [side] = step.dataset.step!.split(':'), span = built.steps[step.dataset.step!], t = side === 'left' ? tl : tr; step.classList.toggle('on', !!span && moving && t >= span[0] && t < span[1]); }
 
     // each hand into its card's window on the canvas
     const box = canvas.getBoundingClientRect();
@@ -461,19 +506,11 @@ export async function createHandGuide(host: HTMLElement): Promise<HandGuide> {
     start() { if (frame) return; moving = true; guide.pick('left'); frame = requestAnimationFrame(tick); },      // (opening, the first card plays by itself)
     stop() { cancelAnimationFrame(frame); frame = 0; moving = false; for (const step of steps) step.classList.remove('on'); cards.left.classList.remove('on'); cards.right.classList.remove('on'); },
     pick(side) { active = side; began = performance.now(); cards.left.setAttribute('aria-pressed', String(side === 'left')); cards.right.setAttribute('aria-pressed', String(side === 'right')); },
-    accent(colour) {
-      const css = colour.trim() || '#f6b3cc';
-      tint.value.set(css); hot.value.copy(tint.value).lerp(new THREE.Color('#ffffff'), 0.35);
-      (ring.material as THREE.MeshBasicMaterial).color.copy(hot.value); (lightRing.material as THREE.MeshBasicMaterial).color.copy(hot.value); chips.points.material.color.copy(hot.value);
-      paintCard(cardArt, css); cardMap.needsUpdate = true;
-      const g = backdrop.getContext('2d')!, pool = g.createRadialGradient(128, 138, 0, 128, 138, 180);
-      pool.addColorStop(0, `color-mix(in srgb, ${css} 16%, #17141f)`); pool.addColorStop(0.55, '#110f18'); pool.addColorStop(1, '#09080d');
-      g.fillStyle = '#110f18'; g.fillRect(0, 0, 256, 256); g.fillStyle = pool; g.fillRect(0, 0, 256, 256); backing.needsUpdate = true;
-    },
+    accent(colour) { built.accent(colour); },
     frame(tl, tr, lit) { if (fit()) { moving = true; draw(tl, tr, lit); canvas.classList.add('ready'); } },
   };
   guide.accent(getComputedStyle(host).getPropertyValue('--accent'));
   pickable(cards, side => { if (frame) guide.pick(side); });
-  if (import.meta.env.DEV) Object.assign(window, { __guide: { ...guide, left, right, cameraL, cameraR, blade, bladeBase, bladeTip, FOCUS_R, tracks: { L_POSE, L_CURL, L_HOLD, R_POSE, R_CURL, R_POWER } } });
+  if (import.meta.env.DEV) Object.assign(window, { __guide: { ...guide, ...built.debug } });
   return guide;
 }
