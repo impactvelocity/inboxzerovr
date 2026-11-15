@@ -13,7 +13,7 @@ export function instructions(site: string) {
   return `Inbox Zero VR is a VR game (Meta Quest, or any browser) where the user clears their unread email: they slash what can be archived, keep what matters, and pick or speak replies. You do the reading and the acting with your own email tools; this server never sees their mailbox, only short summaries you send, and it writes nothing: it is data in to make the game, and data out so you can act.
 
 1. Read the user's newest unread emails (5 to 20 plays best, 30 at most). For each, send create_round an opaque ref of your own (1, 2, 3...: never the real message id), who it is from, the subject, a short summary (never the full body), a category, and exactly two short replies (required on every email: the two bubbles round two shows; for automated mail, two things you could do instead, like "Unsubscribe me"). Mark one or two that matter most today special.
-2. Give the user the 4-digit code and the play_instructions (the play_url fills the code in; quest_url opens it on their Quest). Keep the key: you need it for the results.
+2. Show the user message_for_user straight away, word for word. It has all three things they need: the 4-digit code, the Open in VR link (quest_url: sends the game to their Meta Quest) and the browser link (play_url: opens it with the code filled in). Never leave out or shorten a link. Keep the key: you need it for the results.
 3. When they say they're done, call get_results (wait_seconds waits for a game still being played). Every ref comes back once: archive (they slashed it), reply (a draft they picked as reply_text, or what they said into the mic as dictated, word for word: you write the email; ask_user means ask them what to say), or leave (kept it or let it go: leave it unread). If they play it again from the results screen, the last finished game replaces the results and plays goes up: read them again before acting.
 4. Show the plan in plain words ("archive these 6, reply to Sam with 'Thursday works', leave 3") and act only after they agree: archive, send or draft the replies (whichever they prefer), leave the rest.
 5. Then call delete_round: the round and its results are deleted at once. Call it too if they decide not to go ahead.
@@ -53,8 +53,8 @@ If nothing was kept in round one, there is no round two.
 ## The flow
 
 1. **The user asks to play.** Read their newest unread emails in their inbox with your own tools: 5 to 20 plays best, 30 at most. Leave out what they've already dealt with.
-2. **Create a round** with \`create_round\` (fields below). You get back a 4-digit \`code\`, a \`key\`, a \`play_url\`, a \`quest_url\` and \`play_instructions\`.
-3. **Give the user the code.** Pass on the \`play_instructions\`. Opened on a phone or computer signed in to their Meta account, \`quest_url\` opens the game in their Quest's browser. \`play_url\` opens it in any browser with the code filled in: they press **Clear Your Inbox**. Or they open \`${site}/play/\`, press **Enter Code** and type the code. Keep the key, and keep your own list of which ref is which email.
+2. **Create a round** with \`create_round\` (fields below). You get back a 4-digit \`code\`, a \`key\`, a \`play_url\`, a \`quest_url\`, \`message_for_user\` and \`next_steps\`.
+3. **Give the user the code and both links.** Show them \`message_for_user\` word for word: the code, the **Open in VR** link (\`quest_url\`: Meta's send-to-headset link; opened on a phone or computer signed in to their Meta account, it opens the game in their Quest's browser) and the **browser** link (\`play_url\`: opens the game in any browser, the Quest's too, with the code filled in, and they press **Clear Your Inbox**). Never leave out or shorten a link: a player in a headset can't type a long address. Without a link they can open \`${site}/play/\`, press **Enter Code** and type the code. Keep the key, and keep your own list of which ref is which email.
 4. **Wait for them to say they're done**, then call \`get_results\`. If the game is still going, \`status\` is \`playing\`; \`wait_seconds\` (up to 25) waits for the end before answering.
 5. **Show them the plan and ask before acting.** Use plain words, by sender and subject (map each ref back yourself), for example: "Archive these 6 (Daily Brew, two promos...), reply to Sam: 'Thursday works, see you at 12:30!', leave 3 unread. Shall I go ahead? Send the replies, or save them as drafts?"
 6. **Do it** with their OK. What each action means is under Results, below.
@@ -122,7 +122,7 @@ Ask before sending anything, and ask whether replies should be sent or saved as 
 
 \`\`\`
 POST   ${site}/api/rounds                          { emails: [...], title?, hours? }
-       → 201 { code, key, expires_at, emails, play_url, quest_url, play_instructions }
+       → 201 { code, key, expires_at, emails, play_url, quest_url, message_for_user, next_steps }
 GET    ${site}/api/rounds/{code}/results?wait=20   Authorization: Bearer <key>
        → { code, status, plays, summary, actions: [...], expires_at }
 DELETE ${site}/api/rounds/{code}                   Authorization: Bearer <key>
@@ -168,5 +168,5 @@ Then, to the user: "You archived Daily Brew, said yes to Sam's lunch, and left t
 /** The MCP prompt play_inbox_zero: what the user would say to start a game. */
 export function playPrompt(count?: string) {
   const n = count && /^\d+$/.test(count.trim()) ? Math.min(30, Math.max(1, Number(count))) : 0;
-  return `Let's play Inbox Zero VR with my email. Read my newest ${n || '10 to 15'} unread emails in my inbox with your email tools and make a round of them with create_round, following the Inbox Zero VR server's instructions: short summaries only, your own refs, never real message ids, and two short replies as me on every email (for automated mail, two things you could do instead). Then give me the code and the link. When I tell you I'm done, get the results, show me the plan by sender and subject, and only act after I say yes. Write any reply I said into the mic as a proper email from my words. When it's all done, delete the round.`;
+  return `Let's play Inbox Zero VR with my email. Read my newest ${n || '10 to 15'} unread emails in my inbox with your email tools and make a round of them with create_round, following the Inbox Zero VR server's instructions: short summaries only, your own refs, never real message ids, and two short replies as me on every email (for automated mail, two things you could do instead). Then give me the code, the Open in VR link and the browser link. When I tell you I'm done, get the results, show me the plan by sender and subject, and only act after I say yes. Write any reply I said into the mic as a proper email from my words. When it's all done, delete the round.`;
 }

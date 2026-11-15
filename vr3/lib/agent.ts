@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { z } from 'zod';
-import { deleteRound, CodeAndKey, CreateRound, createRound, getResults, playInstructions, questLink, RoundError, type Results } from './rounds';
+import { deleteRound, CodeAndKey, CreateRound, createRound, getResults, nextSteps, questLink, userMessage, RoundError, type Results } from './rounds';
 import { origin } from './session';
 import { store } from './store';
 
@@ -49,7 +49,8 @@ export const CreateOutput = z.object({
   emails: z.number().describe('How many emails the round has.'),
   play_url: z.string().describe('Opens the game with the code filled in, in any browser (the Quest\'s too).'),
   quest_url: z.string().describe('Meta\'s send-to-headset link: opened on a phone or computer signed in to the user\'s Meta account, it opens play_url in their Quest\'s browser.'),
-  play_instructions: z.string().describe('What to tell the user, and what to do after.'),
+  message_for_user: z.string().describe('Show this to the user word for word, now: the code, the Open in VR link and the browser link. Never leave out or shorten a link.'),
+  next_steps: z.string().describe('What you do once they say they are done.'),
 });
 
 export const ResultAction = z.object({
@@ -83,7 +84,8 @@ export async function agentCreate(input: unknown) {
     ...made,
     play_url,
     quest_url: questLink(play_url),
-    play_instructions: playInstructions(made.code, site),
+    message_for_user: userMessage(made.code, site),
+    next_steps: nextSteps(),
   };
 }
 

@@ -252,6 +252,22 @@ export function questLink(url: string) {
   return `https://www.oculus.com/open_url/?url=${encodeURIComponent(url)}`;
 }
 
-export function playInstructions(code: string, site: string) {
-  return `Tell the user: "Your Inbox Zero game is ready. Tap ${questLink(`${site}/play/?code=${code}`)} to open it on your Meta Quest, or open ${site}/play/?code=${code} in the Quest's browser (or any browser), then press Clear Your Inbox. Or open ${site}/play/, press Enter Code and type ${code}. Tell me when you're done." When they say they're done, call get_results with this code and key, show them what they chose, and only after they agree do it with your own email tools: archive what says archive, send or draft the replies, and leave the rest unread. Write each reply as a proper email in their voice: a chosen draft as reply_text, or what they said into the mic as dictated (their words as heard; check names). Then call delete_round with this code and key. If you don't, the round and its results are deleted ${MAX_HOURS} hours after it was made.`;
+/**
+ * What the agent shows the user, word for word (2026-11-15: agents gave "the code, but not the url ... they should give the code
+ * and a url to open, but also the open in vr url too"): the code and both links, each on its own line, as plain URLs so no
+ * client can hide them behind a link it doesn't render.
+ */
+export function userMessage(code: string, site: string) {
+  const play = `${site}/play/?code=${code}`;
+  return `Your Inbox Zero game is ready. Your code is ${code}.
+
+Open in VR (sends it to your Meta Quest): ${questLink(play)}
+Open in a browser (on your Quest, or anywhere): ${play}
+
+Or go to ${site}/play/, press Enter Code and type ${code}. Tell me when you're done.`;
+}
+
+/** What the agent does after it has shown the message. */
+export function nextSteps() {
+  return `When they say they're done, call get_results with this code and key, show them what they chose by sender and subject, and only after they agree do it with your own email tools: archive what says archive, send or draft the replies, and leave the rest unread. Write each reply as a proper email in their voice: a chosen reply as reply_text, or what they said into the mic as dictated (their words as heard; check names). A reply you wrote for automated mail ("Unsubscribe me") is a thing to do, not to send. Then call delete_round with this code and key. If you don't, the round and its results are deleted ${MAX_HOURS} hours after it was made.`;
 }

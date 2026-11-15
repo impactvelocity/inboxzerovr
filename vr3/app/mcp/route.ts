@@ -29,7 +29,7 @@ const TOOLS = [
   {
     name: 'create_round',
     title: 'Create an Inbox Zero game',
-    description: 'Sets up a game of the user\'s own unread email (5 to 20 plays best, 30 at most) and returns a 4-digit code they type into the game, a play_url that fills it in, a quest_url that opens it on their Quest, what to tell them, and a key you keep to read the results. Send short summaries, never full emails, and opaque refs of your own, never real message ids. Every email needs exactly two short replies, the two bubbles the user picks between: for mail from a person, replies written as the user; for automated mail, two things you could do instead ("Unsubscribe me"). The guide (resource inboxzero://guide) says how each field is shown.',
+    description: 'Sets up a game of the user\'s own unread email (5 to 20 plays best, 30 at most) and returns a 4-digit code they type into the game, a play_url that fills it in, a quest_url that opens it on their Quest, message_for_user, and a key you keep to read the results. Show the user message_for_user straight away, word for word: it has the code and both links (Open in VR, and the browser link), and they need all three. Send short summaries, never full emails, and opaque refs of your own, never real message ids. Every email needs exactly two short replies, the two bubbles the user picks between: for mail from a person, replies written as the user; for automated mail, two things you could do instead ("Unsubscribe me"). The guide (resource inboxzero://guide) says how each field is shown.',
     inputSchema: schema(CreateRound),
     outputSchema: schema(CreateOutput, 'output'),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
@@ -92,7 +92,10 @@ async function handle(msg: Rpc, site: string): Promise<object | null> {
       if (!tool) return fail(msg.id, -32602, `Unknown tool: ${String(p.name)}`);
       try {
         const out = await tool.run(p.arguments ?? {});
-        const text = 'play_instructions' in out ? `${JSON.stringify(out, null, 2)}\n\n${out.play_instructions}` : JSON.stringify(out, null, 2);
+        // (create_round: the message for the user first, so a client that shows the model only the text still has it, links and all)
+        const text = 'message_for_user' in out
+          ? `Show the user this message now, word for word. Keep the code and BOTH links (Open in VR, and the browser link): never drop or shorten them.\n\n${out.message_for_user}\n\nThen: ${out.next_steps}\n\nKeep the key: ${out.key}\n\n${JSON.stringify(out, null, 2)}`
+          : JSON.stringify(out, null, 2);
         return ok(msg.id, { content: [{ type: 'text', text }], structuredContent: out, isError: false });
       } catch (e) {
         // (a tool that fails tells the model why, as a result, so it can fix its call)
