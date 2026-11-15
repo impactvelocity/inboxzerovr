@@ -64,7 +64,7 @@ If nothing was kept in round one, there is no round two.
 
 ## Writing a round
 
-\`create_round\` takes \`emails\` (1 to 30, in the order they should come; newest first is usual), an optional \`title\` (up to 40 characters, shown in the game, like "Tuesday inbox") and optional \`hours\` (0.25 to 4: the most the round and its results are kept if you don't call \`delete_round\`; default 4).
+\`create_round\` takes \`emails\` (1 to 30, in the order they should come; newest first is usual), a \`title\` (always give one: a short name the user will recognise as their own game, like "Tuesday inbox" or "Launch week catch-up"; it is shown big when they enter their code. 2 to 4 words, 24 characters or fewer; 40 at most) and optional \`hours\` (0.25 to 4: the most the round and its results are kept if you don't call \`delete_round\`; default 4).
 
 Each email:
 

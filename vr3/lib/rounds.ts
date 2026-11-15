@@ -56,7 +56,8 @@ export type RoundEmail = z.infer<typeof RoundEmail>;
 
 export const CreateRound = z.object({
   emails: z.array(RoundEmail).min(1).max(MAX_EMAILS).describe(`The emails for this game, in the order they should come (newest first is usual). 5 to 20 plays best; at most ${MAX_EMAILS}.`),
-  title: z.string().trim().max(40).optional().describe('A few words shown in the game, like "Tuesday inbox".'),
+  // (2026-11-15: "the AI agent creates a short title, use that so its like oh yeah this is my game": the found screen shows it)
+  title: z.string().trim().max(40).optional().describe('Always give one: a short title for this game that the user will recognise as theirs, shown big when their code is found, like "Tuesday inbox" or "Launch week catch-up". 2 to 4 words, 24 characters or fewer.'),
   hours: z.number().min(0.25).max(MAX_HOURS).optional().describe(`How long the round and its results are kept at most, if you don't call delete_round first. Default and most: ${MAX_HOURS}.`),
 });
 export type CreateRound = z.infer<typeof CreateRound>;
