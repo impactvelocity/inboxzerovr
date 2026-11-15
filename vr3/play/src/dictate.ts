@@ -76,6 +76,11 @@ function createDictate() {
     device: '',
     /** Why Scribe can't be had here, from the server's check ('' when it can, or not known): 'no-key', 'invite-only', 'no-server'. */
     scribeWhy: '',
+    /**
+     * The server says the real mic is not for this browser (SCRIBE_PUBLIC=0 and no access code or agent round; 2026-11-15: "if
+     * its 0 false - hide the mic option and make recording the demo setup"): no mic on the home page, round two the demo.
+     */
+    micOff: false,
   };
   const listeners = new Set<() => void>();
   const told = () => listeners.forEach(f => f());
@@ -136,7 +141,7 @@ function createDictate() {
   function checkScribe() {
     if (checking) return; checking = true;
     void fetch('/api/scribe-token?check', { cache: 'no-store' }).then(r => r.ok ? r.json() : { ready: false, why: 'no-server' })
-      .then((r: { ready?: boolean; why?: string }) => { d.scribe = !!r.ready; d.scribeWhy = r.ready ? '' : r.why ?? ''; })
+      .then((r: { ready?: boolean; mic?: boolean; why?: string }) => { d.scribe = !!r.ready; d.scribeWhy = r.ready ? '' : r.why ?? ''; d.micOff = r.mic === false; })
       .catch(() => { d.scribe ??= false; d.scribeWhy = 'no-server'; })
       .finally(() => { checking = false; told(); });
   }
@@ -301,7 +306,7 @@ function createDictate() {
    * A real take happens whenever the mic is connected: approved already (so nothing is asked in VR) and there. Whether
    * anything can write the words down no longer decides it (2026-11-13: "ALWAYS use the real mic if the mic is connected").
    */
-  const possible = () => !DEMO_MIC && canMic && (d.permission === 'granted' || (d.permission === 'unknown' && remembered()) || !!stream) && (d.hasDevice || !!stream);
+  const possible = () => !DEMO_MIC && !d.micOff && canMic && (d.permission === 'granted' || (d.permission === 'unknown' && remembered()) || !!stream) && (d.hasDevice || !!stream);
   let testing: ReturnType<typeof setTimeout> | null = null;
   /** The home page's mic test is running a take (2026-11-15): the game's loop leaves it alone. */
   let debugging = false;
@@ -314,7 +319,7 @@ function createDictate() {
      * Never asked yet (2026-11-13: "make the mic always record the reply even in just play demo, so anyone can see it
      * work"): the home page asks on the first click there, and Start / Just Play ask before going in, never in VR.
      */
-    get unasked() { return !DEMO_MIC && canMic && d.permission === 'unknown' && !remembered() && !stream; },
+    get unasked() { return !DEMO_MIC && !d.micOff && d.scribe !== null && canMic && d.permission === 'unknown' && !remembered() && !stream; },
     /** Ask for the mic now (from a click on the home page), then let it go again: the browser remembers. */
     async ask() { const ok = await open(true); if (ok && d.phase === 'idle') close(); void refresh(); return ok; },
     /**
@@ -322,7 +327,7 @@ function createDictate() {
      * nothing: if it was never approved, the mic stays the demo.
      */
     hold() {
-      if (DEMO_MIC || !canMic || !(d.permission === 'granted' || remembered())) return;
+      if (DEMO_MIC || d.micOff || !canMic || !(d.permission === 'granted' || remembered())) return;
       held = true; void open().then(ok => { if (ok && d.phase === 'idle' && !testing) close(); });
       if (d.scribe !== true) checkScribe();
     },
@@ -382,6 +387,7 @@ function createDictate() {
      * easier than playing a game"): a real take, the same path as round two, asking for the mic if need be (it is a click).
      */
     async debugTake() {
+      if (d.micOff) return false;
       const ok = await open(true);
       void refresh(); checkScribe();
       if (!ok) return false;
@@ -438,10 +444,13 @@ export const dictate = createDictate();
 export function bindHomeMic() {
   const button = document.getElementById('connect-mic') as HTMLButtonElement | null, wrap = button?.parentElement, bar = wrap?.querySelector<HTMLElement>('.mic-meter span');
   // (2026-11-15: "add a message if mic is connected or not": said in words beside the icon, not only its edge)
-  const note = document.getElementById('mic-note');
+  const note = document.getElementById('mic-note'), debug = document.getElementById('debug-mic');
   if (!button || !wrap) return;
   let shown = '';
   function show() {
+    // (no mic for this browser, or not known yet: none of it shows, and round two is the demo recording)
+    const hide = dictate.micOff || dictate.scribe === null;
+    wrap!.hidden = hide; if (note) note.hidden = hide; if (debug) debug.hidden = hide;
     const p = dictate.permission, words = dictate.scribe ? 'ElevenLabs Scribe writes down what you say.' : dictate.hasBrowserSpeech ? 'This browser writes down what you say.' : 'Round two hears you; nothing here writes the words down yet.';
     const [label, tone, title] = p === 'unavailable' ? ['Mic needs https', 'off', 'The mic only works on a secure page (https).']
       : !dictate.hasDevice ? ['No mic found', 'off', 'No microphone is connected.']
@@ -481,7 +490,8 @@ export function bindSetupMic() {
     line!.className = 'mic-state ' + (p === 'granted' ? 'on' : p === 'unknown' ? '' : 'off');
     line!.textContent = p === 'granted' ? `Mic on. ${how}` : p === 'denied' ? 'Mic is blocked for this site: allow it in the browser\'s site settings.'
       : p === 'unavailable' ? 'The mic needs a secure page (https).' : !dictate.hasDevice ? 'No microphone is connected.' : `Mic not allowed yet: round two's mic is a demo until it is. ${how}`;
-    button!.hidden = p === 'granted' || p === 'unavailable';
+    button!.hidden = p === 'granted' || p === 'unavailable' || dictate.micOff;
+    if (dictate.micOff) line!.textContent = 'Round two\'s mic is the demo recording here.';
   }
   button.addEventListener('click', () => { void dictate.ask().then(show); });
   dictate.onChange(show);

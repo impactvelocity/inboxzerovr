@@ -11,14 +11,18 @@ import { hasAccess, hasRound } from '@/lib/session';
  * had, without spending one.
  *
  * Tokens cost money, so they go to browsers that opened an agent round or have the access code, or to
- * everyone when SCRIBE_PUBLIC=1 (and always in development). Others get 403 and the game uses the browser's own speech
- * recognition, then the mock.
+ * everyone when SCRIBE_PUBLIC=1 (and in development unless it is 0). Others get 403, and the game hides the mic: round two
+ * is the demo recording.
  */
 export async function GET(req: Request) {
-  const allowed = process.env.SCRIBE_PUBLIC === '1' || process.env.NODE_ENV === 'development' || (await hasAccess()) || (await hasRound());
+  // SCRIBE_PUBLIC (2026-11-15: "make it public, env is good idea, and then if its 0 false - hide the mic option and make recording the
+  // demo setup"): 1/true, the mic for everyone; 0/false, only for an access code or an agent round, even in development; unset,
+  // everyone in development and invite only on the site. A browser it is not for gets `mic: false`: the game hides the mic and
+  // round two is the demo recording.
+  const allowed = (env.scribePublic ?? process.env.NODE_ENV === 'development') || (await hasAccess()) || (await hasRound());
   const ready = env.gatewayKey && allowed;
-  // (why not, for the home page's mic test: 'no-key' or 'invite-only')
-  if (new URL(req.url).searchParams.has('check')) return json({ ready, why: ready ? '' : !env.gatewayKey ? 'no-key' : 'invite-only' });
+  // (why not, for the home page's mic test: 'no-key' or 'invite-only'; `mic`: whether the game offers the real mic at all)
+  if (new URL(req.url).searchParams.has('check')) return json({ ready, mic: allowed, why: ready ? '' : !env.gatewayKey ? 'no-key' : 'invite-only' });
   if (!env.gatewayKey) return json({ error: 'AI_GATEWAY_API_KEY is not set' }, 501);
   if (!allowed) return json({ error: 'The mic service is invite only' }, 403);
   try {

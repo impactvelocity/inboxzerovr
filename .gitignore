@@ -72,3 +72,10 @@ __pycache__/
 
 # Quest gameplay recordings (large, not committed)
 /vr-video/
+
+# The site's icons and share images live in the Next app folder and must ship with it.
+!/vr3/app/favicon.ico
+!/vr3/app/icon.svg
+!/vr3/app/apple-icon.png
+!/vr3/app/opengraph-image.jpg
+!/vr3/app/twitter-image.jpg

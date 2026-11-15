@@ -206,6 +206,7 @@ button.link:hover{background:none;opacity:1}
 .dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;flex-wrap:wrap}
 /* Connect mic on the home page (src/dictate.ts): its edge says the mic's state, a meter under it while it listens */
 .mic-wrap{position:relative;display:inline-grid}
+.mic-wrap[hidden],#home #debug-mic.pix[hidden],.mic-note[hidden]{display:none}
 .mic-meter{position:absolute;left:8px;right:8px;bottom:-10px;height:4px;background:#ffffff26;opacity:0;transition:opacity .2s;pointer-events:none}
 .mic-wrap.testing .mic-meter{opacity:1}
 .mic-meter span{display:block;height:100%;width:0;background:#7dffc9;transition:width 60ms linear}
