@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inbox Zero VR demo film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Silkscreen:wght@400;700&display=block" rel="stylesheet">
+<link rel="stylesheet" href="film.css">
+</head>
+<body>
+<div id="stage">
+  <!-- backdrops -->
+  <div id="white" class="layer"></div>
+  <div id="night" class="layer"><img id="night-img" src="../work/footage/home/0001.jpg" alt=""></div>
+  <!-- real game footage, one frame at a time -->
+  <div id="foot" class="layer"><img id="foot-img" alt=""></div>
+
+  <!-- hook: the inbox -->
+  <div id="inbox-wrap" class="layer center">
+    <!-- v12: mail piling up around the icon: notification banners and little envelopes flying in -->
+    <div id="notes"></div>
+    <div id="flies"></div>
+    <!-- v11: the hook is an app icon with a badge, iPhone home screen style (a generic mail icon, not Apple's) -->
+    <div id="app" class="app"><div class="appicon" id="appicon"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="appbadge" id="appbadge">122</span></div><div class="applabel">Inbox</div></div>
+    <div id="tried" class="chips"><span class="mini" id="chip-filters"><span class="mi fil"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6.2 7.4v5.4l-3.6 1.9v-7.3z"/></svg></span><i class="nope"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i><span class="ml">Filters</span></span><span class="chip-slot" id="slot-rem"><span class="mini" id="chip-rem"><span class="mi rem"><svg viewBox="0 0 24 24"><path d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5v3.6L4.8 15.5h14.4l-1.7-2.9V9A5.5 5.5 0 0 0 12 3.5z"/><path d="M10 18.5a2 2 0 0 0 4 0" class="clap"/></svg></span><i class="nope"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i><span class="ml">Reminders</span></span></span></div>
+    <div id="inbox" class="card inbox">
+      <div class="ihead"><span class="ititle">Inbox</span><span class="badge"><b id="count">181</b> unread</span></div>
+      <div class="rows" id="rows"></div>
+      <div class="empty" id="empty"><div class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div class="empty-t">Inbox zero</div></div>
+    </div>
+    <div id="slash" class="slash"></div>
+  </div>
+  <div id="half-a" class="layer center half"></div>
+  <div id="half-b" class="layer center half"></div>
+  <div id="flash" class="layer"></div>
+
+  <!-- the logo slam and the glide into the home screen -->
+  <div id="logo-shade"></div>
+  <div id="end-black"></div>      <!-- v41: the end goes to black under the logo -->
+  <img id="logo-slam" src="../work/assets/logos/kyoto.webp" alt="">
+  <!-- v27: after the logo, on the same shade -->
+  <div id="round-line"><span class="rl1"><b>Clear</b><b>your</b><b>email</b><b>inbox</b></span><span class="kcs" id="kcs"></span><span class="rl2"><b>one</b><b>round</b><b>at</b><b>a</b><b>time</b></span></div>
+  <!-- v33: the mail icon again, in Keyboard Smash colours, cut down to zero -->
+  <div id="ks-cut">
+    <div id="ks-parts"></div>
+    <div id="ks-icon"><div class="ptile"><svg viewBox="-1 -1 18 13" width="162" height="117" shape-rendering="crispEdges"><rect x="0" y="0" width="1" height="1" fill="#f4fff9"/><rect x="0" y="1" width="1" height="1" fill="#f4fff9"/><rect x="0" y="2" width="1" height="1" fill="#f4fff9"/><rect x="0" y="3" width="1" height="1" fill="#f4fff9"/><rect x="0" y="4" width="1" height="1" fill="#f4fff9"/><rect x="0" y="5" width="1" height="1" fill="#f4fff9"/><rect x="0" y="6" width="1" height="1" fill="#f4fff9"/><rect x="0" y="7" width="1" height="1" fill="#f4fff9"/><rect x="0" y="8" width="1" height="1" fill="#f4fff9"/><rect x="0" y="9" width="1" height="1" fill="#f4fff9"/><rect x="0" y="10" width="1" height="1" fill="#f4fff9"/><rect x="1" y="0" width="1" height="1" fill="#f4fff9"/><rect x="1" y="1" width="1" height="1" fill="#1f9f7a"/><rect x="1" y="2" width="1" height="1" fill="#1f9f7a"/><rect x="1" y="3" width="1" height="1" fill="#f4fff9"/><rect x="1" y="4" width="1" height="1" fill="#f4fff9"/><rect x="1" y="5" width="1" height="1" fill="#f4fff9"/><rect x="1" y="6" width="1" height="1" fill="#f4fff9"/><rect x="1" y="7" width="1" height="1" fill="#f4fff9"/><rect x="1" y="8" width="1" height="1" fill="#f4fff9"/><rect x="1" y="9" width="1" height="1" fill="#f4fff9"/><rect x="1" y="10" width="1" height="1" fill="#f4fff9"/><rect x="2" y="0" width="1" height="1" fill="#f4fff9"/><rect x="2" y="1" width="1" height="1" fill="#f4fff9"/><rect x="2" y="2" width="1" height="1" fill="#1f9f7a"/><rect x="2" y="3" width="1" height="1" fill="#f4fff9"/><rect x="2" y="4" width="1" height="1" fill="#f4fff9"/><rect x="2" y="5" width="1" height="1" fill="#f4fff9"/><rect x="2" y="6" width="1" height="1" fill="#f4fff9"/><rect x="2" y="7" width="1" height="1" fill="#f4fff9"/><rect x="2" y="8" width="1" height="1" fill="#f4fff9"/><rect x="2" y="9" width="1" height="1" fill="#f4fff9"/><rect x="2" y="10" width="1" height="1" fill="#f4fff9"/><rect x="3" y="0" width="1" height="1" fill="#f4fff9"/><rect x="3" y="1" width="1" height="1" fill="#f4fff9"/><rect x="3" y="2" width="1" height="1" fill="#f4fff9"/><rect x="3" y="3" width="1" height="1" fill="#1f9f7a"/><rect x="3" y="4" width="1" height="1" fill="#f4fff9"/><rect x="3" y="5" width="1" height="1" fill="#f4fff9"/><rect x="3" y="6" width="1" height="1" fill="#f4fff9"/><rect x="3" y="7" width="1" height="1" fill="#f4fff9"/><rect x="3" y="8" width="1" height="1" fill="#f4fff9"/><rect x="3" y="9" width="1" height="1" fill="#f4fff9"/><rect x="3" y="10" width="1" height="1" fill="#f4fff9"/><rect x="4" y="0" width="1" height="1" fill="#f4fff9"/><rect x="4" y="1" width="1" height="1" fill="#f4fff9"/><rect x="4" y="2" width="1" height="1" fill="#f4fff9"/><rect x="4" y="3" width="1" height="1" fill="#f4fff9"/><rect x="4" y="4" width="1" height="1" fill="#1f9f7a"/><rect x="4" y="5" width="1" height="1" fill="#f4fff9"/><rect x="4" y="6" width="1" height="1" fill="#f4fff9"/><rect x="4" y="7" width="1" height="1" fill="#f4fff9"/><rect x="4" y="8" width="1" height="1" fill="#f4fff9"/><rect x="4" y="9" width="1" height="1" fill="#f4fff9"/><rect x="4" y="10" width="1" height="1" fill="#f4fff9"/><rect x="5" y="0" width="1" height="1" fill="#f4fff9"/><rect x="5" y="1" width="1" height="1" fill="#f4fff9"/><rect x="5" y="2" width="1" height="1" fill="#f4fff9"/><rect x="5" y="3" width="1" height="1" fill="#f4fff9"/><rect x="5" y="4" width="1" height="1" fill="#f4fff9"/><rect x="5" y="5" width="1" height="1" fill="#1f9f7a"/><rect x="5" y="6" width="1" height="1" fill="#f4fff9"/><rect x="5" y="7" width="1" height="1" fill="#f4fff9"/><rect x="5" y="8" width="1" height="1" fill="#f4fff9"/><rect x="5" y="9" width="1" height="1" fill="#f4fff9"/><rect x="5" y="10" width="1" height="1" fill="#f4fff9"/><rect x="6" y="0" width="1" height="1" fill="#f4fff9"/><rect x="6" y="1" width="1" height="1" fill="#f4fff9"/><rect x="6" y="2" width="1" height="1" fill="#f4fff9"/><rect x="6" y="3" width="1" height="1" fill="#f4fff9"/><rect x="6" y="4" width="1" height="1" fill="#f4fff9"/><rect x="6" y="5" width="1" height="1" fill="#f4fff9"/><rect x="6" y="6" width="1" height="1" fill="#1f9f7a"/><rect x="6" y="7" width="1" height="1" fill="#f4fff9"/><rect x="6" y="8" width="1" height="1" fill="#f4fff9"/><rect x="6" y="9" width="1" height="1" fill="#f4fff9"/><rect x="6" y="10" width="1" height="1" fill="#f4fff9"/><rect x="7" y="0" width="1" height="1" fill="#f4fff9"/><rect x="7" y="1" width="1" height="1" fill="#f4fff9"/><rect x="7" y="2" width="1" height="1" fill="#f4fff9"/><rect x="7" y="3" width="1" height="1" fill="#f4fff9"/><rect x="7" y="4" width="1" height="1" fill="#f4fff9"/><rect x="7" y="5" width="1" height="1" fill="#f4fff9"/><rect x="7" y="6" width="1" height="1" fill="#f4fff9"/><rect x="7" y="7" width="1" height="1" fill="#1f9f7a"/><rect x="7" y="8" width="1" height="1" fill="#f4fff9"/><rect x="7" y="9" width="1" height="1" fill="#f4fff9"/><rect x="7" y="10" width="1" height="1" fill="#f4fff9"/><rect x="8" y="0" width="1" height="1" fill="#f4fff9"/><rect x="8" y="1" width="1" height="1" fill="#f4fff9"/><rect x="8" y="2" width="1" height="1" fill="#f4fff9"/><rect x="8" y="3" width="1" height="1" fill="#f4fff9"/><rect x="8" y="4" width="1" height="1" fill="#f4fff9"/><rect x="8" y="5" width="1" height="1" fill="#f4fff9"/><rect x="8" y="6" width="1" height="1" fill="#f4fff9"/><rect x="8" y="7" width="1" height="1" fill="#1f9f7a"/><rect x="8" y="8" width="1" height="1" fill="#f4fff9"/><rect x="8" y="9" width="1" height="1" fill="#f4fff9"/><rect x="8" y="10" width="1" height="1" fill="#f4fff9"/><rect x="9" y="0" width="1" height="1" fill="#f4fff9"/><rect x="9" y="1" width="1" height="1" fill="#f4fff9"/><rect x="9" y="2" width="1" height="1" fill="#f4fff9"/><rect x="9" y="3" width="1" height="1" fill="#f4fff9"/><rect x="9" y="4" width="1" height="1" fill="#f4fff9"/><rect x="9" y="5" width="1" height="1" fill="#f4fff9"/><rect x="9" y="6" width="1" height="1" fill="#1f9f7a"/><rect x="9" y="7" width="1" height="1" fill="#f4fff9"/><rect x="9" y="8" width="1" height="1" fill="#f4fff9"/><rect x="9" y="9" width="1" height="1" fill="#f4fff9"/><rect x="9" y="10" width="1" height="1" fill="#f4fff9"/><rect x="10" y="0" width="1" height="1" fill="#f4fff9"/><rect x="10" y="1" width="1" height="1" fill="#f4fff9"/><rect x="10" y="2" width="1" height="1" fill="#f4fff9"/><rect x="10" y="3" width="1" height="1" fill="#f4fff9"/><rect x="10" y="4" width="1" height="1" fill="#f4fff9"/><rect x="10" y="5" width="1" height="1" fill="#1f9f7a"/><rect x="10" y="6" width="1" height="1" fill="#f4fff9"/><rect x="10" y="7" width="1" height="1" fill="#f4fff9"/><rect x="10" y="8" width="1" height="1" fill="#f4fff9"/><rect x="10" y="9" width="1" height="1" fill="#f4fff9"/><rect x="10" y="10" width="1" height="1" fill="#f4fff9"/><rect x="11" y="0" width="1" height="1" fill="#f4fff9"/><rect x="11" y="1" width="1" height="1" fill="#f4fff9"/><rect x="11" y="2" width="1" height="1" fill="#f4fff9"/><rect x="11" y="3" width="1" height="1" fill="#f4fff9"/><rect x="11" y="4" width="1" height="1" fill="#1f9f7a"/><rect x="11" y="5" width="1" height="1" fill="#f4fff9"/><rect x="11" y="6" width="1" height="1" fill="#f4fff9"/><rect x="11" y="7" width="1" height="1" fill="#f4fff9"/><rect x="11" y="8" width="1" height="1" fill="#f4fff9"/><rect x="11" y="9" width="1" height="1" fill="#f4fff9"/><rect x="11" y="10" width="1" height="1" fill="#f4fff9"/><rect x="12" y="0" width="1" height="1" fill="#f4fff9"/><rect x="12" y="1" width="1" height="1" fill="#f4fff9"/><rect x="12" y="2" width="1" height="1" fill="#f4fff9"/><rect x="12" y="3" width="1" height="1" fill="#1f9f7a"/><rect x="12" y="4" width="1" height="1" fill="#f4fff9"/><rect x="12" y="5" width="1" height="1" fill="#f4fff9"/><rect x="12" y="6" width="1" height="1" fill="#f4fff9"/><rect x="12" y="7" width="1" height="1" fill="#f4fff9"/><rect x="12" y="8" width="1" height="1" fill="#f4fff9"/><rect x="12" y="9" width="1" height="1" fill="#f4fff9"/><rect x="12" y="10" width="1" height="1" fill="#f4fff9"/><rect x="13" y="0" width="1" height="1" fill="#f4fff9"/><rect x="13" y="1" width="1" height="1" fill="#f4fff9"/><rect x="13" y="2" width="1" height="1" fill="#1f9f7a"/><rect x="13" y="3" width="1" height="1" fill="#f4fff9"/><rect x="13" y="4" width="1" height="1" fill="#f4fff9"/><rect x="13" y="5" width="1" height="1" fill="#f4fff9"/><rect x="13" y="6" width="1" height="1" fill="#f4fff9"/><rect x="13" y="7" width="1" height="1" fill="#f4fff9"/><rect x="13" y="8" width="1" height="1" fill="#f4fff9"/><rect x="13" y="9" width="1" height="1" fill="#f4fff9"/><rect x="13" y="10" width="1" height="1" fill="#f4fff9"/><rect x="14" y="0" width="1" height="1" fill="#f4fff9"/><rect x="14" y="1" width="1" height="1" fill="#1f9f7a"/><rect x="14" y="2" width="1" height="1" fill="#1f9f7a"/><rect x="14" y="3" width="1" height="1" fill="#f4fff9"/><rect x="14" y="4" width="1" height="1" fill="#f4fff9"/><rect x="14" y="5" width="1" height="1" fill="#f4fff9"/><rect x="14" y="6" width="1" height="1" fill="#f4fff9"/><rect x="14" y="7" width="1" height="1" fill="#f4fff9"/><rect x="14" y="8" width="1" height="1" fill="#f4fff9"/><rect x="14" y="9" width="1" height="1" fill="#f4fff9"/><rect x="14" y="10" width="1" height="1" fill="#f4fff9"/><rect x="15" y="0" width="1" height="1" fill="#f4fff9"/><rect x="15" y="1" width="1" height="1" fill="#f4fff9"/><rect x="15" y="2" width="1" height="1" fill="#f4fff9"/><rect x="15" y="3" width="1" height="1" fill="#f4fff9"/><rect x="15" y="4" width="1" height="1" fill="#f4fff9"/><rect x="15" y="5" width="1" height="1" fill="#f4fff9"/><rect x="15" y="6" width="1" height="1" fill="#f4fff9"/><rect x="15" y="7" width="1" height="1" fill="#f4fff9"/><rect x="15" y="8" width="1" height="1" fill="#f4fff9"/><rect x="15" y="9" width="1" height="1" fill="#f4fff9"/><rect x="15" y="10" width="1" height="1" fill="#f4fff9"/></svg></div><span id="ks-badge"><span class="pxb"><b id="ks-num">10</b></span></span></div>
+    <div id="ks-streak"></div>
+  </div>
+  <!-- v22: under the round's logo -->
+  <div id="logo-credit"><svg viewBox="0 0 26 12" width="104" height="48" shape-rendering="crispEdges"><rect x="0" y="5" width="1" height="1" fill="#0864e6"/><rect x="0" y="6" width="1" height="1" fill="#0864e6"/><rect x="1" y="3" width="1" height="1" fill="#0864e6"/><rect x="1" y="4" width="1" height="1" fill="#0864e6"/><rect x="1" y="5" width="1" height="1" fill="#0864e6"/><rect x="1" y="6" width="1" height="1" fill="#0864e6"/><rect x="1" y="7" width="1" height="1" fill="#0864e6"/><rect x="1" y="8" width="1" height="1" fill="#0864e6"/><rect x="2" y="2" width="1" height="1" fill="#0864e6"/><rect x="2" y="3" width="1" height="1" fill="#0864e6"/><rect x="2" y="4" width="1" height="1" fill="#0864e6"/><rect x="2" y="5" width="1" height="1" fill="#0864e6"/><rect x="2" y="6" width="1" height="1" fill="#0864e6"/><rect x="2" y="7" width="1" height="1" fill="#0864e6"/><rect x="2" y="8" width="1" height="1" fill="#0864e6"/><rect x="2" y="9" width="1" height="1" fill="#0864e6"/><rect x="3" y="1" width="1" height="1" fill="#0864e6"/><rect x="3" y="2" width="1" height="1" fill="#0864e6"/><rect x="3" y="3" width="1" height="1" fill="#0864e6"/><rect x="3" y="8" width="1" height="1" fill="#0864e6"/><rect x="3" y="9" width="1" height="1" fill="#0864e6"/><rect x="3" y="10" width="1" height="1" fill="#0864e6"/><rect x="4" y="1" width="1" height="1" fill="#0864e6"/><rect x="4" y="2" width="1" height="1" fill="#0864e6"/><rect x="4" y="9" width="1" height="1" fill="#0864e6"/><rect x="4" y="10" width="1" height="1" fill="#0864e6"/><rect x="5" y="0" width="1" height="1" fill="#0864e6"/><rect x="5" y="1" width="1" height="1" fill="#0864e6"/><rect x="5" y="2" width="1" height="1" fill="#0864e6"/><rect x="5" y="9" width="1" height="1" fill="#0864e6"/><rect x="5" y="10" width="1" height="1" fill="#0864e6"/><rect x="5" y="11" width="1" height="1" fill="#0864e6"/><rect x="6" y="0" width="1" height="1" fill="#0864e6"/><rect x="6" y="1" width="1" height="1" fill="#0864e6"/><rect x="6" y="2" width="1" height="1" fill="#0864e6"/><rect x="6" y="9" width="1" height="1" fill="#0864e6"/><rect x="6" y="10" width="1" height="1" fill="#0864e6"/><rect x="6" y="11" width="1" height="1" fill="#0864e6"/><rect x="7" y="1" width="1" height="1" fill="#1a7ef2"/><rect x="7" y="2" width="1" height="1" fill="#1a7ef2"/><rect x="7" y="9" width="1" height="1" fill="#1a7ef2"/><rect x="7" y="10" width="1" height="1" fill="#1a7ef2"/><rect x="8" y="1" width="1" height="1" fill="#1a7ef2"/><rect x="8" y="2" width="1" height="1" fill="#1a7ef2"/><rect x="8" y="9" width="1" height="1" fill="#1a7ef2"/><rect x="8" y="10" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="1" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="2" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="3" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="8" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="9" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="10" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="2" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="3" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="4" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="7" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="8" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="9" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="3" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="4" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="5" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="6" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="7" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="8" width="1" height="1" fill="#1a7ef2"/><rect x="12" y="4" width="1" height="1" fill="#1a7ef2"/><rect x="12" y="5" width="1" height="1" fill="#1a7ef2"/><rect x="12" y="6" width="1" height="1" fill="#1a7ef2"/><rect x="12" y="7" width="1" height="1" fill="#1a7ef2"/><rect x="13" y="4" width="1" height="1" fill="#2f98fb"/><rect x="13" y="5" width="1" height="1" fill="#2f98fb"/><rect x="13" y="6" width="1" height="1" fill="#2f98fb"/><rect x="13" y="7" width="1" height="1" fill="#2f98fb"/><rect x="14" y="3" width="1" height="1" fill="#2f98fb"/><rect x="14" y="4" width="1" height="1" fill="#2f98fb"/><rect x="14" y="5" width="1" height="1" fill="#2f98fb"/><rect x="14" y="6" width="1" height="1" fill="#2f98fb"/><rect x="14" y="7" width="1" height="1" fill="#2f98fb"/><rect x="14" y="8" width="1" height="1" fill="#2f98fb"/><rect x="15" y="2" width="1" height="1" fill="#2f98fb"/><rect x="15" y="3" width="1" height="1" fill="#2f98fb"/><rect x="15" y="4" width="1" height="1" fill="#2f98fb"/><rect x="15" y="7" width="1" height="1" fill="#2f98fb"/><rect x="15" y="8" width="1" height="1" fill="#2f98fb"/><rect x="15" y="9" width="1" height="1" fill="#2f98fb"/><rect x="16" y="1" width="1" height="1" fill="#2f98fb"/><rect x="16" y="2" width="1" height="1" fill="#2f98fb"/><rect x="16" y="3" width="1" height="1" fill="#2f98fb"/><rect x="16" y="8" width="1" height="1" fill="#2f98fb"/><rect x="16" y="9" width="1" height="1" fill="#2f98fb"/><rect x="16" y="10" width="1" height="1" fill="#2f98fb"/><rect x="17" y="1" width="1" height="1" fill="#2f98fb"/><rect x="17" y="2" width="1" height="1" fill="#2f98fb"/><rect x="17" y="9" width="1" height="1" fill="#2f98fb"/><rect x="17" y="10" width="1" height="1" fill="#2f98fb"/><rect x="18" y="1" width="1" height="1" fill="#2f98fb"/><rect x="18" y="2" width="1" height="1" fill="#2f98fb"/><rect x="18" y="9" width="1" height="1" fill="#2f98fb"/><rect x="18" y="10" width="1" height="1" fill="#2f98fb"/><rect x="19" y="0" width="1" height="1" fill="#2f98fb"/><rect x="19" y="1" width="1" height="1" fill="#2f98fb"/><rect x="19" y="2" width="1" height="1" fill="#2f98fb"/><rect x="19" y="9" width="1" height="1" fill="#2f98fb"/><rect x="19" y="10" width="1" height="1" fill="#2f98fb"/><rect x="19" y="11" width="1" height="1" fill="#2f98fb"/><rect x="20" y="0" width="1" height="1" fill="#4db3ff"/><rect x="20" y="1" width="1" height="1" fill="#4db3ff"/><rect x="20" y="2" width="1" height="1" fill="#4db3ff"/><rect x="20" y="9" width="1" height="1" fill="#4db3ff"/><rect x="20" y="10" width="1" height="1" fill="#4db3ff"/><rect x="20" y="11" width="1" height="1" fill="#4db3ff"/><rect x="21" y="1" width="1" height="1" fill="#4db3ff"/><rect x="21" y="2" width="1" height="1" fill="#4db3ff"/><rect x="21" y="9" width="1" height="1" fill="#4db3ff"/><rect x="21" y="10" width="1" height="1" fill="#4db3ff"/><rect x="22" y="1" width="1" height="1" fill="#4db3ff"/><rect x="22" y="2" width="1" height="1" fill="#4db3ff"/><rect x="22" y="3" width="1" height="1" fill="#4db3ff"/><rect x="22" y="8" width="1" height="1" fill="#4db3ff"/><rect x="22" y="9" width="1" height="1" fill="#4db3ff"/><rect x="22" y="10" width="1" height="1" fill="#4db3ff"/><rect x="23" y="2" width="1" height="1" fill="#4db3ff"/><rect x="23" y="3" width="1" height="1" fill="#4db3ff"/><rect x="23" y="4" width="1" height="1" fill="#4db3ff"/><rect x="23" y="5" width="1" height="1" fill="#4db3ff"/><rect x="23" y="6" width="1" height="1" fill="#4db3ff"/><rect x="23" y="7" width="1" height="1" fill="#4db3ff"/><rect x="23" y="8" width="1" height="1" fill="#4db3ff"/><rect x="23" y="9" width="1" height="1" fill="#4db3ff"/><rect x="24" y="3" width="1" height="1" fill="#4db3ff"/><rect x="24" y="4" width="1" height="1" fill="#4db3ff"/><rect x="24" y="5" width="1" height="1" fill="#4db3ff"/><rect x="24" y="6" width="1" height="1" fill="#4db3ff"/><rect x="24" y="7" width="1" height="1" fill="#4db3ff"/><rect x="24" y="8" width="1" height="1" fill="#4db3ff"/><rect x="25" y="5" width="1" height="1" fill="#4db3ff"/><rect x="25" y="6" width="1" height="1" fill="#4db3ff"/></svg><span>Built for Meta VR Hackathon</span></div>
+
+  <!-- the agent: a Muse window, rebuilt from the user's screenshot (work/assets/muse-example.webp) -->
+  <div id="muse" class="layer center">
+    <div class="mwin" id="mwin">
+      <div class="mrail"><span class="lights"><i></i><i></i><i></i></span><span class="ri on"><svg viewBox="0 0 24 24"><path d="M12 4c-4.6 0-8 3-8 7 0 1.7.7 3.2 1.8 4.4L5 20l4.3-1.4c.9.3 1.8.4 2.7.4 4.6 0 8-3 8-7s-3.4-8-8-8z"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="13" height="16" rx="2"/><path d="M4 8v10M10 8h5"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><path d="M9 17h6M10 20h4M12 3a6 6 0 0 0-3.5 10.9c.6.5.9 1 1 1.6h5c.1-.6.4-1.1 1-1.6A6 6 0 0 0 12 3z"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><circle cx="7.5" cy="16.5" r="3"/><rect x="13.5" y="13.5" width="6" height="6" rx="1"/><path d="M7.5 4.5l3 5h-6zM16.5 4.5l3 2.5-3 2.5-3-2.5z"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span></div>
+      <div class="mmain">
+        <div class="mtop"><span class="mback"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span><span class="mpill">New side chat</span></div>
+        <div class="mwho"><img src="../work/assets/billbo.png" alt=""><span class="mname">Billbo</span><span class="mconn" id="mconn"><i></i>Inbox Zero VR connected</span></div>
+        <div class="mchat" id="mchat">
+          <div class="msg user" id="m-ask">Set up an Inbox Zero game</div>
+          <div class="msg tool" id="m-read"><span class="tk" id="t-read"></span>Reading your newest unread emails<b id="m-count"></b></div>
+          <div class="msg tool" id="m-round"><span class="tk" id="t-round"></span>Inbox Zero VR, create_round</div>
+          <div class="msg bot" id="m-ready">Your game is ready, open it on your Quest
+            <div class="linkcard" id="m-link"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg><span class="lurl">inboxzerovr.com/play?code=4821</span><span class="lopen" id="m-open">Open</span></div>
+          </div>
+          <div class="msg bot" id="m-done">Round done, here's what you chose
+            <div class="res" id="r-arch"><span class="tk"></span>Archive 6 emails</div>
+            <div class="res" id="r-send"><span class="tk"></span>Send 2 replies</div>
+            <div class="res" id="r-later"><span class="tk"></span>Leave 2 for tomorrow</div>
+            <div class="mbtns"><span class="mbtn primary" id="m-ok">Okay</span><span class="mbtn" id="m-edit">Edit</span></div>
+          </div>
+        </div>
+        <div class="mconnect card" id="mconnect"><div class="ctitle">Add a connector</div><div class="crow"><span class="cfield">inboxzerovr.com/mcp</span><span class="mbtn primary" id="c-btn">Connect</span></div></div>
+        <div class="mbar"><span class="mplus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="mtext" id="mtext">Message</span><span class="mmic"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="msend" id="msend"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- built: the browser -->
+  <div id="browser" class="layer center">
+    <div class="win" id="win">
+      <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="addr">inboxzerovr.com</span></div>
+      <div class="shot"><img src="../work/assets/site-hero.png" alt=""><span class="hide-badge"></span></div>
+    </div>
+    <div class="chiprow" id="sdk-row"><span class="chip big" id="chip-sdk"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg>Meta Immersive Web SDK</span></div>
+    <div class="chiprow" id="nodl-row"><span class="chip big" id="chip-nodl"><svg viewBox="0 0 24 24"><path d="M12 4v11m-5-5 5 5 5-5M5 20h14"/></svg>Nothing to download</span></div>
+  </div>
+
+  <!-- seated -->
+  <div id="seated" class="layer center">
+    <!-- v8: the transparent take, small in the bottom left, over Kyoto at night -->
+    <div id="seat-bg"><img src="../work/assets/kyoto-night.jpg" alt=""></div>
+    <div id="seat-motes"></div>
+    <div id="seat-shade"></div>
+    <img id="seat-img" alt="">
+  </div>
+
+  <!-- the game never touches your inbox -->
+  <div id="flow" class="layer">
+    <svg id="flow-arc" viewBox="0 0 1920 1080" width="1920" height="1080"><path id="arc" d="M1580 668 C1580 890 340 890 340 668" fill="none" stroke="#bdb5c9" stroke-width="4" stroke-dasharray="4 14" stroke-linecap="round"/></svg>
+    <div class="wire" id="w-ia"></div><div class="wire" id="w-ag"></div>
+    <span class="chip wchip" id="c-ia">your emails</span><span class="chip wchip" id="c-ag">round 4821</span>
+    <div class="node card" id="n-inbox"><span class="nic" style="background:#e0127a"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 8l9 6 9-6"/></svg></span><span class="nl">Your inbox</span></div>
+    <div class="node card" id="n-agent"><img class="nav" src="../work/assets/billbo.png" alt=""><span class="nl">Your agent</span></div>
+    <div class="node card" id="n-game"><span class="nic" style="background:#3b2f52"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg></span><span class="nl">The game</span></div>
+    <span class="nox" id="nox"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span>
+    <div class="pixels" id="pixels"></div>
+  </div>
+
+  <!-- overlays on the footage -->
+  <img id="level-logo" class="level-logo" alt="">
+  <img id="hand-l" class="hand left" alt="">
+  <img id="hand-r" class="hand right" alt="">
+  <div id="home-code" class="homecode">Game 4821</div>
+  <div id="phrases"></div>
+  <div id="mic" class="bubble"><span class="micdot"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span id="mic-t"></span></div>
+
+  <!-- the close -->
+  <div id="close" class="layer">
+    <img id="end-logo" src="../work/assets/logos/site.webp" alt="">
+    <div id="url" class="url"><span id="url-t"></span><i id="caret"></i></div>
+    <div id="cards" class="cards"></div>
+    <div id="agent-chip" class="chip big agentchip"><img src="../work/assets/billbo.png" alt="">Connect your agent<span class="sub">inboxzerovr.com/mcp</span></div>
+    <div id="credit" class="credit">Built for the Meta Start Hackathon</div>
+  </div>
+  <div id="petals" class="layer"></div>
+  <!-- v40: the level's name, top right; pink bits flung off the sword split -->
+  <div id="level-name"></div>
+  <div id="split-parts"></div>
+  <!-- the outro: gameplay, and what's in the game -->
+  <div id="outro" class="layer">
+    <div class="shade"></div>
+    <img id="out-logo" src="../work/assets/logos/site.webp" alt="">
+    <div id="badges" class="badges"></div>
+    <div id="out-url" class="url small">inboxzerovr.com</div>
+  </div>
+
+  <svg id="cursor" viewBox="0 0 32 32" width="44" height="44"><path d="M5 3l20 11-9 2-4 9z" fill="#17131f" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>
+  <div id="ripple"></div>
+</div>
+<script src="../work/cues.js"></script>
+<script src="../work/footage.js"></script>
+<script src="film.js"></script>
+</body>
+</html>

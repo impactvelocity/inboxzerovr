@@ -19,9 +19,8 @@ Built with Meta's Immersive Web SDK, so it runs in the Quest browser with nothin
 0:33 Grab, throw, cut
 0:40 Round two: replies from your agent
 0:53 Seven levels
-1:37 How it's built
-1:53 Your agent does the rest, after you say okay
-2:03 Try it
-2:15 Gameplay and what's inside
+1:21 How it's built
+1:38 Your agent does the rest, after you say okay
+1:48 Try it
 
 #VR #MetaQuest #WebXR #InboxZero #MCP #AIagents #Hackathon

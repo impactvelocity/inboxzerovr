@@ -1,5 +1,95 @@
 # Inbox Zero VR demo film, plan
 
+## v42 (2026-11-14)
+
+- Every level shot is 4 s (was 5); the pauses after the level lines are now 0.6 to 2.0 s. The film is 2:13.3.
+- The Inferno clip starts 1 s in (its frame 31), where it gets interesting; its hits are re-timed to match.
+- Music: the Keyboard Smash song (`office/music.m4a`) for the whole film, one continuous play, instead of Kyoto's. It starts 2:28 into the song so the song's real ending closes the film; held steady at about -31 LUFS under the voice (evened out), then lifted to about -23 for the ending clip, where the same song carries on unlevelled into its last hits and ring-out.
+- Fix: the effects mix could stall at the end (ffmpeg waiting on a never-ending input); every effect track is now padded to the film's exact length before mixing.
+
+## v41 (2026-11-14), a new ending
+
+- Everything after the "Become a hero with inbox zero" card is gone: the 20 s gameplay montage and the six feature badges.
+- After the card (held 1.6 s past the line, as before) comes `vr-video/02-keyboard/keyboard-outro.mp4`, 13 s, whole: the monitor smashed for 8 s.
+- 8 s into it the dark overlay fades up, the Keyboard Smash logo and the pixel Meta mark with "Built for Meta VR Hackathon" come in and float a little (a slow bob and breathe), the overlay deepens to black under them over 1.4 s, and they fade out on the last frame.
+- Music: the Kyoto song now ends on the hero card (its own ending, timed to land there). The Keyboard Smash song (`office/music.m4a`) comes in under the card's last moment and plays over the ending clip at about -23 LUFS (louder than the -31 bed: no voice there), from 4:27 into it, so its real last hits and ring-out close the film.
+- Light keyboard hits on the ending clip's smashes before the overlay.
+- The film is 2:20.3. The chapters lose "Gameplay and what's inside".
+
+## v40 (2026-11-14)
+
+- Every level shot is 5 s (was 7 for Keyboard Smash and 6 for the rest): `LEVEL_SHOT` in `tools/build_vo.py`, which solves each level's pause (now 1.6 to 3.0 s). Each clip plays its first 5 s. The film is 2:26 (146.9 s); everything after the levels is 8 s earlier.
+- Each level's name sits top right in the pixel font and the level's own colour (on a small dark plate with stepped corners), popping in with the level's logo.
+- The voice has no effect on it any more: the plain take (`VOICE_FX = False` in `tools/mix.py`).
+- The sword split is half a second later, at 0:06.5; the sword clip now starts at its frame 10 so its own cut still lands on "sword". 160 pink petals, hot-pink sparks and white glints are flung off the cut line as the screen splits, and drift on over the sword shot.
+
+## v39 (2026-11-14)
+
+- "One round at a time" stamps in word by word: each word is on almost at once (0.05 s), drops in from 1.8x with a small bounce, and sprays keycaps out sideways as it lands (cream keys with a darker side, and a few mint pixels).
+- No fade out any more. At 0:18.3 the Keyboard Smash icon swells and pops away in a last burst of pixels and paper, and every word of the headline hops and falls off the screen with a spin, the bottom line first, while the dark overlay clears behind them.
+
+## v38 (2026-11-14)
+
+- The opening's notification banners sit in four even rows (128 px apart) centred on the middle of the screen, where they used to start near the top. They form a gentle arc round the icon (the middle rows tucked 50 px closer to it than the top and bottom ones), with much less random scatter (a few pixels, and tilts of about 2 degrees, leaning in towards the icon), and they drop a shorter way into place.
+
+## v37 (2026-11-14)
+
+- 0:40.6 to 0:44.4 ("Every email you keep comes back with two short replies from your agent") is now a stretch of `vr-video/08-kyoto-hands/kyoto-hands.mp4` (a 67 s hands playthrough), its frames 1222 to 1335: the ROUND 2 / 1 TO ANSWER countdown, then REPLY! and the two reply boards appearing on "two short replies", the email floating in between them. It replaces my last desktop capture in this section.
+
+## v36 (2026-11-14)
+
+- "Built for Meta VR Hackathon" is in the pixel font, with a pixel-art Meta mark: the loop rasterised onto a 26 x 12 grid, two cells thick, in four hard steps of Meta blue (drawn by me, not Meta's file).
+- The Keyboard Smash mail icon is pixel art to match its badge: stair-step corners, a fill in hard mint bands, and a 16 x 11 pixel envelope.
+- The cut streaks are centred on the icon and sweep along their own line, so each crosses the icon (they used to swing below it), drawn on top.
+
+## v35 (2026-11-14)
+
+- The seven level shots are the user's own level clips from `vr-video/`, each played whole at real speed: Keyboard Smash 7 s (`02-keyboard/keyboard-level.mp4`), and 6 s each for The Haunted Hall, Toxic Danger, Inferno, Kyoto Nights, LumberHack and Super Space.
+- Each level's pause after its line is now solved so the shot is exactly its clip's length (`LEVEL_SHOT` in `tools/build_vo.py`; pauses now 2.6 to 4.0 s instead of a flat 3.5 s). The film is 154.9 s; everything after the levels moved by up to -0.7 s, all re-timed from the cues.
+- Hit sounds on each clip's biggest impacts (picked by how much the picture changes, so one or two may sit on a fast camera move): the keyboard's swing-chop-crunch, the castle sword, the lab's melt, Inferno's flare, the katana, the axe chop, the saber.
+- Note: `keyboard-level.mp4` is the same recording as the first 7 s of `smash-intro.mp4` (used at 0:11 to 0:20), so those hits appear twice.
+- The 20 s gameplay outro still uses my desktop captures.
+
+## v34 (2026-11-14)
+
+- "Clear your email inbox / one round at a time" is set in the pixel font (Silkscreen, 78 px), like the game's labels.
+- The Keyboard Smash icon's badge is pixel art now: square with stair-step corners, a mint frame round a dark green screen, the number in the pixel font, a soft glow.
+- Music at one steady level ("seems to go in and out"): no ducking any more. The song is evened out with a slow leveller (with a 20 s run-up so the opening isn't quieter) and held at about -31 LUFS, 13 dB under the voice, from start to end; measured every 10 s it stays between -30.2 and -32.0. `DUCKING = True` in `tools/mix.py` brings the ducking back.
+
+## v33 (2026-11-14)
+
+- The Keyboard Smash logo, the dark overlay and "Built for Meta VR Hackathon" now come in at 0:12.0 (on "…to Inbox Zero"), and leave at 0:15 as before.
+- 0:15.2 to 0:18.5: the mail icon from the opening comes back in Keyboard Smash colours (a mint tile with a cream envelope; the badge styled like the level's green CRT screen, in the pixel font) and is cut ten times across "clear your inbox, one round at a time": each cut is a mint streak at alternating angles, a shake, the badge counting down one, and a burst of mint and green pixels with a few cream paper bits. It reaches 0 on "time", glows, and the badge pops away; everything fades with the overlay.
+- The headline sits under the icon now (88 px, 69% down).
+- Ten light keyboard-level swipe sounds on the cuts and a small crunch at zero, quiet under her voice.
+
+## v32 (2026-11-14)
+
+- 0:30.1 to 0:40.6: `vr-video/08-kyoto-hands/hands-slash.mp4` (the in-VR How to Play intro with real hands), at real speed. It rises up over the agent window like a card right after "Open" is clicked (the 0:20 lift in reverse). Its title plays under "Pick your level, and hit play", its two cards (Grab to read / Throw to keep, Grip to arm / Slash to clear) under "Grab an email… throw it to keep it", the katana slashes through the panel at 0:37.4 (on "take your right hand") and the shards fly through "cut it up into tiny little pieces"; the ROUND 1 countdown carries to "Every email you keep…".
+- 0:44.4 "Hold it up to the one you like": `vr-video/01-kyoto/reply.mp4`, Reply A glowing on "up".
+- 0:45.8 "pull it close to say your own": `vr-video/09-kyoto-v3-controller/recording.mp4`, the email at the mic and the LISTENING panel opening on "close".
+- Removed in this stretch (the game's own UI now says it): the level-select screen and its two cursor clicks, the "Game 4821" chip, the hand illustrations, the "Grab to read / Throw to keep / Cut to archive" lines, and the mic bubble.
+- The cut hit moved to the panel slash (a katana slash and a glass crunch).
+- Placeholders still in this stretch: 0:40.6 to 0:44.4 ("Every email you keep comes back with two short replies") and 0:47.5 onward ("leave it for tomorrow", the end screen) are still my desktop captures.
+
+## v31 (2026-11-14), polish pass on 0:00 to 0:20 only
+
+Reviewed at three frames a second. Nothing after the agent window's arrival was touched.
+
+- Hook: the sixth banner now lands at 3.05 s, filling a lull before Filters (it used to land 0.09 s before the "reminder" banner and had lost its ping); it has a ping now.
+- The saber shot on "slash" no longer freezes on its last frame (frames 13 to 30).
+- 0:13.5 to 0:18.5: the dark overlay is about 13% lighter once the logo has gone, so the smash still reads behind the headline; it clears 0.15 s sooner.
+- The headline "Clear your email inbox" sits centred on its own, then opens up for "one round at a time" (it used to sit high, waiting).
+- Keyboard hits are half as loud while the overlay is up and she is talking; full strength again at 0:19.4.
+- A soft whoosh on the logo's arrival and on the lift into the agent scene.
+- The join at 0:20 (was a hard cut from the smash to white): the overlay clears, the smash plays in the clear for about 0.6 s with one last hit, then the whole gameplay frame lifts up and off like a card (slightly smaller, rounded corners, a shadow) over half a second, and the agent window rises in underneath it. The window now starts 0.33 s earlier and from lower so the two move as one push; everything inside it is timed as before.
+
+## v30 (2026-11-14)
+
+- Notification pings in the hook, made with ElevenLabs (flow "jjoD9U8quf3MSenM0KyR", four takes; prompt: a soft, bright, wooden two-note knock-pop from a modern team chat app, not any real app's actual alert). Take 4 (two notes, 0.3 s apart) is the main ping, take 2 (a single pop) alternates with it; takes 1 and 3 were too quiet or just a click. Trimmed copies are `work/audio/notify/ping-a.wav` and `ping-b.wav`.
+- One ping as each banner lands: 0.4, 0.8, 1.2, 1.65, 2.5 s, and the "Reminder: reminder about reminders" banner at 4.97 s (a touch louder). The banner 0.09 s before that one and the last banner under the sword slash get none.
+- Levelled like the other hits, about 8 dB under the voice in the hook. Picture unchanged.
+
 ## v29 (2026-11-14)
 
 - The "slash" cut at 0:09.7 is now `vr-video/05-space/slash-space-short.mp4` (Super Space's saber) instead of the Haunted Hall: frames 15 to 30, so the saber's swing lands at 10.0 s and the email shatters just before "burn". The hit is Super Space's saber slash.

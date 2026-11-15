@@ -239,3 +239,144 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#fff;font-family
 #round-line span{display:block}
 #round-line .rl2{color:#4ff3c8;display:flex;justify-content:center;gap:.26em;height:1.06em}
 #round-line b{display:inline-block;font-weight:800}
+
+/* v33: the Keyboard Smash mail icon, cut to zero (the level's colours: CRT mint, phosphor green on near-black, cream) */
+#ks-cut{position:absolute;left:50%;top:372px;width:0;height:0;visibility:hidden}
+#ks-icon{position:absolute;left:-125px;top:-125px;width:250px;height:250px;border-radius:58px;display:grid;place-items:center;
+  background:linear-gradient(180deg,#a8ffe0 0%,#46dcae 50%,#119c79 100%);box-shadow:0 30px 60px -26px #000c,inset 0 3px 0 #ffffff55,inset 0 -6px 14px #05523f55;transform-origin:50% 60%}
+#ks-icon svg{width:170px;height:170px;filter:drop-shadow(0 6px 10px #05523f66)}
+#ks-badge{position:absolute;top:-30px;right:-46px;transform-origin:30% 70%;filter:drop-shadow(0 0 14px #4ff3c899) drop-shadow(0 6px 0 #0b0912aa)}
+#ks-badge .pxb{display:block;padding:7px;background:#7dffc9;clip-path:polygon(0 14px,7px 14px,7px 7px,14px 7px,14px 0,calc(100% - 14px) 0,calc(100% - 14px) 7px,calc(100% - 7px) 7px,calc(100% - 7px) 14px,100% 14px,100% calc(100% - 14px),calc(100% - 7px) calc(100% - 14px),calc(100% - 7px) calc(100% - 7px),calc(100% - 14px) calc(100% - 7px),calc(100% - 14px) 100%,14px 100%,14px calc(100% - 7px),7px calc(100% - 7px),7px calc(100% - 14px),0 calc(100% - 14px))}
+#ks-badge b{display:block;min-width:92px;height:92px;padding:0 18px;background:#0b231f;color:#7dffc9;font:700 50px/94px var(--pixel);text-align:center;clip-path:polygon(0 12px,6px 12px,6px 6px,12px 6px,12px 0,calc(100% - 12px) 0,calc(100% - 12px) 6px,calc(100% - 6px) 6px,calc(100% - 6px) 12px,100% 12px,100% calc(100% - 12px),calc(100% - 6px) calc(100% - 12px),calc(100% - 6px) calc(100% - 6px),calc(100% - 12px) calc(100% - 6px),calc(100% - 12px) 100%,12px 100%,12px calc(100% - 6px),6px calc(100% - 6px),6px calc(100% - 12px),0 calc(100% - 12px))}
+#ks-streak{position:absolute;z-index:3;left:-330px;top:-5px;width:660px;height:10px;border-radius:5px;opacity:0;
+  background:linear-gradient(90deg,transparent,#eafff7 35%,#7dffc9 60%,transparent);box-shadow:0 0 22px 6px #4ff3c877}
+#ks-parts i{position:absolute;display:block;left:0;top:0}
+#round-line{top:69%;font-family:var(--pixel);font-weight:700;font-size:78px;line-height:1.16;letter-spacing:-.035em}      /* v34: the game's pixel font */
+
+/* v36: pixel Meta mark + pixel font under the logo */
+#logo-credit{font:700 42px/1 var(--pixel);letter-spacing:-.01em;gap:24px}
+#logo-credit svg{width:117px;height:54px}
+/* v36: the Keyboard Smash icon as pixel art: stair-step corners, hard-banded fill, a pixel envelope */
+#ks-icon{background:none;box-shadow:none;border-radius:0;filter:drop-shadow(0 18px 0 #0b091299) drop-shadow(0 0 0 #4ff3c800)}
+#ks-icon .ptile{position:absolute;inset:0;display:grid;place-items:center;clip-path:polygon(0 28px,14px 28px,14px 14px,28px 14px,28px 0,calc(100% - 28px) 0,calc(100% - 28px) 14px,calc(100% - 14px) 14px,calc(100% - 14px) 28px,100% 28px,100% calc(100% - 28px),calc(100% - 14px) calc(100% - 28px),calc(100% - 14px) calc(100% - 14px),calc(100% - 28px) calc(100% - 14px),calc(100% - 28px) 100%,28px 100%,28px calc(100% - 14px),14px calc(100% - 14px),14px calc(100% - 28px),0 calc(100% - 28px));
+  background:linear-gradient(180deg,#a8ffe0 0,#a8ffe0 18px,#5ae6bb 18px,#5ae6bb 50%,#2fc79b 50%,#2fc79b calc(100% - 22px),#139f7c calc(100% - 22px))}
+#ks-icon svg{width:162px;height:117px;filter:none}
+
+/* v39: the headline's words are separate (they fall away one by one); keycap particles burst from "one round at a time" */
+#round-line .rl1{display:flex;justify-content:center;gap:.26em}
+#round-line .kcs{position:absolute;left:0;top:0;width:0;height:0}
+#round-line .kcs i{position:absolute;display:block;left:0;top:0}
+#round-line .kcs i.key{border-radius:5px;background:#efe3c8;border-bottom:7px solid #b3a07c;box-shadow:inset 0 3px 0 #fffaf0,0 0 14px #4ff3c855}
+#round-line .kcs i.px{background:#7dffc9;box-shadow:0 0 10px #4ff3c8aa}
+
+/* v40: the level's name, top right, in the pixel font and the level's colour */
+#level-name{position:absolute;right:56px;top:58px;font:700 30px/1 var(--pixel);letter-spacing:.01em;white-space:nowrap;padding:12px 18px 13px;
+  background:#0b0912b3;visibility:hidden;transform-origin:100% 50%;
+  clip-path:polygon(0 6px,6px 6px,6px 0,calc(100% - 6px) 0,calc(100% - 6px) 6px,100% 6px,100% calc(100% - 6px),calc(100% - 6px) calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,6px calc(100% - 6px),0 calc(100% - 6px))}
+/* v40: the sword split's pink particles, above the flying halves */
+#split-parts{position:absolute;inset:0;z-index:6;pointer-events:none}
+#split-parts i{position:absolute;left:0;top:0;display:block}
+
+/* v41: the end's black, under the floating logo */
+#end-black{position:absolute;inset:0;background:#000;visibility:hidden}
+
+/* ======================= v43: the scenes after the levels ======================= */
+/* stepped pixel corners: --s is one step */
+.stp{clip-path:polygon(0 calc(var(--s)*2),var(--s) calc(var(--s)*2),var(--s) var(--s),calc(var(--s)*2) var(--s),calc(var(--s)*2) 0,calc(100% - var(--s)*2) 0,calc(100% - var(--s)*2) var(--s),calc(100% - var(--s)) var(--s),calc(100% - var(--s)) calc(var(--s)*2),100% calc(var(--s)*2),100% calc(100% - var(--s)*2),calc(100% - var(--s)) calc(100% - var(--s)*2),calc(100% - var(--s)) calc(100% - var(--s)),calc(100% - var(--s)*2) calc(100% - var(--s)),calc(100% - var(--s)*2) 100%,calc(var(--s)*2) 100%,calc(var(--s)*2) calc(100% - var(--s)),var(--s) calc(100% - var(--s)),var(--s) calc(100% - var(--s)*2),0 calc(100% - var(--s)*2))}
+.sk-b,.sk-in,.pu-b,.pu-in,.pc-b,.pc-in,.lc-b,.lc-in,#pick{clip-path:polygon(0 calc(var(--s)*2),var(--s) calc(var(--s)*2),var(--s) var(--s),calc(var(--s)*2) var(--s),calc(var(--s)*2) 0,calc(100% - var(--s)*2) 0,calc(100% - var(--s)*2) var(--s),calc(100% - var(--s)) var(--s),calc(100% - var(--s)) calc(var(--s)*2),100% calc(var(--s)*2),100% calc(100% - var(--s)*2),calc(100% - var(--s)) calc(100% - var(--s)*2),calc(100% - var(--s)) calc(100% - var(--s)),calc(100% - var(--s)*2) calc(100% - var(--s)),calc(100% - var(--s)*2) 100%,calc(var(--s)*2) 100%,calc(var(--s)*2) calc(100% - var(--s)),var(--s) calc(100% - var(--s)),var(--s) calc(100% - var(--s)*2),0 calc(100% - var(--s)*2))}
+
+/* built for web: a bigger window, the address typing, the game inside it */
+#browser{overflow:hidden}
+#browser .win{position:absolute;left:280px;top:120px;width:1360px;border-radius:20px;transform-origin:50% 53.4%;box-shadow:0 0 0 1px var(--line),0 50px 100px -36px #16101f66}
+#browser .bar{height:56px}
+#browser .addr{max-width:620px;gap:10px;transform:translateX(-46px);font:500 22px/1 var(--text);color:var(--ink);justify-content:center;display:flex;align-items:center}
+#browser .addr svg{width:18px;height:18px;fill:none;stroke:var(--dim);stroke-width:2.2;stroke-linecap:round}
+#addr-caret{display:inline-block;width:2px;height:24px;background:var(--hot);margin-left:2px}
+#browser .shot{width:1360px;height:765px;background:#1a1426}
+#site-img,#game-img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;transform-origin:50% 40%}
+#browser .hide-badge{left:0;bottom:0;width:90px;height:90px;background:#fff}
+#b-play{position:absolute;left:482px;top:463px;width:202px;height:30px}
+#b-load{position:absolute;left:0;top:0;height:5px;width:100%;background:linear-gradient(90deg,#ff2e93,#ff8cc0);transform-origin:0 50%;box-shadow:0 0 12px #ff2e9399;opacity:0}
+.sticker{position:absolute;left:0;top:0;visibility:hidden;filter:drop-shadow(7px 7px 0 #170d15);transform-origin:50% 50%}
+.sk-b{--s:6px;display:block;padding:5px;background:#170d15}
+.sk-in{--s:5px;display:flex;align-items:center;gap:16px;padding:16px 26px 17px 20px;background:#f6b3cc;color:#170d15;font:700 30px/1 var(--pixel);letter-spacing:-.01em;white-space:nowrap}
+.sticker.mint .sk-in{background:#7dffc9}
+.sk-ic svg{display:block}
+
+/* seated: the level select behind, in soft focus */
+#seat-bg{background:#140f24}
+#seat-bg img{transform-origin:50% 50%}
+#seat-shade{background:radial-gradient(ellipse 52% 75% at 22% 92%,#0b0912a8 0%,#0b091200 72%),linear-gradient(0deg,#0b09128c 0%,#0b091200 40%)}
+#seat-motes{display:none}
+
+/* clear inbox: the intro's app icon, cleared */
+.appdone{position:absolute;top:-38px;right:-52px;width:116px;height:116px;border-radius:50%;background:#14b88a;box-shadow:0 0 0 9px #fff,0 14px 28px -10px #14b88a99;display:grid;place-items:center;transform:scale(0)}
+.appdone svg{width:68px;height:68px;fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+.appring{position:absolute;left:50%;top:50%;width:300px;height:300px;margin:-150px 0 0 -150px;border-radius:84px;border:6px solid #14b88a;opacity:0;pointer-events:none}
+#app{position:relative}
+#clear-parts{position:absolute;inset:0;pointer-events:none}
+#clear-parts i{position:absolute;left:0;top:0;display:block;opacity:0}
+.applabel b{color:#0a9a7a;font-weight:700}
+
+/* the agent's results card */
+.rcard{width:940px;margin-top:20px;border-radius:26px;background:#fff;box-shadow:0 0 0 1px var(--line),0 24px 50px -30px #16101f66;overflow:hidden}
+.rhead{display:flex;align-items:center;gap:16px;padding:20px 26px;background:var(--tint);border-bottom:1px solid var(--line)}
+.rgame{width:48px;height:48px;border-radius:14px;background:#2a2140;display:grid;place-items:center}
+.mwin .rgame svg{width:30px;height:30px;stroke:#7dffc9;stroke-width:2}
+.rtitle{font:700 28px/1 var(--text);letter-spacing:-.01em}
+.rround{font:500 24px/1 var(--text);color:var(--dim)}
+.rstate{margin-left:auto;display:inline-flex;align-items:center;gap:10px;height:44px;padding:0 18px;border-radius:22px;background:#fff;box-shadow:0 0 0 1px var(--line);font:600 22px/1 var(--text);color:var(--soft)}
+.rstate i{width:10px;height:10px;border-radius:50%;background:#ff9a2e}
+.rstate.done{background:#e3f6f0;box-shadow:none;color:#0a7a60}
+.rstate.done i{background:#0a9a7a}
+.mwin .res{position:relative;display:flex;align-items:center;gap:20px;margin:0;padding:18px 26px;border-top:1px solid var(--line);font:500 32px/1.2 var(--text);overflow:hidden}
+.mwin .res:first-of-type{border-top:0}
+.ric{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;flex:none;position:relative;z-index:1}
+.mwin .ric svg{width:30px;height:30px;stroke:#fff;stroke-width:2.2}
+.rl{font-weight:600;position:relative;z-index:1}
+.rn{color:var(--soft);position:relative;z-index:1}
+.mwin .res .tk{margin-left:auto;width:40px;height:40px;position:relative;z-index:1}
+.mwin .res .tk.done::after{width:16px;height:9px}
+.rfill{position:absolute;left:0;top:0;bottom:0;width:100%;background:linear-gradient(90deg,#e9f7f3,#f4fbf9);transform-origin:0 50%;transform:scaleX(0)}
+.mwin .mbtns{margin-top:24px}
+.mwin .mbtn{height:66px;padding:0 36px;font-size:29px;border-radius:33px}
+
+/* the flow: bigger nodes, packets on the wires, the round stamped deleted */
+#flow .node{top:392px;width:460px;height:296px;gap:22px}
+#flow .nic{width:128px;height:128px;border-radius:34px}
+#flow .nic svg{width:68px;height:68px}
+#flow .nav{width:128px;height:128px}
+#flow .nl{font-size:42px}
+#flow .wire{top:538px;height:5px;background:repeating-linear-gradient(90deg,#d9d3e3 0 14px,transparent 14px 22px)}
+#flow .wchip{top:448px;height:58px;font-size:25px}
+#packets{position:absolute;inset:0;pointer-events:none}
+#packets i{position:absolute;left:0;top:0;display:block;width:46px;height:34px;opacity:0}
+#packets i svg{width:100%;height:100%;filter:drop-shadow(0 6px 10px #16101f40)}
+.delstamp{position:absolute;left:0;top:0;padding:12px 20px 13px;background:var(--hot);color:#fff;font:700 26px/1 var(--pixel);white-space:nowrap;visibility:hidden;transform-origin:50% 50%;--s:4px;clip-path:polygon(0 8px,4px 8px,4px 4px,8px 4px,8px 0,calc(100% - 8px) 0,calc(100% - 8px) 4px,calc(100% - 4px) 4px,calc(100% - 4px) 8px,100% 8px,100% calc(100% - 8px),calc(100% - 4px) calc(100% - 8px),calc(100% - 4px) calc(100% - 4px),calc(100% - 8px) calc(100% - 4px),calc(100% - 8px) 100%,8px 100%,8px calc(100% - 4px),4px calc(100% - 4px),4px calc(100% - 8px),0 calc(100% - 8px))}
+
+/* try it yourself: Inferno behind, the pixel address, two rows of levels, the agent */
+#close-shade{position:absolute;inset:0;background:radial-gradient(ellipse 70% 62% at 50% 50%,#0b0912a6 0%,#0b0912d9 100%)}
+#close-white{position:absolute;inset:0;background:#fff;opacity:0}
+.purl{position:absolute;left:50%;top:0;visibility:hidden;filter:drop-shadow(8px 8px 0 #170d15);transform-origin:50% 50%}
+.pu-b{--s:8px;display:block;padding:6px;background:#170d15}
+.pu-in{--s:6px;display:flex;align-items:center;height:104px;padding:0 44px 0 48px;background:#f6b3cc;color:#170d15;font:700 58px/1 var(--pixel);letter-spacing:-.02em;white-space:nowrap}
+#close #caret{width:8px;height:58px;margin-left:8px;border-radius:0;background:#170d15}
+#close .cards{left:0;top:0}
+#close .lc{width:360px;height:203px;border-radius:0;overflow:visible;box-shadow:none;filter:drop-shadow(0 22px 26px #000c);transform-origin:50% 60%}
+.lc-b{--s:6px;position:absolute;inset:0;padding:5px;background:#fff6}
+.lc-in{--s:5px;position:relative;width:100%;height:100%;overflow:hidden;background:#170d15}
+.lc-in img{width:100%;height:100%;object-fit:cover;display:block}
+.lc-in .lname{position:absolute;left:0;right:0;bottom:0;padding:34px 16px 12px;background:linear-gradient(0deg,#0b0912e6 0%,#0b091200 100%);font:700 25px/1 var(--pixel);letter-spacing:-.01em;white-space:nowrap}
+.lc-in .glint{position:absolute;top:-20%;bottom:-20%;width:90px;background:linear-gradient(90deg,#fff0,#ffffff66,#fff0);transform:skewX(-18deg);opacity:0}
+#pick{--s:7px;position:absolute;left:0;top:0;width:380px;height:223px;visibility:hidden;background:#ff2e93;
+  -webkit-mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);padding:7px;filter:drop-shadow(0 0 14px #ff2e93)}
+.pchip{position:absolute;left:50%;top:0;visibility:hidden;filter:drop-shadow(7px 7px 0 #170d15)}
+.pc-b{--s:7px;display:block;padding:5px;background:#170d15}
+.pc-in{--s:6px;display:flex;align-items:center;gap:20px;padding:14px 32px 14px 16px;background:#211a33;color:#fff}
+.pc-av{--s:4px;width:66px;height:66px;padding:4px;background:#7dffc9;flex:none;clip-path:polygon(0 8px,4px 8px,4px 4px,8px 4px,8px 0,calc(100% - 8px) 0,calc(100% - 8px) 4px,calc(100% - 4px) 4px,calc(100% - 4px) 8px,100% 8px,100% calc(100% - 8px),calc(100% - 4px) calc(100% - 8px),calc(100% - 4px) calc(100% - 4px),calc(100% - 8px) calc(100% - 4px),calc(100% - 8px) 100%,8px 100%,8px calc(100% - 4px),4px calc(100% - 4px),4px calc(100% - 8px),0 calc(100% - 8px))}
+.pc-av img{width:100%;height:100%;display:block;image-rendering:pixelated}
+.pc-tt{display:flex;flex-direction:column;gap:10px}
+.pc-t{font:700 32px/1 var(--pixel);letter-spacing:-.01em;white-space:nowrap}
+.pc-sub{font:700 24px/1 var(--pixel);color:#7dffc9;white-space:nowrap}
+#close #end-logo{width:1180px;margin-left:-590px;filter:drop-shadow(0 10px 0 #170d15) drop-shadow(0 30px 50px #000c)}
+#petals i{border-radius:0}

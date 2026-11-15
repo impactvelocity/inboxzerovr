@@ -9,8 +9,10 @@
  * (`tune.longest`). Then `phase` is 'done' and letters.ts offers SEND IT and REDO, or TRY AGAIN.
  *
  * Who turns speech into words, best first:
- *   'scribe'   ElevenLabs Scribe v2 realtime over a WebSocket, with a single-use token from the dev
- *              server (/api/scribe-token in the Next app, vr3/app/api; the key stays on the server)
+ *   'scribe'   ElevenLabs Scribe v2 realtime through the Vercel AI Gateway (2026-11-14: "so its all in AI gateway"):
+ *              a WebSocket to the gateway with a short-lived client secret from /api/scribe-token (the Next app,
+ *              vr3/app/api; the gateway key stays on the server). The gateway's transcription-stream envelope:
+ *              a start frame, the audio as binary 16 kHz PCM, then audio-done; back come transcript parts and finish
  *   'browser'  the browser's own SpeechRecognition, where there is one (desktop Chrome; the Quest
  *              browser is unknown)
  *   'voice'    the mic is connected but nothing can write the words down: it still listens for real (the bars
@@ -33,6 +35,13 @@ export const tune = {
   speakAbove: 0.025,    // the level (RMS) that counts as speaking, at the least: it also follows the room's noise
   warmFor: 6,           // a mic opened at the ring and not used is closed after this long
 };
+
+/**
+ * The demo recording always, even with a connected mic (2026-11-14: "I want to record a demo for audio, add back the demo
+ * recording audio so I can record the sequence with it then turn it back on"): round two's mic types the made-up words
+ * with DEMO under it, and the mic is never opened or asked for. Set back to false for the real mic.
+ */
+export const DEMO_MIC = false;
 
 type Phase = 'idle' | 'opening' | 'listening' | 'finishing' | 'done';
 type Engine = 'pending' | 'scribe' | 'browser' | 'voice' | 'mock';
@@ -191,26 +200,31 @@ function createDictate() {
     }
     carry = pos - block.length;
   }
-  function send(pcm: Int16Array, commit: boolean) {
+  /** Audio to the gateway: raw 16 kHz PCM in binary frames (`last`: then say the audio is over, so the last words come back). */
+  function send(pcm: Int16Array, last: boolean) {
     if (!ws || ws.readyState !== WebSocket.OPEN) { pending.push(pcm.slice()); return; }
-    const bytes = new Uint8Array(pcm.buffer, pcm.byteOffset, pcm.byteLength);
-    let bin = '';
-    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
-    ws.send(JSON.stringify({ message_type: 'input_audio_chunk', audio_base_64: btoa(bin), commit, sample_rate: RATE }));
+    if (pcm.length) ws.send(pcm.slice().buffer);
+    if (last) ws.send(JSON.stringify({ type: 'transcription-stream.audio-done' }));
   }
 
   /** A token and a socket to Scribe (null if there is no Scribe here). */
   async function connect(): Promise<WebSocket | null> {
     // (tried even if the last check said no: that check may have been a server still starting)
-    let token = '';
+    let token = '', url = '';
     try {
       const reply = await fetch('/api/scribe-token', { cache: 'no-store' });
       if (!reply.ok) { if (reply.status !== 501) d.trouble = `token: ${reply.status}`; d.scribe = false; return null; }
-      token = ((await reply.json()) as { token?: string }).token ?? '';
-      if (token) d.scribe = true;
+      const body = (await reply.json()) as { token?: string; url?: string };
+      token = body.token ?? ''; url = body.url ?? '';
+      if (token && url) d.scribe = true;
     } catch { return null; }
-    if (!token) return null;
-    return new WebSocket(`wss://api.elevenlabs.io/v1/speech-to-text/realtime?model_id=scribe_v2_realtime&audio_format=pcm_${RATE}&commit_strategy=manual&token=${encodeURIComponent(token)}`);      // (no language_code: Scribe works it out)
+    if (!token || !url) return null;
+    // (a browser's WebSocket can't send headers, so the secret rides the subprotocols, as the gateway's own client does)
+    const socket = new WebSocket(url, ['ai-gateway-transcription.v1', `ai-gateway-auth.${token}`]);
+    socket.binaryType = 'arraybuffer';
+    // the start frame goes first, before any audio (listeners added later run after this one)
+    socket.addEventListener('open', () => socket.send(JSON.stringify({ type: 'transcription-stream.start', inputAudioFormat: { type: 'audio/pcm', rate: RATE } })));      // (no language: Scribe works it out)
+    return socket;
   }
   /**
    * Scribe got ready while the mic's ring fills (2026-11-12: "quick to load / activate"): the token and
@@ -227,13 +241,17 @@ function createDictate() {
     if (mine !== take) { socket.close(); return false; }
     ws = socket;
     const flush = () => { const waiting = pending; pending = []; waiting.forEach(p => send(p, false)); };
-    if (socket.readyState === WebSocket.OPEN) flush(); else socket.onopen = flush;
+    if (socket.readyState === WebSocket.OPEN) flush(); else socket.addEventListener('open', flush);
     socket.onmessage = e => {
-      if (mine !== take) return;
-      const m = JSON.parse(String(e.data)) as { message_type: string; text?: string; error?: string };
-      if (m.message_type === 'partial_transcript') partial = m.text ?? '';
-      else if (m.message_type === 'committed_transcript') { settled = (settled + ' ' + (m.text ?? '')).trim(); partial = ''; if (d.phase === 'finishing') done(); }
-      else if (m.error) { d.trouble = `scribe ${m.message_type}: ${m.error}`; console.warn('[dictate]', d.trouble); if (m.message_type !== 'commit_throttled' && m.message_type !== 'insufficient_audio_activity') done(); else if (d.phase === 'finishing') done(); }
+      if (mine !== take || typeof e.data !== 'string') return;
+      let m: { type?: string; text?: string; delta?: string; error?: { message?: string } | string };
+      try { m = JSON.parse(e.data); } catch { return; }
+      if (m.type === 'transcript-partial') partial = m.text ?? '';
+      else if (m.type === 'transcript-delta') partial += m.delta ?? '';
+      else if (m.type === 'transcript-final') { settled = (settled + ' ' + (m.text ?? '')).trim(); partial = ''; }
+      else if (m.type === 'finish') { if (!settled && m.text) settled = m.text.trim(); partial = ''; d.text = join(); done(); return; }
+      else if (m.type === 'error') { d.trouble = `scribe: ${typeof m.error === 'string' ? m.error : m.error?.message ?? 'error'}`; console.warn('[dictate]', d.trouble); d.text = join(); done(); return; }
+      else return;
       d.text = join();
     };
     socket.onerror = () => { if (mine === take) { d.trouble ||= 'scribe: connection failed'; console.warn('[dictate]', d.trouble); } };
@@ -273,7 +291,7 @@ function createDictate() {
    * A real take happens whenever the mic is connected: approved already (so nothing is asked in VR) and there. Whether
    * anything can write the words down no longer decides it (2026-11-13: "ALWAYS use the real mic if the mic is connected").
    */
-  const possible = () => canMic && (d.permission === 'granted' || (d.permission === 'unknown' && remembered()) || !!stream) && (d.hasDevice || !!stream);
+  const possible = () => !DEMO_MIC && canMic && (d.permission === 'granted' || (d.permission === 'unknown' && remembered()) || !!stream) && (d.hasDevice || !!stream);
   let testing: ReturnType<typeof setTimeout> | null = null;
   const extra = {
     /** Whether real words are on their way (not the mock), for the music to go softer. */
@@ -284,7 +302,7 @@ function createDictate() {
      * Never asked yet (2026-11-13: "make the mic always record the reply even in just play demo, so anyone can see it
      * work"): the home page asks on the first click there, and Start / Just Play ask before going in, never in VR.
      */
-    get unasked() { return canMic && d.permission === 'unknown' && !remembered() && !stream; },
+    get unasked() { return !DEMO_MIC && canMic && d.permission === 'unknown' && !remembered() && !stream; },
     /** Ask for the mic now (from a click on the home page), then let it go again: the browser remembers. */
     async ask() { const ok = await open(true); if (ok && d.phase === 'idle') close(); void refresh(); return ok; },
     /**
@@ -292,7 +310,7 @@ function createDictate() {
      * nothing: if it was never approved, the mic stays the demo.
      */
     hold() {
-      if (!canMic || !(d.permission === 'granted' || remembered())) return;
+      if (DEMO_MIC || !canMic || !(d.permission === 'granted' || remembered())) return;
       held = true; void open().then(ok => { if (ok && d.phase === 'idle' && !testing) close(); });
       if (d.scribe !== true) checkScribe();
     },

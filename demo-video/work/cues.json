@@ -1,5 +1,5 @@
 {
- "duration": 134.38,
+ "duration": 115.52,
  "cues": {
   "unread": {
    "start": 0.4,
@@ -122,113 +122,113 @@
    "text": "and you finally get to smash your monitor with your keyboard!"
   },
   "castle": {
-   "start": 60.21,
-   "end": 62.39,
+   "start": 57.43,
+   "end": 59.61,
    "text": "Defend your castle from haunted mail!"
   },
   "lab": {
-   "start": 66.09,
-   "end": 68.29,
+   "start": 61.43,
+   "end": 63.63,
    "text": "Disinfect toxic spam in the lab!"
   },
   "inferno": {
-   "start": 72.03,
-   "end": 74.51,
+   "start": 65.43,
+   "end": 67.91,
    "text": "Torch your inbox in the Inferno mail room!"
   },
   "kyoto": {
-   "start": 78.25,
-   "end": 81.0,
+   "start": 69.43,
+   "end": 72.18,
    "text": "Slice your worries away in a Kyoto zen garden!"
   },
   "axe": {
-   "start": 84.71,
-   "end": 86.58,
+   "start": 73.43,
+   "end": 75.3,
    "text": "Split your backlog with an axe!"
   },
   "or": {
-   "start": 90.2,
-   "end": 90.57,
+   "start": 77.43,
+   "end": 77.8,
    "text": "Or..."
   },
   "space": {
-   "start": 90.75,
-   "end": 93.46,
+   "start": 77.98,
+   "end": 80.69,
    "text": "slice through deep space with a laser sword!"
   },
   "iwsdk": {
-   "start": 97.14,
-   "end": 99.69,
+   "start": 81.43,
+   "end": 83.98,
    "text": "It's built with Meta's Immersive Web SDK,"
   },
   "browser": {
-   "start": 99.75,
-   "end": 101.25,
+   "start": 84.04,
+   "end": 85.54,
    "text": "so it runs right in the browser,"
   },
   "nodl": {
-   "start": 101.33,
-   "end": 102.57,
+   "start": 85.62,
+   "end": 86.86,
    "text": "with nothing to download!"
   },
   "chair": {
-   "start": 102.86,
-   "end": 104.35,
+   "start": 87.15,
+   "end": 88.64,
    "text": "It's made to play from your chair"
   },
   "come": {
-   "start": 104.66,
-   "end": 107.33,
+   "start": 88.95,
+   "end": 91.62,
    "text": "Emails come to you, and your weapons do the stretching!"
   },
   "really": {
-   "start": 111.18,
-   "end": 113.26,
+   "start": 92.32,
+   "end": 94.4,
    "text": "And it really does clear your inbox"
   },
   "archives": {
-   "start": 113.91,
-   "end": 115.38,
+   "start": 95.05,
+   "end": 96.52,
    "text": "Your agent archives what you cut"
   },
   "sends": {
-   "start": 115.46,
-   "end": 116.53,
+   "start": 96.6,
+   "end": 97.67,
    "text": "and sends your replies,"
   },
   "okay": {
-   "start": 116.62,
-   "end": 117.65,
+   "start": 97.76,
+   "end": 98.79,
    "text": "after you say okay"
   },
   "never": {
-   "start": 118.94,
-   "end": 120.74,
+   "start": 100.08,
+   "end": 101.88,
    "text": "The game never touches your inbox,"
   },
   "deleted": {
-   "start": 120.86,
-   "end": 122.78,
+   "start": 102.0,
+   "end": 103.92,
    "text": "and each round is deleted once it's done"
   },
   "try": {
-   "start": 123.81,
-   "end": 126.94,
+   "start": 104.95,
+   "end": 108.08,
    "text": "Try it yourself at InboxZeroVR.com!"
   },
   "seven": {
-   "start": 127.18,
-   "end": 129.05,
+   "start": 108.32,
+   "end": 110.19,
    "text": "Play the demo in all seven levels,"
   },
   "agent": {
-   "start": 129.14,
-   "end": 131.49,
+   "start": 110.28,
+   "end": 112.63,
    "text": "or connect your agent and play your own inbox"
   },
   "hero": {
-   "start": 131.77,
-   "end": 134.01,
+   "start": 112.91,
+   "end": 115.15,
    "text": "Become a hero with inbox zero!"
   }
  },
@@ -1121,707 +1121,707 @@
   {
    "s": "castle",
    "w": "defend",
-   "t": 60.21
+   "t": 57.43
   },
   {
    "s": "castle",
    "w": "your",
-   "t": 60.653
+   "t": 57.873
   },
   {
    "s": "castle",
    "w": "castle",
-   "t": 60.959
+   "t": 58.179
   },
   {
    "s": "castle",
    "w": "from",
-   "t": 61.402
+   "t": 58.622
   },
   {
    "s": "castle",
    "w": "haunted",
-   "t": 61.709
+   "t": 58.929
   },
   {
    "s": "castle",
    "w": "mail",
-   "t": 62.22
+   "t": 59.44
   },
   {
    "s": "lab",
    "w": "disinfect",
-   "t": 66.09
+   "t": 61.43
   },
   {
    "s": "lab",
    "w": "toxic",
-   "t": 66.864
+   "t": 62.204
   },
   {
    "s": "lab",
    "w": "spam",
-   "t": 67.312
+   "t": 62.652
   },
   {
    "s": "lab",
    "w": "in",
-   "t": 67.679
+   "t": 63.019
   },
   {
    "s": "lab",
    "w": "the",
-   "t": 67.883
+   "t": 63.223
   },
   {
    "s": "lab",
    "w": "lab",
-   "t": 68.168
+   "t": 63.508
   },
   {
    "s": "inferno",
    "w": "torch",
-   "t": 72.03
+   "t": 65.43
   },
   {
    "s": "inferno",
    "w": "your",
-   "t": 72.42
+   "t": 65.82
   },
   {
    "s": "inferno",
    "w": "inbox",
-   "t": 72.739
+   "t": 66.139
   },
   {
    "s": "inferno",
    "w": "in",
-   "t": 73.128
+   "t": 66.528
   },
   {
    "s": "inferno",
    "w": "the",
-   "t": 73.305
+   "t": 66.705
   },
   {
    "s": "inferno",
    "w": "inferno",
-   "t": 73.553
+   "t": 66.953
   },
   {
    "s": "inferno",
    "w": "mail",
-   "t": 74.085
+   "t": 67.485
   },
   {
    "s": "inferno",
    "w": "room",
-   "t": 74.404
+   "t": 67.804
   },
   {
    "s": "kyoto",
    "w": "slice",
-   "t": 78.25
+   "t": 69.43
   },
   {
    "s": "kyoto",
    "w": "your",
-   "t": 78.648
+   "t": 69.828
   },
   {
    "s": "kyoto",
    "w": "worries",
-   "t": 78.974
+   "t": 70.154
   },
   {
    "s": "kyoto",
    "w": "away",
-   "t": 79.516
+   "t": 70.696
   },
   {
    "s": "kyoto",
    "w": "in",
-   "t": 79.842
+   "t": 71.022
   },
   {
    "s": "kyoto",
    "w": "a",
-   "t": 80.023
+   "t": 71.203
   },
   {
    "s": "kyoto",
    "w": "kyoto",
-   "t": 80.132
+   "t": 71.312
   },
   {
    "s": "kyoto",
    "w": "zen",
-   "t": 80.53
+   "t": 71.71
   },
   {
    "s": "kyoto",
    "w": "garden",
-   "t": 80.783
+   "t": 71.963
   },
   {
    "s": "axe",
    "w": "split",
-   "t": 84.71
+   "t": 73.43
   },
   {
    "s": "axe",
    "w": "your",
-   "t": 85.106
+   "t": 73.826
   },
   {
    "s": "axe",
    "w": "backlog",
-   "t": 85.429
+   "t": 74.149
   },
   {
    "s": "axe",
    "w": "with",
-   "t": 85.969
+   "t": 74.689
   },
   {
    "s": "axe",
    "w": "an",
-   "t": 86.292
+   "t": 75.012
   },
   {
    "s": "axe",
    "w": "axe",
-   "t": 86.472
+   "t": 75.192
   },
   {
    "s": "or",
    "w": "or",
-   "t": 90.2
+   "t": 77.43
   },
   {
    "s": "space",
    "w": "slice",
-   "t": 90.75
+   "t": 77.98
   },
   {
    "s": "space",
    "w": "through",
-   "t": 91.153
+   "t": 78.383
   },
   {
    "s": "space",
    "w": "deep",
-   "t": 91.702
+   "t": 78.932
   },
   {
    "s": "space",
    "w": "space",
-   "t": 92.032
+   "t": 79.262
   },
   {
    "s": "space",
    "w": "with",
-   "t": 92.435
+   "t": 79.665
   },
   {
    "s": "space",
    "w": "a",
-   "t": 92.764
+   "t": 79.994
   },
   {
    "s": "space",
    "w": "laser",
-   "t": 92.874
+   "t": 80.104
   },
   {
    "s": "space",
    "w": "sword",
-   "t": 93.277
+   "t": 80.507
   },
   {
    "s": "iwsdk",
    "w": "it's",
-   "t": 97.14
+   "t": 81.43
   },
   {
    "s": "iwsdk",
    "w": "built",
-   "t": 97.468
+   "t": 81.758
   },
   {
    "s": "iwsdk",
    "w": "with",
-   "t": 97.869
+   "t": 82.159
   },
   {
    "s": "iwsdk",
    "w": "meta's",
-   "t": 98.196
+   "t": 82.486
   },
   {
    "s": "iwsdk",
    "w": "immersive",
-   "t": 98.67
+   "t": 82.96
   },
   {
    "s": "iwsdk",
    "w": "web",
-   "t": 99.362
+   "t": 83.652
   },
   {
    "s": "iwsdk",
    "w": "sdk",
-   "t": 99.617
+   "t": 83.907
   },
   {
    "s": "browser",
    "w": "so",
-   "t": 99.75
+   "t": 84.04
   },
   {
    "s": "browser",
    "w": "it",
-   "t": 99.894
+   "t": 84.184
   },
   {
    "s": "browser",
    "w": "runs",
-   "t": 100.038
+   "t": 84.328
   },
   {
    "s": "browser",
    "w": "right",
-   "t": 100.298
+   "t": 84.588
   },
   {
    "s": "browser",
    "w": "in",
-   "t": 100.615
+   "t": 84.905
   },
   {
    "s": "browser",
    "w": "the",
-   "t": 100.76
+   "t": 85.05
   },
   {
    "s": "browser",
    "w": "browser",
-   "t": 100.962
+   "t": 85.252
   },
   {
    "s": "nodl",
    "w": "with",
-   "t": 101.33
+   "t": 85.62
   },
   {
    "s": "nodl",
    "w": "nothing",
-   "t": 101.584
+   "t": 85.874
   },
   {
    "s": "nodl",
    "w": "to",
-   "t": 102.006
+   "t": 86.296
   },
   {
    "s": "nodl",
    "w": "download",
-   "t": 102.147
+   "t": 86.437
   },
   {
    "s": "chair",
    "w": "it's",
-   "t": 102.86
+   "t": 87.15
   },
   {
    "s": "chair",
    "w": "made",
-   "t": 103.108
+   "t": 87.398
   },
   {
    "s": "chair",
    "w": "to",
-   "t": 103.357
+   "t": 87.647
   },
   {
    "s": "chair",
    "w": "play",
-   "t": 103.495
+   "t": 87.785
   },
   {
    "s": "chair",
    "w": "from",
-   "t": 103.743
+   "t": 88.033
   },
   {
    "s": "chair",
    "w": "your",
-   "t": 103.991
+   "t": 88.281
   },
   {
    "s": "chair",
    "w": "chair",
-   "t": 104.24
+   "t": 88.53
   },
   {
    "s": "come",
    "w": "emails",
-   "t": 104.66
+   "t": 88.95
   },
   {
    "s": "come",
    "w": "come",
-   "t": 105.037
+   "t": 89.327
   },
   {
    "s": "come",
    "w": "to",
-   "t": 105.298
+   "t": 89.588
   },
   {
    "s": "come",
    "w": "you",
-   "t": 105.444
+   "t": 89.734
   },
   {
    "s": "come",
    "w": "and",
-   "t": 105.705
+   "t": 89.995
   },
   {
    "s": "come",
    "w": "your",
-   "t": 105.908
+   "t": 90.198
   },
   {
    "s": "come",
    "w": "weapons",
-   "t": 106.169
+   "t": 90.459
   },
   {
    "s": "come",
    "w": "do",
-   "t": 106.604
+   "t": 90.894
   },
   {
    "s": "come",
    "w": "the",
-   "t": 106.75
+   "t": 91.04
   },
   {
    "s": "come",
    "w": "stretching",
-   "t": 106.953
+   "t": 91.243
   },
   {
    "s": "really",
    "w": "and",
-   "t": 111.18
+   "t": 92.32
   },
   {
    "s": "really",
    "w": "it",
-   "t": 111.431
+   "t": 92.571
   },
   {
    "s": "really",
    "w": "really",
-   "t": 111.61
+   "t": 92.75
   },
   {
    "s": "really",
    "w": "does",
-   "t": 112.077
+   "t": 93.217
   },
   {
    "s": "really",
    "w": "clear",
-   "t": 112.399
+   "t": 93.539
   },
   {
    "s": "really",
    "w": "your",
-   "t": 112.794
+   "t": 93.934
   },
   {
    "s": "really",
    "w": "inbox",
-   "t": 113.117
+   "t": 94.257
   },
   {
    "s": "archives",
    "w": "your",
-   "t": 113.91
+   "t": 95.05
   },
   {
    "s": "archives",
    "w": "agent",
-   "t": 114.155
+   "t": 95.295
   },
   {
    "s": "archives",
    "w": "archives",
-   "t": 114.454
+   "t": 95.594
   },
   {
    "s": "archives",
    "w": "what",
-   "t": 114.917
+   "t": 96.057
   },
   {
    "s": "archives",
    "w": "you",
-   "t": 115.162
+   "t": 96.302
   },
   {
    "s": "archives",
    "w": "cut",
-   "t": 115.353
+   "t": 96.493
   },
   {
    "s": "sends",
    "w": "and",
-   "t": 115.46
+   "t": 96.6
   },
   {
    "s": "sends",
    "w": "sends",
-   "t": 115.647
+   "t": 96.787
   },
   {
    "s": "sends",
    "w": "your",
-   "t": 115.941
+   "t": 97.081
   },
   {
    "s": "sends",
    "w": "replies",
-   "t": 116.182
+   "t": 97.322
   },
   {
    "s": "okay",
    "w": "after",
-   "t": 116.62
+   "t": 97.76
   },
   {
    "s": "okay",
    "w": "you",
-   "t": 116.998
+   "t": 98.138
   },
   {
    "s": "okay",
    "w": "say",
-   "t": 117.238
+   "t": 98.378
   },
   {
    "s": "okay",
    "w": "okay",
-   "t": 117.478
+   "t": 98.618
   },
   {
    "s": "never",
    "w": "the",
-   "t": 118.94
+   "t": 100.08
   },
   {
    "s": "never",
    "w": "game",
-   "t": 119.157
+   "t": 100.297
   },
   {
    "s": "never",
    "w": "never",
-   "t": 119.437
+   "t": 100.577
   },
   {
    "s": "never",
    "w": "touches",
-   "t": 119.778
+   "t": 100.918
   },
   {
    "s": "never",
    "w": "your",
-   "t": 120.243
+   "t": 101.383
   },
   {
    "s": "never",
    "w": "inbox",
-   "t": 120.523
+   "t": 101.663
   },
   {
    "s": "deleted",
    "w": "and",
-   "t": 120.86
+   "t": 102.0
   },
   {
    "s": "deleted",
    "w": "each",
-   "t": 121.064
+   "t": 102.204
   },
   {
    "s": "deleted",
    "w": "round",
-   "t": 121.325
+   "t": 102.465
   },
   {
    "s": "deleted",
    "w": "is",
-   "t": 121.645
+   "t": 102.785
   },
   {
    "s": "deleted",
    "w": "deleted",
-   "t": 121.791
+   "t": 102.931
   },
   {
    "s": "deleted",
    "w": "once",
-   "t": 122.227
+   "t": 103.367
   },
   {
    "s": "deleted",
    "w": "it's",
-   "t": 122.489
+   "t": 103.629
   },
   {
    "s": "deleted",
    "w": "done",
-   "t": 122.751
+   "t": 103.891
   },
   {
    "s": "try",
    "w": "try",
-   "t": 123.81
+   "t": 104.95
   },
   {
    "s": "try",
    "w": "it",
-   "t": 124.163
+   "t": 105.303
   },
   {
    "s": "try",
    "w": "yourself",
-   "t": 124.416
+   "t": 105.556
   },
   {
    "s": "try",
    "w": "at",
-   "t": 125.274
+   "t": 106.414
   },
   {
    "s": "try",
    "w": "inboxzerovrcom",
-   "t": 125.526
+   "t": 106.666
   },
   {
    "s": "seven",
    "w": "play",
-   "t": 127.18
+   "t": 108.32
   },
   {
    "s": "seven",
    "w": "the",
-   "t": 127.481
+   "t": 108.621
   },
   {
    "s": "seven",
    "w": "demo",
-   "t": 127.714
+   "t": 108.854
   },
   {
    "s": "seven",
    "w": "in",
-   "t": 128.015
+   "t": 109.155
   },
   {
    "s": "seven",
    "w": "all",
-   "t": 128.182
+   "t": 109.322
   },
   {
    "s": "seven",
    "w": "seven",
-   "t": 128.416
+   "t": 109.556
   },
   {
    "s": "seven",
    "w": "levels",
-   "t": 128.783
+   "t": 109.923
   },
   {
    "s": "agent",
    "w": "or",
-   "t": 129.14
+   "t": 110.28
   },
   {
    "s": "agent",
    "w": "connect",
-   "t": 129.299
+   "t": 110.439
   },
   {
    "s": "agent",
    "w": "your",
-   "t": 129.775
+   "t": 110.915
   },
   {
    "s": "agent",
    "w": "agent",
-   "t": 130.061
+   "t": 111.201
   },
   {
    "s": "agent",
    "w": "and",
-   "t": 130.41
+   "t": 111.55
   },
   {
    "s": "agent",
    "w": "play",
-   "t": 130.633
+   "t": 111.773
   },
   {
    "s": "agent",
    "w": "your",
-   "t": 130.918
+   "t": 112.058
   },
   {
    "s": "agent",
    "w": "own",
-   "t": 131.204
+   "t": 112.344
   },
   {
    "s": "agent",
    "w": "inbox",
-   "t": 131.426
+   "t": 112.566
   },
   {
    "s": "hero",
    "w": "become",
-   "t": 131.77
+   "t": 112.91
   },
   {
    "s": "hero",
    "w": "a",
-   "t": 132.352
+   "t": 113.492
   },
   {
    "s": "hero",
    "w": "hero",
-   "t": 132.487
+   "t": 113.627
   },
   {
    "s": "hero",
    "w": "with",
-   "t": 132.89
+   "t": 114.03
   },
   {
    "s": "hero",
    "w": "inbox",
-   "t": 133.293
+   "t": 114.433
   },
   {
    "s": "hero",
    "w": "zero",
-   "t": 133.786
+   "t": 114.926
   }
  ]
 }

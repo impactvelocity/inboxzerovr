@@ -8,7 +8,8 @@ import json, subprocess, os, re
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.dirname(HERE)
 A = os.path.join(ROOT, 'work', 'audio')
 SPEED, END_SPEED, LEAD = 1.0, 1.0, 0.4      # v12: lead-in cut from 1.0 s so the slash lands at 7 s
-SEAT_HOLD = 3.5       # seconds after "your weapons do the stretching" (v9)
+LEVEL_SHOT = {k: 4.0 for k in ('office', 'castle', 'lab', 'inferno', 'kyoto', 'axe', 'space')}      # v42: "make all the levels 4 seconds" (v40: 5, v35: the clips' 7 and 6)
+SEAT_HOLD = 0.35      # v43: no dead air after "your weapons do the stretching" (v9 had 3.5)
 HOLD = 3.5            # seconds of level after each level line (v4 had 5, v5 3.5)
 
 # v7: four takes. vo1 is the first full take; how / built / close are the re-reads for the agent (MCP) flow.
@@ -96,6 +97,18 @@ def lufs(path):
     err = subprocess.run(['ffmpeg', '-hide_banner', '-nostats', '-i', path, '-af', 'ebur128', '-f', 'null', '-'], capture_output=True, text=True).stderr
     return float(re.findall(r'I:\s+(-?[\d.]+) LUFS', err)[-1])
 
+def level_beats():
+    first = {}
+    for sid, src, s0, e0, text in SENTENCES:
+        for k, (src2, name, a, b, beat) in enumerate(SECTIONS):
+            if src2 == src and a <= s0 < b and name not in first: first[name] = s0
+    out = {}
+    for k, (src, name, a, b, beat) in enumerate(SECTIONS):
+        if name in LEVEL_SHOT:
+            nxt = SECTIONS[k + 1]
+            out[name] = round(LEVEL_SHOT[name] - ((b - first[name]) / SPEED + (first[nxt[1]] - nxt[2]) / SPEED), 3)
+    return out
+
 def main():
     # the takes are levelled to the first one, so the joins don't jump in loudness
     ref = lufs(os.path.join(A, SOURCES['vo1']))
@@ -103,7 +116,9 @@ def main():
     parts, t, offsets = [], LEAD, {}
     silence = lambda d, name: (run('ffmpeg', '-y', '-f', 'lavfi', '-i', 'anullsrc=r=44100:cl=mono', '-t', f'{d:.3f}', '-c:a', 'pcm_s16le', os.path.join(A, name)), name)[1]
     parts.append(silence(LEAD, 'sil-lead.wav'))
+    LB = level_beats(); print('level pauses', LB)
     for i, (src, name, s, e, beat) in enumerate(SECTIONS):
+        beat = LB.get(name, beat)
         out = f'sec-{i:02}-{name}.wav'
         run('ffmpeg', '-y', '-ss', f'{s}', '-to', f'{e}', '-i', os.path.join(A, SOURCES[src]),
             '-af', f'volume={gain[src]:.2f}dB,atempo={SPEED},afade=t=in:d=0.02,afade=t=out:st={(e - s) / SPEED - 0.03:.3f}:d=0.03', '-ar', '44100', '-ac', '1', '-c:a', 'pcm_s16le', os.path.join(A, out))

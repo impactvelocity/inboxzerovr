@@ -11,7 +11,12 @@ const C = id => CUES.cues[id].start, E = id => CUES.cues[id].end;
 const W = (id, word, n = 0) => { const w = CUES.words.filter(x => x.s === id && x.w === word)[n]; if (!w) throw new Error(`no word ${id}/${word}`); return w.t; };
 const rnd = (i) => { const x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
 // v5: the voice ends, the end card holds a moment, then 20 s of gameplay with the game's features
-const OUT_HOLD = 1.6, OUT_LEN = 20;
+// v41: after the hero card, the Keyboard Smash ending clip (13 s, keyboard-outro.mp4) instead of the 20 s gameplay and badges
+const OUT_HOLD = 1.6, END_CLIP = 13.0;
+// v43: the ending plays Keyboard Smash's end anthem whole (vr3/play/public/audio/office/anthem.m4a, 18.6 s): its first
+// "Smash" (1.76 s in, vr3/play/src/levels/lyrics.ts) lands on the ending clip's first monitor hit (its frame 4), and the
+// film runs on to the song's own last note. ANTHEM_REL is where the song starts, after T_OUT.
+const ANTHEM_LEN = 18.6, ANTHEM_REL = .4 + 3 / FPS - 1.76, OUT_LEN = ANTHEM_REL + ANTHEM_LEN + .1;
 const DUR = Math.round((CUES.cues.hero.end + OUT_HOLD + OUT_LEN) * FPS) / FPS;
 
 // in at a, out at b: {o, y} or null when gone (slide up and fade in, lift and fade out)
@@ -58,19 +63,33 @@ const NOTES = [
 const noteEls = NOTES.map(([from, subj]) => { const d = document.createElement('div'); d.className = 'note'; d.innerHTML = `<span class="ni">${MINI}</span><span class="nt"><div class="nf">${from}</div><div class="ns">${subj}</div></span><span class="nw">now</span>`; $('notes').appendChild(d); return d; });
 const flyEls = []; for (let k = 0; k < 30; k++) { const d = document.createElement('div'); d.className = 'fly'; d.innerHTML = ENV; $('flies').appendChild(d); flyEls.push(d); }
 
+/* ---------- v33: the Keyboard Smash icon's cuts ---------- */
+const KS_N = 10, KS_PER = 14;
+const ksParts = []; for (let k = 0; k < (KS_N + 2) * KS_PER; k++) {      // (v39: +2 groups for the exit burst)
+  const i = document.createElement('i'); $('ks-parts').appendChild(i); ksParts.push(i); }
+
+const KC_PER = 12, kcParts = []; for (let k = 0; k < 5 * KC_PER; k++) { const i = document.createElement('i'); i.className = k % KC_PER < 8 ? 'key' : 'px'; $('kcs').appendChild(i); kcParts.push(i); }
+
+const SP_N = 160, spParts = []; for (let k = 0; k < SP_N; k++) { const i = document.createElement('i'); $('split-parts').appendChild(i); spParts.push(i); }
+
 /* ---------- the timeline ---------- */
-const T_SWORD = 6.0, T_SPLIT = T_SWORD + .02, T_GAME = T_SWORD + .34;      // v24: the split at 0:06 ("have tried sword - do that at 0:06"); she says "sword" at 7.0 over the sword clip
+const T_SWORD = 6.5, T_SPLIT = T_SWORD + .02, T_GAME = T_SWORD + .34;      // v24: the split at 0:06 ("have tried sword - do that at 0:06"); she says "sword" at 7.0 over the sword clip
 // the cut through the screen: -14 degrees through the centre (left edge at 72% down, right edge at 28%)
 const CUT_DEG = -14, CUT_L = 50 + 50 * Math.tan(14 * Math.PI / 180) * 1920 / 1080, CUT_R = 100 - CUT_L;
 const T_INBOX = W('slash', 'inbox');
 const T_SMASH_END = E('slash') + .45;      // the long smash plays through "Inbox Zero!"
 // v19: then the Round 1 clip from its countdown (replacing the level select), then more of the long smash to the agent scene
-const T_R2 = T_SMASH_END + 119 / FPS, T_LOGO = T_SMASH_END;
+const T_R2 = T_SMASH_END + 119 / FPS, T_LOGO = 12.0;      // v33: the logo and the Meta line come in at 0:12 (on "…to Inbox Zero")
+// v31: the push into the agent scene: the gameplay lifts off over half a second, ending as the window settles
+const T_PUSH = C('connect') - .75, PUSH_LEN = .55;
 const T_REALLY = C('really'), T_HERO = C('hero');
 const T_OUT = E('hero') + OUT_HOLD, T_END = T_OUT + OUT_LEN;
+const T_ANTHEM = T_OUT + ANTHEM_REL, SONG = s => T_ANTHEM + s;      // (song time to film time)
 // the agent flow (v7)
-const M_IN = C('connect') - .3, T_CONNECT = W('connect', 'muse'), T_OPEN = W('link', 'quest') + .15, T_HOME = T_OPEN + .75;
-const M2_IN = C('archives') - .35, T_OKAY = W('okay', 'okay') + .05, M2_OUT = C('never') - .55;
+const M_IN = T_PUSH + .12,      /* v31: the window rises right behind the lifting gameplay (was C('connect') - .3) */ T_CONNECT = W('connect', 'muse'), T_OPEN = W('link', 'quest') + .15, T_HOME = T_OPEN + .75;
+// v32: after "Open" the How to Play clip rises over the agent window like a card (the 0:20 lift, in reverse)
+const T_REVEAL = T_OPEN + .25;
+const M2_IN = C('archives') - .15,      /* v43: later, so inbox zero gets a beat (was - .35) */ T_OKAY = W('okay', 'okay') + .05, M2_OUT = C('never') - .55;
 // the hook's clock: the badge rolls up to 181 as it's said, then creeps; Filters knocks a few off and they come straight back,
 // Reminders adds its own reminder
 const T_ROLL0 = .25, T_181 = W('unread', '181') + .35, T_FIL = W('tried', 'filters'), T_REM = W('tried', 'reminders'), CREEP = 1.2;
@@ -87,37 +106,42 @@ const FLY_AT = [];
 for (let k = 0; k < 16; k++) FLY_AT.push(lerp(T_ROLL0 + .25, T_181, k / 15));
 for (let k = 1; FLY_AT.length < flyEls.length; k++) { const t = T_181 + k / CREEP; if (t > T_SWORD - .15) break; FLY_AT.push(t); }
 // banners: [arrives, side (-1 left, 1 right), row]
-const NOTE_AT = [[.3, -1, 0], [.7, 1, 0], [1.1, -1, 1], [1.55, 1, 1], [2.4, -1, 2], [T_FIL + .95, 1, 2], [T_REM + .3, -1, 3], [C('sword') + .35, 1, 3]];
+const NOTE_AT = [[.3, -1, 0], [.7, 1, 0], [1.1, -1, 1], [1.55, 1, 1], [2.4, -1, 2], [3.05, 1, 2], [T_REM + .3, -1, 3], [C('sword') + .35, 1, 3]];
 
 // footage: [clip, from, to, at, key] — clip frame `key` is shown at time `at`
 const SEG = [
   // v14: the user's own headset captures (vr-video/): the slash opens mid-cut with the pieces flying,
   // and the flamethrower's email catches fire (frame 14) just after "flamethrower"
-  ['sword-cut', T_SPLIT, W('flame', 'flamethrower') - .1, T_SPLIT, 1],      // v26: cut-0m13s.mp4 at real speed; its cut (frame 24) lands on "sword"
+  ['sword-cut', T_SPLIT, W('flame', 'flamethrower') - .1, T_SPLIT, 10],      // (v40: from frame 10, so its cut, frame 24, still lands on "sword")      // v26: cut-0m13s.mp4 at real speed; its cut (frame 24) lands on "sword"
   ['flame-v2', W('flame', 'flamethrower') - .1, C('slash'), W('flame', 'flamethrower') + .1, 14],
   // v15: the user's own captures. Slash: the Haunted Hall blade mid-cut from the first frame. Burn: Toxic Danger's
   // email at its heaviest melt. Smash: the keyboard hits the monitor (frame 13) just after "smash".
-  ['slash-space', C('slash'), W('slash', 'burn'), C('slash'), 15],      // v29: Super Space's saber, its swing (frame 24) at 10.0 and the shatter
+  ['slash-space', C('slash'), W('slash', 'burn'), C('slash'), 13],      // v29: Super Space's saber, its swing (frame 24) at 10.0 and the shatter
   ['melt-v3', W('slash', 'burn'), W('slash', 'smash'), W('slash', 'burn'), 33],
   // v25: one continuous clip, smash-intro.mp4 (12 s), from "smash" to the agent scene; the logo moment sits over it at 0:13.5
-  ['smash-intro', W('slash', 'smash'), C('connect') - .25, W('slash', 'smash'), 1],
-  ['kyoto-keep2', C('grab') - .1, C('cut'), W('throw', 'throw') + .12, 78],
-  ['kyoto-cut2', C('cut'), C('replies'), W('cut', 'cut') + .12, 66],
-  ['kyoto-round2b', C('replies'), C('later'), W('pull', 'pull') + .05, 180],      // "SENT" lands as she says pull
+  ['smash-intro', W('slash', 'smash'), T_PUSH + PUSH_LEN, W('slash', 'smash'), 1],
+  // v32: the user's hands How to Play intro (cards, then a slash through the panel at frame 220 on "take your right hand"),
+  // then the ROUND 1 countdown, at real speed from the card's rise to "Every email you keep"
+  ['hands-slash', T_REVEAL, C('replies'), T_REVEAL, 1],
+  // v37: kyoto-hands.mp4's round two: the ROUND 2 countdown, then the two reply boards on "two short replies" (frame 1281)
+  ['kyoto-hands', C('replies'), C('hold'), W('replies', 'two'), 1281],
+  // v32: "Hold it up to the one you like": reply.mp4, Reply A glowing (frame 34) on "up"
+  ['reply-hold', C('hold'), C('pull'), C('hold'), 22],
+  // v32: "pull it close to say your own": recording.mp4, the email at the mic and the recording panel opening on "close"
+  ['recording', C('pull'), C('later'), C('pull'), 33],
   ['kyoto-round2b', C('later'), C('minutes'), W('later', 'throw') + .15, 249],
   ['kyoto-round2b', C('minutes'), C('monitor'), C('minutes'), 'end-90'],
   // v4: the long level shots (one cut on the word, then the view opens up while more mail is cut), each held 5 s past its line
-  ['office2-long', C('monitor'), C('castle'), W('monitor', 'smash') + .12, 'cut'],
-  ['castle-long', C('castle'), C('lab'), W('castle', 'defend') + .25, 'cut'],
-  ['lab-long', C('lab'), C('inferno'), W('lab', 'disinfect') + .3, 'cut'],
-  ['inferno-long', C('inferno'), C('kyoto'), W('inferno', 'torch') + .2, 'cut'],
-  ['kyoto-long', C('kyoto'), C('axe'), W('kyoto', 'slice') + .2, 'cut'],
-  ['lumber-long', C('axe'), C('or'), W('axe', 'split') + .2, 'cut'],
-  ['space-long', C('or'), C('iwsdk') - .02, W('space', 'slice') + .15, 'cut'],
-  ...['kyoto-long', 'castle-long', 'lab-long', 'space-long', 'inferno-long', 'lumber-long', 'office2-long'].map((clip, i, all) => {
-    const d = (OUT_LEN - .4) / all.length, from = T_OUT + .4 + i * d;      // (after the end card has cleared: no crossfade)
-    return [clip, from, from + d + (i === all.length - 1 ? 1 : 0), from, 150];
-  }),
+  ['lvl-keyboard', C('monitor'), C('castle'), C('monitor'), 1],      // v35: the user's level clip, whole, at real speed
+  ['lvl-haunted', C('castle'), C('lab'), C('castle'), 1],      // v35: the user's level clip, whole, at real speed
+  ['lvl-toxic', C('lab'), C('inferno'), C('lab'), 1],      // v35: the user's level clip, whole, at real speed
+  ['lvl-inferno', C('inferno'), C('kyoto'), C('inferno'), 31],      // v42: from 1 s in ("the clip is more interesting after 1 second")      // v35: the user's level clip, whole, at real speed
+  ['lvl-kyoto', C('kyoto'), C('axe'), C('kyoto'), 1],      // v35: the user's level clip, whole, at real speed
+  ['lvl-lumber', C('axe'), C('or'), C('axe'), 1],      // v35: the user's level clip, whole, at real speed
+  ['lvl-space', C('or'), C('iwsdk') - .02, C('or'), 1],      // v35: the user's level clip, whole, at real speed
+  // v43: "use the inferno clips as background game" for try it yourself: inferno-long from its fight (frame 45), at 0.85x
+  ['inferno-long', C('try') - .3, T_OUT + .4, C('try') - .3, 45, .85],
+  ['kbd-outro', T_OUT + .4, T_END + .1, T_OUT + .4, 1],      // v41: the Keyboard Smash ending, whole
 ];
 // level logos over the footage
 const LOGOS = [
@@ -126,9 +150,9 @@ const LOGOS = [
 const LOGO_END = C('iwsdk') - .3;
 // short lines on the footage: [text, from, to, style]
 const PHRASES = [
-  ['Grab to read', C('grab'), C('throw') - .05],
-  ['Throw to keep', C('throw'), C('cut') - .05],
-  ['Cut to archive', C('cut'), E('cut') + .1],
+  // (v32: "Grab to read" removed: the game's own How to Play cards say it)
+  // (v32: "Throw to keep" removed: the game's own How to Play cards say it)
+  // (v32: "Cut to archive" removed: the game's own How to Play cards say it)
   // (v7: no "Saved as a Gmail draft": the agent sends replies now, after you say okay, and the approval scene shows it)
   ['Leave it for tomorrow', W('later', 'leave') - .1, E('later') + .3],
   // (no line over the end screen: the game's own "Cleared 10 emails" sits there)
@@ -153,31 +177,68 @@ const BADGES = [
 const badgeEls = BADGES.map(([ic, col, text]) => { const d = document.createElement('div'); d.className = 'badge-row'; d.innerHTML = `<span class="ic" style="background:${col}">${ic}</span><span class="bt">${text}</span>`; $('badges').appendChild(d); return d; });
 const BADGE_AT = BADGES.map((b, i) => T_OUT + 1.1 + i * 2.35);
 
+/* ---------- v43: built for web, seated, clear inbox ---------- */
+const B_A = C('iwsdk') - .02, T_CLICK = W('browser', 'browser'), T_GAME0 = T_CLICK + .3, T_EXP0 = E('nodl') - .2, T_FULL = T_EXP0 + .5;
+// the level select in the browser and behind the seated player is one clip on one clock, slowed (120 frames for ~7 s)
+const HOME_RATE = .55, homeFrame = T => clamp(1 + Math.floor((T - T_GAME0) * FPS * HOME_RATE), 1, FOOT.home);
+const homeSrc = T => `../work/footage/home/${String(homeFrame(T)).padStart(4, '0')}.jpg`;
+// the seated take (work/footage/seated3, the user's 14 s cut): its grab, read and throw, then the cut on "stretching",
+// sped up a third so the action fills the line with no hold after it (v43: "speed up animation, and remove any delay")
+const SEAT_A = C('chair') - .05, SEAT_B = C('really') - .3, SEAT_SLASH = W('come', 'stretching') - SEAT_A, SEAT_END = SEAT_B + .3 - SEAT_A;
+const SEAT_RATE = (6.4 - .9) / SEAT_SLASH;
+const SEAT_MAP = [[0, .9], [SEAT_SLASH, 6.4], [SEAT_END, 6.4 + (SEAT_END - SEAT_SLASH) * SEAT_RATE]];
+function seatSrc(u) { for (let k = 0; k < SEAT_MAP.length - 1; k++) { const [u0, s0] = SEAT_MAP[k], [u1, s1] = SEAT_MAP[k + 1]; if (u <= u1 || k === SEAT_MAP.length - 2) return s0 + (s1 - s0) * clamp((u - u0) / (u1 - u0)); } }
+function seatAt(src) { for (let k = 0; k < SEAT_MAP.length - 1; k++) { const [u0, s0] = SEAT_MAP[k], [u1, s1] = SEAT_MAP[k + 1]; if (src <= s1) return SEAT_A + u0 + (u1 - u0) * (src - s0) / (s1 - s0); } return null; }
+// "and it really does clear your inbox": the intro's app icon again, its banners swiped away and the badge run down to zero
+const T_CLR0 = SEAT_B, T_CLR1 = M2_IN + .12, T_CLR_GO = W('really', 'does') - .15, T_ZERO = W('really', 'inbox') - .25;
+const clearParts = []; for (let k = 0; k < 44; k++) { const i = document.createElement('i'); $('clear-parts').appendChild(i); clearParts.push(i); }
+// pixel icons (a string per row, X = filled), drawn as crisp SVG rects
+function pixSvg(rows, fill, cell) {
+  let r = ''; rows.forEach((row, y) => [...row].forEach((c, x) => { if (c !== '.') r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${c === 'o' ? '#ffffff' : fill}"/>`; }));
+  return `<svg viewBox="0 0 ${rows[0].length} ${rows.length}" width="${rows[0].length * cell}" height="${rows.length * cell}" shape-rendering="crispEdges">${r}</svg>`;
+}
+$('ic-sdk').innerHTML = pixSvg(['..XXXXXXXXXX..', '.XXXXXXXXXXXX.', 'XXooXXXXXXooXX', 'XXooXXXXXXooXX', 'XXXXXX..XXXXXX', '.XXXX....XXXX.'], '#170d15', 3.4);
+$('ic-nodl').innerHTML = pixSvg(['X.....XX.....X', '.X....XX....X.', '..X...XX...X..', '...X..XX..X...', '..XXX.XX.XXX..', '...XXXXXXXX...', '....XXXXXX....', '.....XXXX.....', 'XX....XX....XX', 'XXXXXXXXXXXXXX'], '#170d15', 3);
+// the flow's packets (envelopes along the wires) and the close's embers
+const packets = []; for (let k = 0; k < 9; k++) { const i = document.createElement('i'); i.innerHTML = ENV; $('packets').appendChild(i); packets.push(i); }
+const embers = []; for (let k = 0; k < 46; k++) { const i = document.createElement('i'); i.className = 'ember'; $('close').insertBefore(i, $('end-logo')); embers.push(i); }
+// the level cards: two rows, each with its name in the level's colour, as on the game's home screen
+const LEVEL_NAMES = { kyoto: ['Kyoto Nights', '#ffc0d9'], office: ['Keyboard Smash', '#7dffc9'], castle: ['The Haunted Hall', '#c9b2ff'], lab: ['Toxic Danger', '#8dff6a'], space: ['Super Space', '#5ef0ff'], inferno: ['Inferno', '#ff9a52'], lumber: ['LumberHack', '#ffc440'] };
+cards.forEach((c, i) => { const [n, col] = LEVEL_NAMES[LEVELS[i]]; c.innerHTML = `<span class="lc-b"><span class="lc-in"><img src="../work/assets/home/${LEVELS[i]}.webp" alt=""><span class="lname" style="color:${col}">${n}</span><i class="glint"></i></span></span>`; });
+
 /* ---------- footage ---------- */
 function keyOf(clip, key0) { return key0 === 'cut' ? CUTS[clip][0] : typeof key0 === 'string' ? FOOT[clip] + +key0.slice(3) : key0; }
 let footSrc = '';
 function footage(T) {
   const seg = SEG.find(s => T >= s[1] && T < s[2]);
-  if (!seg) { show($('foot'), false); return null; }
-  const [clip, from, , at, key0] = seg, n = FOOT[clip];
+  if (!seg) { $('foot').style.zIndex = ''; $('foot').style.borderRadius = ''; $('foot').style.boxShadow = ''; show($('foot'), false); return null; }
+  const [clip, from, , at, key0, speed = 1] = seg, n = FOOT[clip];
   const key = keyOf(clip, key0);
-  const f = clamp(Math.round(key + (T - at) * FPS), 1, n);
+  const f = clamp(Math.round(key + (T - at) * FPS * speed), 1, n);
   const src = `../work/footage/${clip}/${String(f).padStart(4, '0')}.jpg`;
   if (src !== footSrc) { $('foot-img').src = src; footSrc = src; }
   // a slow push in through each shot, so nothing sits still
   $('foot-img').style.transform = clip === 'sword-cut'
     ? `scale(${1.22 - .2 * eo((T - from) / .4)}) translate(${10 * (1 - clamp((T - from) / .3)) * Math.sin((T - from) * 80)}px,0)`      // v21: a punch in as the screen splits
     : `scale(${1 + .035 * clamp((T - from) / 4)})`;
-  show($('foot'), true, 1, '');      // (v19: a straight cut from the smash into the round; the logo carries it)
+  // v31: at the end of the smash the whole frame lifts up and off (a little smaller, corners rounded), white under it
+  // v32: and the How to Play clip rises up over the agent window the same way (off > 0 is below the frame)
+  const off = clip === 'smash-intro' ? -eio((T - T_PUSH) / PUSH_LEN) : clip === 'hands-slash' ? 1 - eio((T - from) / PUSH_LEN) : 0, push = Math.abs(off);
+  $('foot').style.borderRadius = push > 0 ? `${36 * Math.min(1, push * 4)}px` : '';
+  $('foot').style.overflow = 'hidden'; $('foot').style.boxShadow = push > 0 ? '0 40px 80px -30px #16101f66' : '';
+  $('foot').style.zIndex = push > 0 ? 5 : '';      // (above the agent window while it lifts, so the window is uncovered, not faded over it)
+  show($('foot'), true, 1, push > 0 ? `translateY(${1150 * off}px) scale(${1 - .07 * Math.min(1, push * 2.5)})` : '');
   return seg;
 }
 
 /* ---------- scenes ---------- */
 function inbox(T) {
   const wrap = $('inbox-wrap');
-  const hookOn = T < T_GAME, endOn = T >= T_REALLY - .05 && T < C('archives') - .4;
+  const hookOn = T < T_GAME, endOn = T >= T_CLR0 && T < T_CLR1;      // (v43: the end is the app icon again, clearInbox)
   if (!hookOn && !endOn) { show(wrap, false); show($('half-a'), false); show($('half-b'), false); return; }
   show(wrap, true, 1, '');
+  if (endOn) return clearInbox(T);
+  $('appdone').style.transform = 'scale(0)'; $('appring').style.opacity = 0; $('applabel').textContent = 'Inbox'; $('app').style.transform = ''; $('app').style.opacity = 1;
   let A, count;
   if (hookOn) {
     // mail keeps arriving: 6 rows, then a flood up to "181", then a slow creep
@@ -229,14 +290,18 @@ function inbox(T) {
       el.style.opacity = clamp(p * 8) * (1 - clamp((p - .9) / .1));
       el.style.transform = `translate(${x - 25}px,${y - 18}px) rotate(${lerp((rnd(k + 5) - .5) * 80, 0, e)}deg) scale(${lerp(1.5, .5, e)})`;
     });
-    // banners drop in and pile up either side, each a little crooked
+    // banners drop in and pile up either side of the icon.
+    // v38: centred on the middle of the screen in four even rows, in a gentle arc round the icon (the middle rows tucked
+    // in closer, the outer ones further out), each only slightly crooked, and each drops a shorter way into its place
+    const ROW_GAP = 128, NOTE_H = 94, top0 = 540 - (3 * ROW_GAP + NOTE_H) / 2, ARC = [64, 14, 14, 64];
     noteEls.forEach((el, k) => {
       const [at, side, row] = NOTE_AT[k];
       if (T < at) { el.style.opacity = 0; return; }
-      const p = eo((T - at) / .45), tilt = (rnd(k + 40) - .5) * 9;
-      el.style.left = (side < 0 ? 150 : 1290) + (rnd(k + 50) - .5) * 60 + 'px'; el.style.top = 186 + row * 132 + (rnd(k + 60) - .5) * 26 + 'px';
+      const p = eo((T - at) / .45), tilt = side * (row < 2 ? -1.6 : 1.6) + (rnd(k + 40) - .5) * 2.4;
+      el.style.left = (side < 0 ? 196 - ARC[row] : 1244 + ARC[row]) + (rnd(k + 50) - .5) * 14 + 'px';
+      el.style.top = top0 + row * ROW_GAP + (rnd(k + 60) - .5) * 8 + 'px';
       el.style.opacity = clamp((T - at) / .15);
-      el.style.transform = `translateY(${(1 - p) * -90}px) rotate(${tilt + (1 - p) * side * 10}deg) scale(${lerp(.9, 1, p)})`;
+      el.style.transform = `translateY(${(1 - p) * -56}px) rotate(${tilt + (1 - p) * side * 6}deg) scale(${lerp(.92, 1, p)})`;
     });
     // the bell rings when Reminders arrives
     const ring = clamp((T - T_REM) / .8);
@@ -309,6 +374,105 @@ function inbox(T) {
   }
 }
 
+function clearInbox(T) {
+  // v43: "clear inbox nicer, look more like a real app - more like the intro": the hook's icon and its banners come back,
+  // the banners are swiped off either side and the mail flies out of the icon as the badge runs down; at zero the badge
+  // pops off for a green tick, the icon bounces, a ring goes out and a burst of bits, and the label reads "Inbox zero"
+  $('app').style.display = 'flex'; $('app').style.visibility = 'visible'; $('inbox').style.display = 'none';
+  $('tried').style.display = 'none'; $('slash').style.opacity = 0; show($('half-a'), false); show($('half-b'), false);
+  $('notes').style.display = $('flies').style.display = 'block'; $('notes').style.visibility = $('flies').style.visibility = 'visible';
+  const icon = $('appicon'), badge = $('appbadge'), done = $('appdone'), ring = $('appring'), label = $('applabel');
+  const t0 = T_CLR0, go = T_CLR_GO, z = T_ZERO;
+  // in: the icon pops up as the seated scene fades; out: it lifts away as the agent's window rises
+  const pin = eo((T - t0 - .08) / .4), over = .07 * Math.sin(Math.PI * clamp((T - t0 - .3) / .3));
+  const out = eio((T - (M2_IN - .1)) / .3);
+  $('app').style.opacity = clamp((T - t0) / .15) * (1 - out);
+  $('app').style.transform = `translateY(${-60 * out}px)`;
+  // the count: from where the hook left it down to zero, eased, with a pop on each envelope that leaves
+  const runP = clamp((T - go) / (z - go)), n = T < go ? HOOK_COUNT : Math.round(HOOK_COUNT * (1 - eio(runP)));
+  badge.textContent = n;
+  const OUT_N = 18, outAt = Array.from({ length: OUT_N }, (_, k) => lerp(go, z - .12, k / (OUT_N - 1)));
+  const since = Math.min(...outAt.filter(t => t <= T).map(t => T - t), 9), pop = .14 * Math.max(0, 1 - since / .14);
+  const zp = clamp((T - z) / .22);      // the red badge swells and is gone
+  badge.style.transform = `scale(${T < z ? 1 + pop : (1 + .25 * Math.sin(Math.PI * zp * .5)) * (1 - eo((zp - .3) / .7))})`;
+  badge.style.opacity = T < z + .2 ? 1 : 0;
+  const dp = clamp((T - z - .1) / .4);      // the tick badge lands
+  done.style.transform = `scale(${dp <= 0 ? 0 : eo(dp) + .22 * Math.sin(Math.PI * clamp(dp / .7))}) rotate(${-25 * (1 - eo(dp))}deg)`;
+  // the icon: jiggles while it empties (calmer as it goes), then squashes and springs at zero
+  const jig = T >= go && T < z ? 1.4 * (1 - runP) : 0, sq = clamp((T - z) / .5);
+  const sx = 1 + .1 * Math.sin(Math.PI * sq) * Math.exp(-3 * sq) * (sq < .25 ? 1 : -1), sy = 1 - (sx - 1);
+  icon.style.transform = `translateY(${-6 * Math.sin(T * 1.7)}px) rotate(${jig * Math.sin(T * 23)}deg) scale(${(lerp(.6, 1, pin) + over) * (1 + .03 * Math.max(0, 1 - since / .12))}) scale(${sx},${sy})`;
+  const rp = clamp((T - z - .05) / .7);
+  ring.style.opacity = rp > 0 && rp < 1 ? .9 * (1 - rp) : 0;
+  ring.style.transform = `scale(${lerp(1, 1.75, eo(rp))})`; ring.style.borderWidth = `${lerp(10, 2, rp)}px`;
+  icon.style.boxShadow = `0 34px 70px -28px #1650d077,inset 0 3px 0 #ffffff40,inset 0 -6px 14px #0b3ea833,0 0 ${80 * (1 - rp) * (rp > 0 ? 1 : 0)}px ${30 * (1 - rp) * (rp > 0 ? 1 : 0)}px #14b88a55`;
+  const lz = T >= z + .1;
+  if (lz && !label.querySelector('b')) label.innerHTML = 'Inbox <b>zero</b>'; else if (!lz && label.querySelector('b')) label.textContent = 'Inbox';
+  const lp = clamp((T - z - .1) / .3);
+  label.style.transform = `scale(${1 + .12 * Math.sin(Math.PI * lp)})`;
+  // the banners: back in their places from the intro, then swiped off to their own side, one after another
+  const ROW_GAP = 128, NOTE_H = 94, top0 = 540 - (3 * ROW_GAP + NOTE_H) / 2, ARC = [64, 14, 14, 64];
+  const ORDER = [6, 7, 4, 5, 2, 3, 0, 1];      // (the bottom rows first)
+  noteEls.forEach((el, k) => {
+    const [, side, row] = NOTE_AT[k], at = t0 + .05 + k * .04, sw = go + ORDER.indexOf(k) * .075;
+    if (T < at) { el.style.opacity = 0; return; }
+    const p = eo((T - at) / .35), tilt = side * (row < 2 ? -1.6 : 1.6) + (rnd(k + 40) - .5) * 2.4;
+    const q = clamp((T - sw) / .38), fly = q * q;
+    el.style.left = (side < 0 ? 196 - ARC[row] : 1244 + ARC[row]) + (rnd(k + 50) - .5) * 14 + 'px';
+    el.style.top = top0 + row * ROW_GAP + (rnd(k + 60) - .5) * 8 + 'px';
+    el.style.opacity = clamp((T - at) / .12) * (1 - clamp((q - .55) / .45));
+    el.style.transform = `translateX(${side * 980 * fly}px) translateY(${(1 - p) * -40 - 30 * fly}px) rotate(${tilt + side * 14 * fly}deg) scale(${lerp(.92, 1, p)})`;
+  });
+  // envelopes fly out of the icon to the edges (the intro's, the other way)
+  const ir = icon.getBoundingClientRect(), ix = ir.left + ir.width / 2, iy = ir.top + ir.height / 2;
+  flyEls.forEach((el, k) => {
+    const launch = outAt[k], dur = .6;
+    if (launch === undefined || T < launch || T > launch + dur) { el.style.opacity = 0; return; }
+    const p = (T - launch) / dur, e = eio(p), ang = rnd(k + 120) * Math.PI * 2;
+    const ex = 960 + Math.cos(ang) * 1250, ey = 540 + Math.sin(ang) * 760, arc = (rnd(k + 131) - .5) * 300 * Math.sin(Math.PI * e);
+    const x = lerp(ix, ex, e) - Math.sin(ang) * arc, y = lerp(iy, ey, e) + Math.cos(ang) * arc;
+    el.style.opacity = clamp(p * 10) * (1 - clamp((p - .85) / .15));
+    el.style.transform = `translate(${x - 25}px,${y - 18}px) rotate(${lerp(0, (rnd(k + 105) - .5) * 120, e)}deg) scale(${lerp(.5, 1.5, e)})`;
+  });
+  // the burst at zero: teal, blue and pink bits and white glints, flung out and falling
+  const bq0 = T - z - .08;
+  clearParts.forEach((e, k) => {
+    const q = bq0 - rnd(k + 7) * .06;
+    if (q < 0 || q > 1.1) { e.style.opacity = 0; return; }
+    const ang = rnd(k) * Math.PI * 2, sp = 300 + 520 * rnd(k + 1), kind = rnd(k + 2);
+    const x = ix + Math.cos(ang) * sp * eo(q / .9), y = iy + Math.sin(ang) * sp * .75 * eo(q / .9) + 520 * q * q;
+    const sz = kind > .85 ? 9 : 12 + 12 * rnd(k + 3);
+    e.style.width = sz + 'px'; e.style.height = sz + 'px';
+    e.style.background = kind > .85 ? '#ffffff' : ['#14b88a', '#5ac8fa', '#1f8cff', '#ff2e93', '#7dffc9'][Math.floor(rnd(k + 4) * 5)];
+    e.style.boxShadow = kind > .85 ? '0 0 12px #fff' : 'none';
+    e.style.opacity = 1 - clamp((q - .7) / .4);
+    e.style.transform = `translate(${x - sz / 2}px,${y - sz / 2}px) rotate(${(rnd(k + 5) - .5) * 720 * q}deg)`;
+  });
+}
+
+function splitParts(T) {
+  // v40: pink petals, hot-pink sparks and white glints flung off the cut as the screen splits, for more punch
+  const q0 = T - T_SPLIT, el = $('split-parts');
+  if (q0 < 0 || q0 > 1.2) return show(el, false);
+  show(el, true, 1, '');
+  const r = CUT_DEG * Math.PI / 180, tx = Math.cos(r), ty = Math.sin(r), nx = Math.sin(r), ny = -Math.cos(r);
+  spParts.forEach((e, k) => {
+    const delay = rnd(k + 3) * .08, q = q0 - delay;
+    if (q < 0 || q > 1.0) { e.style.opacity = 0; return; }
+    const along = (rnd(k) - .5) * 2200, side = k % 2 ? 1 : -1, sp = 220 + 680 * rnd(k + 1), kind = rnd(k + 2);
+    const ox = 960 + tx * along, oy = 540 + ty * along;
+    const dx = (nx * side * .9 + tx * (rnd(k + 4) - .5) * .9) * sp, dy = (ny * side * .9 + ty * (rnd(k + 4) - .5) * .9) * sp;
+    const x = ox + dx * eo(q / .9), y = oy + dy * eo(q / .9) + 380 * q * q;
+    const petal = kind < .55, glint = kind > .85, sz = petal ? 20 + 18 * rnd(k + 5) : glint ? 8 + 6 * rnd(k + 5) : 11 + 10 * rnd(k + 5);
+    e.style.width = sz + 'px'; e.style.height = (petal ? sz * .7 : sz) + 'px';
+    e.style.borderRadius = petal ? '60% 0 60% 0' : '0';
+    e.style.background = petal ? (rnd(k + 6) > .5 ? '#ffb3d1' : '#ff8cc0') : glint ? '#ffffff' : '#ff2e93';
+    e.style.boxShadow = petal ? 'none' : `0 0 ${glint ? 14 : 12}px ${glint ? '#ffffffcc' : '#ff2e93cc'}`;
+    e.style.opacity = 1 - clamp((q - .7) / .3);
+    e.style.transform = `translate(${x}px,${y}px) rotate(${(rnd(k + 7) - .5) * 900 * q}deg)`;
+  });
+}
+
 function flash(T) {
   const f = $('flash');
   const hits = [[T_HERO + .02, .45, .35]];
@@ -325,14 +489,30 @@ function slam(T) {
     show(night, true, T >= C('try') - .3 ? eo((T - C('try') + .3) / .3) : 1, '');
     $('night-img').style.filter = false ? `blur(${lerp(22, 0, eio((T - g0) / .9))}px) brightness(${lerp(.42, 1, eio((T - g0) / .9))}) saturate(1.2)` : 'blur(22px) brightness(.42) saturate(1.2)';
   } else show(night, false);
+  // v41: 8 s into the ending clip the dark overlay comes back with the logo and the Meta line, floating a little;
+  // then the overlay goes to black under them, and they fade out last
+  const T_E8 = T_OUT + .4 + 8, eb = $('end-black');
+  if (T >= T_E8) {
+    const e = T - T_E8, sh = $('logo-shade'), cr = $('logo-credit'), left = T_END - T;
+    show(sh, true, eo(e / .8), '');
+    show(eb, true, eio((e - 2.2) / 1.4), '');
+    if (!L.src.endsWith('logos/office.webp')) L.src = '../work/assets/logos/office.webp';
+    L.style.width = '940px';
+    const pin = eo((e - .3) / .6), fade = 1 - eio((.9 - left) / .9), bob = Math.sin(e * 1.4) * 9, breathe = 1 + .012 * Math.sin(e * 1.1);
+    show(L, e > .3, pin * fade, `translate(-50%,-50%) translateY(${-70 + bob + (1 - pin) * 30}px) scale(${lerp(1.12, 1, pin) * breathe})`);
+    const cp = eo((e - .75) / .5);
+    show(cr, e > .75, cp * fade, `translate(-50%,-50%) translateY(${92 + bob * .8 + (1 - cp) * 20}px)`);
+    show($('round-line'), false); show($('ks-cut'), false);
+    return;
+  } else show(eb, false);
   // v19: the Keyboard Smash level's logo pops into the centre as the round starts, then gets out of the way.
   // v22: over a dark shade that fades in and out with it, and "Built for Meta VR Hackathon" with the Meta mark under it.
   // v27: the shade stays on through "one round at a time"; the logo and the Meta line leave at 0:15 and the line
   // "Clear your email inbox / one round at a time" takes their place, its second half arriving word by word as it's said
   const u = T - T_LOGO, shade = $('logo-shade'), credit = $('logo-credit'), line = $('round-line');
-  const T_OUT1 = C('game') - .15, T_SHADE_OUT = E('round') + .45;
+  const T_OUT1 = C('game') - .15, T_SHADE_OUT = E('round') + .3;
   if (u < 0 || T > T_SHADE_OUT + .6) { show(shade, false); show(credit, false); show(line, false); return show(L, false); }
-  show(shade, true, eo(u / .35) * (1 - .1 * eo((u - .15) / .5)) * (1 - eio((T - T_SHADE_OUT) / .6)), '');
+  show(shade, true, eo(u / .35) * (1 - .1 * eo((u - .15) / .5)) * (1 - .13 * eio((T - T_OUT1) / .6)) * (1 - eio((T - T_SHADE_OUT) / .5)), '');      // (v31: lighter under the headline, so the smash still reads)
   // the logo and the Meta line: in, then lifted away at 0:15
   if (T < T_OUT1 + .45) {
     if (!L.src.endsWith('logos/office.webp')) L.src = '../work/assets/logos/office.webp';
@@ -343,21 +523,90 @@ function slam(T) {
     const cv = vis(T, T_LOGO + .3, T_OUT1 - .05, { y: 24, din: .4, dout: .35, lift: -60 });
     if (cv) show(credit, true, cv.o, `translate(-50%,-50%) translateY(${92 + cv.y}px)`); else show(credit, false);
   } else { show(L, false); show(credit, false); }
+  // v33: the mail icon, in Keyboard Smash colours, pops in as the logo leaves and is cut ten times down to zero across
+  // "clear your inbox, one round at a time": a mint streak, a shake, the badge counting down, a burst of green pixels and paper
+  const ks = $('ks-cut'), KS_IN = T_OUT1 + .2, KS_CUT = Array.from({ length: KS_N }, (_, k) => lerp(W('game', 'clear') - .05, W('round', 'time') + .1, k / (KS_N - 1)));
+  // v39: no fade out: at TX the icon swells, then pops away in one last burst, and the words fall off
+  const TX = E('round') + .12, xe = clamp((T - TX) / .42);
+  const kv = T >= KS_IN && T < TX + .5 ? { o: 1 } : null;
+  if (!kv) show(ks, false);
+  else {
+    show(ks, true, 1, '');
+    const done = KS_CUT.filter(t => T >= t).length, last = done ? KS_CUT[done - 1] : -9, since = T - last;
+    const hit = Math.max(0, 1 - since / .2), side = done % 2 ? 1 : -1;
+    const pin = eo((T - KS_IN) / .35), over = .12 * Math.sin(Math.PI * clamp((T - KS_IN - .15) / .3));
+    const zero = done === KS_N ? eo((T - KS_CUT[KS_N - 1] - .05) / .4) : 0;
+    const pop = xe <= 0 ? 1 : xe < .25 ? 1 + .18 * eo(xe / .25) : 1.18 * (1 - eio((xe - .25) / .75));
+    $('ks-icon').style.transform = `scale(${(lerp(.55, 1, pin) + over - .07 * hit + .05 * zero) * pop}) rotate(${side * 7 * hit + 28 * eio(xe)}deg) translateX(${side * 10 * hit}px)`;
+    $('ks-icon').style.filter = `drop-shadow(0 18px 0 #0b091299) drop-shadow(0 0 ${36 * zero}px #4ff3c8${Math.round(200 * zero).toString(16).padStart(2, '0')})`;
+    const b = $('ks-badge'); $('ks-num').textContent = KS_N - done;
+    const gone = done === KS_N ? eio((T - KS_CUT[KS_N - 1] - .45) / .3) : 0;
+    b.style.transform = `scale(${(1 + .3 * hit) * (1 - gone)})`; b.style.opacity = 1 - gone;
+    // the streak: a quick swipe across the icon at alternating angles
+    const st = $('ks-streak'), sp = clamp(since / .14);
+    st.style.opacity = since < .2 ? 1 - clamp((since - .08) / .12) : 0;
+    // (v36: centred on the icon and sweeping along its own line, so it crosses the icon, not below it)
+    st.style.transformOrigin = '50% 50%';
+    st.style.transform = `rotate(${side * (18 + 10 * rnd(done))}deg) translateX(${-side * 300 * (1 - eo(sp))}px) scaleX(${.35 + .65 * eo(sp)})`;
+    // the bursts: mint and green pixels, and a few cream paper bits, flung off the icon, falling
+    ksParts.forEach((e, n) => {
+      const k = Math.floor(n / KS_PER), exitB = k >= KS_N, q = T - (exitB ? TX + .1 : KS_CUT[k]);
+      if (q < 0 || q > .8) { e.style.opacity = 0; return; }
+      const ang = exitB ? rnd(n) * Math.PI * 2 : (k % 2 ? -.35 : .35) + (rnd(n) - .5) * 2.4 + (rnd(n + 7) > .5 ? Math.PI : 0), sp2 = (exitB ? 520 : 380) + 520 * rnd(n + 1), paper = rnd(n + 2) > .78;
+      const x = Math.cos(ang) * sp2 * eo(q / .8) * .9, y = Math.sin(ang) * sp2 * eo(q / .8) * .6 + 420 * q * q;
+      const sz = paper ? 16 + 10 * rnd(n + 4) : 7 + 9 * rnd(n + 4);
+      e.style.width = sz + 'px'; e.style.height = (paper ? sz * .7 : sz) + 'px';
+      e.style.background = paper ? '#efe4c8' : rnd(n + 5) > .5 ? '#7dffc9' : rnd(n + 6) > .5 ? '#2bbf93' : '#d6fff0';
+      e.style.boxShadow = paper ? 'none' : '0 0 10px #4ff3c8aa';
+      e.style.opacity = 1 - clamp((q - .45) / .35);
+      e.style.transform = `translate(${x}px,${y}px) rotate(${(rnd(n + 8) - .5) * 720 * q}deg)`;
+    });
+  }
   // the line: first half in as the logo leaves, then "one round at a time" word by word; out with the shade
-  const lv = vis(T, T_OUT1 + .4, T_SHADE_OUT, { y: 34, din: .5, dout: .45 });      // (after the logo has cleared: no crossfade)
-  if (!lv) return show(line, false);
+  const lv = vis(T, T_OUT1 + .4, 999, { y: 34, din: .5 });      // (after the logo has cleared: no crossfade; v39: it leaves by falling, not fading)
+  if (!lv || T > TX + 1.1) return show(line, false);
   show(line, true, lv.o, `translateY(calc(-50% + ${lv.y}px))`);
-  const second = ['one', 'round', 'at', 'a', 'time'];
-  line.querySelectorAll('.rl2 b').forEach((b, k) => {
-    const p = eo((T - W('round', second[k]) + .06) / .3);
-    b.style.display = p > 0 ? 'inline-block' : 'none';      // (only words already said take space, so the line builds from the centre)
-    b.style.opacity = p; b.style.transform = `translateY(${(1 - p) * 26}px)`;
+  const second = ['one', 'round', 'at', 'a', 'time'], at = second.map(w => W('round', w) - .06);
+  line.querySelector('.rl2').style.height = 1.06 * eio((T - (W('round', 'one') - .35)) / .4) + 'em';      // (v31: the first line sits centred until the second opens under it)
+  const words = [...line.querySelectorAll('.rl1 b'), ...line.querySelectorAll('.rl2 b')];
+  words.forEach((b, i) => {
+    const k = i - 4;      // (the second line's words are 4 to 8)
+    let sc = 1, ty = 0, op = 1;
+    if (k >= 0) {
+      // v39: each word stamps in: on almost at once, down from 1.8x with a small bounce
+      const p = clamp((T - at[k]) / .18);
+      b.style.display = T >= at[k] ? 'inline-block' : 'none';      // (only words already said take space, so the line builds from the centre)
+      op = clamp((T - at[k]) / .05);
+      sc = lerp(1.8, 1, eo(p)) - .06 * Math.sin(Math.PI * clamp((T - at[k] - .16) / .18));
+      ty = -18 * (1 - eo(p));
+    }
+    // the fall: a little hop, then down with a spin, one word after the other
+    const order = k >= 0 ? k : 5 + i;      // (the bottom line goes first, so the two lines never cross)
+    const q = clamp((T - (TX + order * .04)) / .65), x = (rnd(i + 70) - .5) * 220 * q, y = 1150 * q * q - 55 * q, r = (rnd(i + 71) - .5) * 80 * q;
+    b.style.opacity = op * (1 - clamp((q - .8) / .2));
+    b.style.transform = `translate(${x}px,${ty + y}px) rotate(${r}deg) scale(${sc})`;
+  });
+  // keycaps burst from each word of "one round at a time" as it lands (from where the word was when it landed: words
+  // said later push the line left by half their width, so that is added back)
+  const rl2 = [...line.querySelectorAll('.rl2 b')], gap = parseFloat(getComputedStyle(line.querySelector('.rl2')).columnGap) || 20;
+  kcParts.forEach((e, n) => {
+    const k = Math.floor(n / KC_PER), q = T - (at[k] + .1);
+    if (q < 0 || q > .7 || rl2[k].style.display === 'none') { e.style.opacity = 0; return; }
+    const b = rl2[k], later = rl2.slice(k + 1).filter(w => w.style.display !== 'none').reduce((a, w) => a + (w.offsetWidth + gap) / 2, 0);
+    const ox = b.offsetLeft + b.offsetWidth / 2 + later, oy = b.parentElement.offsetTop + b.offsetHeight / 2;
+    // (sprayed out sideways from the word and a little up, so they don't cover the line above)
+    const key = e.className === 'key', left = rnd(n + 9) > .5, ang = (left ? Math.PI : 0) + (left ? 1 : -1) * (.12 + .62 * rnd(n)), sp = 260 + 300 * rnd(n + 1);
+    const x = ox + Math.cos(ang) * sp * eo(q / .7), y = oy + Math.sin(ang) * sp * eo(q / .7) * .8 + 760 * q * q;
+    const sz = key ? 26 + 12 * rnd(n + 2) : 9 + 6 * rnd(n + 2);
+    e.style.width = sz + 'px'; e.style.height = sz + 'px';
+    e.style.opacity = 1 - clamp((q - .45) / .25);
+    e.style.transform = `translate(${x - sz / 2}px,${y - sz / 2}px) rotate(${(rnd(n + 3) - .5) * 540 * q}deg)`;
   });
 }
 
 function homeScreen(T) {
   // the real home screen: under the logo glide, and again when the agent's link opens on the Quest
-  const wins = [[T_HOME, C('grab') - .1, 0, .3]];      // (v19: no level select after the smash)
+  const wins = [];      // (v32: no level select; the How to Play clip covers "pick your level, and hit play")
   const w = wins.find(w => T >= w[0] && T < w[1]);
   const code = $('home-code');
   if (!w) { show(code, false); return false; }
@@ -378,9 +627,8 @@ function cursor(T) {
   const moves = [
     [C('connect') + .15, T_CONNECT - .08, 1500, 900, 'c-btn', T_CONNECT],
     [W('link', 'opens') - .2, T_OPEN - .08, 1400, 880, 'm-open', T_OPEN],
-    [T_HOME + .15, W('pick', 'level') - .05, 1500, 960, [1092, 452], W('pick', 'level')],
-    [W('pick', 'level') + .3, W('play', 'play') - .05, 1092, 452, [960, 765], W('play', 'play')],
-    [C('browser') - .55, W('browser', 'browser') - .05, 1420, 980, [860, 724], W('browser', 'browser')],
+    // (v32: the two level-select clicks are gone with the level select)
+    [C('browser') - .6, T_CLICK - .07, 1520, 1010, 'b-play', T_CLICK],      // v43: on the site's own Play in browser button
     [C('sends') + .2, T_OKAY - .08, 1450, 900, 'm-ok', T_OKAY],
   ];
   const m = moves.find(m => T >= m[0] && T < m[5] + .45);
@@ -405,10 +653,10 @@ function msg(id, T, at, flex = 'block') {
 function muse(T) {
   // v7, the core of the film: the player's own agent (Muse) sets the game up over our MCP, and later acts on the results
   const el = $('muse'), win = $('mwin');
-  const setup = T >= M_IN && T < T_HOME + .05, done = T >= M2_IN && T < M2_OUT + .35;
+  const setup = T >= M_IN && T < T_REVEAL + PUSH_LEN - .05, done = T >= M2_IN && T < M2_OUT + .35;
   if (!setup && !done) return show(el, false);
   show(el, true, 1, '');
-  place(win, setup ? vis(T, M_IN, T_OPEN + .4, { y: 50, din: .55 }) : vis(T, M2_IN, M2_OUT, { y: 50, din: .55 }));
+  place(win, setup ? vis(T, M_IN, T_REVEAL + PUSH_LEN - .14, { y: 260, din: .62, dout: .06 }) : vis(T, M2_IN, M2_OUT, { y: 50, din: .55 }));
   const ids = ['m-ask', 'm-read', 'm-round', 'm-ready', 'm-done'];
   if (setup) {
     // 1. add our MCP as a connector
@@ -462,17 +710,24 @@ function overlays(T, seg) {
     if (!L.src.endsWith(src.slice(2))) L.src = src;
     const p = eo((T - cur[1]) / .35), out = clamp((T - LOGO_END) / .3);
     show(L, true, p * (1 - out), `translateY(${(1 - p) * -24 + out * -20}px) scale(${lerp(.86, 1, p)})`);
-  } else show(L, false);
+    // v40: the level's name, top right, in its own colour
+    const NAMES = { office: ['Keyboard Smash', '#7dffc9'], castle: ['The Haunted Hall', '#c9b2ff'], lab: ['Toxic Danger', '#8dff6a'], inferno: ['Inferno', '#ff9a52'], kyoto: ['Kyoto Nights', '#ffc0d9'], lumber: ['LumberHack', '#ffc440'], space: ['Super Space', '#5ef0ff'] };
+    const nm = $('level-name'), [txt, col] = NAMES[cur[0]];
+    if (nm.textContent !== txt) nm.textContent = txt;
+    nm.style.color = col;
+    const np = eo((T - cur[1] - .08) / .3);
+    show(nm, true, np * (1 - out), `translateX(${(1 - np) * 30}px) scale(${lerp(.9, 1, np) + .05 * Math.sin(Math.PI * clamp((T - cur[1] - .1) / .25))})`);
+  } else { show(L, false); show($('level-name'), false); }
   // hands
   const hl = $('hand-l'), hr = $('hand-r');
-  const lv = vis(T, C('grab') - .05, C('cut') - .25, { y: 120, din: .45 });
+  const lv = null;      // (v32: no hand illustrations; the clip has the real hands)
   if (lv) {
     const img = T >= W('throw', 'throw') ? 'left-throw' : T >= W('grab', 'read') ? 'left-read' : 'left-grab';
     if (!hl.src.includes(img)) hl.src = `../work/assets/hands/${img}.png`;
     const pop = T - Math.max(W('throw', 'throw'), 0) >= 0 && T - W('throw', 'throw') < .25 ? 1 + .08 * Math.sin(Math.PI * (T - W('throw', 'throw')) / .25) : 1;
     show(hl, true, lv.o, `translate(${(1 - lv.pi) * -200}px,${lv.y}px) scale(${pop})`);
   } else show(hl, false);
-  const rv = vis(T, C('cut') - .05, C('replies') - .3, { y: 120, din: .45 });
+  const rv = null;
   if (rv) {
     const img = T >= W('cut', 'pieces') - .1 ? 'right-destroy' : 'right-slash';
     if (!hr.src.includes(img)) hr.src = `../work/assets/hands/${img}.png`;
@@ -481,7 +736,7 @@ function overlays(T, seg) {
   // phrases: each rises in as the last lifts out
   PHRASES.forEach(([, a, b], i) => { const v = vis(T, a, b, { y: 28, din: .45, dout: .25, lift: -22 }); place(phraseEls[i], v, 'translateX(-50%)'); if (v) phraseEls[i].style.transform = `translateX(-50%) translateY(${v.y}px)`; });
   // dictation bubble
-  const mv = vis(T, C('pull') - .05, C('later') + .2, { y: 24, din: .4 });
+  const mv = null;      // (v32: no mic bubble; recording.mp4 shows the real recording panel)
   if (mv) {
     const words = 'Monday works, see you then', t0 = W('pull', 'say');
     const n = Math.round(words.length * clamp((T - t0) / .9));
@@ -492,18 +747,50 @@ function overlays(T, seg) {
 }
 
 function browser(T) {
-  const a = C('iwsdk') - .02, b = C('chair') - .3;
+  // v43: "built for web ... make nicer": a bigger window; the address types itself and the site loads; Play in browser is
+  // clicked on "browser" and the game's level select runs in the window; the two lines land as pixel stickers on its
+  // edge; then the game fills the screen and becomes the backdrop of the seated scene
   const el = $('browser');
-  if (T < a || T >= b + .3) return show(el, false);
+  if (T < B_A || T >= T_FULL + .06) return show(el, false);
   show(el, true, 1, '');
-  const v = vis(T, a, b, { y: 50, din: .6 });
-  place($('win'), v, `scale(${lerp(.97, 1, v ? v.pi : 1)})`);
-  const s1 = vis(T, W('iwsdk', 'immersive') - .1, C('nodl') - .1, { y: 26 });
-  const s2 = vis(T, C('nodl') - .05, b, { y: 26 });
-  $('sdk-row').style.visibility = s1 ? 'visible' : 'hidden'; place($('chip-sdk'), s1);
-  $('nodl-row').style.visibility = s2 ? 'visible' : 'hidden'; place($('chip-nodl'), s2);
-  // the window lifts a little to make room for the chip
-  if (v) $('win').style.transform += ` translateY(${-36 * eo((T - W('iwsdk', 'immersive') + .1) / .5)}px)`;
+  const win = $('win'), pin = eo((T - B_A) / .6), ex = eio((T - T_EXP0) / (T_FULL - T_EXP0)), S = 1920 / 1360;
+  const drift = 1 + .015 * clamp((T - B_A - .6) / 4);
+  const sc = lerp(lerp(.93, 1, pin) * drift, S, ex);
+  win.style.borderRadius = `${20 * (1 - ex)}px`;
+  show(win, true, clamp((T - B_A) / .25), `translateY(${lerp(70 * (1 - pin), -18.5, ex)}px) scale(${sc})`);
+  // the address: typed, then "/play" after the click
+  const host = 'inboxzerovr.com', ta = B_A + .2, typed = Math.round(host.length * clamp((T - ta) / .5));
+  const extra = T >= T_CLICK + .04 ? '/play' : '';
+  $('addr-t').textContent = host.slice(0, typed) + extra;
+  $('addr-caret').style.opacity = T < ta + .5 + .2 && Math.floor(T * 4) % 2 === 0 ? 1 : T < ta + .5 ? 1 : 0;
+  // loading bars across the top of the page: the site, then the game
+  const ld = $('b-load'), l1 = clamp((T - (ta + .5)) / .35), l2 = clamp((T - (T_CLICK + .04)) / .26);
+  const lp = T < T_CLICK ? l1 : l2, lon = (T < T_CLICK ? (l1 > 0 && l1 < 1.25) : (l2 > 0)) && T < T_GAME0 + .2;
+  ld.style.opacity = lon ? 1 - clamp((T - (T < T_CLICK ? ta + .85 : T_GAME0)) / .2) : 0;
+  ld.style.transform = `scaleX(${eo(lp)})`;
+  // the site settles in, then gives way to the game
+  const so = eo((T - (ta + .7)) / .35), go = eo((T - T_GAME0) / .3);
+  const site = $('site-img'); site.style.opacity = so * (1 - go);
+  site.style.transform = `translateY(${16 * (1 - so)}px) scale(${1.02 - .02 * so + .015 * clamp((T - ta - .7) / 4)})`;
+  $('shot').style.background = T < T_GAME0 ? '#fff' : '#1a1426';
+  const game = $('game-img');
+  if (T >= T_GAME0 - .02) { const src = homeSrc(T); if (!game.src.endsWith(src.slice(2))) game.src = src; }
+  game.style.opacity = go; game.style.transform = `scale(${lerp(1.06, 1, go)})`;
+  // the button takes the click
+  const bp = $('b-play'), press = T >= T_CLICK && T < T_CLICK + .16;
+  bp.style.background = press ? '#ffffff59' : 'transparent'; bp.style.boxShadow = press ? '0 0 24px 6px #7dffc988' : 'none';
+  // the stickers: they slap onto the window's bottom edge; the first slides over when the second arrives; both drop away
+  const s1 = $('st-sdk'), s2 = $('st-nodl'), t1 = W('iwsdk', 'immersive') - .1, t2 = W('nodl', 'nothing') - .12;
+  const w1 = s1.offsetWidth, w2 = s2.offsetWidth, GAP = 40, both = eio((T - t2) / .4);
+  const x1 = lerp(960 - w1 / 2, 960 - (w1 + GAP + w2) / 2, both), x2 = 960 - (w1 + GAP + w2) / 2 + w1 + GAP;
+  const edge = 941 + 70 * (1 - pin) - s1.offsetHeight / 2, drop = eio((T - T_EXP0) / .35);
+  [[s1, t1, x1, -3], [s2, t2, x2, 2.5]].forEach(([st, at, x, rot]) => {
+    const q = clamp((T - at) / .32);
+    if (q <= 0 || drop >= 1) return show(st, false);
+    const sc2 = q < .55 ? lerp(1.7, .92, eo(q / .55)) : lerp(.92, 1, eo((q - .55) / .45));
+    st.style.left = x + 'px'; st.style.top = edge + 'px';
+    show(st, true, clamp(q * 5) * (1 - drop), `translateY(${260 * drop * drop}px) rotate(${rot + (1 - eo(q)) * rot * -4 + drop * rot * 4}deg) scale(${sc2})`);
+  });
 }
 
 // petals and warm motes for the Kyoto backdrop (fixed seeds, so every frame is a pure function of time)
@@ -511,89 +798,103 @@ const seatMotes = [];
 for (let k = 0; k < 46; k++) { const i = document.createElement('i'); i.className = k < 30 ? 'petal' : 'mote'; $('seat-motes').appendChild(i); seatMotes.push(i); }
 
 function seated(T) {
-  // v8: the transparent take (the user's own cut, 5 s at 30 fps) in the bottom left, over Kyoto at night.
-  // Its own timing is kept, eased a little so the slash lands on "stretching".
-  const a = C('chair') - .05, b = C('really') - .3;
-  const el = $('seated');
-  if (T < a || T >= b + .3) return show(el, false);
-  const o = clamp((T - a) / .35) * (1 - clamp((T - b) / .3));
-  show(el, true, o, '');
-  const u = T - a, slash = W('come', 'stretching') - a;
-  // v9 take (14 s): grab A at 2.0, read and throw it at 3.8, cut B at 6.4, pink slash 7.5, A and B again, last pink slash 12.0.
-  // The grab lands on "come to you", the first cut on "stretching", the rest plays near real speed in the hold after it.
-  const end = b + .3 - a;
-  const MAP = [[0, 0], [2.3, 2.0], [slash - 1.0, 4.0], [slash, 6.4], [end, 13.9]];
-  let s = 13.9;
-  for (let k = 0; k < MAP.length - 1; k++) if (u <= MAP[k + 1][0]) { const [u0, s0] = MAP[k], [u1, s1] = MAP[k + 1]; s = s0 + (s1 - s0) * clamp((u - u0) / (u1 - u0)); break; }
+  // v8: the transparent take (the user's own cut) in the bottom left. v43: "level select behind the player": the game's
+  // level select, carried on from the browser window as it fills the screen, eases into soft focus behind the player,
+  // who slides in from the left; the take plays a third faster and the scene ends as the line does
+  const a = SEAT_A, b = SEAT_B, el = $('seated');
+  if (T < T_FULL - .02 || T >= b + .3) return show(el, false);
+  show(el, true, 1 - clamp((T - b) / .3), '');
+  const u = T - a, s = seatSrc(u);
   const f = clamp(Math.round(s * 30) + 1, 1, FOOT.seated3);
   const src = `../work/footage/seated3/${String(f).padStart(4, '0')}.png`;
   if (!$('seat-img').src.endsWith(src.slice(2))) $('seat-img').src = src;
-  // the garden: a slow push in, petals drifting across, warm motes rising
-  $('seat-bg').firstElementChild.style.transform = `scale(${1.04 + .06 * clamp(u / end)}) translateX(${-16 * clamp(u / end)}px)`;
-  seatMotes.forEach((m, k) => {
-    const petal = k < 30, sp = petal ? 70 + 90 * rnd(k + 1) : 18 + 22 * rnd(k + 1);
-    const t = u + rnd(k + 2) * 12;
-    let x, y, sz;
-    if (petal) {
-      x = ((rnd(k) * 2300 - 200 + t * sp * 1.1) % 2300) - 150;
-      y = ((rnd(k + 3) * 1300 + t * sp * .55) % 1300) - 120 + 22 * Math.sin(t * 1.3 + k);
-      sz = 9 + 12 * rnd(k + 4);
-      m.style.width = sz + 'px'; m.style.height = sz * .75 + 'px';
-      m.style.transform = `rotate(${t * 90 * (rnd(k + 5) - .5) + k * 40}deg)`;
-      m.style.opacity = .55 + .4 * rnd(k + 6);
-    } else {
-      x = 200 + rnd(k) * 1650 + 30 * Math.sin(t * .7 + k);
-      y = 1080 - ((rnd(k + 3) * 900 + t * sp) % 900) - 60;
-      sz = 3 + 4 * rnd(k + 4);
-      m.style.width = sz + 'px'; m.style.height = sz + 'px';
-      m.style.opacity = (.35 + .5 * rnd(k + 6)) * (.6 + .4 * Math.sin(t * 2.2 + k * 1.7));
-    }
-    m.style.left = x + 'px'; m.style.top = y + 'px';
-  });
+  const pin = eo((T - T_FULL + .05) / .5);
+  show($('seat-img'), true, clamp((T - T_FULL + .05) / .25), `translateX(${-170 * (1 - pin)}px) scale(${lerp(.96, 1, pin)})`);
+  // the level select: same clock as in the browser; a slow push, a rack of focus, a little darker
+  const bg = $('seat-bgimg'), bsrc = homeSrc(T);
+  if (!bg.src.endsWith(bsrc.slice(2))) bg.src = bsrc;
+  const foc = eio((T - T_FULL - .05) / .6);
+  bg.style.transform = `scale(${1 + .05 * clamp((T - T_FULL) / (b + .3 - T_FULL))})`;
+  bg.style.filter = `blur(${3.2 * foc}px) brightness(${1 - .24 * foc}) saturate(${1 + .1 * foc})`;
+  $('seat-shade').style.opacity = foc;
 }
 
 function flow(T) {
-  // "The game never touches your inbox": inbox, agent, game, built out from the centre; then the round is deleted
+  // "The game never touches your inbox": inbox, agent, game, built out from the centre, mail moving along the wires;
+  // a packet from the game heads for the inbox and is stopped at the cross; then the round is deleted.
+  // v43: bigger, the nodes float, envelopes run the wires, and the round is stamped deleted where its chip shatters
   const a = C('never') - .25, b = C('try') - .4, el = $('flow');
   if (T < a || T >= b + .3) return show(el, false);
   const out = clamp((T - b) / .3);
   show(el, true, 1 - out, `translateY(${-24 * eo(out)}px)`);
-  const NW = 440, STEP = 620;
+  const NW = 460, STEP = 640, WY = 540;
   const pA = eo((T - a) / .5), pG = eo((T - W('never', 'game') + .1) / .5), pI = eo((T - W('never', 'touches') + .05) / .5);
   const width = NW + (pG + pI) * STEP, left = 960 - width / 2;
   const xI = left, xA = left + pI * STEP, xG = xA + STEP;
-  const node = (id, x, p) => { const n = $(id); n.style.left = x + 'px'; show(n, p > 0, p, `translateY(${(1 - p) * 30}px)`); };
-  node('n-inbox', xI, pI); node('n-agent', xA, pA); node('n-game', xG, pG);
+  const node = (id, x, p, k) => { const n = $(id); n.style.left = x + 'px'; show(n, p > 0, p, `translateY(${(1 - p) * 34 + 5 * Math.sin(T * 1.5 + k * 2.1)}px) scale(${lerp(.9, 1, p)})`); };
+  node('n-inbox', xI, pI, 0); node('n-agent', xA, pA, 1); node('n-game', xG, pG, 2);
   const wire = (id, chip, x0, p, gone = 0) => {
     const w = $(id), c = $(chip), q = eo((p - .5) / .5);
     w.style.left = x0 + NW + 22 + 'px'; w.style.width = STEP - NW - 44 + 'px';
-    show(w, q > 0, q * (1 - .75 * gone), `scaleX(${q})`);
+    show(w, q > 0, q * (1 - .7 * gone), `scaleX(${q})`); w.style.transformOrigin = '0 50%';
     c.style.left = x0 + NW + (STEP - NW) / 2 + 'px';
     show(c, q > 0 && gone < 1, q * (1 - clamp(gone * 5)), `translateX(-50%) translateY(${(1 - q) * 14}px)`);
+    return q;
   };
-  // the round goes when the game is done: its chip breaks into pixels
-  const dp = clamp((T - W('deleted', 'deleted')) / 1.0);
-  wire('w-ia', 'c-ia', xI, pI); wire('w-ag', 'c-ag', xA, pG, dp);
-  // no line from the game to the inbox: a dashed path with a cross on it
+  const tDel = W('deleted', 'deleted'), dp = clamp((T - tDel) / 1.0);
+  const qIA = wire('w-ia', 'c-ia', xI, pI), qAG = wire('w-ag', 'c-ag', xA, pG, dp);
+  // envelopes along the wires (three on each, staggered), the agent's to the game stopping when the round is deleted
+  const PER = .95;
+  const runWire = (x0, q, k0, t0, stopAt) => {
+    for (let j = 0; j < 3; j++) {
+      const e = packets[k0 + j], ph = (T - t0) / PER - j / 3, p = ph - Math.floor(ph), cyc = Math.floor(ph);
+      const startT = t0 + (cyc + j / 3) * PER;
+      if (q < 1 || ph < 0 || startT > stopAt) { e.style.opacity = 0; continue; }
+      const x = lerp(x0 + NW + 30, x0 + STEP - 30, eio(p)) - 23, y = WY - 17 - 22 * Math.sin(Math.PI * p);
+      e.style.opacity = clamp(p * 6) * clamp((1 - p) * 6);
+      e.style.transform = `translate(${x}px,${y}px) scale(${.8 + .2 * Math.sin(Math.PI * p)})`;
+    }
+  };
+  runWire(xI, qIA, 0, W('never', 'touches') + .45, b);
+  runWire(xA, qAG, 3, W('never', 'game') + .45, tDel - .5);
+  // no way from the game back to the inbox: a dashed path with a cross on it, and a packet that tries it and is stopped
   const xp = eo((T - W('never', 'inbox')) / .5), arc = $('arc');
-  arc.style.opacity = .9 * xp; arc.style.strokeDashoffset = 0;
+  arc.setAttribute('d', `M${xG + NW / 2} ${392 + 296 + 10} C${xG + NW / 2} 935 ${xI + NW / 2} 935 ${xI + NW / 2} ${392 + 296 + 10}`);
+  arc.style.opacity = .9 * xp;
   $('flow-arc').style.clipPath = `inset(0 0 0 ${(1 - xp) * 100}%)`;
+  const L = arc.getTotalLength(), mid = arc.getPointAtLength(L / 2);
+  const nox = $('nox'); nox.style.left = mid.x + 'px'; nox.style.top = mid.y + 'px';
+  const tb = W('never', 'inbox') + .55, bonk = [tb, tb + 1.0].map(t => T - t - .5).filter(d => d >= 0 && d < .25)[0];
   const xo = eo((T - W('never', 'inbox') - .3) / .3);
-  show($('nox'), xo > 0, xo, `scale(${lerp(.4, 1, xo) + .15 * Math.sin(Math.PI * clamp((T - W('never', 'inbox') - .3) / .3))})`);
+  show(nox, xo > 0, xo, `scale(${lerp(.4, 1, xo) + .15 * Math.sin(Math.PI * clamp((T - W('never', 'inbox') - .3) / .3)) + (bonk !== undefined ? .25 * Math.sin(Math.PI * bonk / .25) : 0)})`);
+  [tb, tb + 1.0].forEach((t, j) => {
+    const e = packets[6 + j], p = (T - t) / .5;
+    if (p < 0 || p > 1.5) { e.style.opacity = 0; return; }
+    const pt = arc.getPointAtLength(L * .5 * eio(Math.min(p, 1))), hit = clamp((p - 1) / .5);
+    e.style.opacity = clamp(p * 6) * (1 - hit);
+    e.style.transform = `translate(${pt.x - 23 + (hit > 0 ? 10 * Math.sin(hit * 40) * (1 - hit) : 0)}px,${pt.y - 17 - 30 * hit}px) rotate(${hit * 30}deg) scale(${1 + .5 * hit})`;
+    e.style.filter = hit > 0 ? 'grayscale(1) brightness(1.4)' : '';
+  });
+  packets[8].style.opacity = 0;
+  // the round goes when the game is done: its chip breaks into pixels and a pixel stamp lands in its place
+  const cx = xA + NW + (STEP - NW) / 2, cy = 477;
   const px = $('pixels');
   if (dp > 0 && dp < 1) {
     px.style.visibility = 'visible';
-    const cx = xA + NW + (STEP - NW) / 2, cy = 485, cw = 180, ch = 54, GX = 14, GY = 4;
+    const cw = 200, ch = 58, GX = 16, GY = 5;
     pixels.forEach(({ i }, k) => {
       if (k >= GX * GY) { i.style.opacity = 0; return; }
       const gx = k % GX, gy = Math.floor(k / GX), d = clamp((dp - rnd(k) * .3) / .7);
       i.style.width = cw / GX + 1 + 'px'; i.style.height = ch / GY + 1 + 'px';
       i.style.left = cx - cw / 2 + gx * cw / GX + 'px'; i.style.top = cy - ch / 2 + gy * ch / GY + 'px';
       i.style.opacity = 1 - eo(d);
-      i.style.transform = `translate(${(rnd(k + 9) - .5) * 160 * eo(d)}px,${-150 * eo(d) * (.5 + rnd(k + 3))}px) scale(${1 - .7 * d})`;
-      i.style.background = rnd(k + 5) > .6 ? '#ff9ec8' : '#d9d3e3';
+      i.style.transform = `translate(${(rnd(k + 9) - .5) * 220 * eo(d)}px,${-180 * eo(d) * (.5 + rnd(k + 3)) + 260 * d * d}px) scale(${1 - .7 * d})`;
+      i.style.background = rnd(k + 5) > .6 ? '#ff2e93' : rnd(k + 6) > .5 ? '#ff9ec8' : '#d9d3e3';
     });
   } else px.style.visibility = 'hidden';
+  const st = $('delstamp'), sq = clamp((T - tDel - .18) / .22);
+  st.style.left = cx + 'px'; st.style.top = cy + 'px';
+  if (sq > 0) show(st, true, clamp(sq * 4), `translate(-50%,-50%) rotate(-5deg) scale(${lerp(1.8, 1, eo(sq)) - .06 * Math.sin(Math.PI * clamp((T - tDel - .4) / .2))})`); else show(st, false);
 }
 
 function closing(T) {
@@ -654,6 +955,7 @@ function closing(T) {
 }
 
 function outro(T) {
+  return show($('outro'), false);      // (v41: the gameplay montage and feature badges are gone)
   const el = $('outro');
   if (T < T_OUT - .05) return show(el, false);
   show(el, true, 1, '');
@@ -676,7 +978,7 @@ function outro(T) {
 
 function white(T) {
   // the clean white world: the hook, connect, built, chair, AI
-  const on = T < T_SPLIT || (T >= M_IN + .05 && T < T_HOME + .35) || (T >= C('iwsdk') - .02 && T < C('try') - .3);
+  const on = T < T_SPLIT || (T >= T_PUSH && T < T_REVEAL + PUSH_LEN + .15) || (T >= C('iwsdk') - .02 && T < C('try') - .3);
   show($('white'), on, 1, '');
 }
 
@@ -730,21 +1032,29 @@ function buildHits() {
   // v30: a notification ping as each banner lands (ElevenLabs takes, work/audio/notify: a two-note knock and a single pop,
   // alternated so eight in six seconds don't machine-gun; the "reminder about reminders" one a touch louder)
   const PING = ['a', 'b', 'a', 'b', 'a', 'a', 'a', 'a'];
-  NOTE_AT.forEach(([at], k) => { if (at < T_SWORD - .15) SFX.push({ t: +(at + .1).toFixed(3), file: `../work/audio/notify/ping-${PING[k]}.wav`, gain: k === 6 ? .85 : k < 2 ? .8 : .7 }); });
+  // (no ping within a quarter second before another one, and none under the sword slash)
+  NOTE_AT.forEach(([at], k) => { if (at < T_SWORD - .45 && !NOTE_AT.some(([o], j) => j !== k && o > at && o - at < .25)) SFX.push({ t: +(at + .1).toFixed(3), file: `../work/audio/notify/ping-${PING[k]}.wav`, gain: k === 6 ? .85 : k < 2 ? .8 : .7 }); });
   // the hook: the sword through the inbox, the slash clip, the flamethrower catching
   h(T_SWORD - .12, 'kyoto/slash1.flac');
   h(T_SPLIT - .01, 'kyoto/slash2.flac', 1); h(T_SPLIT, 'office/glass.flac', .55);      // v21: more weight on the split
-  h(T_SPLIT + 23 / FPS - .03, 'kyoto/slash3.flac', .9);      // v26: the sword clip's own cut (frame 24)
+  h(T_SPLIT + (24 - 10) / FPS - .03, 'kyoto/slash3.flac', .9);      // v26: the sword clip's own cut (frame 24)
   h(W('flame', 'flamethrower') + .03, 'inferno/flare.flac');
   // Slash, burn, and smash (the long smash's keyboard hits at its frames 13, 46, 78)
-  h(C('slash') + (24 - 15) / FPS - .03, 'space/slash1.flac');      // v29: the saber's swing
+  h(C('slash') + (24 - 13) / FPS - .03, 'space/slash1.flac');      // v29: the saber's swing
   h(W('slash', 'burn') + .02, 'lab/melt1.flac');
   // v25: the smash-intro clip's impacts (its frames), from "smash" to the agent scene
-  [[7, 1], [61, .85], [89, .8], [115, .8], [166, .85], [198, .85], [213, .7], [252, .9], [263, .8]].forEach(([fr, g]) => kb(W('slash', 'smash') + (fr - 1) / FPS - .02, g));
+  [[7, 1], [61, .85], [89, .8], [115, .8], [166, .85], [198, .85], [213, .7], [252, .9], [263, .8]].forEach(([fr, g]) => {
+    const t = W('slash', 'smash') + (fr - 1) / FPS - .02, under = t > T_LOGO - .1 && t < E('round') + .5;      // v31: behind the overlay and her voice, the hits sit back
+    if (t < T_PUSH + .2) kb(t, under ? g * .5 : g);
+  });
+  h(T_LOGO - .06, 'swoosh2.flac', .45);
+  { const a = W('game', 'clear') - .05, b = W('round', 'time') + .1;      // v33: the icon's ten cuts
+    for (let k = 0; k < 10; k++) h(lerp(a, b, k / 9) - .02, `office/slash${1 + k % 6}.flac`, .32);
+    h(b + .02, 'office/glass.flac', .4); } h(T_PUSH - .02, 'swoosh1.flac', .6);      // v31: the logo's arrival, and the lift into the agent scene
   // the round: the keyboard smashes at the 7 s clip's frames 125 and 178
 
   // how it works: cut it up into tiny little pieces
-  h(W('cut', 'cut') + .12 - .03, 'kyoto/slash3.flac');
+  h(T_REVEAL + 219 / FPS - .03, 'kyoto/slash3.flac'); h(T_REVEAL + 220 / FPS, 'office/glass.flac', .45);      // v32: the slash through the How to Play panel
   // the levels and the gameplay outro: every cut in the long shots, the first loudest
   const HIT = { 'office2-long': 'office/glass.flac', 'castle-long': 'castle/slash2.flac', 'lab-long': 'lab/melt2.flac', 'inferno-long': 'inferno/flare.flac', 'kyoto-long': 'kyoto/slash4.flac', 'lumber-long': 'lumber/chop.flac', 'space-long': 'space/slash2.flac' };
   for (const [clip, from, to, at, key0] of SEG) {
@@ -752,6 +1062,16 @@ function buildHits() {
     const key = keyOf(clip, key0), outro = from >= T_OUT;
     CUTS[clip].forEach((c, i) => { const t = at + (c - key) / FPS, g = outro ? .55 : i === 0 || c === key ? 1 : .6; if (t >= from && t < to - .05) clip === 'office2-long' ? kb(t - .03, g) : h(t - .03, HIT[clip], g); });
   }
+  // v35: the user's level clips: a hit on each clip's biggest impacts (found by how much the picture changes), the first loudest
+  const LV = {"lvl-keyboard": [7, 61, 89, 166, 198], "lvl-haunted": [53, 82, 112, 156], "lvl-toxic": [18, 82, 107, 163], "lvl-inferno": [63, 84, 107, 138, 168], "lvl-kyoto": [7, 29, 69, 118, 149], "lvl-lumber": [41, 76, 105, 140], "lvl-space": [97, 133, 173]};
+  const LVS = { 'lvl-haunted': 'castle/slash1.flac', 'lvl-toxic': 'lab/melt1.flac', 'lvl-inferno': 'inferno/flare.flac', 'lvl-kyoto': 'kyoto/slash4.flac', 'lvl-lumber': 'lumber/chop.flac', 'lvl-space': 'space/slash2.flac' };
+  for (const [clip, from, to] of SEG) {
+    if (!LV[clip]) continue;
+    const key = SEG.find(g => g[0] === clip)[4];      // (v42: a clip may start part way in)
+    LV[clip].forEach((fr, i) => { const t = from + (fr - key) / FPS - .02; if (t >= from && t < to - .05) clip === 'lvl-keyboard' ? kb(t, i ? .7 : 1) : h(t, LVS[clip], i ? .65 : 1); });
+  }
+  // v41: the ending clip's monitor smashes, before the overlay comes in
+  [[4, .9], [25, .7], [55, .8], [76, .7], [108, .8], [142, .7]].forEach(([fr, g]) => kb(T_OUT + .4 + (fr - 1) / FPS - .02, g * .8));
   // the seated player's three cuts (the take's 6.4, 7.5 and 12.0 s), through the same playback curve as the picture
   const a = C('chair') - .05, b = C('really') - .3, slash = W('come', 'stretching') - a, end = b + .3 - a;
   [6.4, 7.5, 12.0].forEach((src, i) => h(a + slash + (src - 6.4) / (13.9 - 6.4) * (end - slash) - .03, 'kyoto/slash5.flac', i ? .7 : 1));
@@ -772,6 +1092,7 @@ async function renderAt(T) {
   flow(T);
   closing(T);
   flash(T);
+  splitParts(T);
   outro(T);
   cursor(T);
   const imgs = [...document.images].filter(i => i.style.visibility !== 'hidden' && !i.complete);

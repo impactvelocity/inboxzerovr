@@ -8,6 +8,8 @@ export const env = {
   /** Writes up what was said into the mic as an email (lib/ai.ts). */
   polishModel: process.env.POLISH_MODEL || 'anthropic/claude-haiku-5.5',
   fallbackModel: process.env.FALLBACK_MODEL || 'google/gemini-3.8-flash',
-  elevenlabs: process.env.ELEVENLABS_API_KEY ?? '',
+  /** Round two's mic: a client secret is minted for the browser (app/api/scribe-token), which needs a real gateway key, not OIDC. */
+  gatewayKey: !!process.env.AI_GATEWAY_API_KEY,
+  micModel: process.env.MIC_MODEL || 'elevenlabs/scribe-v2-realtime',
   publicOrigin: process.env.PUBLIC_ORIGIN ?? '',
 };
