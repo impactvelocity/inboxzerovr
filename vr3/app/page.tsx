@@ -225,6 +225,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
             <a className="pix" href={playHref}>PLAY DEMO</a>
           </div>
           <div className="foot-bar">
+            {/* (the logo also played Kyoto's win, an easter egg: <FootEgg /> from ./_site/FootEgg. Hidden for now, 2026-11-15) */}
             <img className="foot-logo" src="/play/logos/site.webp" alt="Inbox Zero" width={126} height={26} loading="lazy" />
             <div className="foot-by">
               <p className="byline">

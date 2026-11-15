@@ -6,7 +6,7 @@ import { uiSound } from './uisound';
  * the video embed to play / so it can be watched on quest"). The demo video (the site's `demoVideo`, app/_site/content.ts) from
  * YouTube's no-cookie player, made on open and removed on close, so it stops; the game's music is silent while it is open.
  */
-const VIDEO = '1M4B0hSwFXw';
+const VIDEO = '7igom3vHeBk';
 
 let open = false;
 /** The video card is open (main.ts: the music steps out). */

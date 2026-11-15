@@ -206,7 +206,7 @@ button.link:hover{background:none;opacity:1}
 .dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;flex-wrap:wrap}
 /* Connect mic on the home page (src/dictate.ts): its edge says the mic's state, a meter under it while it listens */
 .mic-wrap{position:relative;display:inline-grid}
-.mic-wrap[hidden],#home #debug-mic.pix[hidden],.mic-note[hidden]{display:none}
+.mic-wrap[hidden],#home #debug-mic.pix[hidden]{display:none}
 .mic-meter{position:absolute;left:8px;right:8px;bottom:-10px;height:4px;background:#ffffff26;opacity:0;transition:opacity .2s;pointer-events:none}
 .mic-wrap.testing .mic-meter{opacity:1}
 .mic-meter span{display:block;height:100%;width:0;background:#7dffc9;transition:width 60ms linear}
@@ -215,12 +215,8 @@ button.link:hover{background:none;opacity:1}
 #home .pix.mic-off:disabled{cursor:default;opacity:.7}
 #home .pix.mic-ask{animation:mic-ask 1.6s ease-in-out infinite}
 @keyframes mic-ask{50%{filter:brightness(1.4)}}
-/* beside the mic icon (2026-11-15): Debug Mic, and in words whether the mic is connected */
+/* beside the mic icon (2026-11-15): Debug Mic (with ?debug=1) */
 #home #debug-mic.pix{padding:9px 12px 11px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
-.mic-note{font:12px/1.2 'Helvetica Neue',Arial,sans-serif;letter-spacing:.04em;text-shadow:0 1px 6px #000;white-space:nowrap}
-.mic-note.on{color:#7dffc9}
-.mic-note.off{color:#ff8fa3}
-@media(max-width:600px){.mic-note{display:none}}
 /* the mic test card (src/micdebug.ts) */
 .mic-debug h2{margin:0 0 12px;font-size:18px;letter-spacing:.04em}
 .mic-checks{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0 0 14px;font-size:13px}
@@ -241,7 +237,7 @@ button.link:hover{background:none;opacity:1}
 .mic-details{margin-top:10px;font-size:12px;opacity:.75}
 .mic-details pre{margin:6px 0 0;max-height:180px;overflow:auto;white-space:pre-wrap;word-break:break-all;font-size:11px}
 /* Video, top left, and its card (src/videocard.ts, 2026-11-15) */
-#home .pix.video-btn{grid-auto-flow:column;gap:8px;padding:9px 13px 11px 11px}
+#home .pix.video-btn{grid-auto-flow:column;gap:8px;padding:9px 14px 11px 16px}      /* (more room left of the play triangle: its flat side sits hard against the edge) */
 #home .pix.video-btn .video-word{position:relative;display:block;line-height:0}
 .video-card{width:min(94vw,1000px);max-width:none;padding:14px 14px 16px;overflow:hidden}
 .video-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden}
@@ -249,6 +245,8 @@ button.link:hover{background:none;opacity:1}
 .video-card .dialog-actions{justify-content:center;margin-top:14px}
 /* MCP, top right, and its card (src/mcpcard.ts, 2026-11-15) */
 #home .pix.mcp-btn{padding:9px 12px 11px}
+/* every button along the top the mic's height (2026-11-15: "make the video button same height as mic icon, and make mcp and meta also same height") */
+#home .home-top .pix{box-sizing:border-box;height:40px;padding-top:0;padding-bottom:2px}
 /* (2026-11-15: "make the typography better on this, better spacing / games and drop the periods": all in the pixel letters) */
 .mcp-card{width:min(92vw,480px);padding:34px 30px 28px;text-align:center}
 .mcp-card[open]{display:grid;justify-items:center}

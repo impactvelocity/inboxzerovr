@@ -101,6 +101,44 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 .dot.on{background:var(--mint);box-shadow:0 0 0 3px #4ff3c833,0 0 10px var(--mint)}
 
 /* the level picker: a small painting per level, the picked one lit in its colour with a bar that fills until the next */
+/* ───────── the footer's easter egg, Kyoto's win (FootEgg.tsx, Win.tsx): the footer's words and the nav step aside,
+   the painting pushes in, and the song's words, the katana and the petals take the footer ───────── */
+.nav,.foot-hero{transition:opacity .6s ease}
+body.winning .nav,.foot.winning .foot-hero{opacity:0;pointer-events:none}
+.foot-bg{transition:scale 8s ease-out}
+.foot.winning .foot-bg{scale:1.08}
+.foot-egg{all:unset;cursor:pointer;display:block;transition:transform .2s steps(2),filter .2s}
+.foot-egg:hover{transform:translateY(-2px) rotate(-2deg);filter:drop-shadow(0 0 10px #ff8fb8aa)}
+.foot-egg:focus-visible{outline:2px solid var(--mint);outline-offset:6px}
+.win{position:absolute;inset:0;z-index:3;display:grid;place-items:center;pointer-events:none;animation:win-in .8s ease both;
+  background:radial-gradient(70% 60% at 50% 48%,#0b091259,#0b0912a6)}
+@keyframes win-in{from{opacity:0}}
+.win-air{position:absolute;inset:0;width:100%;height:100%}
+.win-words{position:relative;display:grid;place-items:center;width:min(1000px,92%);text-align:center}
+.win-words>*{grid-area:1/1}
+.win-line{margin:0;font:700 clamp(20px,3.4vw,40px)/1.15 var(--pixel);text-transform:uppercase;color:#fff;
+  text-shadow:0 4px 0 #0b0912,0 0 24px color-mix(in srgb,var(--accent) 70%,transparent)}
+.win-line span{display:inline-block;margin:0 .22em}
+.win-line.now span.fresh{color:var(--accent);animation:word-pop .38s cubic-bezier(.2,1.8,.4,1) both}
+@keyframes word-pop{from{opacity:0;transform:translateY(14px) scale(.5)}}
+.win-line.now{animation:line-in .2s .18s ease both}      /* (waits for the cut before it to clear) */
+@keyframes line-in{from{opacity:0}}
+/* the cut: the weapon sweeps through, a white slash stays a moment, the line's two halves fall away */
+.win-cut{position:relative;width:100%;display:grid;place-items:center}
+.win-cut>*{grid-area:1/1}
+.win-line.half{word-spacing:.44em}
+.win-line.half.top{clip-path:inset(0 0 52% 0);animation:cut-top .95s .1s cubic-bezier(.4,0,.8,.4) both}
+.win-line.half.bottom{clip-path:inset(48% 0 0 0);animation:cut-bottom .95s .1s cubic-bezier(.4,0,.8,.4) both}
+@keyframes cut-top{12%{transform:translate(-14px,-12px) rotate(-3deg)}100%{transform:translate(-80px,170px) rotate(-16deg);opacity:0}}
+@keyframes cut-bottom{12%{transform:translate(12px,8px) rotate(2deg)}100%{transform:translate(70px,230px) rotate(12deg);opacity:0}}
+.win-slash{justify-self:stretch;height:4px;background:#fff;box-shadow:0 0 12px #fff,0 0 30px var(--accent);rotate:-4deg;transform-origin:0 50%;animation:slash .5s ease-out both}
+@keyframes slash{0%{transform:scaleX(0);opacity:1}35%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
+.win-katana{justify-self:start;width:clamp(210px,28vw,340px);height:auto;filter:drop-shadow(0 4px 0 #0b0912) drop-shadow(0 0 14px #fff8);animation:katana-sweep .42s cubic-bezier(.3,0,.2,1) both}
+@keyframes katana-sweep{0%{transform:translate(-60%,-40px) rotate(-24deg);opacity:0}15%{opacity:1}80%{opacity:1}100%{transform:translate(calc(min(1000px,92vw) - 40%),30px) rotate(14deg);opacity:0}}
+.win-logo{width:min(620px,74%);height:auto;filter:drop-shadow(0 10px 30px #000000b3);animation:logo-smash .7s cubic-bezier(.2,1.5,.35,1) both}
+@keyframes logo-smash{0%{opacity:0;transform:scale(2.4) rotate(-6deg)}60%{opacity:1}100%{transform:none}}
+.win-stop{position:absolute;bottom:clamp(28px,5vh,56px);left:50%;translate:-50% 0;pointer-events:auto;--c:var(--accent)}
+@media (prefers-reduced-motion:reduce){.win-line.now span.fresh,.win-line.now,.win-logo,.win,.win-katana,.win-slash{animation:none}.win-katana,.win-slash{display:none}.foot.winning .foot-bg{scale:1}}
 .hero-pick{justify-self:center;display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:18px;width:100%}
 .hero-levels{display:grid;grid-template-columns:repeat(7,84px);gap:10px}
 .hero-levels button{all:unset;position:relative;cursor:pointer;display:block;aspect-ratio:84/52;padding:3px;background:#ffffff2e;box-shadow:0 6px 0 #0b091299;transition:transform .18s steps(3),background .2s,box-shadow .2s}

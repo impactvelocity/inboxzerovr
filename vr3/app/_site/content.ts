@@ -6,7 +6,7 @@
  */
 export const SITE = {
   /** The demo video's YouTube id (the part after v=). */
-  demoVideo: '1M4B0hSwFXw',
+  demoVideo: '7igom3vHeBk',
   /** The MCP server an agent is given (app/mcp/route.ts). */
   mcp: 'https://www.inboxzerovr.com/mcp',
   competition: { name: 'Meta VR Start Developer Competition 2026', url: 'https://start-developer-competition-26.devpost.com/' },

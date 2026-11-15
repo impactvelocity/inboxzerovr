@@ -443,15 +443,15 @@ export const dictate = createDictate();
  */
 export function bindHomeMic() {
   const button = document.getElementById('connect-mic') as HTMLButtonElement | null, wrap = button?.parentElement, bar = wrap?.querySelector<HTMLElement>('.mic-meter span');
-  // (2026-11-15: "add a message if mic is connected or not": said in words beside the icon, not only its edge)
+  // (the words beside the icon, "Mic connected", went 2026-11-15: "remove mic connected lavel"; its edge still says it)
   // (Debug Mic only with ?debug=1 in the address, 2026-11-15: "hide the debug button from root"; it stays hidden otherwise)
-  const note = document.getElementById('mic-note'), debug = new URLSearchParams(location.search).has('debug') ? document.getElementById('debug-mic') : null;
+  const debug = new URLSearchParams(location.search).has('debug') ? document.getElementById('debug-mic') : null;
   if (!button || !wrap) return;
   let shown = '';
   function show() {
     // (no mic for this browser, or not known yet: none of it shows, and round two is the demo recording)
     const hide = dictate.micOff || dictate.scribe === null;
-    wrap!.hidden = hide; if (note) note.hidden = hide; if (debug) debug.hidden = hide;
+    wrap!.hidden = hide; if (debug) debug.hidden = hide;
     const p = dictate.permission, words = dictate.scribe ? 'ElevenLabs Scribe writes down what you say.' : dictate.hasBrowserSpeech ? 'This browser writes down what you say.' : 'Round two hears you; nothing here writes the words down yet.';
     const [label, tone, title] = p === 'unavailable' ? ['Mic needs https', 'off', 'The mic only works on a secure page (https).']
       : !dictate.hasDevice ? ['No mic found', 'off', 'No microphone is connected.']
@@ -463,14 +463,6 @@ export function bindHomeMic() {
     wrap!.classList.toggle('testing', dictate.testing);
     if (label !== shown) { shown = label; button!.setAttribute('aria-label', label); }
     button!.title = `${label}. ${title}`;
-    if (note) {
-      const on = p === 'granted' && dictate.hasDevice;
-      // (only when it is on: "remove the mic warning ... the browser already asks, dont need to show it here", 2026-11-15)
-      note.textContent = on ? (dictate.testing ? 'Mic listening…' : 'Mic connected') : '';
-      note.className = 'mic-note on';
-      if (!on) note.hidden = true;
-      note.title = title;
-    }
   }
   drawMic(button.querySelector<HTMLCanvasElement>('canvas.mic'));
   // the meter under the button while it listens
