@@ -7,6 +7,8 @@
 export const SITE = {
   /** The demo video's YouTube id (the part after v=). */
   demoVideo: '1M4B0hSwFXw',
+  /** The MCP server an agent is given (app/mcp/route.ts). */
+  mcp: 'https://www.inboxzerovr.com/mcp',
   competition: { name: 'Meta VR Start Developer Competition 2026', url: 'https://start-developer-competition-26.devpost.com/' },
   segments: 'https://developers.meta.com/vr/blog/know-your-players-understanding-your-audience-with-2025-quest-gamer-segments/',
   author: { name: 'Dylan Jones', url: 'https://hidylanjones.com', linkedin: 'https://www.linkedin.com/in/hidylanjones', avatar: '/site/dylan.webp' },

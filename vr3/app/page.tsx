@@ -1,7 +1,9 @@
 import { headers } from 'next/headers';
 import { Demo } from './_site/Demo';
-import { HandShot } from './_site/HandShot';
+import { HowToPlay } from './_site/HowToPlay';
 import { LevelScene } from './_site/LevelScene';
+import { McpUrl } from './_site/McpUrl';
+import { StarField } from './_site/StarField';
 import { Hero } from './_site/Hero';
 import { MetaMark } from './_site/MetaMark';
 import { CATEGORIES, LEVELS, SITE } from './_site/content';
@@ -38,8 +40,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
           </a>
         </p>
         <div className="nav-links">
-          <a href={playHref}>Play Demo</a>
-          <a href="#how">Connect Your Agent</a>
+          <a className="nav-video" href="#demo">Watch Demo Video</a>
         </div>
         <p className="nav-for"><a href={SITE.competition.url} target="_blank" rel="noopener noreferrer"><MetaMark />Meta VR Start Hackathon</a></p>
       </nav>
@@ -64,7 +65,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
                 <Pixels art={ICON_PLUG} />
                 <h3>Connect MCP</h3>
                 <p>Add the MCP to your favourite agent, the one that reads your email.</p>
-                <code className="mcp-url">https://<wbr />www.inboxzerovr.com/mcp</code>
+                <code className="mcp-url">https://<wbr />{SITE.mcp.replace('https://', '')}</code>
               </li>
               <li style={{ '--c': 'var(--pink)' } as React.CSSProperties}>
                 <Pixels art={ICON_LETTER} />
@@ -75,7 +76,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
                 <Pixels art={ICON_SWORD} />
                 <h3>Play Inbox Zero</h3>
                 <p>Type in the code. Smash or keep each email, then reply. Your agent does the rest.</p>
-                <p className="quiet">No agent? Play the demo inbox.</p>
               </li>
             </ol>
 
@@ -87,76 +87,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
               </div>
             </aside>
 
-            <h3 className="mini">The controls</h3>
-            <div className="hands">
-              <article className="hand-card left">
-                <h4>Left hand</h4>
-                <div className="shots">
-                  <figure>
-                    <HandShot name="left-grab" alt="A left hand reaching for an email"><Pixels art={ICON_GRAB} /></HandShot>
-                    <figcaption><b>Grab</b>Reach towards a letter and squeeze.</figcaption>
-                  </figure>
-                  <figure>
-                    <HandShot name="left-read" alt="A left hand holding an email up close"><Pixels art={ICON_READ} /></HandShot>
-                    <figcaption><b>Read</b>It comes up close enough to read.</figcaption>
-                  </figure>
-                  <figure>
-                    <HandShot name="left-throw" alt="A left hand throwing an email away, the email glowing gold"><Pixels art={ICON_KEEP} /></HandShot>
-                    <figcaption><b>Throw</b>Throw it anywhere to keep it. It flashes gold.</figcaption>
-                  </figure>
-                </div>
-              </article>
-              <article className="hand-card right">
-                <h4>Right hand</h4>
-                <div className="shots">
-                  <figure>
-                    <HandShot name="right-destroy" alt="A right hand swinging a katana through an email, cutting it in two in a burst of cherry blossom"><Pixels art={ICON_CUT} /></HandShot>
-                    <figcaption><b>Slash and destroy</b>Swing through the email and it is gone. The level decides what you swing.</figcaption>
-                  </figure>
-                </div>
-              </article>
-            </div>
+          </div>
+        </section>
 
-            <h3 className="mini">The rounds</h3>
-            <div className="rounds">
-              <article className="round">
-                <div className="mock one" aria-hidden>
-                  <div className="bar"><span>3 / 10</span><i style={{ '--fill': '30%' } as React.CSSProperties} /><span>30%</span></div>
-                  <div className="mail cut">
-                    <span className="tag" style={{ '--t': '#ffa24a' } as React.CSSProperties}>PROMO</span>
-                    <b>Flash sale ends tonight</b>
-                    <small>Deals Daily · 48 hours only</small>
-                  </div>
-                  <span className="float saved">SAVED</span>
-                </div>
-                <h4>Round 1</h4>
-                <p>Your unread emails fly in from the middle of the scene, one after another. Cut the junk. Grab the ones that matter, read them, and throw them to keep them.</p>
-              </article>
-              <article className="round">
-                <div className="mock two" aria-hidden>
-                  <div className="bubble l">Thursday works. See you at ten.</div>
-                  <div className="mail">
-                    <span className="tag" style={{ '--t': '#ff6ec7' } as React.CSSProperties}>PERSONAL</span>
-                    <b>Coffee this week?</b>
-                    <small>Maya Chen</small>
-                  </div>
-                  <div className="bubble r">Can we do next week instead?</div>
-                  <span className="mic"><svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.9V22h2v-3.1A7 7 0 0 0 19 12z" /></svg></span>
-                  <span className="float later">LATER</span>
-                </div>
-                <h4>Round 2</h4>
-                <p>Each email you kept comes back with two replies already written. Hold the email against one to choose it. Hold it against the microphone to say your own. Throw it away and it waits until tomorrow.</p>
-              </article>
-            </div>
+        {/* ───────── how to play: the game's own How to Play pop-up, a round at a time (play/guide.html) ───────── */}
+        <section className="band howto" id="how-to-play">
+          <StarField />
+          <div className="wrap">
+            <h2 className="pixel-head">How to Play</h2>
 
-            <h3 className="mini">What your agent does after</h3>
-            <dl className="outcomes">
-              <div><dt>Cut</dt><dd>Archived, not deleted.</dd></div>
-              <div><dt>Kept</dt><dd>Left alone. Still unread.</dd></div>
-              <div><dt>Replied</dt><dd>Sent, or saved as a draft. Your agent asks which.</dd></div>
-              <div><dt>Later</dt><dd>Left alone.</dd></div>
-            </dl>
-            <p className="fine">Quit halfway and your agent gets nothing to act on.</p>
+            <HowToPlay />
           </div>
         </section>
 
@@ -197,7 +137,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
         </section>
 
         {/* ───────── why ───────── */}
-        <section className="band why" id="why">
+        {/* (hidden for now, 2026-11-15) */}
+        <section className="band why" id="why" hidden>
           <div className="wrap">
             <h2>Email is easier to face when you can hit it.</h2>
             <p className="sub">An unread count follows you around all day. Inbox Zero turns it into one sitting. Put the headset on, deal with ten emails, take it off.</p>
@@ -231,8 +172,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
         {/* ───────── the levels ───────── */}
         <section className="band levels" id="levels">
           <div className="wrap">
-            <h2>Cut it, smash it, melt it, burn it or punch it.</h2>
-            <p className="sub">There are eight levels. The rules are the same in all of them. The room and the weapon change. Point at one to try its weapon.</p>
+            <h2 className="pixel-head">Cut it, smash it, melt it or burn it</h2>
           </div>
           {LEVELS.map(level => (
             <article className="level" key={level.id} id={level.id} style={{ '--accent': level.accent } as React.CSSProperties}>
@@ -245,40 +185,67 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
             </article>
           ))}
         </section>
+
+        {/* ───────── how the MCP works: the address, what happens, and its three tools (app/mcp/route.ts) ───────── */}
+        <section className="band mcp" id="mcp">
+          <div className="wrap">
+            <h2 className="pixel-head">How the MCP Works</h2>
+            <McpUrl url={SITE.mcp} />
+            <p className="mcp-lede">Give this URL to your agent and ask for a game. It reads your unread email and sends a short, temporary version: just enough to play one round.</p>
+            <p className="mcp-lede">In the game you slash to archive, keep, pick a reply or record your own. When you’re done, your agent does the rest, and everything is deleted from our server.</p>
+
+            <ol className="tools-grid">
+              <li>
+                <code>create_round</code>
+                <h3>Makes the game</h3>
+                <p>Your agent sends a summary of each email: who it’s from, the subject, a line on what it wants, and a couple of replies. It gets back a 4-digit code and a link that opens on your Quest.</p>
+              </li>
+              <li>
+                <code>get_results</code>
+                <h3>Reads what you chose</h3>
+                <p>When you’re done, your agent gets back each email marked archive, reply or leave unread, with the reply you picked or said.</p>
+              </li>
+              <li>
+                <code>delete_round</code>
+                <h3>Cleans up</h3>
+                <p>Once your agent has acted, it deletes the game and your choices. If it doesn’t, they’re deleted after 4 hours anyway.</p>
+              </li>
+            </ol>
+          </div>
+        </section>
       </main>
 
       {/* ───────── made for ───────── */}
       <footer className="foot" id="made">
-        <div className="foot-scene">
-          <div className="foot-words">
-            <h2>Built for the <a href={SITE.competition.url} target="_blank" rel="noopener noreferrer">Meta VR Start<br />Developer Competition 2026</a></h2>
-            <p className="sub">One person made it. It runs in the Quest’s browser, so there is nothing to install. The game is WebXR and three.js, each level is a flat painting given depth, and a small server reads the mail and forgets it.</p>
-            <ul className="tools">{SITE.tools.map(tool => <li key={tool.name}><a href={tool.url} target="_blank" rel="noopener noreferrer">{tool.name}</a></li>)}</ul>
-            <p className="fine">No emails were deleted in the making of this game.</p>
+        <img className="foot-bg" src="/play/home/kyoto.webp" alt="" loading="lazy" aria-hidden />
+        <div className="foot-hero" style={{ '--accent': '#f6b3cc' } as React.CSSProperties}>
+          <h2 className="pixel-head">Clear your inbox</h2>
+          <div className="cta-row">
+            <a className="pix ghost" href="#mcp">CONNECT MCP</a>
+            <a className="pix" href={playHref}>PLAY DEMO</a>
           </div>
-          <div className="foot-art"><img src="/play/garden/twilight-v2.webp" alt="" loading="lazy" aria-hidden /></div>
-        </div>
-        <div className="foot-bar">
-          <img className="foot-logo" src="/play/logos/site.webp" alt="Inbox Zero" width={126} height={26} loading="lazy" />
-          <p className="byline">
-            <img src={SITE.author.avatar} alt="" width={28} height={28} loading="lazy" />
-            <span>Built by <a href={SITE.author.url} target="_blank" rel="noopener noreferrer">{SITE.author.name}</a></span>
-          </p>
-          <span className="grow" />
-          <a className="icon" href={SITE.github} target="_blank" rel="noopener noreferrer" aria-label="Inbox Zero VR on GitHub" title="Source on GitHub">
-            <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
-          </a>
-          <a className="icon" href={SITE.author.linkedin} target="_blank" rel="noopener noreferrer" aria-label={`${SITE.author.name} on LinkedIn`} title={`${SITE.author.name} on LinkedIn`}>
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-          </a>
-          <a className="pix small" href={playHref}>{vr ? 'PLAY GAME' : 'PLAY'}</a>
+          <div className="foot-bar">
+            <img className="foot-logo" src="/play/logos/site.webp" alt="Inbox Zero" width={126} height={26} loading="lazy" />
+            <div className="foot-by">
+              <p className="byline">
+                <img src={SITE.author.avatar} alt="" width={28} height={28} loading="lazy" />
+                <span>Built by <a href={SITE.author.url} target="_blank" rel="noopener noreferrer">{SITE.author.name}</a></span>
+              </p>
+              <a className="icon" href={SITE.github} target="_blank" rel="noopener noreferrer" aria-label="Inbox Zero VR on GitHub" title="Source on GitHub">
+                <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
+              </a>
+              <a className="icon" href={SITE.author.linkedin} target="_blank" rel="noopener noreferrer" aria-label={`${SITE.author.name} on LinkedIn`} title={`${SITE.author.name} on LinkedIn`}>
+                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+              </a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>
   );
 }
 
-/* Small pixel pictures, shown in a hand's tile until its real picture exists (HandShot): '#' is ink, 'a' is the accent, anything else is empty. */
+/* Small pixel pictures (Pixels): '#' is ink, 'a' is the accent, anything else is empty. */
 const ICON_PLUG = [
   '...a....a...',
   '...a....a...',
@@ -331,54 +298,6 @@ const ICON_LOCK = [
   '.####..####.',
   '.##########.',
   '.##########.',
-];
-const ICON_GRAB = [
-  'aa..........aa',
-  'a............a',
-  '..##########..',
-  '..##......##..',
-  '..#.#....#.#..',
-  '..#..#..#..#..',
-  '..#...##...#..',
-  '..##########..',
-  'a............a',
-  'aa..........aa',
-];
-const ICON_READ = [
-  '..##########..',
-  '..#........#..',
-  '..#.aaaaaa.#..',
-  '..#........#..',
-  '..#.aaaa...#..',
-  '..#........#..',
-  '..#.aaaaaa.#..',
-  '..#........#..',
-  '..#.aaa....#..',
-  '..##########..',
-];
-const ICON_KEEP = [
-  '.........a....',
-  '..a.....aaa...',
-  '.........a....',
-  '....##########',
-  'aa..##......##',
-  '....#.#....#.#',
-  'aaa.#..#..#..#',
-  '....#...##...#',
-  'aa..#........#',
-  '....##########',
-];
-const ICON_CUT = [
-  '...........aa.',
-  '######....aa..',
-  '##....#..aa...',
-  '#.#.....aa....',
-  '#..#...aa.####',
-  '#.....aa.#...#',
-  '#....aa.....##',
-  '####aa.....#.#',
-  '...aa..#.....#',
-  '..aa...#######',
 ];
 
 function Pixels({ art }: { art: string[] }) {

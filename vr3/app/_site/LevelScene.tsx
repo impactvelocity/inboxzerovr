@@ -4,9 +4,9 @@ import { useEffect, useRef, useState } from 'react';
 
 /**
  * A level as a small scene: its painting behind, its own logo across the top, and over them the
- * game's 3D view of the level (play/src/showcase.ts, served at /play/showcase.html): a Quest hand
- * on the left, one of the level's emails floating in the middle, its weapon on the right, and its
- * air (petals, embers, bubbles, stars).
+ * game's 3D view of the level (play/src/showcase.ts, served at /play/showcase.html): one of the
+ * level's emails floating in the middle, its weapon on the right, and its air (petals, embers,
+ * bubbles, stars).
  *
  * The 3D view is an iframe with a see-through canvas. It is only there while the level is on or
  * near the screen, so a long page holds two or three of them at most. This tells it where the

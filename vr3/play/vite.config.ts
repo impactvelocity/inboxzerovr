@@ -130,7 +130,8 @@ export default defineConfig(({ mode }) => {
     preview: { port: 4183, strictPort: true, proxy: { '/api': { target: api, changeOrigin: false, xfwd: true }, '/mcp': { target: api, changeOrigin: false, xfwd: true }, '/agent.md': { target: api, changeOrigin: false, xfwd: true } } },
     resolve: { dedupe: ['three', '@pmndrs/uikit'] },
     optimizeDeps: { exclude: ['@babylonjs/havok'] },
-    // (two pages: the game, and showcase.html, the one-level 3D view the site's front page lays over each level's painting)
-    build: { target: 'esnext', chunkSizeWarningLimit: 1600, rollupOptions: { input: { main: 'index.html', showcase: 'showcase.html' } } },
+    // (three pages: the game; showcase.html, the one-level 3D view the site's front page lays over each level's painting;
+    //  and guide.html, one round of How to Play for the site's How to Play section)
+    build: { target: 'esnext', chunkSizeWarningLimit: 1600, rollupOptions: { input: { main: 'index.html', showcase: 'showcase.html', guide: 'guide.html' } } },
   };
 });

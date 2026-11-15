@@ -64,6 +64,7 @@ h4{font:600 20px/1.2 var(--display);letter-spacing:-.02em}
   -webkit-mask:linear-gradient(90deg,#000 66%,#0000 0) 0 0/6px 3px repeat-x;mask:linear-gradient(90deg,#000 66%,#0000 0) 0 0/6px 3px repeat-x;
   transform:scaleX(0);transform-origin:left;transition:transform .24s steps(6)}
 .nav-links a:hover{opacity:1}
+.nav-links .nav-video{font:700 13px/1 var(--pixel);letter-spacing:.08em;text-transform:uppercase}
 .nav-links a:hover::after,.nav-links a:focus-visible::after{transform:none}
 
 /* ───────── hero: the one dark part ───────── */
@@ -77,9 +78,6 @@ h4{font:600 20px/1.2 var(--display);letter-spacing:-.02em}
 /* a hint of scanlines over the painting */
 .hero-shade::after{content:'';position:absolute;inset:0;background:repeating-linear-gradient(#0000 0 3px,#00000024 3px 4px);mix-blend-mode:multiply;opacity:.6}
 /* its lower edge breaks up into the white page in pixels */
-.hero::after{content:'';position:absolute;inset:auto 0 0;height:16px;background:
-  linear-gradient(90deg,var(--bg) 50%,#0000 0) 0 0/16px 8px repeat-x,
-  linear-gradient(var(--bg),var(--bg)) 0 8px/100% 8px no-repeat}
 .hero-body{align-self:center;justify-self:center;display:flex;flex-direction:column;align-items:center;text-align:center;width:min(820px,100%);padding-block:20px}
 
 
@@ -122,8 +120,8 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 .in-vr .hero-levels{grid-template-columns:repeat(7,104px)}
 
 /* ───────── cards, as every section under the hero uses them ───────── */
-.steps li,.hand-card,.round,.bento article,.why-grid article{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:var(--shadow)}
-.steps p,.round p,.bento p,.why-grid p{margin-top:10px;color:var(--soft);font-size:16px}
+.steps li,.bento article,.why-grid article{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:var(--shadow)}
+.steps p,.bento p,.why-grid p{margin-top:10px;color:var(--soft);font-size:16px}
 
 /* the "Built by" line, used in the footer */
 .byline{display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 10px;font-size:15px;color:var(--soft)}
@@ -147,7 +145,13 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 .band.how{padding-top:clamp(48px,6vw,72px)}
 .steps{margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
 .pixel-head{font:700 clamp(24px,3.6vw,40px)/1.15 var(--pixel);letter-spacing:0;text-transform:uppercase;max-width:none;text-align:center}
-.steps h3{font-size:20px}
+/* the white cards (one game at a time, the MCP's tools): a quiet pixel frame. A 3px line drawn with four shadows leaves
+   each corner a pixel short, a flat step of shadow sits under it, and the titles are in the pixel letters, small */
+.steps li,.tools-grid li{--frame:#2a2335;border:0;border-radius:0;background:#fff;margin:3px;
+  box-shadow:0 -3px 0 0 var(--frame),0 3px 0 0 var(--frame),-3px 0 0 0 var(--frame),3px 0 0 0 var(--frame),0 9px 0 0 #16101f14;
+  transition:transform .18s steps(3),box-shadow .18s}
+.steps li:hover,.tools-grid li:hover{transform:translateY(-3px);box-shadow:0 -3px 0 0 var(--frame),0 3px 0 0 var(--frame),-3px 0 0 0 var(--frame),3px 0 0 0 var(--frame),0 12px 0 0 #16101f1a}
+.steps h3,.tools-grid h3{font:400 16px/1.3 var(--pixel);letter-spacing:.04em;text-transform:uppercase;color:var(--ink)}
 .steps .pixels{width:48px;margin-bottom:18px;fill:var(--ink)}
 .steps .pixels .a{fill:var(--c)}
 .mcp-url{display:block;margin-top:16px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;background:#f6f4fa;font:500 13px/1.4 ui-monospace,Menlo,monospace;color:var(--ink)}
@@ -157,59 +161,26 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 .privacy p{margin-top:6px}
 .steps .quiet,.quiet{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-size:13.5px;color:var(--dim)}
 
-/* the controls: a card per hand, its moves in order, each a picture of a Quest hand in a small dark scene */
-.hands{display:grid;grid-template-columns:3fr 1fr;gap:16px}
-.hand-card{--c:var(--teal);--glow:#12414a;position:relative;overflow:hidden;padding:22px 22px 24px}
-.hand-card.right{--c:var(--pink);--glow:#4a1d4f}
-.hand-card::before{content:'';position:absolute;inset:0 0 auto;height:4px;background:var(--c)}
-.hand-card h4{display:flex;align-items:center;gap:10px}
-.hand-card h4::before{content:'';width:10px;height:10px;background:var(--c)}
-.shots{margin-top:18px;display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:16px}
-.shots figure{margin:0;position:relative}
-.shot{position:relative;aspect-ratio:1;display:grid;place-items:center;overflow:hidden;border-radius:12px;background:radial-gradient(ellipse at 50% 115%,var(--glow) 0,#151027 58%,#0d0a16 100%)}
-.shot img{width:100%;height:100%;object-fit:contain;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
-.shots figure:hover .shot img{transform:scale(1.06)}
-/* an arrow in the gap, from one move to the next */
-.shots figure+figure::before{content:'';position:absolute;z-index:1;left:-13px;top:calc((100% - 5.2em)/2);width:10px;height:10px;background:var(--c);clip-path:polygon(0 0,40% 0,40% 20%,60% 20%,60% 40%,80% 40%,80% 60%,60% 60%,60% 80%,40% 80%,40% 100%,0 100%)}
-.shots figcaption{margin-top:12px;min-height:4.2em;font-size:15px;line-height:1.4;color:var(--soft)}
-.shots figcaption b{display:block;margin-bottom:3px;font:600 18px/1.2 var(--display);letter-spacing:-.02em;color:var(--ink)}
+/* small pixel pictures (page.tsx Pixels) */
 .pixels{display:block;width:46%;height:auto;fill:#f6eef5}
 .pixels .a{fill:color-mix(in srgb,var(--c) 55%,#fff)}
 
-.rounds{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
-.round{padding:0;overflow:hidden}
-.round>h4,.round>p{display:block;margin-inline:26px}
-.round>h4{margin-top:24px;font-size:26px}
-.round>p{margin-bottom:28px}
-/* the two rounds are shown as the game looks: small dark scenes set into the white cards */
-.mock{position:relative;height:270px;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 120%,#3a1d5c 0,#17112a 55%,#0d0a16 100%)}
-.mock.two{background:radial-gradient(ellipse at 50% 120%,#12414a 0,#101a2c 55%,#0b0a16 100%)}
-.mock .bar{position:absolute;top:16px;left:50%;translate:-50%;width:min(300px,76%);display:flex;align-items:center;gap:10px;font:400 10px/1 var(--pixel);color:#fff}
-.mock .bar i{flex:1;height:8px;background:#ffffff26;position:relative}
-.mock .bar i::after{content:'';position:absolute;inset:0 auto 0 0;width:var(--fill);background:var(--mint);box-shadow:0 0 10px var(--mint)}
-.mail{position:relative;width:210px;padding:14px 16px 16px;background:#f7efe6;color:#1d1524;border-radius:6px;box-shadow:0 18px 40px #00000080;display:grid;gap:5px;font-size:14px;line-height:1.25;text-align:left}
-.mail b{font:700 16px/1.2 var(--display)}
-.mail small{color:#6c6076;font-size:12px}
-.tag{justify-self:start;padding:4px 6px;background:var(--t);color:#170d15;font:700 9px/1 var(--pixel);letter-spacing:.1em}
-/* the cut: a bright line through the letter */
-.mail.cut{rotate:-5deg;animation:bob 4s ease-in-out infinite}
-.mail.cut::after{content:'';position:absolute;left:-34px;right:-34px;top:50%;height:3px;background:linear-gradient(90deg,#0000,#fff 20%,var(--hot) 60%,#0000);rotate:-24deg;box-shadow:0 0 16px var(--hot),0 0 4px #fff}
-@keyframes bob{50%{translate:0 -6px}}
-.float{position:absolute;font:700 11px/1 var(--pixel);letter-spacing:.14em}
-.float.saved{left:11%;top:38%;color:var(--gold);text-shadow:0 0 12px #ffd24a99;rotate:-8deg}
-.float.later{right:8%;top:14%;color:#ffffff8c}
-.mock.two{grid-template-columns:1fr auto 1fr;gap:12px;padding:0 14px 44px;align-items:center}
-.mock.two .mail{width:176px;scale:.94}
-.bubble{padding:11px 13px;border-radius:12px;background:#1f2b45;border:1px solid #7dd3fc66;color:#e8f4ff;font-size:13px;line-height:1.3;max-width:150px;box-shadow:0 0 22px #7dd3fc26}
-.bubble.l{justify-self:end}
-.bubble.r{justify-self:start;border-color:#ff6ec766;box-shadow:0 0 22px #ff6ec726;background:#33203c}
-.mic{position:absolute;bottom:18px;left:50%;translate:-50%;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#170d15;color:var(--mint);box-shadow:0 0 0 2px var(--mint),0 0 0 7px #4ff3c826,0 0 22px #4ff3c866}
+/* ───────── how to play: each round is the game's own How to Play (play/guide.html) on a dark panel over its level's painting ───────── */
+/* deep space, as in Super Space: two faint nebulae and the drifting stars of StarField.tsx */
+.band.howto{isolation:isolate;overflow:hidden;padding-block:clamp(88px,11vw,140px);color:#f6eef5;
+  background:radial-gradient(60% 55% at 18% 30%,#3b1d6a59,transparent 70%),radial-gradient(55% 60% at 85% 70%,#0f3c6e4d,transparent 70%),radial-gradient(40% 40% at 60% 15%,#ff8ae614,transparent 70%),linear-gradient(#07061a,#0b0920 55%,#07061a)}
+.star-field{position:absolute;inset:0;z-index:-1;width:100%;height:100%;pointer-events:none}
+.howto .pixel-head{text-shadow:0 4px 0 #0b0912,0 2px 24px #000000b3}
+.guides{margin-top:clamp(44px,5vw,64px);display:grid;grid-template-columns:repeat(2,1fr);gap:clamp(24px,4vw,56px)}
+.guide{display:flex;flex-direction:column;align-items:center;text-align:center}
+.guide h3{display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:18px;font-size:22px;text-shadow:0 2px 12px #000}
+.guide h3 span{font:400 12px/1 var(--pixel);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
+/* the cards float: no panel round them, only a soft pool of the round's colour beneath */
+.guide-screen{position:relative;isolation:isolate;width:100%}
+.guide-screen::before{content:'';position:absolute;inset:8% 6%;z-index:-1;border-radius:50%;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 22%,transparent),transparent);filter:blur(24px)}
+.guide-screen iframe{display:block;width:100%;height:clamp(240px,30vw,380px);border:0;background:transparent}
+.guide p{margin-top:18px;color:#f3eef8e6;font-size:16.5px;text-shadow:0 1px 10px #000;text-wrap:balance}
 
-.outcomes{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--panel);box-shadow:var(--shadow)}
-.outcomes div{padding:20px 22px;border-left:1px solid var(--line)}
-.outcomes div:first-child{border-left:0}
-.outcomes dt{font:400 12px/1 var(--pixel);letter-spacing:.14em;text-transform:uppercase;color:var(--pink)}
-.outcomes dd{margin-top:10px;color:var(--soft);font-size:15.5px}
 
 /* ───────── the AI ───────── */
 .bento{margin-top:48px;display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
@@ -266,40 +237,40 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 .level-words h3{font:700 clamp(30px,3.4vw,42px)/1.02 var(--display);letter-spacing:-.04em}
 .level-words p{margin:14px 0 24px;color:var(--soft);font-size:18px;max-width:26em;text-wrap:pretty}
 
+/* ───────── how the MCP works ───────── */
+.band.mcp{padding-block:clamp(64px,8vw,104px)}
+.mcp-box{margin:28px auto 0;width:min(720px,100%);display:flex;align-items:center;gap:12px;padding:10px 10px 10px 22px;border:2px solid var(--ink);border-radius:14px;background:#fff;box-shadow:0 6px 0 var(--ink)}
+.mcp-box code{flex:1;min-width:0;font:600 clamp(16px,2.4vw,24px)/1.3 ui-monospace,Menlo,monospace;color:var(--ink);overflow-wrap:anywhere}
+.mcp-box .pix{--c:var(--mint);flex:none}
+.mcp-lede{margin:22px auto 0;max-width:42em;text-align:center;color:var(--soft);font-size:16px;text-wrap:balance}
+.mcp-lede+.mcp-lede{margin-top:12px}
+.tools-grid{margin-top:40px;list-style:none;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.tools-grid li{padding:24px}
+.tools-grid code{display:inline-block;padding:5px 9px;border-radius:6px;background:var(--night);color:var(--mint);font:600 13px/1 ui-monospace,Menlo,monospace}
+.tools-grid h3{margin-top:16px}
+.tools-grid p{margin-top:8px;color:var(--soft);font-size:15.5px}
+
 /* ───────── footer ───────── */
-.foot{margin-top:clamp(56px,8vw,104px);border-top:1px solid var(--line);background:var(--tint)}
-.foot-scene{padding:clamp(72px,10vw,128px) var(--gutter) 0;text-align:center}
-.foot-words{width:min(820px,100%);margin-inline:auto;display:flex;flex-direction:column;align-items:center}
-.foot h2{font-size:clamp(32px,5.4vw,62px);max-width:none}
-.foot h2 a{color:var(--pink);text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 100%/0 3px no-repeat;transition:background-size .3s}
-.foot h2 a:hover{background-size:100% 3px}
-.tools{margin-top:28px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px}
-.tools a{display:block;padding:8px 14px;border:1px solid #16101f29;border-radius:99px;background:#fff;font-size:14px;font-weight:500;text-decoration:none;transition:border-color .2s,color .2s}
-.tools a:hover{border-color:var(--teal);color:var(--teal)}
-/* the courtyard, as a wide picture the words stand on */
-.foot-art{width:min(1200px,100%);margin:clamp(40px,6vw,64px) auto 0;overflow:hidden;border-radius:16px 16px 0 0;box-shadow:0 0 0 1px #16101f24,0 -20px 60px -30px #f6b3ccb3}
-.foot-art img{width:100%;aspect-ratio:3/1;object-fit:cover;object-position:50% 62%}
-.foot-bar{display:flex;flex-wrap:wrap;align-items:center;gap:14px 20px;padding:18px var(--gutter);border-top:1px solid var(--line);background:#fff}
+/* one dark piece: the Kyoto courtyard behind the closing call and the bar with the logo and links */
+.foot{position:relative;isolation:isolate;overflow:hidden;background:var(--night);color:#f6eef5}
+.foot-bg{position:absolute;inset:0;z-index:-2;width:100%;height:100%;object-fit:cover;object-position:50% 55%}
+.foot::before{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(#0b0912cc,#0b091266 35%,#0b091299 70%,#0b0912f2)}
+.foot-hero{display:flex;flex-direction:column;align-items:center;gap:28px;padding:clamp(120px,16vw,200px) var(--gutter) clamp(110px,14vw,170px);text-align:center}
+.foot-hero .pixel-head{text-shadow:0 4px 0 #0b0912,0 2px 24px #000000b3}
+.foot-bar{display:flex;flex-direction:column;align-items:center;gap:16px;margin-top:30px}
+.foot-by{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:8px 14px}
+.foot-bar .byline{color:#b8adc4}
+.foot-bar .byline a{color:#fff}
+.foot-bar .icon{width:auto;height:auto;border-radius:0;color:#b8adc4;background:none}
+.foot-bar .icon:hover{color:#fff;background:none}
 .foot-logo{height:24px;width:auto;image-rendering:pixelated}
-.grow{flex:1}
 .icon{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;color:var(--soft);background:#16101f0d;transition:color .2s,background .2s}
 .icon:hover{color:var(--ink);background:#16101f1a}
-.foot-bar .pix{--c:var(--mint)}
 
-/* sections rise in as they are scrolled to, where the browser can do that without script */
-@supports (animation-timeline:view()){
-  @media (prefers-reduced-motion:no-preference){
-    .steps li,.hand-card,.round,.bento article,.why-grid article,.scene,.level-words,.outcomes,.foot-art{animation:rise linear both;animation-timeline:view();animation-range:entry 0% entry 38%}
-  }
-}
-@keyframes rise{from{opacity:0;translate:0 34px}}
 
 @media (max-width:900px){
-  .steps,.hands,.why-grid{grid-template-columns:1fr}
-  .rounds{grid-template-columns:1fr}
-  .outcomes{grid-template-columns:repeat(2,1fr)}
-  .outcomes div:nth-child(3){border-left:0}
-  .outcomes div:nth-child(n+3){border-top:1px solid var(--line)}
+  .steps,.guides,.why-grid,.tools-grid{grid-template-columns:1fr}
+  .guides{row-gap:56px}
   .level,.level:nth-of-type(even){grid-template-columns:1fr}
   .level:nth-of-type(even) .scene{order:0}
   .level::before,.level:nth-of-type(even)::before{inset:0 0 40%}
@@ -313,23 +284,15 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
   .hero-levels{grid-template-columns:repeat(7,1fr);gap:6px;width:100%}
   .hero-levels button{padding:2px}
   .bento{grid-template-columns:1fr}
-  .shots{grid-auto-flow:row;gap:12px}
-  .shots figure{display:grid;grid-template-columns:104px 1fr;gap:14px;align-items:center}
-  .shots figcaption{margin:0;min-height:0}
-  .shots figure+figure::before{display:none}
     .hero{padding-top:84px}
   .pix.big{padding:22px 40px 25px;font-size:22px}
   .cta-row{flex-direction:column;align-self:stretch}
-  .mock.two{grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:10px;padding:14px 12px 62px;height:auto}
-  .mock.two .mail{grid-column:1/-1;grid-row:1;justify-self:center}
-  .mock.two .bubble{max-width:none;justify-self:stretch}
-  .float.later{top:auto;bottom:30px}
+  .foot-hero .cta-row{align-self:stretch}
+  .mcp-box{flex-direction:column;align-items:stretch;padding:16px;text-align:center}
   .access{border-radius:14px}
-  .foot-bar .grow{display:none}
-  .foot-art img{aspect-ratio:2/1}
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .hero-logo,.mail.cut,h1 em,.hero-levels button.on::after{animation:none}
+  .hero-logo,h1 em,.hero-levels button.on::after{animation:none}
   .hero-art img{transition:opacity .4s}
 }

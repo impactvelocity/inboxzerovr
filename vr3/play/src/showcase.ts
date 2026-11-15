@@ -1,12 +1,13 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { levelLights } from './levels/lights';
 import { Emails, type Email } from './mail/emails';
+import type { CardPainter } from './levels/cards';
 
 /**
  * One level at a glance, for the site's front page (vr3/app, "the levels"): on a see-through
- * canvas, the level's own weapon on the right, one of its emails floating in the middle, a Quest
- * hand on the left, and the level's air (petals, embers, bubbles, stars). The site lays this over
+ * canvas, the level's own weapon on the right, one of its emails floating in the middle, and the
+ * level's air (petals, embers, bubbles, stars). (A Quest hand stood on the left until 2026-11-15:
+ * "drop the hand model".) The site lays this over
  * the level's painting in an iframe: /play/showcase.html?level=castle.
  *
  * Everything shown is the game's own: the weapon is built by the same file that builds it for the
@@ -46,25 +47,32 @@ interface Show {
 
 const base = import.meta.env.BASE_URL;
 const from = (category: Email['category'], kind?: Email['kind']) => (e: Email) => e.category === category && (!kind || e.kind === kind);
-const painted = (load: () => Promise<(g: CanvasRenderingContext2D, email: Email | null, hazard: boolean) => void>, hazard = false) => async (): Promise<Paint> => {
-  const paint = await load();
-  return (canvas, email) => paint(canvas.getContext('2d')!, email, hazard);
+/** A level's own card: it paints the paper and frame and says where the words go, and the game's layout writes them in
+ *  (as letters.ts does in play; until 2026-11-15 only the frame was drawn here, so every email but Kyoto's was blank). */
+const painted = (load: () => Promise<CardPainter>, hazard = false) => async (): Promise<Paint> => {
+  const [paint, { layoutEmail }] = await Promise.all([load(), import('./mail/layout')]);
+  return (canvas, email) => {
+    const g = canvas.getContext('2d')!, style = paint(g, email, hazard);
+    if (style) layoutEmail(g, email, style, false);
+  };
 };
+/** One of the demo emails, by who sent it: each level shows a funny one (2026-11-15: "funny email example like the kyoto one"). */
+const sender = (name: string) => (e: Email) => e.from === name;
 
 const SHOWS: Record<string, Show> = {
   kyoto: { lights: 'kyoto', weapon: katana, long: 0.7, card: async () => inkCard, email: from('Personal'), hot: '#ffc3dd',
     air: { colours: ['#ffc4d8', '#ff9fc0', '#fff0f5'], count: 46, size: [7, 15], drift: [-0.16, -0.22], sway: 0.12, glow: false, twinkle: 0 } },
-  office: { lights: 'office', weapon: r => import('./weapons/keyboard').then(m => m.buildKeyboard(r)), long: 0.7, card: painted(() => import('./levels/cards').then(m => m.officeCard)), email: from('Work'), hot: '#b8ffe4',
+  office: { lights: 'office', weapon: r => import('./weapons/keyboard').then(m => m.buildKeyboard(r)), long: 0.7, card: painted(() => import('./levels/cards').then(m => m.officeCard)), email: sender('Webinar Wizard'), hot: '#b8ffe4',
     air: { colours: ['#7dffc9', '#b8ffe4', '#f2e2bd'], count: 44, size: [4, 9], drift: [0, 0.1], sway: 0.03, glow: true, twinkle: 0.8 } },
-  castle: { lights: 'castle', weapon: r => import('./weapons/knightsword').then(m => m.buildKnightSword(r)), long: 0.78, card: painted(() => import('./levels/cards').then(m => m.castleCard)), email: from('Bill'), hot: '#d9c8ff',
+  castle: { lights: 'castle', weapon: r => import('./weapons/knightsword').then(m => m.buildKnightSword(r)), long: 0.78, card: painted(() => import('./levels/cards').then(m => m.castleCard)), email: sender('City Power'), hot: '#d9c8ff',
     air: { colours: ['#ffc457', '#ff8a3d', '#b79cff', '#fff1c4'], count: 46, size: [4, 10], drift: [0.03, 0.2], sway: 0.1, glow: true, twinkle: 0.5 } },
-  lab: { lights: 'lab', weapon: r => import('./weapons/sprayer').then(m => m.buildSprayer(r)), long: 0.4, card: painted(() => import('./levels/cards').then(m => m.labCard), true), email: from('Spam'), hot: '#c8ff9a',
+  lab: { lights: 'lab', weapon: r => import('./weapons/sprayer').then(m => m.buildSprayer(r)), long: 0.4, card: painted(() => import('./levels/cards').then(m => m.labCard), true), email: sender('Candle Co.'), hot: '#c8ff9a',
     air: { colours: ['#a6ff3d', '#5dffa1', '#e9ffd0'], count: 40, size: [5, 13], drift: [0, 0.17], sway: 0.08, glow: true, twinkle: 0.2 }, jet: ['#f4ffe6', '#b6ff6a', '#5dffa1'] },
-  space: { lights: 'space', weapon: r => import('./weapons/saber').then(m => m.buildSaber(r)), long: 0.76, card: painted(() => import('./levels/spacecard').then(m => m.spaceCard)), email: from('Alert'), hot: '#9ff6ff',
+  space: { lights: 'space', weapon: r => import('./weapons/saber').then(m => m.buildSaber(r)), long: 0.76, card: painted(() => import('./levels/spacecard').then(m => m.spaceCard)), email: sender('CloudBox'), hot: '#9ff6ff',
     air: { colours: ['#ffffff', '#7df3ff', '#ff8ae6', '#cfc4ff'], count: 70, size: [3, 8], drift: [-1.5, 0], sway: 0, glow: true, twinkle: 0.4 } },
-  inferno: { lights: 'inferno', weapon: r => import('./weapons/flamethrower').then(m => m.buildFlameThrower(r)), long: 0.36, card: painted(() => import('./levels/infernocard').then(m => m.infernoCard), true), email: from('Promo'), hot: '#ffd27a',
+  inferno: { lights: 'inferno', weapon: r => import('./weapons/flamethrower').then(m => m.buildFlameThrower(r)), long: 0.36, card: painted(() => import('./levels/infernocard').then(m => m.infernoCard), true), email: sender('SockDrawer Deals'), hot: '#ffd27a',
     air: { colours: ['#ffc23d', '#ff7a1e', '#ff3d2e', '#fff1c4'], count: 56, size: [4, 10], drift: [0.05, 0.42], sway: 0.14, glow: true, twinkle: 0.6 }, jet: ['#fff3c2', '#ffc23d', '#ff7a1e', '#ff3d2e'] },
-  lumber: { lights: 'lumber', weapon: r => import('./weapons/axe').then(m => m.buildAxe(r)), long: 0.72, card: painted(() => import('./levels/lumbercard').then(m => m.lumberCard)), email: from('Tracking'), hot: '#ffe2a0',
+  lumber: { lights: 'lumber', weapon: r => import('./weapons/axe').then(m => m.buildAxe(r)), long: 0.72, card: painted(() => import('./levels/lumbercard').then(m => m.lumberCard)), email: sender('Plant Parent Weekly'), hot: '#ffe2a0',
     air: { colours: ['#f6a81c', '#ee7a1a', '#d9471c', '#f3c53a'], count: 40, size: [8, 16], drift: [-0.24, -0.2], sway: 0.16, glow: false, twinkle: 0 } },
 };
 
@@ -105,18 +113,6 @@ const inkCard: Paint = async (canvas, email) => {
   }
   g.putImageData(sheet, 0, 0);
 };
-
-/** The hand a controller-free player sees: the same open hand model the game's SDK loads, dark and see-through with a lit rim. */
-const HAND = 'https://cdn.jsdelivr.net/npm/@webxr-input-profiles/assets@1.0/dist/profiles/generic-hand/left.glb';
-function handMaterial() {
-  const material = new THREE.MeshStandardMaterial({ color: '#0d0f16', transparent: true, roughness: 1, metalness: 0 });
-  material.onBeforeCompile = shader => {
-    shader.fragmentShader = shader.fragmentShader.replace('#include <dithering_fragment>', /* glsl */ `#include <dithering_fragment>
-      float rim = pow(1. - abs(dot(normalize(vNormal), normalize(vViewPosition))), 1.25);
-      gl_FragColor = vec4(mix(vec3(.11, .13, .2), vec3(.9, .96, 1.), rim), mix(.4, 1., rim));`);
-  };
-  return material;
-}
 
 async function main() {
   const query = new URLSearchParams(location.search);
@@ -171,22 +167,6 @@ async function main() {
   const middle = centre.clone().multiplyScalar(scale);      // (the model's middle from its grip, as drawn)
   spec.onArmed?.(true);
 
-  // ── the hand, on the left
-  const hand = new THREE.Group(); scene.add(hand);
-  new GLTFLoader().loadAsync(HAND).then(gltf => {
-    const model = gltf.scene, material = handMaterial();
-    model.traverse(node => { const mesh = node as Mesh; if (mesh.isMesh) { mesh.material = material; mesh.frustumCulled = false; } });
-    const bounds = new THREE.Box3().setFromObject(model), span = bounds.getSize(new THREE.Vector3());
-    model.position.sub(bounds.getCenter(new THREE.Vector3()));      // (it turns about its own middle)
-    // In the model the fingers run along -Y, the back of the hand faces -X and the thumb is on -Z.
-    // Shown as a player sees their own left hand held up: its back to the viewer, the thumb on the
-    // right, the fingers up and leaning in towards the email and a little into the picture.
-    const fingers = new THREE.Vector3(0.5, 0.82, -0.25).normalize(), thumb = new THREE.Vector3().crossVectors(fingers, new THREE.Vector3(0, 0, 1)).normalize(), back = new THREE.Vector3().crossVectors(thumb, fingers);
-    const turn = new THREE.Group(); turn.add(model);
-    turn.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(back.negate(), fingers.negate(), thumb.negate()));
-    turn.scale.setScalar(0.5 * tall / Math.max(span.x, span.y, span.z));
-    hand.add(turn);
-  }).catch(() => { /* no hand: the rest stands without it */ });
 
   // ── the air
   const air = show.air, AMBIENT = air.count, POOL = AMBIENT + 90;
@@ -225,7 +205,7 @@ async function main() {
   const hot = [new THREE.Color('#ffffff'), new THREE.Color(show.hot), ...palette], jet = (show.jet ?? []).map(c => new THREE.Color(c));
 
   // ── where things stand, for a picture this wide
-  const home = { letter: new THREE.Vector3(), weapon: new THREE.Vector3(), hand: new THREE.Vector3() };
+  const home = { letter: new THREE.Vector3(), weapon: new THREE.Vector3() };
   function layout() {
     const w = innerWidth, h = Math.max(1, innerHeight);
     renderer.setSize(w, h, false);
@@ -234,7 +214,6 @@ async function main() {
     // (the level's logo is across the top of the painting: everything sits a little below the middle)
     home.letter.set(0, -0.1 * tall, 0);
     home.weapon.set(0.31 * wide, -0.03 * tall, 0.1);
-    home.hand.set(-0.31 * wide, -0.2 * tall, 0.05);
     letter.scale.setScalar(Math.min(0.3 * wide, 0.62 * tall / 0.625));
   }
   layout(); addEventListener('resize', layout);
@@ -330,9 +309,6 @@ async function main() {
     streak.material.opacity = (1 - state.streak) * 0.95; streak.scale.set(0.2 + state.streak * 1.2, 1 + (1 - state.streak) * 2, 1);
     halo.material.opacity = 0.22 + 0.2 * state.live + 0.05 * Math.sin(t * 2);
 
-    // the hand: open, waiting; hovered, it reaches for the email
-    hand.position.copy(home.hand); hand.position.x += state.live * 0.05 * wide; hand.position.y += Math.sin(t * 1.0 + 1) * 0.018 * tall + state.live * 0.05 * tall;
-    hand.rotation.set(Math.sin(t * 0.8) * 0.05, state.look.x * 0.12 + Math.sin(t * 0.6) * 0.06, -state.live * 0.12 + Math.sin(t * 0.9) * 0.03);
 
     // the air: drifting; quicker and brighter while hovered
     const rush = 1 + state.live * 1.6;
@@ -362,7 +338,7 @@ async function main() {
   const loop = (now: number) => { frame(now); requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
   // (for a look from the console where no frames come, as in a hidden pane: __show.step(1.2) runs that many seconds)
-  Object.assign(window, { __show: { scene, camera, spec, pointer, state, hand, pivot, step: (seconds = 1 / 60) => { for (let left = seconds; left > 0; left -= 1 / 60) tick(1 / 60); } } });
+  Object.assign(window, { __show: { scene, camera, spec, pointer, state, pivot, step: (seconds = 1 / 60) => { for (let left = seconds; left > 0; left -= 1 / 60) tick(1 / 60); } } });
 }
 
 /** A soft round glow, for the light behind the email and the streak of a hit. */

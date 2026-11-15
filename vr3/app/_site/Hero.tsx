@@ -57,7 +57,7 @@ export function Hero({ vr, judge, playHref }: { vr: boolean; judge: boolean; pla
         ) : (
           <div className="cta">
             <div className="cta-row">
-              <a className="pix ghost" href="#how">CONNECT MCP</a>
+              <a className="pix ghost" href="#mcp">CONNECT MCP</a>
               <a className="pix" href={href(level.id)}>PLAY DEMO</a>
             </div>
           </div>
