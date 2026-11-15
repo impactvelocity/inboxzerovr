@@ -125,8 +125,9 @@ export default defineConfig(({ mode }) => {
   return {
     base: './',
     plugins: [weaponTweaks(), headsetSocket(),...(process.env.HTTPS === '1' ? [basicSsl()] : [])],
-    server: { port: 5183, strictPort: true, proxy: { '/api': { target: api, changeOrigin: false, xfwd: true } } },
-    preview: { port: 4183, strictPort: true, proxy: { '/api': { target: api, changeOrigin: false, xfwd: true } } },
+    // (/mcp too: the home page's MCP card shows this page's own address for it, 2026-11-15; and /agent.md, the guide the MCP server points to)
+    server: { port: 5183, strictPort: true, proxy: { '/api': { target: api, changeOrigin: false, xfwd: true }, '/mcp': { target: api, changeOrigin: false, xfwd: true }, '/agent.md': { target: api, changeOrigin: false, xfwd: true } } },
+    preview: { port: 4183, strictPort: true, proxy: { '/api': { target: api, changeOrigin: false, xfwd: true }, '/mcp': { target: api, changeOrigin: false, xfwd: true }, '/agent.md': { target: api, changeOrigin: false, xfwd: true } } },
     resolve: { dedupe: ['three', '@pmndrs/uikit'] },
     optimizeDeps: { exclude: ['@babylonjs/havok'] },
     // (two pages: the game, and showcase.html, the one-level 3D view the site's front page lays over each level's painting)

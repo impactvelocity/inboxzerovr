@@ -6,7 +6,7 @@ import { env } from './env';
  * Two cookies, both only to say who may use the mic (its tokens cost money: app/api/scribe-token).
  * Nothing about anyone's mail is in either.
  *   izvr_a  this browser has an ?access= code (judges): the mic in the demo too, for a month (signed)
- *   izvr_r  this browser opened an agent round in the last 3 hours (signed)
+ *   izvr_r  this browser opened an agent round in the last 4 hours, as long as a round lasts (signed)
  * Both http-only, SameSite=Lax. Without AUTH_SECRET, neither is given.
  */
 
@@ -49,7 +49,7 @@ async function has(name: string): Promise<boolean> {
 export const grantAccess = () => grant(A, MONTH);
 export const hasAccess = () => has(A);
 /** An agent round was opened here (lib/rounds.ts). */
-export const grantRound = () => grant(R, 3 * 3600);
+export const grantRound = () => grant(R, 4 * 3600);
 export const hasRound = () => has(R);
 
 /** Whether a code is one of ACCESS_CODE's, compared in constant time. */

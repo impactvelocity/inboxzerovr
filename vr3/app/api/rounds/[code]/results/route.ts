@@ -7,7 +7,8 @@ import type { AgentResultsRequest } from '@/play/src/mail/wire';
  * the player chose. ?wait=N waits up to N seconds (at most 25) for the game to finish.
  * The same as the MCP tool get_results.
  *
- * POST /api/rounds/{code}/results { outcomes }: the game, at its end. The emails are deleted then.
+ * POST /api/rounds/{code}/results { outcomes, play }: the game, at its end. Posted again
+ * after a Play Again, the new choices replace the old (only by the game that opened it: `play`).
  */
 export async function GET(req: Request, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params;
@@ -21,6 +22,6 @@ export async function POST(req: Request, { params }: { params: Promise<{ code: s
     await limit('finish', 30, 600);
     const body = (await req.json().catch(() => null)) as AgentResultsRequest | null;
     if (!body || !Array.isArray(body.outcomes)) throw new RoundError('outcomes is needed', 400);
-    return finishRound(code, body.outcomes.slice(0, 60));
+    return finishRound(code, body.outcomes.slice(0, 60), String(body.play ?? ''));
   });
 }

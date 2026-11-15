@@ -15,6 +15,7 @@ import { createMist } from './spray';
 import { createHome } from './home';
 import { bindHomeMic, bindSetupMic, dictate } from './dictate';
 import { bindMicDebug } from './micdebug';
+import { bindMcpCard } from './mcpcard';
 import { bindMailUi } from './mailui';
 import { mail } from './mail/source';
 import { WEAPON_VERB, createHowto } from './howto';
@@ -319,6 +320,7 @@ async function main() {
   });
   bindSetupMic();      // the mic line and Allow mic on the Setup card (dictate.ts)
   bindHomeMic();       // and Connect mic beside Setup: the mic is only ever asked for here, never in VR
+  bindMcpCard();       // MCP by the hackathon badge: the address an AI agent makes a round from (mcpcard.ts)
   bindMicDebug();      // and Debug Mic beside it: a real take on the home page, saying what works and what doesn't (micdebug.ts)
   // (and on the first click anywhere on the home page, so round two hears real words in the demo too: 2026-11-13)
   { const home = $('home') ?? document.body; const first = (e: Event) => { if ((e.target as HTMLElement | null)?.closest?.('#start, #just-play')) return; home.removeEventListener('pointerdown', first, true); if (dictate.unasked && !world.renderer.xr.isPresenting) void dictate.ask(); }; home.addEventListener('pointerdown', first, true); }

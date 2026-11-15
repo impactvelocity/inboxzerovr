@@ -5,7 +5,7 @@ import type { Category, Email } from './emails';
  * this file, so a change here is a change to both.
  *
  * Since 2026-11-13 the only real mail is an agent round (below): the game never connects to a
- * mailbox, and the only model on our side writes up what was said into the mic.
+ * mailbox, and what was said into the mic goes to the agent as it was heard.
  */
 
 export const Categories: readonly Category[] = [
@@ -19,7 +19,7 @@ export const Categories: readonly Category[] = [
 // the player types the code into the game. When the game is over the results wait for the agent,
 // which shows them to the player and does the archiving and replying itself. The server never
 // sees the mailbox, only what the agent chose to send, and deletes it when the game is played.
-// The server side is vr3/lib/rounds.ts; the agent's instructions are vr3/public/agent.md.
+// The server side is vr3/lib/rounds.ts; the agent's instructions are vr3/lib/guide.ts.
 
 /** One email as the game gets it from an agent round: the card, and the agent's own reference for it. */
 export interface AgentCard extends Omit<Email, 'replies'> {
@@ -29,7 +29,8 @@ export interface AgentCard extends Omit<Email, 'replies'> {
 }
 
 /** GET /api/rounds/{code}: the round, for the game. */
-export interface AgentRoundResponse { code: string; title: string; emails: AgentCard[] }
+/** `play`: this game's token for posting the results (again, on a Play Again). */
+export interface AgentRoundResponse { code: string; title: string; play: string; emails: AgentCard[] }
 
 /** What the game did with one email of an agent round. Anything not listed was left as it was. */
 export type AgentOutcome =
@@ -38,5 +39,5 @@ export type AgentOutcome =
   | { ref: string; action: 'reply'; dictated: string };
 
 /** POST /api/rounds/{code}/results from the game. */
-export interface AgentResultsRequest { outcomes: AgentOutcome[] }
-export interface AgentResultsResponse { archive: number; reply: number; leave: number }
+export interface AgentResultsRequest { outcomes: AgentOutcome[]; play: string }
+export interface AgentResultsResponse { archive: number; reply: number; leave: number; plays: number }

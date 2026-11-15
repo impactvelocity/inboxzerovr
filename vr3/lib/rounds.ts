@@ -2,8 +2,7 @@ import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto
 import { z } from 'zod';
 import type { Category } from '../play/src/mail/emails';
 import { Categories, type AgentCard, type AgentOutcome, type AgentRoundResponse } from '../play/src/mail/wire';
-import { polish } from './ai';
-import { clamp, isPersonCard, plainPolish } from './text';
+import { clamp, isPersonCard } from './text';
 import { store } from './store';
 
 /**
@@ -11,23 +10,27 @@ import { store } from './store';
  * mailbox; the player's own AI agent already reads theirs, so it sends us a round of emails it has
  * summarised and sorted (each under a reference only it can turn back into a real message), and
  * gets a 4-digit code. The player types the code into the game and plays. The game posts what was
- * done, the emails are deleted at once, and the agent fetches the results, shows them to the
- * player and does the archiving and replying with its own tools.
+ * done, and the agent fetches the results, shows them to the player and does the archiving and
+ * replying with its own tools. This is only data in to make the game, and data out so the agent
+ * can act: nothing is written or rewritten here (2026-11-15: "the replies should just be whatever
+ * they say, and stored as that, let their own agent figure out the end").
  *
- * What is kept, and for how long:
- *   - the round as sent (references, sender, subject, summary, sort, reply drafts): until the game
- *     is finished, or `hours` (default 24) if it never is
- *   - the results (references, archive / reply / leave, the chosen reply, or the dictated words and
- *     the email the model made of them):
- *     until 10 minutes after the agent first reads them, or the same `hours`
- *   - the agent can delete a round and its results at any time (cancel)
+ * What is kept, and for how long (2026-11-15: "once the agent acknowledges it - game setup and results
+ * are deleted", "maybe 4 hrs for time limit instead of 24"): the round as sent and its results, together,
+ * until the agent calls delete_round once it has acted, or 4 hours after the round was made (`hours` can
+ * make that shorter), whichever comes first.
+ * A Play Again from the results screen (2026-11-15: "a replay should keep the old results until the game is completed
+ * again, and then overwritten previous results"): the results are replaced only when that game is finished, and the
+ * agent sees `plays` go up. Only the game that opened the round can post (the `play` token it was given), and nobody
+ * can open a round once it has been played, so a stranger who guesses a code can't read or overwrite a finished one.
  * The agent's key is kept only as a SHA-256 hash.
  *
  * Used by the REST routes (app/api/rounds) and the MCP server (app/mcp/route.ts).
  */
 
 const MAX_EMAILS = 30;
-const RESULTS_GRACE = 10 * 60;
+/** Every round, and its results, is gone this long after it was made at the latest. */
+export const MAX_HOURS = 4;
 const prefix = 'izvr:round:';
 
 // ---------------------------------------------------------------- what an agent sends
@@ -54,7 +57,7 @@ export type RoundEmail = z.infer<typeof RoundEmail>;
 export const CreateRound = z.object({
   emails: z.array(RoundEmail).min(1).max(MAX_EMAILS).describe(`The emails for this game, in the order they should come (newest first is usual). 5 to 20 plays best; at most ${MAX_EMAILS}.`),
   title: z.string().trim().max(40).optional().describe('A few words shown in the game, like "Tuesday inbox".'),
-  hours: z.number().min(0.25).max(24).optional().describe('How long the round waits to be played before it is deleted. Default 24.'),
+  hours: z.number().min(0.25).max(MAX_HOURS).optional().describe(`How long the round and its results are kept at most, if you don't call delete_round first. Default and most: ${MAX_HOURS}.`),
 });
 export type CreateRound = z.infer<typeof CreateRound>;
 
@@ -65,23 +68,25 @@ export const CodeAndKey = z.object({
 
 // ---------------------------------------------------------------- what is kept
 
-type Outcome = { action: 'archive' } | { action: 'reply'; reply_index: number } | { action: 'reply'; dictated: string; text?: string; by?: 'ai' | 'rules' } | { action: 'reply'; ask_user: true };
+type Outcome = { action: 'archive' } | { action: 'reply'; reply_index: number } | { action: 'reply'; dictated: string } | { action: 'reply'; ask_user: true };
 
 interface Round {
   code: string;
   keyHash: string;
   title: string;
   created: number;
-  /** When it is deleted if nobody plays it (ms). */
+  /** When it is deleted, round and results, if the agent hasn't deleted it first (ms). It never moves. */
   until: number;
   status: 'waiting' | 'opened' | 'done';
-  /** Gone as soon as the game is finished. */
-  emails: RoundEmail[] | null;
-  /** What the game did, once it is finished: every ref of the round, in order. */
-  results: { ref: string; outcome: Outcome | null; replies: string[] }[] | null;
+  /** Given to the game when it opens the round; only that game can post results (and post them again on a replay). */
+  play?: string;
+  /** How many finished games the results come from (the last one counts). */
+  plays?: number;
+  /** As the agent sent them, until the round is deleted. */
+  emails: RoundEmail[];
+  /** What the game did, once it is finished (the last game, after a Play Again): every ref of the round, in order. */
+  results: { ref: string; outcome: Outcome | null }[] | null;
   finished?: number;
-  /** When the agent first read the results (they go 10 minutes later). */
-  read?: number;
 }
 
 const hash = (s: string) => createHash('sha256').update(s).digest('hex');
@@ -97,7 +102,7 @@ async function load(code: string): Promise<Round | null> {
 async function loadWithKey(code: string, key: string): Promise<Round> {
   const r = await load(code);
   const given = Buffer.from(hash(key ?? '')), want = Buffer.from(r?.keyHash ?? hash('none'));
-  if (!r || !timingSafeEqual(given, want)) throw new RoundError('No round with that code and key. It may have expired, been deleted, or its results already read more than 10 minutes ago.', 404);
+  if (!r || !timingSafeEqual(given, want)) throw new RoundError(`No round with that code and key. It may have been deleted, or be more than ${MAX_HOURS} hours old.`, 404);
   return r;
 }
 
@@ -109,12 +114,12 @@ export async function createRound(input: CreateRound) {
     if (refs.has(e.ref)) throw new RoundError(`Two emails have the ref "${e.ref}": each needs its own.`, 400);
     refs.add(e.ref);
   }
-  const hours = input.hours ?? 24, now = Date.now(), key = randomBytes(18).toString('base64url');
+  const hours = Math.min(input.hours ?? MAX_HOURS, MAX_HOURS), now = Date.now(), key = randomBytes(18).toString('base64url');
   const round: Round = {
     code: '', keyHash: hash(key), title: input.title || 'Your inbox', created: now, until: now + hours * 3600_000,
     status: 'waiting', emails: input.emails, results: null,
   };
-  // (a free 4-digit code: 10,000 of them, and a round holds one for a day at most)
+  // (a free 4-digit code: 10,000 of them, and a round holds one for 4 hours at most)
   for (let tries = 0; tries < 40; tries++) {
     const code = String(randomInt(0, 10000)).padStart(4, '0');
     round.code = code;
@@ -128,8 +133,8 @@ export async function createRound(input: CreateRound) {
 export type ResultAction =
   | { ref: string; action: 'archive' }
   | { ref: string; action: 'reply'; reply_index: number; reply_text: string }
-  /** Said into the mic: `dictated` is the words as heard, `reply_text` the email made of them (by the model, or by rules without one). */
-  | { ref: string; action: 'reply'; dictated: string; reply_text: string; written_by: 'ai' | 'rules' }
+  /** Said into the mic: `dictated` is their words as speech-to-text heard them, nothing more. The agent writes the email. */
+  | { ref: string; action: 'reply'; dictated: string }
   /** They chose to answer by voice, but no words were caught (no mic in their browser): ask them what to say. */
   | { ref: string; action: 'reply'; ask_user: true }
   | { ref: string; action: 'leave' };
@@ -137,6 +142,8 @@ export type ResultAction =
 export interface Results {
   code: string;
   status: 'waiting' | 'playing' | 'done';
+  /** How many times the round was played to the end: past 1, they played it again and these are the last game's choices. */
+  plays: number;
   /** Plain words for the user, e.g. "Archive 6, reply to 2, leave 4." */
   summary: string;
   actions: ResultAction[];
@@ -147,27 +154,26 @@ export async function getResults(code: string, key: string): Promise<Results> {
   const r = await loadWithKey(code, key);
   if (r.status !== 'done' || !r.results) {
     return {
-      code, status: r.status === 'opened' ? 'playing' : 'waiting', actions: [], expires_at: new Date(r.until).toISOString(),
+      code, status: r.status === 'opened' ? 'playing' : 'waiting', plays: 0, actions: [], expires_at: new Date(r.until).toISOString(),
       summary: r.status === 'opened' ? 'The game is open but not finished yet.' : 'Nobody has entered this code in the game yet.',
     };
   }
-  if (!r.read) {
-    r.read = Date.now(); r.until = r.read + RESULTS_GRACE * 1000;
-    await store.set(prefix + code, r, RESULTS_GRACE);
-  }
-  const actions: ResultAction[] = r.results.map(({ ref, outcome, replies }) => {
+  const replies = new Map(r.emails.map(e => [e.ref, toCard(e).replies]));
+  const actions: ResultAction[] = r.results.map(({ ref, outcome }) => {
     if (!outcome) return { ref, action: 'leave' };
     if (outcome.action === 'archive') return { ref, action: 'archive' };
-    if ('dictated' in outcome) return { ref, action: 'reply', dictated: outcome.dictated, reply_text: outcome.text ?? outcome.dictated, written_by: outcome.by ?? 'rules' };
+    if ('dictated' in outcome) return { ref, action: 'reply', dictated: outcome.dictated };
     if ('ask_user' in outcome) return { ref, action: 'reply', ask_user: true };
-    return { ref, action: 'reply', reply_index: outcome.reply_index, reply_text: replies[outcome.reply_index] ?? '' };
+    return { ref, action: 'reply', reply_index: outcome.reply_index, reply_text: replies.get(ref)?.[outcome.reply_index] ?? '' };
   });
   const n = (a: string) => actions.filter(x => x.action === a).length;
-  const summary = `Archive ${n('archive')}, reply to ${n('reply')}, leave ${n('leave')} as they are.`;
-  return { code, status: 'done', summary, actions, expires_at: new Date(r.until).toISOString() };
+  const plays = r.plays ?? 1;
+  const summary = `Archive ${n('archive')}, reply to ${n('reply')}, leave ${n('leave')} as they are.${plays > 1 ? ` (From game ${plays}: they played it again, and the last game counts.)` : ''}`;
+  return { code, status: 'done', plays, summary, actions, expires_at: new Date(r.until).toISOString() };
 }
 
-export async function cancelRound(code: string, key: string) {
+/** The agent is done with it (acted, or the user said no): the round and its results go now. */
+export async function deleteRound(code: string, key: string) {
   await loadWithKey(code, key);
   await store.del(prefix + code);
   return { code, deleted: true };
@@ -211,36 +217,32 @@ export function toCard(e: RoundEmail): AgentCard {
 /** The game asks for a round by its code (this is what a stranger guessing codes would hit: see the rate limit in the route). */
 export async function openRound(code: string): Promise<AgentRoundResponse | null> {
   const r = await load(code);
-  if (!r || !r.emails) return null;
-  if (r.status === 'waiting') { r.status = 'opened'; await store.set(prefix + code, r, left(r)); }
-  return { code, title: r.title, emails: r.emails.map(toCard) };
+  if (!r || r.status === 'done') return null;      // (played: only the game that played it can play it again, from the cards it kept)
+  if (r.status === 'waiting' || !r.play) { r.status = 'opened'; r.play ??= randomBytes(18).toString('base64url'); await store.set(prefix + code, r, left(r)); }
+  return { code, title: r.title, play: r.play, emails: r.emails.map(toCard) };
 }
 
-/** The game is over: keep what was done, drop the emails. A round can be finished once. */
-export async function finishRound(code: string, outcomes: AgentOutcome[]) {
+/**
+ * The game is over: keep what was done, as it was done (words said into the mic as they were heard). Played again
+ * (Play Again), the new game's choices replace the old ones when it is finished; until then the agent reads the old ones.
+ * `play` is the token the game got when it opened it.
+ */
+export async function finishRound(code: string, outcomes: AgentOutcome[], play: string) {
   const r = await load(code);
   if (!r) throw new RoundError('That round has expired or was deleted.', 404);
-  if (!r.emails || r.status === 'done') throw new RoundError('That round was already played.', 409);
-  const byRef = new Map<string, Outcome>();
+  if (!r.play || typeof play !== 'string' || !timingSafeEqual(Buffer.from(hash(play)), Buffer.from(hash(r.play)))) throw new RoundError('This game was opened on another device: finish it there.', 403);
+  const refs = new Set(r.emails.map(e => e.ref)), byRef = new Map<string, Outcome>();
   for (const o of outcomes) {
-    const e = r.emails.find(x => x.ref === o.ref);
-    if (!e) continue;
+    if (!refs.has(o.ref)) continue;
     if (o.action === 'archive') byRef.set(o.ref, { action: 'archive' });
     else if ('dictated' in o && typeof o.dictated === 'string') byRef.set(o.ref, o.dictated.trim() ? { action: 'reply', dictated: o.dictated.trim().slice(0, 1000) } : { action: 'reply', ask_user: true });
     else if ('reply_index' in o && (o.reply_index === 0 || o.reply_index === 1)) byRef.set(o.ref, { action: 'reply', reply_index: o.reply_index });
   }
-  // (what was said into the mic becomes the email it meant, while the email it answers is still here: lib/ai.ts)
-  await Promise.all(r.emails.map(async e => {
-    const o = byRef.get(e.ref);
-    if (!o || !('dictated' in o)) return;
-    const from = e.from.replace(/\s*<[^>]*>\s*$/, ''), full = await polish({ from, subject: e.subject, summary: e.summary }, o.dictated);
-    o.text = full ?? plainPolish(from, o.dictated); o.by = full ? 'ai' : 'rules';
-  }));
-  r.results = r.emails.map(e => ({ ref: e.ref, outcome: byRef.get(e.ref) ?? null, replies: toCard(e).replies }));
-  r.emails = null; r.status = 'done'; r.finished = Date.now();
+  r.results = r.emails.map(e => ({ ref: e.ref, outcome: byRef.get(e.ref) ?? null }));
+  r.status = 'done'; r.finished = Date.now(); r.plays = (r.plays ?? 0) + 1;
   await store.set(prefix + code, r, left(r));
   const n = (a: string) => r.results!.filter(x => (x.outcome?.action ?? 'leave') === a).length;
-  return { archive: n('archive'), reply: n('reply'), leave: n('leave') };
+  return { archive: n('archive'), reply: n('reply'), leave: n('leave'), plays: r.plays };
 }
 
 // ---------------------------------------------------------------- the words agents read
@@ -251,5 +253,5 @@ export function questLink(url: string) {
 }
 
 export function playInstructions(code: string, site: string) {
-  return `Tell the user: "Your Inbox Zero game is ready. Tap ${questLink(`${site}/play/?code=${code}`)} to open it on your Meta Quest, or open ${site}/play/?code=${code} in the Quest's browser (or any browser), then press Clean Your Inbox. Or open ${site}/play/, press Enter Code and type ${code}. Tell me when you're done." When they say they're done, call get_results with this code and key, show them what they chose, and only after they agree do it with your own email tools: archive what says archive, send or draft the replies (expand a chosen reply into a proper email; a spoken one comes as reply_text, already written up from their words), and leave the rest unread. The round is deleted once played, and the results 10 minutes after you first read them.`;
+  return `Tell the user: "Your Inbox Zero game is ready. Tap ${questLink(`${site}/play/?code=${code}`)} to open it on your Meta Quest, or open ${site}/play/?code=${code} in the Quest's browser (or any browser), then press Clear Your Inbox. Or open ${site}/play/, press Enter Code and type ${code}. Tell me when you're done." When they say they're done, call get_results with this code and key, show them what they chose, and only after they agree do it with your own email tools: archive what says archive, send or draft the replies, and leave the rest unread. Write each reply as a proper email in their voice: a chosen draft as reply_text, or what they said into the mic as dictated (their words as heard; check names). Then call delete_round with this code and key. If you don't, the round and its results are deleted ${MAX_HOURS} hours after it was made.`;
 }

@@ -92,6 +92,7 @@ export function bindResults() {
   function showStatus(r: GameResults) {
     status.textContent = r.sent === 'sending' ? 'Sending your choices to your agent...'
       : r.sent === 'failed' ? `Your choices didn't reach your agent (${r.error}). Ask it for a new code and play again.`
+      : r.sent === 'ok' && r.replay ? 'Played again: your agent now has these choices in place of the last game\'s.'
       : r.sent === 'already' ? 'This was a replay: your agent keeps the choices from your first game.'
       : '';
     status.hidden = !status.textContent;

@@ -1,6 +1,6 @@
 import { headers } from 'next/headers';
 import { z } from 'zod';
-import { cancelRound, CodeAndKey, CreateRound, createRound, getResults, playInstructions, questLink, RoundError, type Results } from './rounds';
+import { deleteRound, CodeAndKey, CreateRound, createRound, getResults, playInstructions, questLink, RoundError, type Results } from './rounds';
 import { origin } from './session';
 import { store } from './store';
 
@@ -40,6 +40,40 @@ function parse<T extends z.ZodType>(schema: T, input: unknown): z.infer<T> {
   return r.data;
 }
 
+// ---------------------------------------------------------------- what comes back (the MCP tools' outputSchema)
+
+export const CreateOutput = z.object({
+  code: z.string().describe('The 4-digit game code the user types in (or that play_url fills in).'),
+  key: z.string().describe('Keep this: get_results and delete_round need it with the code.'),
+  expires_at: z.string().describe('When the round and its results are deleted if you have not called delete_round by then (ISO 8601): 4 hours after it was made at most.'),
+  emails: z.number().describe('How many emails the round has.'),
+  play_url: z.string().describe('Opens the game with the code filled in, in any browser (the Quest\'s too).'),
+  quest_url: z.string().describe('Meta\'s send-to-headset link: opened on a phone or computer signed in to the user\'s Meta account, it opens play_url in their Quest\'s browser.'),
+  play_instructions: z.string().describe('What to tell the user, and what to do after.'),
+});
+
+export const ResultAction = z.object({
+  ref: z.string().describe('Your ref for the email.'),
+  action: z.enum(['archive', 'reply', 'leave']).describe('archive: they slashed it. reply: they picked or spoke a reply. leave: kept but not answered, or let go: leave it unread.'),
+  reply_index: z.number().optional().describe('reply, picked: 0 your first draft (or the first stock reply), 1 the second.'),
+  reply_text: z.string().optional().describe('reply, picked: the draft they picked, word for word.'),
+  dictated: z.string().optional().describe('reply, spoken: what they said into the mic, as speech-to-text heard it, word for word. Write the email from it yourself, in their voice; check names.'),
+  ask_user: z.boolean().optional().describe('reply: true when they chose to answer by voice but no words were caught. Ask them what to say.'),
+});
+
+export const ResultsOutput = z.object({
+  code: z.string(),
+  status: z.enum(['waiting', 'playing', 'done']).describe('waiting: nobody has entered the code yet. playing: the game is open. done: finished, actions are filled in.'),
+  plays: z.number().describe('How many times the round was played to the end (0 until done). Past 1, the user played it again and the actions are the last game\'s: if you read results before, read these in their place.'),
+  summary: z.string().describe('One line, like "Archive 6, reply to 2, leave 4 as they are."'),
+  actions: z.array(ResultAction).describe('When done: every ref of the round exactly once, in your order. Empty until then.'),
+  expires_at: z.string().describe('When the round and its results are deleted if you have not called delete_round by then (ISO 8601).'),
+});
+
+export const DeleteOutput = z.object({ code: z.string(), deleted: z.boolean() });
+
+// ---------------------------------------------------------------- the three calls
+
 export async function agentCreate(input: unknown) {
   await limit('create', 60, 600);      // (agents on one platform share addresses: generous)
   const made = await createRound(parse(CreateRound, input));
@@ -67,9 +101,9 @@ export async function agentResults(input: unknown): Promise<Results> {
   }
 }
 
-export async function agentCancel(input: unknown) {
+export async function agentDelete(input: unknown) {
   const { code, key } = parse(CodeAndKey, input);
-  return cancelRound(code, key);
+  return deleteRound(code, key);
 }
 
 /** The key from `Authorization: Bearer <key>`, or ?key= for agents that can only fetch a URL. */

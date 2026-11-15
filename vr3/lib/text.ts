@@ -13,11 +13,3 @@ export function clamp(s: string | null | undefined, n: number): string {
 const PERSON: readonly Category[] = ['Work', 'Personal', 'Calendar'];
 /** Cards for mail from people: they show the start of the message rather than a one-line gist. */
 export const isPersonCard = (c: Category) => PERSON.includes(c);
-
-const first = (name: string) => name.split(/[\s(]/)[0] || 'there';
-
-/** What was said into the mic, as an email, when there is no model. */
-export function plainPolish(fromName: string, said: string, me = ''): string {
-  const text = said.trim().replace(/^\w/, c => c.toUpperCase());
-  return `Hi ${first(fromName)},\n\n${/[.!?]$/.test(text) ? text : `${text}.`}${me ? `\n\nBest,\n${first(me)}` : '\n\nBest'}`;
-}

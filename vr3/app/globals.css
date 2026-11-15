@@ -43,22 +43,28 @@ h4{font:600 20px/1.2 var(--display);letter-spacing:-.02em}
 .pix.ghost{background:#ffffff59;color:#f6eef5}
 .pix.ghost::before{background:#1b1626;box-shadow:inset 0 -4px 0 #00000059,inset 0 2px 0 #ffffff1f}
 
-/* ───────── nav: centred, a dark purple see-through bar with faint scanlines, white words all the way down.
-   Under it: a hot-pink → blue → mint line (the demo frame's colours) and a row of pixel teeth in the same colours. ───────── */
-.nav{--edge:linear-gradient(90deg,var(--hot),#4a5cff 55%,var(--mint));position:fixed;inset:0 0 auto;z-index:20;display:flex;align-items:center;justify-content:center;gap:36px;height:68px;padding-inline:var(--gutter);color:#fff;
+/* ───────── nav: a dark purple see-through bar with faint scanlines and a hot-pink → blue → mint line under it
+   (the demo frame's colours). Who built it on the left, the competition on the right, the two ways in centred. ───────── */
+.nav{position:fixed;inset:0 0 auto;z-index:20;display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:24px;height:68px;padding-inline:var(--gutter);color:#fff;
   background:repeating-linear-gradient(#0000 0 3px,#ffffff07 3px 4px),#1a1028e6;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
   box-shadow:inset 0 1px 0 #ffffff14,0 14px 32px -6px #0b091273}
-.nav::before{content:'';position:absolute;inset:auto 0 0;height:3px;background:var(--edge)}
-.nav::after{content:'';position:absolute;inset:100% 0 auto;height:4px;background:var(--edge);opacity:.75;
-  -webkit-mask:linear-gradient(90deg,#000 50%,#0000 0) 0 0/8px 4px repeat-x;mask:linear-gradient(90deg,#000 50%,#0000 0) 0 0/8px 4px repeat-x}
-.nav-links{display:flex;gap:32px;font-size:17px;font-weight:500}
-.nav-links a{position:relative;padding-block:6px;color:inherit;opacity:.8;text-decoration:none;transition:opacity .15s}
+.nav::before{content:'';position:absolute;inset:auto 0 0;height:3px;background:linear-gradient(90deg,var(--hot),#4a5cff 55%,var(--mint))}
+.nav-by,.nav-for{display:flex;align-items:center;gap:10px;margin:0;font-size:14px;color:#b8adc4;white-space:nowrap}
+.nav-for{justify-self:end}
+.nav-by img{width:28px;height:28px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px #ffffff40}
+.nav-by a,.nav-for a{color:#fff;font-weight:600;text-decoration:none;text-underline-offset:4px}
+.nav-by a:hover,.nav-for a:hover{text-decoration:underline}
+.nav-for a{display:inline-flex;align-items:center;gap:7px}
+.nav-by .nav-icon{display:grid;place-items:center;width:26px;height:26px;color:#b8adc4;transition:color .15s}
+.nav-by .nav-icon:hover{color:#fff}
+.meta-mark{flex:none;display:block}
+.nav-links{display:flex;align-items:center;gap:32px;font-size:17px;font-weight:500}
+.nav-links a{position:relative;padding-block:6px;color:inherit;opacity:.85;text-decoration:none;transition:opacity .15s}
 .nav-links a::after{content:'';position:absolute;left:0;right:0;bottom:-2px;height:3px;background:var(--mint);
   -webkit-mask:linear-gradient(90deg,#000 66%,#0000 0) 0 0/6px 3px repeat-x;mask:linear-gradient(90deg,#000 66%,#0000 0) 0 0/6px 3px repeat-x;
   transform:scaleX(0);transform-origin:left;transition:transform .24s steps(6)}
 .nav-links a:hover{opacity:1}
 .nav-links a:hover::after,.nav-links a:focus-visible::after{transform:none}
-.nav .pix{--c:var(--mint)}
 
 /* ───────── hero: the one dark part ───────── */
 .hero{--ink:#f6eef5;--soft:#b8adc4;--dim:#857a92;--ring:#ffffff40;position:relative;min-height:min(100svh,940px);display:grid;grid-template-rows:1fr auto;padding:96px var(--gutter) 38px;overflow:hidden;isolation:isolate;background:var(--night);color:var(--ink)}
@@ -76,18 +82,13 @@ h4{font:600 20px/1.2 var(--display);letter-spacing:-.02em}
   linear-gradient(var(--bg),var(--bg)) 0 8px/100% 8px no-repeat}
 .hero-body{align-self:center;justify-self:center;display:flex;flex-direction:column;align-items:center;text-align:center;width:min(820px,100%);padding-block:20px}
 
-.byline{display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 10px;font-size:15px;color:var(--soft)}
-.byline img{width:28px;height:28px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--ring)}
-.byline a{color:var(--ink);font-weight:600;text-decoration:none;text-underline-offset:4px}
-.byline a:hover{text-decoration:underline}
-.byline .sep{width:1px;height:14px;background:var(--ring)}
 
-.hero-logo{position:relative;width:min(440px,72%);aspect-ratio:1400/330;margin-top:26px;animation:float 5.2s ease-in-out infinite;filter:drop-shadow(0 14px 34px color-mix(in srgb,var(--accent) 45%,transparent));transition:filter .8s}
+.hero-logo{position:relative;width:min(220px,36%);aspect-ratio:1400/330;margin-top:26px;animation:float 5.2s ease-in-out infinite;filter:drop-shadow(0 14px 34px color-mix(in srgb,var(--accent) 45%,transparent));transition:filter .8s}
 .hero-logo img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;opacity:0;transform:scale(.97);transition:opacity .5s,transform .5s}
 .hero-logo img.on{opacity:1;transform:none}
 @keyframes float{50%{transform:translateY(-8px)}}
 
-h1{margin-top:22px;font:800 clamp(30px,8.3vw,76px)/1 var(--display);letter-spacing:-.045em;text-shadow:0 2px 24px #000000b3}
+h1{margin-top:22px;font:700 clamp(22px,5.4vw,54px)/1.12 var(--pixel);letter-spacing:0;text-transform:uppercase;text-shadow:0 4px 0 #0b0912,0 2px 24px #000000b3}
 /* the weapon in the headline changes with the level showing */
 h1 .with{white-space:nowrap}
 h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap .45s cubic-bezier(.2,.8,.2,1) both}
@@ -101,28 +102,37 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 .dot{flex:none;width:7px;height:7px;border-radius:50%;background:var(--dim)}
 .dot.on{background:var(--mint);box-shadow:0 0 0 3px #4ff3c833,0 0 10px var(--mint)}
 
-.hero-levels{justify-self:center;display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:18px}
-.hero-levels button{all:unset;cursor:pointer;display:flex;align-items:center;gap:8px;padding:8px 10px;font:400 11px/1 var(--pixel);letter-spacing:.08em;text-transform:uppercase;color:#ffffff8c;transition:color .2s}
-.hero-levels button::before{content:'';width:18px;height:5px;background:#ffffff40;transition:background .3s,width .3s}
-.hero-levels button span{display:none}
-.hero-levels button.on{color:var(--accent)}
-.hero-levels button.on::before{width:30px;background:var(--accent);box-shadow:0 0 12px var(--accent)}
-.hero-levels button.on span{display:inline}
-.hero-levels button:hover::before{background:var(--accent)}
-.hero-levels button:focus-visible{outline:2px solid var(--mint)}
+/* the level picker: a small painting per level, the picked one lit in its colour with a bar that fills until the next */
+.hero-pick{justify-self:center;display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:18px;width:100%}
+.hero-levels{display:grid;grid-template-columns:repeat(7,84px);gap:10px}
+.hero-levels button{all:unset;position:relative;cursor:pointer;display:block;aspect-ratio:84/52;padding:3px;background:#ffffff2e;box-shadow:0 6px 0 #0b091299;transition:transform .18s steps(3),background .2s,box-shadow .2s}
+.hero-levels img{display:block;width:100%;height:100%;object-fit:cover;filter:saturate(.35) brightness(.55);transition:filter .25s}
+.hero-levels button:hover{transform:translateY(-3px);background:color-mix(in srgb,var(--accent) 70%,#fff)}
+.hero-levels button:hover img,.hero-levels button.on img{filter:none}
+.hero-levels button.on{transform:translateY(-5px) scale(1.1);background:var(--accent);box-shadow:0 6px 0 #0b091299,0 0 22px color-mix(in srgb,var(--accent) 70%,transparent);z-index:1}
+.hero-levels button.on::after{content:'';position:absolute;left:3px;right:3px;bottom:3px;height:4px;background:#fffffff0;box-shadow:0 0 6px #fff;transform-origin:left;animation:lvl-timer var(--every) linear both}
+.hero-levels.paused button.on::after{display:none}
+@keyframes lvl-timer{from{transform:scaleX(0)}}
+.hero-levels button:focus-visible{outline:2px solid var(--mint);outline-offset:3px}
+.hero-level-name{font:400 11px/1 var(--pixel);letter-spacing:.12em;text-transform:uppercase;color:var(--accent);text-shadow:0 2px 0 #0b0912;transition:color .2s}
 
 /* in a headset: bigger words and targets, less to read */
-.in-vr .hero h1{font-size:clamp(30px,8.3vw,88px)}
+.in-vr .hero h1{font-size:clamp(22px,5.6vw,68px)}
 .in-vr .cta-note{font-size:16px}
-.in-vr .nav-links{display:none}
-.in-vr .hero-levels button{padding:14px 12px}
+.in-vr .hero-levels{grid-template-columns:repeat(7,104px)}
 
 /* ───────── cards, as every section under the hero uses them ───────── */
 .steps li,.hand-card,.round,.bento article,.why-grid article{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:26px;box-shadow:var(--shadow)}
 .steps p,.round p,.bento p,.why-grid p{margin-top:10px;color:var(--soft);font-size:16px}
 
+/* the "Built by" line, used in the footer */
+.byline{display:inline-flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 10px;font-size:15px;color:var(--soft)}
+.byline img{width:28px;height:28px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px var(--ring)}
+.byline a{color:var(--ink);font-weight:600;text-decoration:none;text-underline-offset:4px}
+.byline a:hover{text-decoration:underline}
+
 /* ───────── demo ───────── */
-.band.demo{padding-top:clamp(28px,4vw,48px)}
+.band.demo{padding-top:clamp(28px,4vw,48px);padding-bottom:0}
 .demo-frame{margin:0 auto;max-width:980px;padding:6px;background:linear-gradient(135deg,var(--hot),#4a5cff 55%,var(--mint));filter:drop-shadow(0 24px 40px #4a5cff2e);
   clip-path:polygon(0 12px,6px 12px,6px 6px,12px 6px,12px 0,calc(100% - 12px) 0,calc(100% - 12px) 6px,calc(100% - 6px) 6px,calc(100% - 6px) 12px,100% 12px,100% calc(100% - 12px),calc(100% - 6px) calc(100% - 12px),calc(100% - 6px) calc(100% - 6px),calc(100% - 12px) calc(100% - 6px),calc(100% - 12px) 100%,12px 100%,12px calc(100% - 6px),6px calc(100% - 6px),6px calc(100% - 12px),0 calc(100% - 12px))}
 .demo-bar{display:flex;align-items:center;gap:7px;height:34px;padding-inline:14px;background:#0e0b16;font:400 10px/1 var(--pixel);letter-spacing:.16em;color:#857a92}
@@ -134,9 +144,17 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 .demo-screen iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
 
 /* ───────── how it works ───────── */
-.how{background:var(--tint)}
+.band.how{padding-top:clamp(48px,6vw,72px)}
 .steps{margin-top:48px;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-.steps .num{display:block;font-size:22px;color:var(--pink);margin-bottom:18px}
+.pixel-head{font:700 clamp(24px,3.6vw,40px)/1.15 var(--pixel);letter-spacing:0;text-transform:uppercase;max-width:none;text-align:center}
+.steps h3{font-size:20px}
+.steps .pixels{width:48px;margin-bottom:18px;fill:var(--ink)}
+.steps .pixels .a{fill:var(--c)}
+.mcp-url{display:block;margin-top:16px;padding:10px 12px;border:1px dashed var(--line);border-radius:8px;background:#f6f4fa;font:500 13px/1.4 ui-monospace,Menlo,monospace;color:var(--ink)}
+.privacy{margin:36px auto 0;max-width:640px;text-align:center;color:var(--soft);font-size:15px}
+.privacy .pixels{width:26px;margin:0 auto 12px;fill:var(--teal)}
+.privacy h3{font-size:16px;color:var(--ink)}
+.privacy p{margin-top:6px}
 .steps .quiet,.quiet{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);font-size:13.5px;color:var(--dim)}
 
 /* the controls: a card per hand, its moves in order, each a picture of a Quest hand in a small dark scene */
@@ -289,14 +307,17 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 }
 @media (max-width:640px){
   html,body{font-size:16px}
-  .nav-links{display:none}
+  .nav{grid-template-columns:auto 1fr;gap:12px}
+  .nav-by span,.nav-by .nav-icon,.nav-for{display:none}
+  .nav-links{justify-self:end;gap:14px;font-size:15px}
+  .hero-levels{grid-template-columns:repeat(7,1fr);gap:6px;width:100%}
+  .hero-levels button{padding:2px}
   .bento{grid-template-columns:1fr}
   .shots{grid-auto-flow:row;gap:12px}
   .shots figure{display:grid;grid-template-columns:104px 1fr;gap:14px;align-items:center}
   .shots figcaption{margin:0;min-height:0}
   .shots figure+figure::before{display:none}
-  .byline .sep{display:none}
-  .hero{padding-top:84px}
+    .hero{padding-top:84px}
   .pix.big{padding:22px 40px 25px;font-size:22px}
   .cta-row{flex-direction:column;align-self:stretch}
   .mock.two{grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:10px;padding:14px 12px 62px;height:auto}
@@ -309,6 +330,6 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 }
 @media (prefers-reduced-motion:reduce){
   html{scroll-behavior:auto}
-  .hero-logo,.mail.cut,h1 em{animation:none}
+  .hero-logo,.mail.cut,h1 em,.hero-levels button.on::after{animation:none}
   .hero-art img{transition:opacity .4s}
 }

@@ -11,7 +11,7 @@ import type { AgentCard, AgentOutcome, AgentResultsResponse, AgentRoundResponse 
  * With a code typed in (the Inbox card, or ?code= in the address; the tab keeps it until played)
  * the next game is that round. Nothing is drafted here: the agent wrote the replies. At the end
  * the game says what was done with each email (POST /api/rounds/{code}/results), where what was
- * said into the mic is written up as an email by the server's one model. The agent reads that,
+ * said into the mic goes as it was heard: the agent writes the email from it. The agent reads that,
  * checks with the player, and does the archiving and replying itself.
  *
  * Gmail sign-in, reading the inbox and the models that sorted it and wrote replies were here
@@ -89,7 +89,9 @@ function createMail() {
   /** The emails as dealt to the game (letters.ts holds these copies), in order, for the results. */
   let dealt: Email[] = [];
   /** The last real game, kept so Play Again on the results screen can play it again. */
-  let last: { code: string; title: string; cards: Email[]; mock: boolean } | null = null;
+  let last: { code: string; title: string; cards: Email[]; mock: boolean; play: string } | null = null;
+  /** The token the server gave this game when it opened the round: the results (and a replay's) are posted with it. */
+  let playToken = '';
   /** This game is a Play Again of the last one. */
   let replaying = false;
   const idle = () => ({ code: '', title: '', state: 'idle' as const, count: 0, error: '', mock: false });
@@ -110,6 +112,7 @@ function createMail() {
       if (mine !== roundTicket) return;
       if (!r.ok) throw new Error(body.error || `the server said ${r.status}`);
       roundCards = body.emails.map((c: AgentCard): Email => ({ ...c, id: c.ref, replies: [c.replies[0], c.replies[1]] }));
+      playToken = body.play ?? '';
       state.round = { code, title: body.title, state: roundCards.length ? 'ready' : 'failed', count: roundCards.length, error: roundCards.length ? '' : 'That round has no emails.', mock: false };
     } catch (e) {
       if (mine !== roundTicket) return;
@@ -148,7 +151,7 @@ function createMail() {
   /** The end of an agent round: what was done with each email goes to the agent (through the server). */
   async function finishRound() {
     const results = state.results = tally();
-    last = { code: state.round.code, title: state.round.title, cards: roundCards, mock: state.round.mock };
+    last = { code: state.round.code, title: state.round.title, cards: roundCards, mock: state.round.mock, play: playToken };
     if (state.round.mock) {
       // a mock round: nothing to send; it is over, as a real one is once its results are given
       outcomes.clear(); dealt = []; replaying = false;
@@ -167,7 +170,7 @@ function createMail() {
     const code = state.round.code;
     state.round.state = 'sending'; told();
     try {
-      const r = await fetch(`/api/rounds/${code}/results`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ outcomes: outs }), credentials: 'same-origin', cache: 'no-store' });
+      const r = await fetch(`/api/rounds/${code}/results`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ outcomes: outs, play: last.play }), credentials: 'same-origin', cache: 'no-store' });
       const body = await r.json().catch(() => ({})) as AgentResultsResponse & { error?: string };
       if (!r.ok) throw new Error(body.error || `the server said ${r.status}`);
       void body;
@@ -175,7 +178,7 @@ function createMail() {
       roundTicket++; roundCards = []; remember('');
       state.round = idle();
     } catch (e) {
-      // (a Play Again of a round already played: the server keeps the first game's choices, and says so with a 409)
+      // (a Play Again replaces the agent's results when it is finished, 2026-11-15; 'already' was the old 409, when the first game's choices stood)
       const message = (e as Error).message;
       results.sent = /already played/i.test(message) ? 'already' : 'failed'; results.error = message;
       if (results.sent === 'already') { roundTicket++; roundCards = []; remember(''); state.round = idle(); }
@@ -220,7 +223,7 @@ function createMail() {
     /** Play Again, from the results screen: the last real game's emails, once more. False if there is none. */
     replay(): boolean {
       if (!last) return false;
-      roundTicket++; roundCards = last.cards; replaying = true; state.results = null; state.notice = '';
+      roundTicket++; roundCards = last.cards; playToken = last.play; replaying = true; state.results = null; state.notice = '';
       state.round = { code: last.code, title: last.title, state: 'ready', count: last.cards.length, error: '', mock: last.mock };
       remember(last.code); told(); return true;
     },
@@ -232,7 +235,7 @@ function createMail() {
      */
     mockResults() {
       const cards = mockRound(MOCK_CODE), title = "Today's inbox", line = (e: Email): ResultLine => ({ from: e.from, subject: e.subject });
-      last = { code: MOCK_CODE, title, cards, mock: true };
+      last = { code: MOCK_CODE, title, cards, mock: true, play: '' };
       const real = cards.filter(e => e.kind === 'Real'), junk = cards.filter(e => e.kind !== 'Real');
       const replies = real.slice(0, 3).map((e, i): ResultReply => i === 2 ? { ...line(e), text: dictation(e), how: 'mic' } : { ...line(e), text: e.replies[i] ?? '', how: i === 0 ? 'A' : 'B' });
       state.results = { code: MOCK_CODE, title, mock: true, replay: false, archived: junk.map(line), replies, left: real.slice(3).map(line), sent: 'mock', error: '' };

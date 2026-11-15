@@ -3,6 +3,7 @@ import { Demo } from './_site/Demo';
 import { HandShot } from './_site/HandShot';
 import { LevelScene } from './_site/LevelScene';
 import { Hero } from './_site/Hero';
+import { MetaMark } from './_site/MetaMark';
 import { CATEGORIES, LEVELS, SITE } from './_site/content';
 
 /**
@@ -29,12 +30,18 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
   return (
     <div className={vr ? 'site in-vr' : 'site'}>
       <nav className="nav">
+        <p className="nav-by">
+          <img src={SITE.author.avatar} alt="" width={28} height={28} />
+          <span>Built by <a href={SITE.author.url} target="_blank" rel="noopener noreferrer">{SITE.author.name}</a></span>
+          <a className="nav-icon" href={SITE.author.linkedin} target="_blank" rel="noopener noreferrer" aria-label={`${SITE.author.name} on LinkedIn`} title={`${SITE.author.name} on LinkedIn`}>
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden><path fill="currentColor" d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 1 1 0-4.125 2.062 2.062 0 0 1 0 4.125zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
+          </a>
+        </p>
         <div className="nav-links">
-          <a href="#how">How it works</a>
-          <a href="#why">Why</a>
-          <a href="#levels">Levels</a>
+          <a href={playHref}>Play Demo</a>
+          <a href="#how">Connect Your Agent</a>
         </div>
-        <a className="pix small" href={playHref}>{vr ? 'PLAY GAME' : 'PLAY'}</a>
+        <p className="nav-for"><a href={SITE.competition.url} target="_blank" rel="noopener noreferrer"><MetaMark />Meta VR Start Hackathon</a></p>
       </nav>
 
       <main id="top">
@@ -50,26 +57,35 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
         {/* ───────── how it works ───────── */}
         <section className="band how" id="how">
           <div className="wrap">
-            <h2>Clear your inbox, one game at a time.</h2>
+            <h2 className="pixel-head">Clear your inbox, one game at a time</h2>
 
             <ol className="steps">
-              <li>
-                <span className="num">01</span>
-                <h3>Ask your agent</h3>
-                <p>Tell an AI agent that can read your email to set up a game. It writes a card for each of your newest unread emails and gives you a 4-digit code. Type the code into the game.</p>
-                <p className="quiet">No agent? The game plays a demo inbox.</p>
+              <li style={{ '--c': 'var(--teal)' } as React.CSSProperties}>
+                <Pixels art={ICON_PLUG} />
+                <h3>Connect MCP</h3>
+                <p>Add the MCP to your favourite agent, the one that reads your email.</p>
+                <code className="mcp-url">https://<wbr />www.inboxzerovr.com/mcp</code>
               </li>
-              <li>
-                <span className="num">02</span>
-                <h3>Play two rounds</h3>
-                <p>In round one every email flies at you, and you cut it or keep it. In round two the ones you kept come back to be answered. You stay in your chair for both.</p>
+              <li style={{ '--c': 'var(--pink)' } as React.CSSProperties}>
+                <Pixels art={ICON_LETTER} />
+                <h3>Create a Game</h3>
+                <p>Ask your agent for a game. It summarizes your unread emails and gives you a 4-digit code.</p>
               </li>
-              <li>
-                <span className="num">03</span>
-                <h3>Tell your agent you’re done</h3>
-                <p>It lists what you chose: archive these six, reply to Sam, leave three. Say OK and it does it.</p>
+              <li style={{ '--c': 'var(--blue)' } as React.CSSProperties}>
+                <Pixels art={ICON_SWORD} />
+                <h3>Play Inbox Zero</h3>
+                <p>Type in the code. Smash or keep each email, then reply. Your agent does the rest.</p>
+                <p className="quiet">No agent? Play the demo inbox.</p>
               </li>
             </ol>
+
+            <aside className="privacy">
+              <Pixels art={ICON_LOCK} />
+              <div>
+                <h3>The game never touches your inbox</h3>
+                <p>Your agent sends short summaries, never your emails. Your choices go back to your agent, and nothing is kept longer than 4 hours.</p>
+              </div>
+            </aside>
 
             <h3 className="mini">The controls</h3>
             <div className="hands">
@@ -140,7 +156,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
               <div><dt>Replied</dt><dd>Sent, or saved as a draft. Your agent asks which.</dd></div>
               <div><dt>Later</dt><dd>Left alone.</dd></div>
             </dl>
-            <p className="fine">The game itself never touches your inbox. Quit halfway and your agent gets nothing to act on.</p>
+            <p className="fine">Quit halfway and your agent gets nothing to act on.</p>
           </div>
         </section>
 
@@ -160,15 +176,15 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
               </article>
               <article>
                 <h3>Say it, and it becomes an email</h3>
-                <p>Hold an email against the microphone and talk. Your words appear as you say them, and are then tidied into a reply.</p>
+                <p>Hold an email against the microphone and talk. Your words appear as you say them, and go to your agent just as you said them.</p>
               </article>
               <article className="wide keep">
                 <h3>Deleted when you finish</h3>
-                <p>Your agent sends a short summary of each email, never the whole thing. The server deletes them the moment your game ends, and deletes your choices 10 minutes after your agent reads them.</p>
+                <p>Your agent sends a short summary of each email, never the whole thing. Your agent deletes the game and your choices once it has acted. Anything left is deleted after 4 hours.</p>
                 <ul className="ticks">
                   <li>No sign-in, and no access to your mailbox</li>
                   <li>Each email goes under a number only your agent can match to the real one</li>
-                  <li>The one model on our side writes up your spoken replies, with zero data retention</li>
+                  <li>No AI on our side reads your emails or your replies</li>
                   <li>Your agent is told to check with you before it archives or replies</li>
                 </ul>
               </article>
@@ -263,6 +279,59 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
 }
 
 /* Small pixel pictures, shown in a hand's tile until its real picture exists (HandShot): '#' is ink, 'a' is the accent, anything else is empty. */
+const ICON_PLUG = [
+  '...a....a...',
+  '...a....a...',
+  '...a....a...',
+  '.##########.',
+  '.##########.',
+  '.##########.',
+  '..########..',
+  '...######...',
+  '....####....',
+  '.....##.....',
+  '.....##.....',
+  '.....##.....',
+];
+const ICON_LETTER = [
+  '.....a......',
+  '....aaa.....',
+  '.....a......',
+  '############',
+  '#a........a#',
+  '#.a......a.#',
+  '#..a....a..#',
+  '#...a..a...#',
+  '#....aa....#',
+  '#..........#',
+  '############',
+];
+const ICON_SWORD = [
+  '..........aa',
+  '.........aa.',
+  '........aa..',
+  '.......aa...',
+  '......aa....',
+  '..#..aa.....',
+  '...#aa......',
+  '....#.......',
+  '...#.#......',
+  '..#...#.....',
+  '##..........',
+  '##..........',
+];
+const ICON_LOCK = [
+  '....####....',
+  '...#....#...',
+  '..#......#..',
+  '..#......#..',
+  '.##########.',
+  '.##########.',
+  '.####..####.',
+  '.####..####.',
+  '.##########.',
+  '.##########.',
+];
 const ICON_GRAB = [
   'aa..........aa',
   'a............a',

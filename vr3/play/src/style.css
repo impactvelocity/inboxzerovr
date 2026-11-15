@@ -240,6 +240,24 @@ button.link:hover{background:none;opacity:1}
 .mic-line.off{color:#ff8fa3;opacity:1}
 .mic-details{margin-top:10px;font-size:12px;opacity:.75}
 .mic-details pre{margin:6px 0 0;max-height:180px;overflow:auto;white-space:pre-wrap;word-break:break-all;font-size:11px}
+/* MCP, top right, and its card (src/mcpcard.ts, 2026-11-15) */
+#home .pix.mcp-btn{padding:9px 12px 11px}
+/* (2026-11-15: "make the typography better on this, better spacing / games and drop the periods": all in the pixel letters) */
+.mcp-card{width:min(92vw,480px);padding:34px 30px 28px;text-align:center}
+.mcp-card[open]{display:grid;justify-items:center}
+.mcp-card h2{margin:0 0 22px;line-height:0;filter:drop-shadow(0 2px 10px #000)}
+.mcp-card h2 canvas{display:block;margin:0 auto}
+.mcp-card .px-sentence{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-end;column-gap:9px;line-height:0;filter:drop-shadow(0 2px 8px #000)}
+.mcp-card .px-word canvas{display:block;image-rendering:pixelated}
+#mcp .mcp-lede{margin:0 0 26px;max-width:420px}
+.mcp-lede .px-word{padding:5px 0}
+.mcp-url{box-sizing:border-box;width:100%;margin:0;padding:15px 16px 14px;border:0;border-radius:0;background:#07060b;box-shadow:inset 0 0 0 3px color-mix(in srgb,var(--accent,#f6b3cc) 55%,#000),inset 0 4px 0 3px #0000004d;color:var(--accent,#f6b3cc);font:600 15px/1 ui-monospace,Menlo,monospace;letter-spacing:.02em;text-align:center;cursor:text}
+.mcp-url:focus{outline:none;box-shadow:inset 0 0 0 3px var(--accent,#f6b3cc),inset 0 4px 0 3px #0000004d}
+.mcp-url::selection{background:var(--accent,#f6b3cc);color:#14121a}
+#mcp .mcp-private{margin:18px 0 0;max-width:360px;opacity:.55}
+.mcp-private .px-word{padding:3px 0}
+.mcp-private.px-sentence{column-gap:6px}
+.mcp-card .dialog-actions{justify-content:center;gap:12px;margin-top:28px}
 .mic-state{display:block;margin-top:4px;font-size:12px;opacity:.75}
 .mic-state.on{color:#7dffc9;opacity:1}
 .mic-state.off{color:#ff8fa3;opacity:1}

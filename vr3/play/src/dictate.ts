@@ -444,7 +444,8 @@ export const dictate = createDictate();
 export function bindHomeMic() {
   const button = document.getElementById('connect-mic') as HTMLButtonElement | null, wrap = button?.parentElement, bar = wrap?.querySelector<HTMLElement>('.mic-meter span');
   // (2026-11-15: "add a message if mic is connected or not": said in words beside the icon, not only its edge)
-  const note = document.getElementById('mic-note'), debug = document.getElementById('debug-mic');
+  // (Debug Mic only with ?debug=1 in the address, 2026-11-15: "hide the debug button from root"; it stays hidden otherwise)
+  const note = document.getElementById('mic-note'), debug = new URLSearchParams(location.search).has('debug') ? document.getElementById('debug-mic') : null;
   if (!button || !wrap) return;
   let shown = '';
   function show() {
@@ -464,8 +465,10 @@ export function bindHomeMic() {
     button!.title = `${label}. ${title}`;
     if (note) {
       const on = p === 'granted' && dictate.hasDevice;
-      note.textContent = on ? (dictate.testing ? 'Mic listening…' : 'Mic connected') : `Mic not connected${label === 'Connect mic' ? '' : ` · ${label.replace(/^Mic /, '')}`}`;
-      note.className = `mic-note ${on ? 'on' : 'off'}`;
+      // (only when it is on: "remove the mic warning ... the browser already asks, dont need to show it here", 2026-11-15)
+      note.textContent = on ? (dictate.testing ? 'Mic listening…' : 'Mic connected') : '';
+      note.className = 'mic-note on';
+      if (!on) note.hidden = true;
       note.title = title;
     }
   }

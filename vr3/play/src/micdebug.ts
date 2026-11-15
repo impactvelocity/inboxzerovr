@@ -3,7 +3,7 @@ import { pixelLabel } from './home';
 import { uiSound } from './uisound';
 
 /**
- * Debug Mic, beside the mic icon on the home page (2026-11-15: "add a debug mic button next to mic icon to test mic setup and
+ * Debug Mic, beside the mic icon on the home page when the address has ?debug=1 (hidden otherwise since 2026-11-15) (2026-11-15: "add a debug mic button next to mic icon to test mic setup and
  * transcription so its easier than playing a game, i need to test online and locally, it didnt seem to work online").
  *
  * A card that says, line by line, what the mic needs and whether it has it: a secure page, the mic approved and there, something
