@@ -55,7 +55,7 @@ export const CreateOutput = z.object({
 export const ResultAction = z.object({
   ref: z.string().describe('Your ref for the email.'),
   action: z.enum(['archive', 'reply', 'leave']).describe('archive: they slashed it. reply: they picked or spoke a reply. leave: kept but not answered, or let go: leave it unread.'),
-  reply_index: z.number().optional().describe('reply, picked: 0 your first draft (or the first stock reply), 1 the second.'),
+  reply_index: z.number().optional().describe('reply, picked: 0 your first reply, 1 your second.'),
   reply_text: z.string().optional().describe('reply, picked: the draft they picked, word for word.'),
   dictated: z.string().optional().describe('reply, spoken: what they said into the mic, as speech-to-text heard it, word for word. Write the email from it yourself, in their voice; check names.'),
   ask_user: z.boolean().optional().describe('reply: true when they chose to answer by voice but no words were caught. Ask them what to say.'),

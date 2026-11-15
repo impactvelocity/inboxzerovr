@@ -29,7 +29,7 @@ const TOOLS = [
   {
     name: 'create_round',
     title: 'Create an Inbox Zero game',
-    description: 'Sets up a game of the user\'s own unread email (5 to 20 plays best, 30 at most) and returns a 4-digit code they type into the game, a play_url that fills it in, a quest_url that opens it on their Quest, what to tell them, and a key you keep to read the results. Send short summaries, never full emails, and opaque refs of your own, never real message ids. For mail from a person who expects an answer, send two short reply drafts written as the user. The guide (resource inboxzero://guide) says how each field is shown.',
+    description: 'Sets up a game of the user\'s own unread email (5 to 20 plays best, 30 at most) and returns a 4-digit code they type into the game, a play_url that fills it in, a quest_url that opens it on their Quest, what to tell them, and a key you keep to read the results. Send short summaries, never full emails, and opaque refs of your own, never real message ids. Every email needs exactly two short replies, the two bubbles the user picks between: for mail from a person, replies written as the user; for automated mail, two things you could do instead ("Unsubscribe me"). The guide (resource inboxzero://guide) says how each field is shown.',
     inputSchema: schema(CreateRound),
     outputSchema: schema(CreateOutput, 'output'),
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },

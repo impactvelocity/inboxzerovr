@@ -298,6 +298,35 @@ body.winning .nav,.foot.winning .foot-hero{opacity:0;pointer-events:none}
 .tools-grid h3{margin-top:16px}
 .tools-grid p{margin-top:8px;color:var(--soft);font-size:15.5px}
 
+/* setting it up in an agent: three buttons, and a pop-up with the steps for each (SetupGuides.tsx) */
+.setup-links{margin-top:36px;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px}
+.setup-links>span{font:400 13px/1 var(--pixel);letter-spacing:.12em;text-transform:uppercase;color:var(--soft);margin-right:4px}
+.setup-links .pix{--c:var(--mint)}
+.setup{width:min(560px,calc(100% - 32px));max-height:calc(100dvh - 48px);padding:0;border:0;background:#fff;color:var(--ink);overflow:auto;
+  box-shadow:0 -3px 0 0 #2a2335,0 3px 0 0 #2a2335,-3px 0 0 0 #2a2335,3px 0 0 0 #2a2335,0 12px 0 0 #16101f26}
+.setup::backdrop{background:#0b0912b3;backdrop-filter:blur(3px)}
+.setup[open]{animation:setup-in .22s cubic-bezier(.2,1.4,.4,1)}
+@keyframes setup-in{from{opacity:0;transform:translateY(14px) scale(.97)}}
+.setup-box{padding:24px 26px 26px}
+.setup-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.setup-head h3{font:400 17px/1.3 var(--pixel);letter-spacing:.04em;text-transform:uppercase}
+.setup-x{all:unset;cursor:pointer;padding:2px 6px;font-size:18px;line-height:1;color:var(--dim)}
+.setup-x:hover{color:var(--ink)}
+.setup-tabs{margin-top:18px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:#f1eef5}
+.setup-tabs button{all:unset;cursor:pointer;padding:10px 8px;text-align:center;font:400 13px/1 var(--pixel);letter-spacing:.1em;text-transform:uppercase;color:var(--soft)}
+.setup-tabs button:hover{color:var(--ink)}
+.setup-tabs button[aria-selected=true]{background:var(--night);color:var(--mint)}
+.setup-first{margin-top:16px;font-size:14px;color:var(--soft)}
+.setup-steps{margin:14px 0 0;padding:0;list-style:none;counter-reset:step;display:grid;gap:12px}
+.setup-steps li{counter-increment:step;position:relative;padding-left:34px;font-size:15.5px;line-height:1.45}
+.setup-steps li::before{content:counter(step);position:absolute;left:0;top:1px;display:grid;place-items:center;width:22px;height:22px;background:var(--night);color:var(--mint);font:400 11px/1 var(--pixel)}
+.setup-steps a{color:var(--teal);font-weight:600}
+.setup-copy{margin-top:8px;display:flex;align-items:center;gap:8px;padding:8px 8px 8px 12px;border:1px dashed var(--line);background:#f8f7fa}
+.setup-copy code{flex:1;min-width:0;font:500 13px/1.4 ui-monospace,Menlo,monospace;overflow-wrap:anywhere}
+.setup-copy button{all:unset;cursor:pointer;flex:none;padding:6px 10px;background:var(--night);color:var(--mint);font:400 11px/1 var(--pixel);letter-spacing:.08em;text-transform:uppercase}
+.setup-note{margin-top:18px;padding-top:14px;border-top:1px dashed var(--line);font-size:13.5px;color:var(--dim)}
+.setup-help{display:inline-block;margin-top:10px;font-size:14px;font-weight:600;color:var(--teal)}
+
 /* ───────── footer ───────── */
 /* one dark piece: the Kyoto courtyard behind the closing call and the bar with the logo and links */
 .foot{position:relative;isolation:isolate;overflow:hidden;background:var(--night);color:#f6eef5}

@@ -3,6 +3,7 @@ import { Demo } from './_site/Demo';
 import { HowToPlay } from './_site/HowToPlay';
 import { LevelScene } from './_site/LevelScene';
 import { McpUrl } from './_site/McpUrl';
+import { SetupGuides } from './_site/SetupGuides';
 import { StarField } from './_site/StarField';
 import { Hero } from './_site/Hero';
 import { MetaMark } from './_site/MetaMark';
@@ -211,6 +212,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
                 <p>Once your agent has acted, it deletes the game and your choices. If it doesn’t, they’re deleted after 4 hours anyway.</p>
               </li>
             </ol>
+
+            <SetupGuides url={SITE.mcp} />
           </div>
         </section>
       </main>

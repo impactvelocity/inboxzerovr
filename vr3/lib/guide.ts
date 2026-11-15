@@ -8,13 +8,11 @@
  * lib/agent.ts (the limits).
  */
 
-export const STOCK_REPLIES = 'Thanks, got it!" and "Thanks! Can we talk about this later this week?';
-export const STOCK_NO = 'Please take me off this list. Thank you!" and "Not interested, thanks';
 
 export function instructions(site: string) {
   return `Inbox Zero VR is a VR game (Meta Quest, or any browser) where the user clears their unread email: they slash what can be archived, keep what matters, and pick or speak replies. You do the reading and the acting with your own email tools; this server never sees their mailbox, only short summaries you send, and it writes nothing: it is data in to make the game, and data out so you can act.
 
-1. Read the user's newest unread emails (5 to 20 plays best, 30 at most). For each, send create_round an opaque ref of your own (1, 2, 3...: never the real message id), who it is from, the subject, a short summary (never the full body), a category, and for mail from a person who expects an answer, two short reply drafts written as the user. Mark one or two that matter most today special.
+1. Read the user's newest unread emails (5 to 20 plays best, 30 at most). For each, send create_round an opaque ref of your own (1, 2, 3...: never the real message id), who it is from, the subject, a short summary (never the full body), a category, and exactly two short replies (required on every email: the two bubbles round two shows; for automated mail, two things you could do instead, like "Unsubscribe me"). Mark one or two that matter most today special.
 2. Give the user the 4-digit code and the play_instructions (the play_url fills the code in; quest_url opens it on their Quest). Keep the key: you need it for the results.
 3. When they say they're done, call get_results (wait_seconds waits for a game still being played). Every ref comes back once: archive (they slashed it), reply (a draft they picked as reply_text, or what they said into the mic as dictated, word for word: you write the email; ask_user means ask them what to say), or leave (kept it or let it go: leave it unread). If they play it again from the results screen, the last finished game replaces the results and plays goes up: read them again before acting.
 4. Show the plan in plain words ("archive these 6, reply to Sam with 'Thursday works', leave 3") and act only after they agree: archive, send or draft the replies (whichever they prefer), leave the rest.
@@ -45,7 +43,7 @@ You also need your own access to the user's email (a Gmail or Outlook connector,
 Knowing this tells you what each result means.
 
 1. **Round one, sort.** The emails come in your order, one at a time. The user **slashes** an email to archive it, or **grabs and throws** it to keep it for round two. One they miss flies past and is left as it is.
-2. **Round two, reply.** Every email they kept comes back, with two reply bubbles: your \`replies\` (the first on the left, the second on the right). Where you sent fewer than two, the game fills in stock ones: "${STOCK_REPLIES}", or for Promo and Spam "${STOCK_NO}". The user picks a bubble, or holds the mic and says their own reply, or sends it away for later (or runs out of time), which leaves it as it is.
+2. **Round two, reply.** Every email they kept comes back, with two reply bubbles: your two \`replies\` (the first on the left, the second on the right). Nothing else is ever offered: every reply in the results is one you wrote, or their own words. The user picks a bubble, or holds the mic and says their own reply, or sends it away for later (or runs out of time), which leaves it as it is.
 3. **The end.** The game sends what they chose to this server, word for word. The user sees a results screen that tells them to tell you they're done.
 
 If nothing was kept in round one, there is no round two.
@@ -74,10 +72,10 @@ Each email:
 | \`from\` | required, up to 80 | The sender as the user knows them: "Sam Lee", "City Power". No email address needed (one in \`<...>\` is dropped). The card shows about 24 characters. |
 | \`subject\` | up to 140 | The subject line. "Re:" and "Fwd:" are dropped. The card shows about 60 characters. |
 | \`summary\` | up to 400 | What it says and wants, in about 180 characters, in the sender's own voice. Keep names, dates, times and amounts. **Never** the full body. |
-| \`category\` | optional | Which card it is drawn on (below). Any case. Left out: Personal if you sent replies, else Newsletter. |
+| \`category\` | optional | Which card it is drawn on (below). Any case. Left out: Personal. |
 | \`important\` | optional | True for real mail the user would want to keep or act on; false for junk. Left out, it is guessed: people, bills, failed deliveries and security alerts are important. |
 | \`special\` | optional | True for the one or two that matter most right now: a deadline today, a failed payment, someone waiting on them. The game gives them the level's own effect so they stand out. One or two a round at most. |
-| \`replies\` | optional, up to 2, 220 each | Reply drafts for mail from a person who expects an answer: a sentence or two each, written as the user, no greeting or sign-off. Make the two different (a yes and a not-now, say). |
+| \`replies\` | **required**, exactly 2, 220 each | The two bubbles in round two, left then right, shown if they keep it. A sentence or two each, written as the user, no greeting or sign-off, and different from each other (a yes and a not-now, say). From a person: replies you would send. From automated mail nobody reads a reply to (receipts, deliveries, newsletters, promos, alerts): two things they might want you to do instead, like "Unsubscribe me" or "Remind me Friday to pay this". |
 | \`amount\` | optional, up to 20 | Receipt and Bill: the amount as written, like \`$84.10\`. |
 | \`due\` | optional, up to 24 | Bill: when it is due, like \`Fri 14 Nov\`, or \`payment failed\`. |
 
@@ -98,7 +96,7 @@ Categories, and how the summary is shown on each:
 | Action | Meaning | What to do (after the user agrees) |
 |---|---|---|
 | \`{ action: "archive" }\` | They slashed it. | Archive it: out of the inbox, not deleted. |
-| \`{ action: "reply", reply_index, reply_text }\` | They picked a reply bubble: \`reply_index\` 0 is your first draft (or the first stock reply), 1 the second. \`reply_text\` is its words, as you sent them. | Reply in the thread, written up as a proper short email in the user's style. A stock "take me off this list" on a promo means they want out: offer to unsubscribe rather than send it. |
+| \`{ action: "reply", reply_index, reply_text }\` | They picked a reply bubble: \`reply_index\` 0 is your first, 1 your second. \`reply_text\` is its words, as you sent them. | A reply: send it in the thread, written up as a proper short email in the user's style. One of the things-to-do you wrote for automated mail ("Unsubscribe me"): do that instead of sending anything. |
 | \`{ action: "reply", dictated }\` | They said their own reply into the mic. \`dictated\` is what they said, word for word, as speech-to-text heard it: nothing is added or rewritten. | Write the reply from it, in their voice, and show it to them before sending. Speech-to-text can mishear names: check them. |
 | \`{ action: "reply", ask_user: true }\` | They chose to answer by voice, but no words were caught. | Ask them what to say. |
 | \`{ action: "leave" }\` | They kept it but didn't answer it, or let it fly past. | Nothing. Leave it unread. |
@@ -141,8 +139,8 @@ POST ${site}/api/rounds
   "title": "Tuesday inbox",
   "emails": [
     { "ref": "1", "from": "Sam Lee", "subject": "Lunch Thursday?", "summary": "Free for lunch Thursday at 12:30 near the office? I'll book somewhere.", "category": "Personal", "replies": ["Thursday works, see you at 12:30!", "Can't do Thursday. How about Friday?"] },
-    { "ref": "2", "from": "Daily Brew", "subject": "This week in coffee", "summary": "New single-origin beans are in. A guide to cold brew. 20% off grinders until Sunday.", "category": "Newsletter" },
-    { "ref": "3", "from": "City Power", "subject": "Your bill is ready", "summary": "Your November bill is ready. Autopay is off.", "category": "Bill", "amount": "$84.10", "due": "Fri 14 Nov", "special": true }
+    { "ref": "2", "from": "Daily Brew", "subject": "This week in coffee", "summary": "New single-origin beans are in. A guide to cold brew. 20% off grinders until Sunday.", "category": "Newsletter", "replies": ["Unsubscribe me", "Save the cold brew guide"] },
+    { "ref": "3", "from": "City Power", "subject": "Your bill is ready", "summary": "Your November bill is ready. Autopay is off.", "category": "Bill", "amount": "$84.10", "due": "Fri 14 Nov", "special": true, "replies": ["Remind me Thursday to pay it", "Turn autopay back on"] }
   ]
 }
 \`\`\`
@@ -170,5 +168,5 @@ Then, to the user: "You archived Daily Brew, said yes to Sam's lunch, and left t
 /** The MCP prompt play_inbox_zero: what the user would say to start a game. */
 export function playPrompt(count?: string) {
   const n = count && /^\d+$/.test(count.trim()) ? Math.min(30, Math.max(1, Number(count))) : 0;
-  return `Let's play Inbox Zero VR with my email. Read my newest ${n || '10 to 15'} unread emails in my inbox with your email tools and make a round of them with create_round, following the Inbox Zero VR server's instructions: short summaries only, your own refs, never real message ids, and two reply drafts as me for anything someone is waiting on me to answer. Then give me the code and the link. When I tell you I'm done, get the results, show me the plan by sender and subject, and only act after I say yes. Write any reply I said into the mic as a proper email from my words. When it's all done, delete the round.`;
+  return `Let's play Inbox Zero VR with my email. Read my newest ${n || '10 to 15'} unread emails in my inbox with your email tools and make a round of them with create_round, following the Inbox Zero VR server's instructions: short summaries only, your own refs, never real message ids, and two short replies as me on every email (for automated mail, two things you could do instead). Then give me the code and the link. When I tell you I'm done, get the results, show me the plan by sender and subject, and only act after I say yes. Write any reply I said into the mic as a proper email from my words. When it's all done, delete the round.`;
 }

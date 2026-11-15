@@ -48,7 +48,9 @@ export const RoundEmail = z.object({
   category: CategoryInput.optional().describe('Which card it is shown on: Work, Personal, Calendar (people and invites), Newsletter, Promo, Spam, Receipt, Bill, Tracking, Social or Alert.'),
   important: z.boolean().optional().describe('True if the user would want to keep it or act on it (a person writing to them, a bill, a failed payment or delivery, a security alert). Guessed from the category if left out.'),
   special: z.boolean().optional().describe('True for the one or two emails that matter most right now (a deadline today, a failed payment, someone waiting on them). The game shows them with the level\'s own special effect, so they stand out. Use it sparingly: one or two a round.'),
-  replies: z.array(z.string().trim().min(1).max(220)).max(2).optional().describe('Up to two short reply drafts (one or two sentences each) the user can pick in round two. Write them for anything a person sent that expects an answer.'),
+  // (required, two, 2026-11-15: an agent's feedback was that it got back a stock reply it never wrote and couldn't tell it from its own;
+  //  round two shows two bubbles on every email kept, so every email brings its two, and every reply in the results is the agent's)
+  replies: z.array(z.string().trim().min(1).max(220)).length(2).describe('Exactly two short replies for the two bubbles in round two, the left then the right, which the user picks between if they keep this email. One or two sentences each, written as the user, no greeting or sign-off, and different from each other (a yes and a not-now, say). Every email needs two. From a person: replies you would send. From automated mail nobody reads a reply to (receipts, deliveries, newsletters, promos, alerts): two things the user might want you to do instead, like "Unsubscribe me" or "Remind me Friday to pay this"; if they pick one, you do that rather than send it.'),
   amount: z.string().trim().max(20).optional().describe('Receipt and Bill: the amount as written, like $84.10.'),
   due: z.string().trim().max(24).optional().describe('Bill: when it is due, like Fri 14 Nov, or "payment failed".'),
 });
@@ -182,29 +184,26 @@ export async function deleteRound(code: string, key: string) {
 
 // ---------------------------------------------------------------- the game's side
 
-const STOCK: [string, string] = ['Thanks, got it!', 'Thanks! Can we talk about this later this week?'];
-const SPAM_NO: [string, string] = ['Please take me off this list. Thank you!', 'Not interested, thanks'];
 
 /** Sentences of a summary, each cut to fit a line of a newsletter card. */
 const lines = (s: string, n: number) => s.split(/(?<=[.!?])\s+|\s*[;\n•]\s*/).map(l => l.trim()).filter(l => l.length > 2).map(l => clamp(l, n));
 
 /** One email as an agent sent it → the card the game draws (the fields of the game's own Email). */
 export function toCard(e: RoundEmail): AgentCard {
-  const category: Category = e.category ?? (e.replies?.length ? 'Personal' : 'Newsletter');
+  const category: Category = e.category ?? 'Personal';
   const words = `${e.subject} ${e.summary}`;
   const failed = /\b(failed|declined|missed|unable to deliver|returned)\b/i.test(words);
   const important = e.important ?? (isPersonCard(category) || category === 'Bill' || (category === 'Tracking' && failed) || (category === 'Alert' && /\b(security|sign-?in|unusual|suspicious)\b/i.test(words)));
   const given = (e.replies ?? []).map(r => clamp(r, 200));
-  const stock = category === 'Spam' || category === 'Promo' ? SPAM_NO : STOCK;
   const card: AgentCard = {
     ref: e.ref, id: e.ref,
-    kind: important ? 'Real' : 'Junk', category, needsReply: given.length > 0,
+    kind: important ? 'Real' : 'Junk', category, needsReply: isPersonCard(category),
     from: clamp(e.from.replace(/\s*<[^>]*>\s*$/, ''), 24),
     subject: clamp(e.subject.replace(/^((re|fwd?):\s*)+/i, ''), 60),
     step: category === 'Tracking' ? (/\bdelivered\b/i.test(words) ? 3 : /\bout for delivery\b/i.test(words) ? 2 : /\b(shipped|on its way|in transit)\b/i.test(words) ? 1 : 0) : 0,
     failed: (category === 'Tracking' || category === 'Bill') && failed,
-    // (two bubbles in round two always: what the agent wrote, topped up with a stock one)
-    replies: [given[0] ?? stock[0], given[1] ?? stock[given[0] === stock[1] ? 0 : 1]],
+    // (the agent's two, always: nothing of ours is ever offered as a reply)
+    replies: [given[0] ?? '', given[1] ?? ''],
   };
   if (e.special) card.special = true;
   if (isPersonCard(category)) card.body = clamp(e.summary, 200);
