@@ -16,8 +16,13 @@ const OUT_HOLD = 1.6, END_CLIP = 13.0;
 // v43: the ending plays Keyboard Smash's end anthem whole (vr3/play/public/audio/office/anthem.m4a, 18.6 s): its first
 // "Smash" (1.76 s in, vr3/play/src/levels/lyrics.ts) lands on the ending clip's first monitor hit (its frame 4), and the
 // film runs on to the song's own last note. ANTHEM_REL is where the song starts, after T_OUT.
-const ANTHEM_LEN = 18.6, ANTHEM_REL = .4 + 3 / FPS - 1.76, OUT_LEN = ANTHEM_REL + ANTHEM_LEN + .1;
-const DUR = Math.round((CUES.cues.hero.end + OUT_HOLD + OUT_LEN) * FPS) / FPS;
+// v62: "use longer-outro.mp4 for the try it yourself and song - make sync and be nice": the longer ending (18 s: the last
+// emails smashed at the desk, then the monitor smashed to bits from its 5.5 s, then the empty office) starts as try it
+// yourself comes in, at real speed; the anthem starts under the card so its first "Smash" lands on the clip's first monitor
+// hit (frame 175), and the film still ends on the song's last note
+const ANTHEM_LEN = 18.6, OUTRO_AT = CUES.cues.try.start - .3, OUTRO_HIT = 174 / FPS;
+const ANTHEM_REL = OUTRO_AT + OUTRO_HIT - 1.76 - (CUES.cues.try.end + OUT_HOLD), OUT_LEN = ANTHEM_REL + ANTHEM_LEN + .1;
+const DUR = Math.round((CUES.cues.try.end + OUT_HOLD + OUT_LEN) * FPS) / FPS;      // (v57: the voice ends on the address)
 
 // in at a, out at b: {o, y} or null when gone (slide up and fade in, lift and fade out)
 function vis(T, a, b, { y = 32, din = .5, dout = .3, lift = -26 } = {}) {
@@ -60,15 +65,18 @@ const NOTES = [
   ['Prince Adewale', 'URGENT business proposal'], ['Crypto Kevin', 'This coin is going to the MOON'], ['Sales Bot 3000', 'Bumping this to the top'],
   ['Calendar Robot', 'Reminder: reminder about reminders'], ['Free Cruise Center', 'You WON a free cruise'],
 ];
-const noteEls = NOTES.map(([from, subj]) => { const d = document.createElement('div'); d.className = 'note'; d.innerHTML = `<span class="ni">${MINI}</span><span class="nt"><div class="nf">${from}</div><div class="ns">${subj}</div></span><span class="nw">now</span>`; $('notes').appendChild(d); return d; });
+// v56: "make variation of email avatar badge colors - make some match different levels - pink, purples, reds, etc"
+const NOTE_COL = [['#ffb3d1', '#ff5fa2', '#e0127a'], ['#d9c6ff', '#9a6cff', '#5a2fd6'], ['#ffb36b', '#ff5a2b', '#d42a12'], ['#5ac8fa', '#1f8cff', '#1668f0'], ['#c4ff9a', '#62d94a', '#2b9f2e'], ['#a8ffe0', '#46dcae', '#119c79'], ['#ffd76b', '#ffad2e', '#e07a12'], ['#f5a3ff', '#c04dff', '#8a1fd6']];
+const noteEls = NOTES.map(([from, subj], k) => { const d = document.createElement('div'); d.className = 'note'; d.innerHTML = `<span class="ni">${MINI}</span><span class="nt"><div class="nf">${from}</div><div class="ns">${subj}</div></span><span class="nw">now</span>`; const c = NOTE_COL[k % NOTE_COL.length]; d.querySelector('.ni').style.background = `linear-gradient(180deg,${c[0]} 0%,${c[1]} 55%,${c[2]} 100%)`; $('notes').appendChild(d); return d; });
 const flyEls = []; for (let k = 0; k < 30; k++) { const d = document.createElement('div'); d.className = 'fly'; d.innerHTML = ENV; $('flies').appendChild(d); flyEls.push(d); }
 
 /* ---------- v33: the Keyboard Smash icon's cuts ---------- */
-const KS_N = 10, KS_PER = 14;
+const KS_N = 10, KS_PER = 10;      // (v46: "a bit less particles", was 14)
 const ksParts = []; for (let k = 0; k < (KS_N + 2) * KS_PER; k++) {      // (v39: +2 groups for the exit burst)
   const i = document.createElement('i'); $('ks-parts').appendChild(i); ksParts.push(i); }
 
-const KC_PER = 12, kcParts = []; for (let k = 0; k < 5 * KC_PER; k++) { const i = document.createElement('i'); i.className = k % KC_PER < 8 ? 'key' : 'px'; $('kcs').appendChild(i); kcParts.push(i); }
+const KC_PER = 8, kcParts = []; for (let k = 0; k < 5 * KC_PER; k++) { const i = document.createElement('i'); i.className = k % KC_PER < 5 ? 'key' : 'px';      // (v46: fewer, was 12 with 8 keys)
+  $('kcs').appendChild(i); kcParts.push(i); }
 
 const SP_N = 160, spParts = []; for (let k = 0; k < SP_N; k++) { const i = document.createElement('i'); $('split-parts').appendChild(i); spParts.push(i); }
 
@@ -82,14 +90,14 @@ const T_SMASH_END = E('slash') + .45;      // the long smash plays through "Inbo
 const T_R2 = T_SMASH_END + 119 / FPS, T_LOGO = 12.0;      // v33: the logo and the Meta line come in at 0:12 (on "…to Inbox Zero")
 // v31: the push into the agent scene: the gameplay lifts off over half a second, ending as the window settles
 const T_PUSH = C('connect') - .75, PUSH_LEN = .55;
-const T_REALLY = C('really'), T_HERO = C('hero');
-const T_OUT = E('hero') + OUT_HOLD, T_END = T_OUT + OUT_LEN;
+const T_REALLY = C('really');
+const T_OUT = E('try') + OUT_HOLD, T_END = T_OUT + OUT_LEN;
 const T_ANTHEM = T_OUT + ANTHEM_REL, SONG = s => T_ANTHEM + s;      // (song time to film time)
 // the agent flow (v7)
 const M_IN = T_PUSH + .12,      /* v31: the window rises right behind the lifting gameplay (was C('connect') - .3) */ T_CONNECT = W('connect', 'muse'), T_OPEN = W('link', 'quest') + .15, T_HOME = T_OPEN + .75;
 // v32: after "Open" the How to Play clip rises over the agent window like a card (the 0:20 lift, in reverse)
 const T_REVEAL = T_OPEN + .25;
-const M2_IN = C('archives') - .15,      /* v43: later, so inbox zero gets a beat (was - .35) */ T_OKAY = W('okay', 'okay') + .05, M2_OUT = C('never') - .55;
+const M2_IN = C('archives') + .05,      /* v60: on "your agent", so inbox zero clears before the dark comes up (v43: - .15) */      /* v43: later, so inbox zero gets a beat (was - .35) */ T_OKAY = W('okay', 'okay') + .05, M2_OUT = C('never') - .42;      // (v64: a beat longer, for the agent doing it)
 // the hook's clock: the badge rolls up to 181 as it's said, then creeps; Filters knocks a few off and they come straight back,
 // Reminders adds its own reminder
 const T_ROLL0 = .25, T_181 = W('unread', '181') + .35, T_FIL = W('tried', 'filters'), T_REM = W('tried', 'reminders'), CREEP = 1.2;
@@ -109,6 +117,7 @@ for (let k = 1; FLY_AT.length < flyEls.length; k++) { const t = T_181 + k / CREE
 const NOTE_AT = [[.3, -1, 0], [.7, 1, 0], [1.1, -1, 1], [1.55, 1, 1], [2.4, -1, 2], [3.05, 1, 2], [T_REM + .3, -1, 3], [C('sword') + .35, 1, 3]];
 
 // footage: [clip, from, to, at, key] — clip frame `key` is shown at time `at`
+const GAP_RATE = ((12.9 - 7.25) + (3.2 - .67)) / (C('monitor') - (W('pull', 'say') + .05)), T_THROW = W('pull', 'say') + .05 + (12.9 - 7.25) / GAP_RATE;      // (v47)
 const SEG = [
   // v14: the user's own headset captures (vr-video/): the slash opens mid-cut with the pieces flying,
   // and the flamethrower's email catches fire (frame 14) just after "flamethrower"
@@ -123,14 +132,13 @@ const SEG = [
   // v32: the user's hands How to Play intro (cards, then a slash through the panel at frame 220 on "take your right hand"),
   // then the ROUND 1 countdown, at real speed from the card's rise to "Every email you keep"
   ['hands-slash', T_REVEAL, C('replies'), T_REVEAL, 1],
-  // v37: kyoto-hands.mp4's round two: the ROUND 2 countdown, then the two reply boards on "two short replies" (frame 1281)
-  ['kyoto-hands', C('replies'), C('hold'), W('replies', 'two'), 1281],
-  // v32: "Hold it up to the one you like": reply.mp4, Reply A glowing (frame 34) on "up"
-  ['reply-hold', C('hold'), C('pull'), C('hold'), 22],
-  // v32: "pull it close to say your own": recording.mp4, the email at the mic and the recording panel opening on "close"
-  ['recording', C('pull'), C('later'), C('pull'), 33],
-  ['kyoto-round2b', C('later'), C('minutes'), W('later', 'throw') + .15, 249],
-  ['kyoto-round2b', C('minutes'), C('monitor'), C('minutes'), 'end-90'],
+  // v44: "new video for 0:40 to 0:53": vr-video/10-new-take/reply-short.mp4 (14 s), one take from the ROUND 2 countdown to
+  // Send it / Redo. Real speed, with its reply boards on "two" and Reply A lit through "hold it up to the one you like";
+  // the stretch round SENT runs 1.5x so the email is at the mic on "say your own" (a map of [film time, clip seconds])
+  // v47: "make the speed fit that 6 second gap, it doesnt need to line up with voice over": from the email at the mic to
+  // 0:53 is one steady speed (about 1.2x) across the recording (to Send it) and the throw (through LATER and the slice)
+  ['reply-short', C('replies'), T_THROW, 0, [[C('replies'), .33], [W('hold', 'like') - .2, 5.0], [W('pull', 'say') + .05, 7.25], [T_THROW, 12.9]]],
+  ['webvr-chair', T_THROW, C('monitor'), 0, [[T_THROW, .67], [C('monitor'), 3.2]]],
   // v4: the long level shots (one cut on the word, then the view opens up while more mail is cut), each held 5 s past its line
   ['lvl-keyboard', C('monitor'), C('castle'), C('monitor'), 1],      // v35: the user's level clip, whole, at real speed
   ['lvl-haunted', C('castle'), C('lab'), C('castle'), 1],      // v35: the user's level clip, whole, at real speed
@@ -138,10 +146,16 @@ const SEG = [
   ['lvl-inferno', C('inferno'), C('kyoto'), C('inferno'), 31],      // v42: from 1 s in ("the clip is more interesting after 1 second")      // v35: the user's level clip, whole, at real speed
   ['lvl-kyoto', C('kyoto'), C('axe'), C('kyoto'), 1],      // v35: the user's level clip, whole, at real speed
   ['lvl-lumber', C('axe'), C('or'), C('axe'), 1],      // v35: the user's level clip, whole, at real speed
-  ['lvl-space', C('or'), C('iwsdk') - .02, C('or'), 1],      // v35: the user's level clip, whole, at real speed
+  // v52: "use this for the superspace level background, and keep playing it during the web vr and seated, so its the same
+  // scene behind the whole time from 1:17 to 1:32": vr-video/05-space/superspace-longer.mp4 (15 s), whole, at real speed,
+  // from the Super Space line through built for web (softened behind the browser) and seated (it fades out with the player)
+  ['superspace', C('or'), C('really') - .02, C('or'), 1],
   // v43: "use the inferno clips as background game" for try it yourself: inferno-long from its fight (frame 45), at 0.85x
-  ['inferno-long', C('try') - .3, T_OUT + .4, C('try') - .3, 45, .85],
-  ['kbd-outro', T_OUT + .4, T_END + .1, T_OUT + .4, 1],      // v41: the Keyboard Smash ending, whole
+  // (v57: no Inferno behind try it yourself: it's on white now)
+  // v60: "the try it yourself - instead of white background, fade the end video and the text over the screen (like one
+  // round at a time)": the Keyboard Smash ending starts under try it yourself, its opening slowed (0.26x) under a dark
+  // shade, then real speed as the card clears, so its frame 55 (a monitor hit) still lands on the anthem's first "Smash"
+  ['kbd-outro2', OUTRO_AT, T_END + .1, OUTRO_AT, 1],      // (v62: vr-video/02-keyboard/longer-outro.mp4, whole, at real speed)
 ];
 // level logos over the footage
 const LOGOS = [
@@ -154,7 +168,7 @@ const PHRASES = [
   // (v32: "Throw to keep" removed: the game's own How to Play cards say it)
   // (v32: "Cut to archive" removed: the game's own How to Play cards say it)
   // (v7: no "Saved as a Gmail draft": the agent sends replies now, after you say okay, and the approval scene shows it)
-  ['Leave it for tomorrow', W('later', 'leave') - .1, E('later') + .3],
+  // (v44: "Leave it for tomorrow" removed: the new reply take is recording there, not throwing it away)
   // (no line over the end screen: the game's own "Cleared 10 emails" sits there)
   // (no "Play from your chair" line since v6: the generated clip shows it, and the line sat on the player's legs)
 ];
@@ -178,7 +192,7 @@ const badgeEls = BADGES.map(([ic, col, text]) => { const d = document.createElem
 const BADGE_AT = BADGES.map((b, i) => T_OUT + 1.1 + i * 2.35);
 
 /* ---------- v43: built for web, seated, clear inbox ---------- */
-const B_A = C('iwsdk') - .02, T_CLICK = W('browser', 'browser'), T_GAME0 = T_CLICK + .3, T_EXP0 = E('nodl') - .2, T_FULL = T_EXP0 + .5;
+const B_A = C('iwsdk') - .02, T_CLICK = W('browser', 'browser'), T_CLICK2 = W('nodl', 'nothing') + .08, T_GAME0 = T_CLICK2 + .22, T_EXP0 = E('nodl') - .2, T_FULL = T_EXP0 + .5;
 // the level select in the browser and behind the seated player is one clip on one clock, slowed (120 frames for ~7 s)
 const HOME_RATE = .55, homeFrame = T => clamp(1 + Math.floor((T - T_GAME0) * FPS * HOME_RATE), 1, FOOT.home);
 const homeSrc = T => `../work/footage/home/${String(homeFrame(T)).padStart(4, '0')}.jpg`;
@@ -190,7 +204,7 @@ const SEAT_MAP = [[0, .9], [SEAT_SLASH, 6.4], [SEAT_END, 6.4 + (SEAT_END - SEAT_
 function seatSrc(u) { for (let k = 0; k < SEAT_MAP.length - 1; k++) { const [u0, s0] = SEAT_MAP[k], [u1, s1] = SEAT_MAP[k + 1]; if (u <= u1 || k === SEAT_MAP.length - 2) return s0 + (s1 - s0) * clamp((u - u0) / (u1 - u0)); } }
 function seatAt(src) { for (let k = 0; k < SEAT_MAP.length - 1; k++) { const [u0, s0] = SEAT_MAP[k], [u1, s1] = SEAT_MAP[k + 1]; if (src <= s1) return SEAT_A + u0 + (u1 - u0) * (src - s0) / (s1 - s0); } return null; }
 // "and it really does clear your inbox": the intro's app icon again, its banners swiped away and the badge run down to zero
-const T_CLR0 = SEAT_B, T_CLR1 = M2_IN + .12, T_CLR_GO = W('really', 'does') - .15, T_ZERO = W('really', 'inbox') - .25;
+const T_CLR0 = SEAT_B, T_CLR1 = M2_IN + .12, T_CLR_GO = W('really', 'does') - .15, T_ZERO = W('really', 'your') - .05;      // (v56: zero on "your", was on "inbox", so the slash has room)
 const clearParts = []; for (let k = 0; k < 44; k++) { const i = document.createElement('i'); $('clear-parts').appendChild(i); clearParts.push(i); }
 // pixel icons (a string per row, X = filled), drawn as crisp SVG rects
 function pixSvg(rows, fill, cell) {
@@ -200,23 +214,50 @@ function pixSvg(rows, fill, cell) {
 $('ic-sdk').innerHTML = pixSvg(['..XXXXXXXXXX..', '.XXXXXXXXXXXX.', 'XXooXXXXXXooXX', 'XXooXXXXXXooXX', 'XXXXXX..XXXXXX', '.XXXX....XXXX.'], '#170d15', 3.4);
 $('ic-nodl').innerHTML = pixSvg(['X.....XX.....X', '.X....XX....X.', '..X...XX...X..', '...X..XX..X...', '..XXX.XX.XXX..', '...XXXXXXXX...', '....XXXXXX....', '.....XXXX.....', 'XX....XX....XX', 'XXXXXXXXXXXXXX'], '#170d15', 3);
 // the flow's packets (envelopes along the wires) and the close's embers
-const packets = []; for (let k = 0; k < 9; k++) { const i = document.createElement('i'); i.innerHTML = ENV; $('packets').appendChild(i); packets.push(i); }
+// v55: the privacy diagram's packets: envelopes from your inbox to your agent, short summaries from your agent to the game
+const envPk = [], sumPk = [];
+const PXENV = (() => { const rows = ['DDDDDDDDDDDDDD', 'DcccccccccccccD'.slice(0, 14), 'DdcccccccccccdD'.slice(0, 14), 'DcdccccccccdcD', 'DccdccccccdccD', 'DcccdccccdcccD', 'DccccddddccccD', 'DccccccccccccD', 'DccccccccccccD', 'DDDDDDDDDDDDDD']; const C = { D: '#2a2118', c: '#efe4c8', d: '#b8a98a' }; let r = ''; rows.forEach((row, y) => [...row].forEach((ch, x) => { if (C[ch]) r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${C[ch]}"/>`; })); return `<svg viewBox="0 0 14 10" width="56" height="40" shape-rendering="crispEdges">${r}</svg>`; })();      // (v60: a pixel email, as the game's)
+for (let k = 0; k < 4; k++) { const i = document.createElement('i'); i.className = 'env'; i.innerHTML = ENV; $('packets').appendChild(i); envPk.push(i); }
+for (let k = 0; k < 11; k++) { const i = document.createElement('i'); i.className = 'sum'; $('packets').appendChild(i); sumPk.push(i); }
+$('fg-icon').innerHTML = pixSvg(['..XXXXXXXXXX..', '.XXXXXXXXXXXX.', 'XXooXXXXXXooXX', 'XXooXXXXXXooXX', 'XXXXXX..XXXXXX', '.XXXX....XXXX.'], '#7dffc9', 9);
 const embers = []; for (let k = 0; k < 46; k++) { const i = document.createElement('i'); i.className = 'ember'; $('close').insertBefore(i, $('end-logo')); embers.push(i); }
 // the level cards: two rows, each with its name in the level's colour, as on the game's home screen
 const LEVEL_NAMES = { kyoto: ['Kyoto Nights', '#ffc0d9'], office: ['Keyboard Smash', '#7dffc9'], castle: ['The Haunted Hall', '#c9b2ff'], lab: ['Toxic Danger', '#8dff6a'], space: ['Super Space', '#5ef0ff'], inferno: ['Inferno', '#ff9a52'], lumber: ['LumberHack', '#ffc440'] };
 cards.forEach((c, i) => { const [n, col] = LEVEL_NAMES[LEVELS[i]]; c.innerHTML = `<span class="lc-b"><span class="lc-in"><img src="../work/assets/home/${LEVELS[i]}.webp" alt=""><span class="lname" style="color:${col}">${n}</span><i class="glint"></i></span></span>`; });
 
+const dust = []; for (let k = 0; k < 40; k++) { const i = document.createElement('i'); const sz = rnd(k + 9) > .8 ? 6 : 4; i.style.width = i.style.height = sz + 'px'; i.style.background = ['#ff2e93', '#3df5c2', '#8f84ff', '#ffffff'][k % 4]; $('retro-dust').appendChild(i); dust.push(i); }
+// v60: the diagram's inbox as pixel art (a banded blue tile is the CSS; this is the envelope on it)
+// v64: "email icon, and robot icon - more pixel fun": pixel art on banded tiles with stepped corners (white scene)
+{ const art = (rows, C, cell) => { let r = ''; rows.forEach((row, y) => [...row].forEach((ch, x) => { if (C[ch]) r += `<rect x="${x}" y="${y}" width="1.02" height="1.02" fill="${C[ch]}"/>`; })); return `<svg viewBox="0 0 ${rows[0].length} ${rows.length}" width="${rows[0].length * cell}" height="${rows.length * cell}" shape-rendering="crispEdges">${r}</svg>`; };
+  document.querySelector('#n-inbox .fi-inbox').innerHTML = art(['XXXXXXXXXXXXXX', 'XoXXXXXXXXXXoX', 'XXoXXXXXXXXoXX', 'XXXoXXXXXXoXXX', 'XXXXoXXXXoXXXX', 'XXXXXooooXXXXX', 'XXXXXXXXXXXXXX', 'XXXXXXXXXXXXXX', 'XXXXXXXXXXXXXX', 'XXXXXXXXXXXXXX'], { X: '#ffffff', o: '#7cc4ff' }, 9);
+  // v66: "make the Agent - just two pixel eyes, like a agent avatar"
+  document.querySelector('#n-agent .frobot').innerHTML = `<span class="feyes">${art(['WW....WW', 'WW....WW', 'WW....WW', 'WW....WW'], { W: '#ffffff' }, 15)}</span>`; }
+
 /* ---------- footage ---------- */
+function segSrc(seg, T) {
+  const [clip, , , at, key0, speed = 1] = seg, n = FOOT[clip];
+  let f;
+  if (Array.isArray(key0)) {      // (v44: [film time, clip seconds] pairs, straight lines between)
+    let sec = key0[key0.length - 1][1];
+    for (let k = 0; k < key0.length - 1; k++) if (T <= key0[k + 1][0]) { const [t0, s0] = key0[k], [t1, s1] = key0[k + 1]; sec = s0 + (s1 - s0) * clamp((T - t0) / (t1 - t0)); break; }
+    f = clamp(Math.round(sec * FPS) + 1, 1, n);
+  } else f = clamp(Math.round(keyOf(clip, key0) + (T - at) * FPS * speed), 1, n);
+  return `../work/footage/${clip}/${String(f).padStart(4, '0')}.jpg`;
+}
+// v49: "0:41 transition, made a quick fade, so not as abrupt": cuts that crossfade instead (film times where a clip starts)
+const XFADE = [C('replies')], XF_LEN = .4;
 function keyOf(clip, key0) { return key0 === 'cut' ? CUTS[clip][0] : typeof key0 === 'string' ? FOOT[clip] + +key0.slice(3) : key0; }
 let footSrc = '';
 function footage(T) {
   const seg = SEG.find(s => T >= s[1] && T < s[2]);
   if (!seg) { $('foot').style.zIndex = ''; $('foot').style.borderRadius = ''; $('foot').style.boxShadow = ''; show($('foot'), false); return null; }
-  const [clip, from, , at, key0, speed = 1] = seg, n = FOOT[clip];
-  const key = keyOf(clip, key0);
-  const f = clamp(Math.round(key + (T - at) * FPS * speed), 1, n);
-  const src = `../work/footage/${clip}/${String(f).padStart(4, '0')}.jpg`;
+  const [clip, from] = seg, src = segSrc(seg, T);
+  // v49: a quick crossfade at the cuts listed in XFADE: the clip before carries on, fading out over the new one
+  const xf = XFADE.find(x => T >= x && T < x + XF_LEN), prev = xf !== undefined && SEG.find(g => g[2] === xf && g[1] < xf), pv = $('foot-prev');
+  if (prev) { const ps = segSrc(prev, T); if (!pv.src.endsWith(ps.slice(2))) pv.src = ps; pv.style.opacity = 1 - eio((T - xf) / XF_LEN); pv.style.visibility = 'visible'; }
+  else pv.style.visibility = 'hidden';
   if (src !== footSrc) { $('foot-img').src = src; footSrc = src; }
+  $('foot-img').style.filter = '';      // (scenes over the footage may soften it: browser, seated)
   // a slow push in through each shot, so nothing sits still
   $('foot-img').style.transform = clip === 'sword-cut'
     ? `scale(${1.22 - .2 * eo((T - from) / .4)}) translate(${10 * (1 - clamp((T - from) / .3)) * Math.sin((T - from) * 80)}px,0)`      // v21: a punch in as the screen splits
@@ -238,6 +279,7 @@ function inbox(T) {
   if (!hookOn && !endOn) { show(wrap, false); show($('half-a'), false); show($('half-b'), false); return; }
   show(wrap, true, 1, '');
   if (endOn) return clearInbox(T);
+  $('appicon').style.opacity = 1; show($('ch-a'), false); show($('ch-b'), false); $('clr-tick').style.transform = 'scale(0)'; $('clr-ring').style.opacity = 0; $('clr-streak').style.opacity = 0;
   $('appdone').style.transform = 'scale(0)'; $('appring').style.opacity = 0; $('applabel').textContent = 'Inbox'; $('app').style.transform = ''; $('app').style.opacity = 1;
   let A, count;
   if (hookOn) {
@@ -382,10 +424,10 @@ function clearInbox(T) {
   $('tried').style.display = 'none'; $('slash').style.opacity = 0; show($('half-a'), false); show($('half-b'), false);
   $('notes').style.display = $('flies').style.display = 'block'; $('notes').style.visibility = $('flies').style.visibility = 'visible';
   const icon = $('appicon'), badge = $('appbadge'), done = $('appdone'), ring = $('appring'), label = $('applabel');
-  const t0 = T_CLR0, go = T_CLR_GO, z = T_ZERO;
+  const t0 = T_CLR0 + .1, go = T_CLR_GO, z = T_ZERO;
   // in: the icon pops up as the seated scene fades; out: it lifts away as the agent's window rises
   const pin = eo((T - t0 - .08) / .4), over = .07 * Math.sin(Math.PI * clamp((T - t0 - .3) / .3));
-  const out = eio((T - (M2_IN - .1)) / .3);
+  const out = eio((T - (M2_IN - .32)) / .27);      // (v60: gone before the retro backdrop comes up)
   $('app').style.opacity = clamp((T - t0) / .15) * (1 - out);
   $('app').style.transform = `translateY(${-60 * out}px)`;
   // the count: from where the hook left it down to zero, eased, with a pop on each envelope that leaves
@@ -396,20 +438,33 @@ function clearInbox(T) {
   const zp = clamp((T - z) / .22);      // the red badge swells and is gone
   badge.style.transform = `scale(${T < z ? 1 + pop : (1 + .25 * Math.sin(Math.PI * zp * .5)) * (1 - eo((zp - .3) / .7))})`;
   badge.style.opacity = T < z + .2 ? 1 : 0;
-  const dp = clamp((T - z - .1) / .4);      // the tick badge lands
-  done.style.transform = `scale(${dp <= 0 ? 0 : eo(dp) + .22 * Math.sin(Math.PI * clamp(dp / .7))}) rotate(${-25 * (1 - eo(dp))}deg)`;
-  // the icon: jiggles while it empties (calmer as it goes), then squashes and springs at zero
-  const jig = T >= go && T < z ? 1.4 * (1 - runP) : 0, sq = clamp((T - z) / .5);
-  const sx = 1 + .1 * Math.sin(Math.PI * sq) * Math.exp(-3 * sq) * (sq < .25 ? 1 : -1), sy = 1 - (sx - 1);
-  icon.style.transform = `translateY(${-6 * Math.sin(T * 1.7)}px) rotate(${jig * Math.sin(T * 23)}deg) scale(${(lerp(.6, 1, pin) + over) * (1 + .03 * Math.max(0, 1 - since / .12))}) scale(${sx},${sy})`;
-  const rp = clamp((T - z - .05) / .7);
-  ring.style.opacity = rp > 0 && rp < 1 ? .9 * (1 - rp) : 0;
-  ring.style.transform = `scale(${lerp(1, 1.75, eo(rp))})`; ring.style.borderWidth = `${lerp(10, 2, rp)}px`;
-  icon.style.boxShadow = `0 34px 70px -28px #1650d077,inset 0 3px 0 #ffffff40,inset 0 -6px 14px #0b3ea833,0 0 ${80 * (1 - rp) * (rp > 0 ? 1 : 0)}px ${30 * (1 - rp) * (rp > 0 ? 1 : 0)}px #14b88a55`;
-  const lz = T >= z + .1;
-  if (lz && !label.querySelector('b')) label.innerHTML = 'Inbox <b>zero</b>'; else if (!lz && label.querySelector('b')) label.textContent = 'Inbox';
-  const lp = clamp((T - z - .1) / .3);
-  label.style.transform = `scale(${1 + .12 * Math.sin(Math.PI * lp)})`;
+  done.style.transform = 'scale(0)'; ring.style.opacity = 0;
+  // v56: "when the inbox gets to 0 slash it away - similar effect to the green inbox icon earlier": a streak across the
+  // icon, which splits along it into two halves that fly apart and fall, with a burst of bits off the cut; then a big
+  // green tick lands where it was, a ring goes out, and the label reads "Inbox zero"
+  const tc = z + .12, cq = clamp((T - tc) / .62), cut = T >= tc;
+  const jig = T >= go && T < z ? 1.4 * (1 - runP) : 0, shk = T >= z && T < tc ? 7 * Math.sin((T - z) * 90) : 0;
+  icon.style.transform = `translateY(${-6 * Math.sin(T * 1.7)}px) translateX(${shk}px) rotate(${jig * Math.sin(T * 23)}deg) scale(${(lerp(.6, 1, pin) + over) * (1 + .03 * Math.max(0, 1 - since / .12))})`;
+  icon.style.opacity = cut ? 0 : 1;
+  icon.style.boxShadow = '';
+  const CUT = -14 * Math.PI / 180, dx = Math.cos(CUT), dy = Math.sin(CUT), nx = Math.sin(CUT), ny = -Math.cos(CUT);
+  [['ch-a', 1], ['ch-b', -1]].forEach(([id, sg]) => {
+    const h = $(id);
+    if (!cut || cq >= 1) return show(h, false);
+    const d = 150 * eo(cq), sl = 70 * eo(cq);
+    show(h, true, 1 - clamp((cq - .55) / .45), `translate(${sg * (nx * d + dx * sl)}px,${sg * (ny * d + dy * sl) + 520 * cq * cq}px) rotate(${sg * -18 * cq}deg)`);
+  });
+  const st = $('clr-streak'), sp = clamp((T - (tc - .1)) / .12);
+  st.style.opacity = T >= tc - .1 && T < tc + .2 ? 1 - clamp((T - tc - .04) / .16) : 0;
+  st.style.transform = `rotate(${-14}deg) translateX(${lerp(-420, 0, eo(sp))}px) scaleY(${1 + 3 * clamp((T - tc) / .15)})`;
+  const tk = $('clr-tick'), tq = clamp((T - tc - .2) / .4);
+  tk.style.transform = `scale(${tq <= 0 ? 0 : tq < .55 ? lerp(.2, 1.15, eo(tq / .55)) : lerp(1.15, 1, eo((tq - .55) / .45))}) rotate(${-30 * (1 - eo(tq))}deg)`;
+  const rr = $('clr-ring'), rq = clamp((T - tc - .3) / .7);
+  rr.style.opacity = rq > 0 && rq < 1 ? .85 * (1 - rq) : 0; rr.style.transform = `scale(${lerp(.9, 1.9, eo(rq))})`; rr.style.borderWidth = `${lerp(12, 2, rq)}px`;
+  const lz = T >= tc + .25;
+  if (label.querySelector('b')) label.textContent = 'Inbox';      // (v67: "drop inbox zero text": the label goes with the icon)
+  const lp = clamp((T - tc - .25) / .3);
+  label.style.transform = ''; label.style.opacity = 1 - clamp((T - tc) / .2);
   // the banners: back in their places from the intro, then swiped off to their own side, one after another
   const ROW_GAP = 128, NOTE_H = 94, top0 = 540 - (3 * ROW_GAP + NOTE_H) / 2, ARC = [64, 14, 14, 64];
   const ORDER = [6, 7, 4, 5, 2, 3, 0, 1];      // (the bottom rows first)
@@ -435,15 +490,17 @@ function clearInbox(T) {
     el.style.transform = `translate(${x - 25}px,${y - 18}px) rotate(${lerp(0, (rnd(k + 105) - .5) * 120, e)}deg) scale(${lerp(.5, 1.5, e)})`;
   });
   // the burst at zero: teal, blue and pink bits and white glints, flung out and falling
-  const bq0 = T - z - .08;
+  const bq0 = T - (z + .12), CR = -14 * Math.PI / 180;
   clearParts.forEach((e, k) => {
-    const q = bq0 - rnd(k + 7) * .06;
+    const q = bq0 - rnd(k + 7) * .05;
     if (q < 0 || q > 1.1) { e.style.opacity = 0; return; }
-    const ang = rnd(k) * Math.PI * 2, sp = 300 + 520 * rnd(k + 1), kind = rnd(k + 2);
-    const x = ix + Math.cos(ang) * sp * eo(q / .9), y = iy + Math.sin(ang) * sp * .75 * eo(q / .9) + 520 * q * q;
+    const along = (rnd(k + 9) - .5) * 300, side = k % 2 ? 1 : -1, sp = 220 + 520 * rnd(k + 1), kind = rnd(k + 2);
+    const ox = ix + Math.cos(CR) * along, oy = iy + Math.sin(CR) * along;
+    const vx = Math.sin(CR) * side * .9 + Math.cos(CR) * (rnd(k + 4) - .5), vy = -Math.cos(CR) * side * .9 + Math.sin(CR) * (rnd(k + 4) - .5);
+    const x = ox + vx * sp * eo(q / .9), y = oy + vy * sp * eo(q / .9) + 520 * q * q;
     const sz = kind > .85 ? 9 : 12 + 12 * rnd(k + 3);
     e.style.width = sz + 'px'; e.style.height = sz + 'px';
-    e.style.background = kind > .85 ? '#ffffff' : ['#14b88a', '#5ac8fa', '#1f8cff', '#ff2e93', '#7dffc9'][Math.floor(rnd(k + 4) * 5)];
+    e.style.background = kind > .85 ? '#ffffff' : ['#5ac8fa', '#1f8cff', '#1668f0', '#ffffff', '#ff2e93', '#efe4c8'][Math.floor(rnd(k + 4) * 6)];
     e.style.boxShadow = kind > .85 ? '0 0 12px #fff' : 'none';
     e.style.opacity = 1 - clamp((q - .7) / .4);
     e.style.transform = `translate(${x - sz / 2}px,${y - sz / 2}px) rotate(${(rnd(k + 5) - .5) * 720 * q}deg)`;
@@ -475,7 +532,7 @@ function splitParts(T) {
 
 function flash(T) {
   const f = $('flash');
-  const hits = [[T_HERO + .02, .45, .35]];
+  const hits = [];      // (v57: no hero flash)
   let o = 0; for (const [t, a, d] of hits) if (T >= t && T < t + d) o = Math.max(o, a * (1 - (T - t) / d));
   show(f, o > 0, o);
 }
@@ -484,22 +541,24 @@ function slam(T) {
   // "Inbox Zero!": the logo lands on the night, then glides to where the home screen keeps it
   const L = $('logo-slam'), a = T_INBOX, g0 = C('hack'), g1 = g0 + .9;
   const night = $('night');
-  const nightOn = T >= C('try') - .3;
+  const nightOn = false;      // (v57: try it yourself is on white)
   if (nightOn) {
     show(night, true, T >= C('try') - .3 ? eo((T - C('try') + .3) / .3) : 1, '');
     $('night-img').style.filter = false ? `blur(${lerp(22, 0, eio((T - g0) / .9))}px) brightness(${lerp(.42, 1, eio((T - g0) / .9))}) saturate(1.2)` : 'blur(22px) brightness(.42) saturate(1.2)';
   } else show(night, false);
   // v41: 8 s into the ending clip the dark overlay comes back with the logo and the Meta line, floating a little;
   // then the overlay goes to black under them, and they fade out last
-  const T_E8 = T_OUT + .4 + 8, eb = $('end-black');
+  const T_E8 = SONG(9.25), eb = $('end-black');      // v43: on the anthem's "No more email tonight" (was 8 s into the clip)
   if (T >= T_E8) {
     const e = T - T_E8, sh = $('logo-shade'), cr = $('logo-credit'), left = T_END - T;
     show(sh, true, eo(e / .8), '');
-    show(eb, true, eio((e - 2.2) / 1.4), '');
-    if (!L.src.endsWith('logos/office.webp')) L.src = '../work/assets/logos/office.webp';
+    show(eb, true, eio((e - 3.6) / 1.2), '');      // (black before the clip runs out)
+    if (!L.src.endsWith('logos/site.webp')) L.src = '../work/assets/logos/site.webp';      // (v69: the main logo)
     L.style.width = '940px';
-    const pin = eo((e - .3) / .6), fade = 1 - eio((.9 - left) / .9), bob = Math.sin(e * 1.4) * 9, breathe = 1 + .012 * Math.sin(e * 1.1);
-    show(L, e > .3, pin * fade, `translate(-50%,-50%) translateY(${-70 + bob + (1 - pin) * 30}px) scale(${lerp(1.12, 1, pin) * breathe})`);
+    // (v43: it punches on the song's "Inbox zero" and "We won!", and fades with the song's last note)
+    const pin = eo((e - .3) / .6), fade = 1 - eio((T - SONG(16.9)) / 1.6), bob = Math.sin(e * 1.4) * 9, breathe = 1 + .012 * Math.sin(e * 1.1);
+    const beat = [[11.6, .05], [12.42, .07], [15.82, .06], [16.04, .1]].reduce((m, [st, g]) => { const d = T - SONG(st) + .03; return d >= 0 && d < .3 ? Math.max(m, g * Math.sin(Math.PI * d / .3)) : m; }, 0);
+    show(L, e > .3, pin * fade, `translate(-50%,-50%) translateY(${-70 + bob + (1 - pin) * 30}px) scale(${(lerp(1.12, 1, pin) + beat) * breathe})`);
     const cp = eo((e - .75) / .5);
     show(cr, e > .75, cp * fade, `translate(-50%,-50%) translateY(${92 + bob * .8 + (1 - cp) * 20}px)`);
     show($('round-line'), false); show($('ks-cut'), false);
@@ -511,11 +570,11 @@ function slam(T) {
   // "Clear your email inbox / one round at a time" takes their place, its second half arriving word by word as it's said
   const u = T - T_LOGO, shade = $('logo-shade'), credit = $('logo-credit'), line = $('round-line');
   const T_OUT1 = C('game') - .15, T_SHADE_OUT = E('round') + .3;
-  if (u < 0 || T > T_SHADE_OUT + .6) { show(shade, false); show(credit, false); show(line, false); return show(L, false); }
+  if (u < 0 || T > T_SHADE_OUT + .6) { show(shade, false); show(credit, false); show(line, false); show($('ks-cut'), false); return show(L, false); }
   show(shade, true, eo(u / .35) * (1 - .1 * eo((u - .15) / .5)) * (1 - .13 * eio((T - T_OUT1) / .6)) * (1 - eio((T - T_SHADE_OUT) / .5)), '');      // (v31: lighter under the headline, so the smash still reads)
   // the logo and the Meta line: in, then lifted away at 0:15
   if (T < T_OUT1 + .45) {
-    if (!L.src.endsWith('logos/office.webp')) L.src = '../work/assets/logos/office.webp';
+    if (!L.src.endsWith('logos/site.webp')) L.src = '../work/assets/logos/site.webp';      // (v69: the main logo)
     L.style.width = '940px';
     const pin = eo(u / .28), pout = eio((T - T_OUT1) / .4);
     const sc = lerp(1.35, 1, pin) + .04 * Math.sin(Math.PI * clamp((u - .2) / .25)) - .08 * pout;
@@ -623,23 +682,25 @@ function homeScreen(T) {
 function cursor(T) {
   const c = $('cursor'), r = $('ripple');
   const mid = id => { const q = $(id).getBoundingClientRect(); return [q.left + q.width / 2, q.top + q.height / 2 + 6]; };
-  // [from, arrive, startX, startY, target (element id or point), clickAt]
+  // [from, arrive, startX (or an element id to start from), startY, target (element id or point), clickAt, chain?]
+  // chain: the move hands straight on to the next one (no fade out), or comes straight from the last (no fade in)
   const moves = [
     [C('connect') + .15, T_CONNECT - .08, 1500, 900, 'c-btn', T_CONNECT],
-    [W('link', 'opens') - .2, T_OPEN - .08, 1400, 880, 'm-open', T_OPEN],
-    // (v32: the two level-select clicks are gone with the level select)
-    [C('browser') - .6, T_CLICK - .07, 1520, 1010, 'b-play', T_CLICK],      // v43: on the site's own Play in browser button
-    [C('sends') + .2, T_OKAY - .08, 1450, 900, 'm-ok', T_OKAY],
+    [W('link', 'opens') - .2, T_OPEN - .08, 1400, 880, 'm-lurl', T_OPEN],      // (v65: on the link itself)
+    // v54: on the level select in the browser: Super Space on "browser", then Clean your inbox
+    [C('browser') - .6, T_CLICK - .07, 1520, 1010, 'b-play', T_CLICK, { until: T_CLICK + .2, noOut: true }],
+    [T_CLICK + .2, T_CLICK2 - .07, 'b-play', 0, 'b-go', T_CLICK2, { noIn: true }],
+    // (v64: no Okay click: "Okay!" is typed in the message box)
   ];
-  const m = moves.find(m => T >= m[0] && T < m[5] + .45);
+  const m = moves.find(m => T >= m[0] && T < (m[6]?.until ?? m[5] + .45));
   if (!m) { show(c, false); show(r, false); return; }
-  const to = typeof m[4] === 'string' ? mid(m[4]) : m[4];
+  const to = typeof m[4] === 'string' ? mid(m[4]) : m[4], from = typeof m[2] === 'string' ? mid(m[2]) : [m[2], m[3]];
   const p = eio((T - m[0]) / (m[1] - m[0]));
-  const x = lerp(m[2], to[0], p), y = lerp(m[3], to[1], p);
+  const x = lerp(from[0], to[0], p), y = lerp(from[1], to[1], p);
   const press = T >= m[5] && T < m[5] + .14 ? .86 : 1;
-  show(c, true, clamp((T - m[0]) / .2) * (1 - clamp((T - m[5] - .25) / .2)), `translate(${x}px,${y}px) scale(${press})`);
-  const rp = (T - m[5]) / .4;
-  if (rp >= 0 && rp < 1) { r.style.left = x + 5 + 'px'; r.style.top = y + 3 + 'px'; show(r, true, 1 - rp, `scale(${lerp(.3, 1.2, eo(rp))})`); } else show(r, false);
+  show(c, true, (m[6]?.noIn ? 1 : clamp((T - m[0]) / .2)) * (m[6]?.noOut ? 1 : 1 - clamp((T - m[5] - .25) / .2)), `translate(${x}px,${y}px) scale(${press})`);
+  const cm = moves.find(q => T >= q[5] && T < q[5] + .4);
+  if (cm) { const [rx, ry] = typeof cm[4] === 'string' ? mid(cm[4]) : cm[4], rp = (T - cm[5]) / .4; r.style.left = rx + 5 + 'px'; r.style.top = ry + 3 + 'px'; show(r, true, 1 - rp, `scale(${lerp(.3, 1.2, eo(rp))})`); } else show(r, false);
 }
 
 // A message in the agent's chat: it takes its place in the column when it arrives, then slides up into it.
@@ -656,6 +717,10 @@ function muse(T) {
   const setup = T >= M_IN && T < T_REVEAL + PUSH_LEN - .05, done = T >= M2_IN && T < M2_OUT + .35;
   if (!setup && !done) return show(el, false);
   show(el, true, 1, '');
+  // v68: Muse is the diagram's agent: a purple pixel tile with two pixel eyes that glance about and blink now and then
+  { const u = T - (setup ? M_IN : M2_IN), look = 5 * Math.sin(u * 1.1) + 2 * Math.sin(u * 2.7), bl = [1.6, 4.1, 6.7, 9.3].some(b => u > b && u < b + .12);
+    $('meyes').style.transform = `translateX(${Math.round(look / 2) * 2}px) scaleY(${bl ? .15 : 1})`; }
+  $('mchat').classList.toggle('done', done);
   place(win, setup ? vis(T, M_IN, T_REVEAL + PUSH_LEN - .14, { y: 260, din: .62, dout: .06 }) : vis(T, M2_IN, M2_OUT, { y: 50, din: .55 }));
   const ids = ['m-ask', 'm-read', 'm-round', 'm-ready', 'm-done'];
   if (setup) {
@@ -680,24 +745,43 @@ function muse(T) {
     msg('m-round', T, C('link') - .1, 'flex');
     $('t-round').classList.toggle('done', T >= C('link') + .45);
     msg('m-ready', T, W('link', 'special') - .1);
-    $('m-link').style.transform = `scale(${T >= T_OPEN && T < T_OPEN + .14 ? .97 : 1})`;
-    $('m-done').style.display = 'none';
+    $('m-lurl').style.color = T >= T_OPEN && T < T_OPEN + .2 ? '#1d4fd6' : '';      // (v65: no scale on the click: it shifted the address)
+    $('m-done').style.display = 'none'; $('m-ask2').style.display = $('m-yes').style.display = $('m-act').style.display = 'none';
   } else {
     // the round is over: the agent shows what you chose and waits for a yes before it touches anything
     for (const id of ids.slice(0, 4)) $(id).style.display = 'none';
+    $('m-ask2').style.display = $('m-yes').style.display = $('m-act').style.display = 'none';
     show($('mconnect'), false); show($('mconn'), true, 1, '');
     $('mtext').textContent = 'Message'; $('mtext').classList.remove('typed'); $('msend').classList.remove('live'); $('msend').style.transform = '';
-    msg('m-done', T, M2_IN + .3);
-    const rows = [['r-arch', W('archives', 'archives') - .05], ['r-send', C('sends')], ['r-later', E('sends') - .15]];
+    // v43: the message is there as the window rises (no empty window); its results card fills in row by row as each is
+    // said, each with its own icon; after Okay each row is done in turn and the card reads "all done"
+    // v64: "make list a bit smaller, cleaner - no card / background - instead of okay and edit - have a reply saying - Want
+    // me to send these replies and archives? Just say the word! ... and writing okay! (and submit)": the list as plain
+    // rows; the agent asks; "Okay!" is typed in the message box and sent; the agent does it, a tool step with its tick, and
+    // each row is ticked in turn
+    msg('m-done', T, M2_IN - .4);
+    const rows = [['r-arch', W('archives', 'archives') - .12], ['r-send', W('sends', 'sends') - .12], ['r-later', E('sends') - .25]];
+    const tSend = W('okay', 'okay') + .1, tAct = tSend + .3;
     rows.forEach(([id, at], i) => {
-      place($(id), vis(T, at, 999, { y: 18, din: .35 }));
-      $(id).querySelector('.tk').classList.toggle('done', T >= T_OKAY + .25 + i * .16);
+      const r = $(id), q = eo((T - at) / .3);
+      r.style.visibility = 'visible'; r.style.display = T >= at ? 'flex' : 'none';
+      r.style.opacity = q; r.style.transform = `translateY(${(1 - q) * 14}px)`;
+      const ic = r.querySelector('.ric'), iq = clamp((T - at) / .3);
+      ic.style.transform = `scale(${iq <= 0 ? .4 : lerp(.4, 1, eo(iq)) + .15 * Math.sin(Math.PI * clamp(iq / .8))})`;
+      const fd = tAct + .1 + i * .14, done = i < 2 && T >= fd;
+      r.querySelector('.rfill').style.transform = 'scaleX(0)';
+      const tk = r.querySelector('.tk'); tk.classList.toggle('done', done); tk.style.opacity = i < 2 ? 1 : 0;
+      tk.style.transform = `scale(${done ? 1 + .3 * Math.sin(Math.PI * clamp((T - fd) / .2)) : 1})`;
     });
-    place($('m-ok').parentElement, vis(T, C('okay') - .15, 999, { y: 18, din: .35 }));
-    const ok = T >= T_OKAY + .1, b = $('m-ok');
-    b.textContent = ok ? 'Done' : 'Okay'; b.classList.toggle('ok', ok);
-    b.style.transform = `scale(${T >= T_OKAY && T < T_OKAY + .12 ? .93 : 1})`;
-    $('m-edit').style.opacity = ok ? 0 : 1;
+    msg('m-ask2', T, E('sends') - .15);
+    // "Okay!" typed in the message box, then sent
+    const typ = 'Okay!', t0 = W('okay', 'say') - .15, n = T >= tSend ? 0 : Math.round(typ.length * clamp((T - t0) / (tSend - .1 - t0)));
+    $('mtext').textContent = n ? typ.slice(0, n) : 'Message'; $('mtext').classList.toggle('typed', n > 0);
+    $('msend').classList.toggle('live', n > 0);
+    $('msend').style.transform = `scale(${T >= tSend && T < tSend + .14 ? .88 : 1})`;
+    msg('m-yes', T, tSend);
+    msg('m-act', T, tAct, 'flex');
+    $('t-act').classList.toggle('done', T >= tAct + .45);
   }
 }
 
@@ -747,41 +831,73 @@ function overlays(T, seg) {
 }
 
 function browser(T) {
-  // v43: "built for web ... make nicer": a bigger window; the address types itself and the site loads; Play in browser is
-  // clicked on "browser" and the game's level select runs in the window; the two lines land as pixel stickers on its
-  // edge; then the game fills the screen and becomes the backdrop of the seated scene
+  // v43: a bigger window, the address typing itself, the two lines as pixel stickers on its edge. v54: "instead of showing
+  // the site, show the level selector - maybe clicking a level": the game's level select loads in the window; on "browser"
+  // the cursor picks Super Space (the selection moves off Kyoto), then Clean your inbox; Super Space loads in the window on
+  // the same frame as the take behind it, and the window grows to fill the screen, straight into the seated scene
   const el = $('browser');
   if (T < B_A || T >= T_FULL + .06) return show(el, false);
   show(el, true, 1, '');
   const win = $('win'), pin = eo((T - B_A) / .6), ex = eio((T - T_EXP0) / (T_FULL - T_EXP0)), S = 1920 / 1360;
-  const drift = 1 + .015 * clamp((T - B_A - .6) / 4);
-  const sc = lerp(lerp(.93, 1, pin) * drift, S, ex);
+  const drift = 1 + .015 * clamp((T - B_A - .6) / 4) * (1 - ex);
   win.style.borderRadius = `${20 * (1 - ex)}px`;
-  show(win, true, clamp((T - B_A) / .25), `translateY(${lerp(70 * (1 - pin), -18.5, ex)}px) scale(${sc})`);
-  // the address: typed, then "/play" after the click
-  const host = 'inboxzerovr.com', ta = B_A + .2, typed = Math.round(host.length * clamp((T - ta) / .5));
-  const extra = T >= T_CLICK + .04 ? '/play' : '';
-  $('addr-t').textContent = host.slice(0, typed) + extra;
-  $('addr-caret').style.opacity = T < ta + .5 + .2 && Math.floor(T * 4) % 2 === 0 ? 1 : T < ta + .5 ? 1 : 0;
-  // loading bars across the top of the page: the site, then the game
-  const ld = $('b-load'), l1 = clamp((T - (ta + .5)) / .35), l2 = clamp((T - (T_CLICK + .04)) / .26);
-  const lp = T < T_CLICK ? l1 : l2, lon = (T < T_CLICK ? (l1 > 0 && l1 < 1.25) : (l2 > 0)) && T < T_GAME0 + .2;
-  ld.style.opacity = lon ? 1 - clamp((T - (T < T_CLICK ? ta + .85 : T_GAME0)) / .2) : 0;
+  win.style.background = 'transparent'; win.querySelector('.bar').style.opacity = 1;
+  // v64: "the chrome browser is still here weirdly, needs to fade away at the same time as the inner part": no grow; the whole
+  // window (chrome and picture together) fades out over the half second, a little larger, as the take behind sharpens
+  // v67: "same issue with the browser chrome": the window, chrome and all, fades away as the level select does (when Clean
+  // your inbox loads the level), straight onto the game behind; nothing of the browser is left over the game
+  const wo = eio((T - T_GAME0 + .05) / .4);
+  $('foot-img').style.filter = `blur(${3 * (1 - wo)}px) brightness(${1 - .32 * (1 - wo)})`;
+  show(win, wo < 1, clamp((T - B_A) / .25) * (1 - wo), `translateY(${70 * (1 - pin)}px) scale(${lerp(.93, 1, pin) * drift * (1 + .05 * eo(wo))})`);
+  // the address: typed, then "/play" once the game starts
+  const host = 'inboxzerovr.com/play', ta = B_A + .2, typed = Math.round(host.length * clamp((T - ta) / .6));
+  $('addr-t').textContent = host.slice(0, typed) + (T >= T_CLICK2 + .04 ? '?level=space' : '');
+  $('addr-caret').style.opacity = T < ta + .6 || (T < ta + 1.2 && Math.floor(T * 4) % 2 === 0) ? 1 : 0;
+  // loading bars: the level select, then the level
+  const ld = $('b-load'), l1 = clamp((T - (ta + .6)) / .65), l2 = clamp((T - (T_CLICK2 + .04)) / .2);
+  const lp = T < T_CLICK2 ? l1 : l2, lon = T < T_CLICK2 ? l1 > 0 && T < ta + 1.45 : T < T_GAME0 + .2;
+  ld.style.opacity = lon ? 1 - clamp((T - (T < T_CLICK2 ? ta + 1.25 : T_GAME0)) / .2) : 0;
   ld.style.transform = `scaleX(${eo(lp)})`;
-  // the site settles in, then gives way to the game
-  const so = eo((T - (ta + .7)) / .35), go = eo((T - T_GAME0) / .3);
-  const site = $('site-img'); site.style.opacity = so * (1 - go);
-  site.style.transform = `translateY(${16 * (1 - so)}px) scale(${1.02 - .02 * so + .015 * clamp((T - ta - .7) / 4)})`;
-  $('shot').style.background = T < T_GAME0 ? '#fff' : '#1a1426';
-  const game = $('game-img');
-  if (T >= T_GAME0 - .02) { const src = homeSrc(T); if (!game.src.endsWith(src.slice(2))) game.src = src; }
-  game.style.opacity = go; game.style.transform = `scale(${lerp(1.06, 1, go)})`;
-  // the button takes the click
-  const bp = $('b-play'), press = T >= T_CLICK && T < T_CLICK + .16;
-  bp.style.background = press ? '#ffffff59' : 'transparent'; bp.style.boxShadow = press ? '0 0 24px 6px #7dffc988' : 'none';
+  // the level select settles in (on the same slowed clock as before)
+  const so = eo((T - (ta + 1.3)) / .35), go = eo((T - T_GAME0) / .25);
+  $('site-img').style.opacity = 0;
+  $('shot').style.background = '#0b0820';
+  // v58: "dont do a white background - do a mock loading with the logo and dark background - see real loading screen": the
+  // game's own loading screen (vr3/play/index.html #loading), drawn larger for the window: the logo floating on dark indigo
+  // lit pink and mint, a pixel bar sweeping pink to mint in steps, "loading" blinking; the level select fades in over it
+  const bl = $('b-loading'); bl.style.opacity = 1 - so; bl.style.visibility = so >= 1 ? 'hidden' : 'visible';
+  const lin = clamp((T - B_A - .1) / .8), lfl = Math.sin((T - B_A) * 2 * Math.PI / 5.2);
+  $('bl-logo').style.opacity = clamp(lin * 3);
+  $('bl-logo').style.transform = `translateY(${-7 * lfl}px) rotate(${.4 * lfl}deg) scale(${lin < .6 ? lerp(.92, 1.03, eo(lin / .6)) : lerp(1.03, 1, eo((lin - .6) / .4))})`;
+  const swp = (T - B_A) % 1.3 / 1.3, stp = Math.floor(swp * 14) / 14;
+  $('bl-sweep').style.transform = `translateX(${lerp(-100, 340, stp)}%)`;
+  $('bl-text').style.opacity = Math.floor((T - B_A) / .55) % 2 ? .45 : 1;
+  const menu = $('game-img'), msrc = homeSrc(T + 1.6);
+  if (!menu.src.endsWith(msrc.slice(2))) menu.src = msrc;
+  menu.style.opacity = so; menu.style.transform = `translateY(${16 * (1 - so)}px) scale(${1.02 - .02 * so})`;
+  // the pick: Kyoto's pink ring and tick are covered with nearby bits of the same frame, and a pink ring and tick land on
+  // Super Space (frame coordinates scaled to the window: 1360 / 1920)
+  const K = 1360 / 1920, picked = T >= T_CLICK + .03, url = `url(${menu.src})`;
+  const patch = (id, x, y, w, h, dx, dy) => { const e = $(id); Object.assign(e.style, { left: x * K + 'px', top: y * K + 'px', width: w * K + 'px', height: h * K + 'px', backgroundImage: url, backgroundSize: '1360px 765px', backgroundPosition: `${-(x + dx) * K}px ${-(y + dy) * K}px`, opacity: picked ? so * (1 - go) : 0 }); };      // (v63: they go with the level select)
+  patch('b-k1', 432, 405, 268, 13, 0, -14); patch('b-k2', 432, 569, 268, 12, 0, 14); patch('b-k3', 430, 405, 12, 176, -12, 0); patch('b-k4', 677, 405, 14, 176, 13, 0);
+  patch('b-k5', 636, 422, 50, 44, -60, 0);
+  const pk = $('b-pick'), pq = clamp((T - T_CLICK - .03) / .25);
+  Object.assign(pk.style, { left: 566 * K + 'px', top: 588 * K + 'px', width: 259 * K + 'px', height: 167 * K + 'px' });
+  pk.style.opacity = picked ? so * (1 - go) : 0; pk.style.transform = `scale(${pq < .6 ? lerp(1.15, .97, eo(pq / .6)) : lerp(.97, 1, eo((pq - .6) / .4))})`;
+  // the buttons take their clicks
+  const bp = $('b-play'), p1 = T >= T_CLICK && T < T_CLICK + .16;
+  Object.assign(bp.style, { left: 573 * K + 'px', top: 595 * K + 'px', width: 245 * K + 'px', height: 153 * K + 'px' });
+  bp.style.background = p1 ? '#ffffff40' : 'transparent';
+  const bg2 = $('b-go'), p2 = T >= T_CLICK2 && T < T_CLICK2 + .16;
+  Object.assign(bg2.style, { left: 803 * K + 'px', top: 785 * K + 'px', width: 314 * K + 'px', height: 55 * K + 'px' });
+  bg2.style.background = p2 ? '#ffffff59' : 'transparent'; bg2.style.boxShadow = p2 ? '0 0 24px 6px #ffb3d188' : 'none';
+  // Super Space in the window, on the same frame as the take behind
+  const lvl = $('level-img'), seg = SEG.find(g => g[0] === 'superspace'), lsrc = segSrc(seg, T);
+  if (T >= T_GAME0 - .02 && !lvl.src.endsWith(lsrc.slice(2))) lvl.src = lsrc;
+  lvl.style.opacity = go; lvl.style.transform = `scale(${lerp(1.05, 1, go)})`;
   // the stickers: they slap onto the window's bottom edge; the first slides over when the second arrives; both drop away
-  const s1 = $('st-sdk'), s2 = $('st-nodl'), t1 = W('iwsdk', 'immersive') - .1, t2 = W('nodl', 'nothing') - .12;
-  const w1 = s1.offsetWidth, w2 = s2.offsetWidth, GAP = 40, both = eio((T - t2) / .4);
+  const s1 = $('st-sdk'), s2 = $('st-nodl'), t1 = W('iwsdk', 'immersive') - .1, t2 = t1 + .08;      // (v64: "show both badges at the same time")
+  const w1 = s1.offsetWidth, w2 = s2.offsetWidth, GAP = 40, both = 1;
   const x1 = lerp(960 - w1 / 2, 960 - (w1 + GAP + w2) / 2, both), x2 = 960 - (w1 + GAP + w2) / 2 + w1 + GAP;
   const edge = 941 + 70 * (1 - pin) - s1.offsetHeight / 2, drop = eio((T - T_EXP0) / .35);
   [[s1, t1, x1, -3], [s2, t2, x2, 2.5]].forEach(([st, at, x, rot]) => {
@@ -798,160 +914,144 @@ const seatMotes = [];
 for (let k = 0; k < 46; k++) { const i = document.createElement('i'); i.className = k < 30 ? 'petal' : 'mote'; $('seat-motes').appendChild(i); seatMotes.push(i); }
 
 function seated(T) {
-  // v8: the transparent take (the user's own cut) in the bottom left. v43: "level select behind the player": the game's
-  // level select, carried on from the browser window as it fills the screen, eases into soft focus behind the player,
-  // who slides in from the left; the take plays a third faster and the scene ends as the line does
+  // v8: the transparent take (the user's own cut) in the bottom left. v43: the player slides in from the left; the take
+  // plays a third faster and the scene ends as the line does. v44: over the webvr-chair take (was the level select)
   const a = SEAT_A, b = SEAT_B, el = $('seated');
   if (T < T_FULL - .02 || T >= b + .3) return show(el, false);
-  show(el, true, 1 - clamp((T - b) / .3), '');
+  show(el, true, 1 - eio((T - b) / .22), '');
   const u = T - a, s = seatSrc(u);
   const f = clamp(Math.round(s * 30) + 1, 1, FOOT.seated3);
   const src = `../work/footage/seated3/${String(f).padStart(4, '0')}.png`;
   if (!$('seat-img').src.endsWith(src.slice(2))) $('seat-img').src = src;
   const pin = eo((T - T_FULL + .05) / .5);
-  show($('seat-img'), true, clamp((T - T_FULL + .05) / .25), `translateX(${-170 * (1 - pin)}px) scale(${lerp(.96, 1, pin)})`);
-  // the level select: same clock as in the browser; a slow push, a rack of focus, a little darker
-  const bg = $('seat-bgimg'), bsrc = homeSrc(T);
-  if (!bg.src.endsWith(bsrc.slice(2))) bg.src = bsrc;
+  show($('seat-img'), true, clamp((T - T_FULL + .05) / .25), `translateX(${380 - 170 * (1 - pin)}px) scale(${lerp(1.04, 1.1, pin)})`);      // (v54: just left of centre, was at the left edge)      // (a touch bigger, from its bottom left corner)
+  // v44: behind the player is the webvr-chair take (the footage layer), a little darker where the player sits
+  $('seat-bg').style.display = 'none';
+  $('foot').style.opacity = 1 - eio((T - b) / .22);      // (the take fades out with the player, to the white of the clear)
   const foc = eio((T - T_FULL - .05) / .6);
-  bg.style.transform = `scale(${1 + .05 * clamp((T - T_FULL) / (b + .3 - T_FULL))})`;
-  bg.style.filter = `blur(${3.2 * foc}px) brightness(${1 - .24 * foc}) saturate(${1 + .1 * foc})`;
+  $('foot-img').style.filter = `brightness(${1 - .1 * foc})`;
   $('seat-shade').style.opacity = foc;
 }
 
 function flow(T) {
-  // "The game never touches your inbox": inbox, agent, game, built out from the centre, mail moving along the wires;
-  // a packet from the game heads for the inbox and is stopped at the cross; then the round is deleted.
-  // v43: bigger, the nodes float, envelopes run the wires, and the round is stamped deleted where its chip shatters
-  const a = C('never') - .25, b = C('try') - .4, el = $('flow');
+  // v55: "completely redesign this part - have the agent muse in center and inbox and game on either side, showing their
+  // agent accesses your email (privacy) and only what is needed is sent to make a game, and deleted after - never reads,
+  // stores, or has access to email - just summary". Your agent in the middle; it and your inbox share a private zone,
+  // envelopes running between them; only short summaries cross to the game; the game has no way back to your email (a
+  // dashed path, crossed, and a summary that tries it is stopped); on "deleted" the game's summaries burst into pixels
+  const a = C('never') - .25, b = C('try') - .58, el = $('flow');
   if (T < a || T >= b + .3) return show(el, false);
   const out = clamp((T - b) / .3);
-  show(el, true, 1 - out, `translateY(${-24 * eo(out)}px)`);
-  const NW = 460, STEP = 640, WY = 540;
-  const pA = eo((T - a) / .5), pG = eo((T - W('never', 'game') + .1) / .5), pI = eo((T - W('never', 'touches') + .05) / .5);
-  const width = NW + (pG + pI) * STEP, left = 960 - width / 2;
-  const xI = left, xA = left + pI * STEP, xG = xA + STEP;
-  const node = (id, x, p, k) => { const n = $(id); n.style.left = x + 'px'; show(n, p > 0, p, `translateY(${(1 - p) * 34 + 5 * Math.sin(T * 1.5 + k * 2.1)}px) scale(${lerp(.9, 1, p)})`); };
-  node('n-inbox', xI, pI, 0); node('n-agent', xA, pA, 1); node('n-game', xG, pG, 2);
-  const wire = (id, chip, x0, p, gone = 0) => {
-    const w = $(id), c = $(chip), q = eo((p - .5) / .5);
-    w.style.left = x0 + NW + 22 + 'px'; w.style.width = STEP - NW - 44 + 'px';
-    show(w, q > 0, q * (1 - .7 * gone), `scaleX(${q})`); w.style.transformOrigin = '0 50%';
-    c.style.left = x0 + NW + (STEP - NW) / 2 + 'px';
-    show(c, q > 0 && gone < 1, q * (1 - clamp(gone * 5)), `translateX(-50%) translateY(${(1 - q) * 14}px)`);
-    return q;
-  };
-  const tDel = W('deleted', 'deleted'), dp = clamp((T - tDel) / 1.0);
-  const qIA = wire('w-ia', 'c-ia', xI, pI), qAG = wire('w-ag', 'c-ag', xA, pG, dp);
-  // envelopes along the wires (three on each, staggered), the agent's to the game stopping when the round is deleted
-  const PER = .95;
-  const runWire = (x0, q, k0, t0, stopAt) => {
-    for (let j = 0; j < 3; j++) {
-      const e = packets[k0 + j], ph = (T - t0) / PER - j / 3, p = ph - Math.floor(ph), cyc = Math.floor(ph);
-      const startT = t0 + (cyc + j / 3) * PER;
-      if (q < 1 || ph < 0 || startT > stopAt) { e.style.opacity = 0; continue; }
-      const x = lerp(x0 + NW + 30, x0 + STEP - 30, eio(p)) - 23, y = WY - 17 - 22 * Math.sin(Math.PI * p);
-      e.style.opacity = clamp(p * 6) * clamp((1 - p) * 6);
-      e.style.transform = `translate(${x}px,${y}px) scale(${.8 + .2 * Math.sin(Math.PI * p)})`;
-    }
-  };
-  runWire(xI, qIA, 0, W('never', 'touches') + .45, b);
-  runWire(xA, qAG, 3, W('never', 'game') + .45, tDel - .5);
-  // no way from the game back to the inbox: a dashed path with a cross on it, and a packet that tries it and is stopped
-  const xp = eo((T - W('never', 'inbox')) / .5), arc = $('arc');
-  arc.setAttribute('d', `M${xG + NW / 2} ${392 + 296 + 10} C${xG + NW / 2} 935 ${xI + NW / 2} 935 ${xI + NW / 2} ${392 + 296 + 10}`);
-  arc.style.opacity = .9 * xp;
-  $('flow-arc').style.clipPath = `inset(0 0 0 ${(1 - xp) * 100}%)`;
+  show(el, true, 1 - out, `translateY(${50 - 24 * eo(out)}px)`);      // (v66: 50 px lower, now the crossed path is gone)
+  const XI = 400, XA = 960, XG = 1520, Y = 430;
+  const tA = a, tG = W('never', 'game') - .1, tI = W('never', 'touches') - .1, tArc = W('never', 'your') - .05, tX = W('never', 'inbox') + .1;
+  const tSum = W('deleted', 'and') - .2, tDel = W('deleted', 'deleted');
+  const pop = q => q <= 0 ? 0 : q < .6 ? lerp(.55, 1.07, eo(q / .6)) : lerp(1.07, 1, eo((q - .6) / .4));
+  const del = clamp((T - tDel) / .35), shake = T > tDel && T < tDel + .3 ? 9 * Math.sin((T - tDel) * 80) * (1 - (T - tDel) / .3) : 0;
+  [['n-inbox', XI, tI, 0, 105], ['n-agent', XA, tA, 1, 105], ['n-game', XG, tG, 2, 105]].forEach(([id, x, at, k, half]) => {
+    const n = $(id), q = clamp((T - at) / .4);
+    n.style.left = x + (id === 'n-game' ? shake : 0) + 'px'; n.style.top = Y - half + 'px';
+    show(n, q > 0, clamp(q * 4), `translateY(${4 * Math.sin(T * 1.5 + k * 2.1)}px) scale(${pop(q)})`);
+  });
+
+  // the private zone: your inbox and your agent
+  const zq = clamp((T - tI - .25) / .45), pz = $('pz');
+  show(pz, zq > 0, clamp(zq * 3), `scale(${lerp(.96, 1, eo(zq))})`);
+  $('pz-tag').style.transform = `translateX(-50%) scale(${pop(clamp((T - tI - .45) / .4))})`;
+  // the wires
+  const wire = (id, x0, x1, at, dim = 0) => { const w = $(id), q = eo((T - at) / .4); w.style.left = x0 + 'px'; w.style.top = Y + 'px'; w.style.width = x1 - x0 + 'px'; show(w, q > 0, q * (1 - .65 * dim), `scaleX(${q})`); return q; };
+  const qIA = wire('w-ia', XI + 125, XA - 140, tI + .2), qAG = wire('w-ag', XA + 140, XG - 125, tG + .3, del);
+  // envelopes: your inbox to your agent, all the way through
+  envPk.forEach((e, j) => {
+    const PER = 1.0, ph = (T - (tI + .6)) / PER - j / 4, p = ph - Math.floor(ph);
+    if (qIA < 1 || ph < 0) { e.style.opacity = 0; return; }
+    const x = lerp(XI + 135, XA - 150, eio(p)) - 28, y = Y - 20 - 16 * Math.sin(Math.PI * p);
+    e.style.opacity = clamp(p * 6) * clamp((1 - p) * 6); e.style.transform = `translate(${x}px,${y}px) scale(${.85 + .2 * Math.sin(Math.PI * p)})`;
+  });
+  // short summaries: your agent to the game, ten of them, counted in on the game's badge
+  const N = 10, launch = k => tSum + k * .085, TRAVEL = .5;
+  let arrived = 0;
+  for (let k = 0; k < N; k++) {
+    const e = sumPk[k], p = (T - launch(k)) / TRAVEL;
+    if (p >= 1) arrived++;
+    if (p < 0 || p >= 1) { e.style.opacity = 0; continue; }
+    const x = lerp(XA + 150, XG - 20, eio(p)) - 46, y = Y - 26 - 34 * Math.sin(Math.PI * p);
+    e.style.opacity = clamp(p * 6) * (1 - clamp((p - .8) / .2)); e.style.transform = `translate(${x}px,${y}px) scale(${lerp(1, .55, clamp((p - .6) / .4))}) rotate(${(rnd(k) - .5) * 14}deg)`;
+  }
+  const chip = $('c-ag'), cq = clamp((T - tSum + .15) / .35);
+  chip.style.left = (XA + XG) / 2 + 'px'; chip.style.top = Y - 118 + 'px';
+  show(chip, false);      // (v66: "drop the just a summary badge")
+  // the agent's eyes: a slow look side to side, and a blink now and then
+  { const e = document.querySelector('#n-agent .feyes'), u = T - a, look = 9 * Math.sin(u * 1.3), bl = [1.2, 3.1, 4.4].some(b => u > b && u < b + .12);
+    if (e) e.style.transform = `translateX(${Math.round(look / 3) * 3}px) scaleY(${bl ? .15 : 1})`; }
+  const gb = $('fg-badge'), last = Math.max(...Array.from({ length: N }, (_, k) => launch(k) + TRAVEL).filter(t => t <= T), -9);
+  gb.textContent = arrived;
+  gb.style.transform = `scale(${arrived === 0 ? 0 : (1 + .25 * Math.max(0, 1 - (T - last) / .15)) * (1 - eo(del))})`;
+  // no way back: the dashed path from the game to your inbox, crossed; a summary tries it and is stopped
+  const xp = eo((T - tArc) / .5), arc = $('arc');
+  arc.setAttribute('d', `M${XG} ${Y + 210} C${XG} ${Y + 470} ${XI} ${Y + 470} ${XI} ${Y + 210}`);
+  arc.style.opacity = 0;      // (v64: "remove the line and the X that goes from game to inbox")
   const L = arc.getTotalLength(), mid = arc.getPointAtLength(L / 2);
   const nox = $('nox'); nox.style.left = mid.x + 'px'; nox.style.top = mid.y + 'px';
-  const tb = W('never', 'inbox') + .55, bonk = [tb, tb + 1.0].map(t => T - t - .5).filter(d => d >= 0 && d < .25)[0];
-  const xo = eo((T - W('never', 'inbox') - .3) / .3);
-  show(nox, xo > 0, xo, `scale(${lerp(.4, 1, xo) + .15 * Math.sin(Math.PI * clamp((T - W('never', 'inbox') - .3) / .3)) + (bonk !== undefined ? .25 * Math.sin(Math.PI * bonk / .25) : 0)})`);
-  [tb, tb + 1.0].forEach((t, j) => {
-    const e = packets[6 + j], p = (T - t) / .5;
-    if (p < 0 || p > 1.5) { e.style.opacity = 0; return; }
-    const pt = arc.getPointAtLength(L * .5 * eio(Math.min(p, 1))), hit = clamp((p - 1) / .5);
-    e.style.opacity = clamp(p * 6) * (1 - hit);
-    e.style.transform = `translate(${pt.x - 23 + (hit > 0 ? 10 * Math.sin(hit * 40) * (1 - hit) : 0)}px,${pt.y - 17 - 30 * hit}px) rotate(${hit * 30}deg) scale(${1 + .5 * hit})`;
-    e.style.filter = hit > 0 ? 'grayscale(1) brightness(1.4)' : '';
-  });
-  packets[8].style.opacity = 0;
-  // the round goes when the game is done: its chip breaks into pixels and a pixel stamp lands in its place
-  const cx = xA + NW + (STEP - NW) / 2, cy = 477;
+  const tb = tX + .35, bk = T - tb - .5, xo = clamp((T - tX) / .3);
+  show(nox, false);
+  const nv = $('fnever'), nq = clamp((T - tX - .12) / .35); nv.style.top = '722px'; nv.style.left = '685px';      // (v64: under the private zone)
+  if (nq > 0) show(nv, true, clamp(nq * 3), `translateX(-50%) translateY(${(1 - eo(nq)) * 14}px)`); else show(nv, false);
+  { const e = sumPk[10], p = (T - tb) / .5;
+    if (true) e.style.opacity = 0;      // (v63: simpler: no summary trying the crossed path)
+    else { const pt = arc.getPointAtLength(L * .5 * eio(Math.min(p, 1))), hit = clamp((p - 1) / .5);
+      e.style.opacity = clamp(p * 6) * (1 - hit);
+      e.style.transform = `translate(${pt.x - 46 + (hit > 0 ? 10 * Math.sin(hit * 40) * (1 - hit) : 0)}px,${pt.y - 26 - 30 * hit}px) rotate(${hit * 30}deg) scale(${.8 + .4 * hit})`;
+      e.style.filter = hit > 0 ? 'grayscale(1)' : ''; } }
+  // deleted: the game's summaries burst into pixels and the round is stamped deleted
   const px = $('pixels');
-  if (dp > 0 && dp < 1) {
+  if (T >= tDel && T < tDel + 1.1) {
     px.style.visibility = 'visible';
-    const cw = 200, ch = 58, GX = 16, GY = 5;
     pixels.forEach(({ i }, k) => {
-      if (k >= GX * GY) { i.style.opacity = 0; return; }
-      const gx = k % GX, gy = Math.floor(k / GX), d = clamp((dp - rnd(k) * .3) / .7);
-      i.style.width = cw / GX + 1 + 'px'; i.style.height = ch / GY + 1 + 'px';
-      i.style.left = cx - cw / 2 + gx * cw / GX + 'px'; i.style.top = cy - ch / 2 + gy * ch / GY + 'px';
-      i.style.opacity = 1 - eo(d);
-      i.style.transform = `translate(${(rnd(k + 9) - .5) * 220 * eo(d)}px,${-180 * eo(d) * (.5 + rnd(k + 3)) + 260 * d * d}px) scale(${1 - .7 * d})`;
-      i.style.background = rnd(k + 5) > .6 ? '#ff2e93' : rnd(k + 6) > .5 ? '#ff9ec8' : '#d9d3e3';
+      const q = (T - tDel - rnd(k + 2) * .08) / 1.0;
+      if (q < 0 || q > 1) { i.style.opacity = 0; return; }
+      const ang = rnd(k) * Math.PI * 2, sp = 160 + 360 * rnd(k + 1), sz = 10 + 12 * rnd(k + 3);
+      i.style.width = i.style.height = sz + 'px'; i.style.left = XG - sz / 2 + 'px'; i.style.top = Y - sz / 2 + 'px';
+      i.style.opacity = 1 - clamp((q - .6) / .4);
+      i.style.transform = `translate(${Math.cos(ang) * sp * eo(q)}px,${Math.sin(ang) * sp * .8 * eo(q) + 300 * q * q}px) rotate(${Math.round(q * 4) * 90}deg)`;
+      i.style.background = ['#ff2e93', '#ffb3d1', '#7dffc9', '#ffffff', '#d9d3e3'][Math.floor(rnd(k + 5) * 5)];
     });
   } else px.style.visibility = 'hidden';
-  const st = $('delstamp'), sq = clamp((T - tDel - .18) / .22);
-  st.style.left = cx + 'px'; st.style.top = cy + 'px';
-  if (sq > 0) show(st, true, clamp(sq * 4), `translate(-50%,-50%) rotate(-5deg) scale(${lerp(1.8, 1, eo(sq)) - .06 * Math.sin(Math.PI * clamp((T - tDel - .4) / .2))})`); else show(st, false);
+  const st = $('delstamp'), sq = clamp((T - tDel - .2) / .22);
+  st.style.left = XG + 'px'; st.style.top = Y + 'px';
+  if (sq > 0) show(st, true, clamp(sq * 4), `translate(-50%,-50%) rotate(-6deg) scale(${lerp(1.8, 1, eo(sq)) - .06 * Math.sin(Math.PI * clamp((T - tDel - .42) / .2))})`); else show(st, false);
 }
 
 function closing(T) {
+  // v63: "make just clean white text, not drop shadow, and use logo for keyboard smash, and in smaller normal text saying
+  // InboxZeroVR.com so its easier to read": over the ending clip under its dark shade, "try it yourself" in white pixel
+  // letters stamped in word by word, the Keyboard Smash logo landing under it on "at", and the address in plain white
+  // text, widely spaced, typed in as it's said; as the card clears they hop and fall away and the shade lifts
   const a = C('try') - .3, el = $('close');
-  if (T < a) { show(el, false); show($('petals'), false); return; }
-  if (T >= T_OUT + .45) { show(el, false); show($('petals'), false); return; }
-  const gone = 1 - eo((T - T_OUT) / .4);
-  show(el, true, gone, `translateY(${-24 * (1 - gone)}px)`);
-  const H = T_HERO;
-  // the address types itself
-  const url = 'inboxzerovr.com', t0 = W('try', 'inboxzerovrcom') - .1;
-  $('url-t').textContent = url.slice(0, Math.round(url.length * clamp((T - t0) / .7))) || '';
-  $('caret').style.opacity = (Math.floor(T * 2.2) % 2 || T < t0 + .7) ? 1 : 0;
-  const uv = vis(T, C('try') - .1, 999, { y: 30 });
-  const hq = eio((T - H) / .6);
-  const urlY = lerp(380, 520, hq);
-  const U = $('url'); U.style.top = urlY + 'px';
-  if (uv) show(U, true, uv.o, `translateX(-50%) translateY(${uv.y}px) scale(${lerp(1, .82, hq)})`);
-  // seven levels build from the centre
-  const ct = C('seven') + .25, gap = 22, cw = 210;
-  const arrived = cards.map((c, i) => eo((T - ct - i * .11) / .4));
-  const total = arrived.reduce((s, p) => s + p * (cw + gap), 0) - gap;
-  let x = 960 - total / 2;
-  const out = 0, cardsY = lerp(560, 700, hq);
-  cards.forEach((c, i) => {
-    const p = arrived[i];
-    if (p <= 0 || out >= 1) { c.style.visibility = 'hidden'; x += 0; return; }
-    c.style.visibility = 'visible'; c.style.opacity = p * (1 - out);
-    c.style.left = x + 'px'; c.style.top = cardsY + 'px';
-    c.style.transform = `translateY(${(1 - p) * 30 - out * 26}px)`;
-    x += p * (cw + gap);
+  if (T < a || T >= T_OUT + 1.2) { show(el, false); show($('petals'), false); return; }
+  show(el, true, 1, ''); show($('petals'), false);
+  const sh = $('close-shade'); sh.style.display = 'block';
+  sh.style.opacity = (1 - .14 * eo((T - a) / .6)) * (1 - eio((T - T_OUT - .15) / .55));
+  $('close-white').style.opacity = 0;
+  embers.forEach(m => { m.style.opacity = 0; });
+  cards.forEach(c => { c.style.visibility = 'hidden'; });
+  show($('pick'), false); show($('agent-chip'), false); show($('end-logo'), false); show($('url'), false);
+  const fall = (k, w = 220) => { const q = clamp((T - (T_OUT + k * .05)) / .65); return { q, x: (rnd(k + 80) - .5) * w * q, y: 1150 * q * q - 55 * q, r: (rnd(k + 81) - .5) * 70 * q, o: 1 - clamp((q - .8) / .2) }; };
+  const tl = $('try-line');
+  show(tl, true, 1, `translate(-50%,-50%) translateY(345px)`);      // (v69: a little more room between the three)
+  [...tl.children].forEach((b, i) => {
+    const at = W('try', ['try', 'it', 'yourself'][i]) - .08, p = clamp((T - at) / .12), f = fall(4 - i);
+    b.style.display = T >= at ? 'inline-block' : 'none';
+    b.style.opacity = clamp((T - at) / .05) * f.o;
+    b.style.transform = `translate(${f.x}px,${-18 * (1 - eo(p)) + f.y}px) rotate(${f.r}deg) scale(${lerp(1.8, 1, eo(p)) - .06 * Math.sin(Math.PI * clamp((T - at - .16) / .18))})`;
   });
-  // the hero: the logo lands
-  const lv = vis(T, H - .02, 999, { y: 50, din: .45 });
-  const ls = lv ? lerp(1.18, 1, eo((T - H) / .35)) + .012 * Math.sin((T - H) * 2) : 1;
-  const push = 1 + .03 * clamp((T - H - .6) / 4);
-  if (lv) show($('end-logo'), true, lv.o, `translateY(${250 + lv.y}px) scale(${ls * push})`); else show($('end-logo'), false);
-  place($('credit'), vis(T, H + 1.4, 999, { y: 20 }));
-  // "or connect your agent": a chip under the level cards, gone when the logo lands
-  const av = vis(T, W('agent', 'agent') - .1, H - .25, { y: 24 });
-  const chip = $('agent-chip'); chip.style.top = '740px';
-  if (av) show(chip, true, av.o, `translateX(-50%) translateY(${av.y}px)`); else show(chip, false);
-  // petals burst on "hero"
-  const pt = T - W('hero', 'hero') + .05;
-  if (pt > 0) {
-    show($('petals'), true, gone, '');
-    petals.forEach((p, k) => {
-      const ang = rnd(k) * Math.PI * 2, sp = 500 + 900 * rnd(k + 1), life = clamp(pt / (2.6 + rnd(k + 2) * 1.6));
-      const px = 960 + Math.cos(ang) * sp * eo(pt / 1.2) + Math.sin(pt * 2 + k) * 30;
-      const py = 470 + Math.sin(ang) * sp * .6 * eo(pt / 1.2) + 260 * pt * pt * .25;
-      const s = 10 + 16 * rnd(k + 4);
-      p.style.width = s + 'px'; p.style.height = s * .8 + 'px';
-      p.style.left = px + 'px'; p.style.top = py + 'px';
-      p.style.opacity = 1 - life; p.style.transform = `rotate(${pt * 200 * (rnd(k + 6) - .5) + k * 40}deg)`;
-      p.style.background = rnd(k + 7) > .7 ? '#ffffff' : rnd(k + 8) > .5 ? '#ff9ec8' : '#ffc2db';
-    });
-  } else show($('petals'), false);
+  const lg = $('try-logo'), lq = clamp((T - (W('try', 'at') - .25)) / .3), lf = fall(1, 160);
+  const ls = lq < .6 ? lerp(1.3, .97, eo(lq / .6)) : lerp(.97, 1, eo((lq - .6) / .4));
+  if (lq > 0) show(lg, true, clamp(lq * 4) * lf.o, `translate(-50%,-50%) translate(${lf.x}px,${lf.y}px) rotate(${lf.r}deg) scale(${ls + .01 * Math.sin((T - a) * 2)})`); else show(lg, false);
+  const url = 'InboxZeroVR.com', t0 = W('try', 'inboxzerovrcom') - .2, uf = fall(0, 120);
+  const n = Math.round(url.length * clamp((T - t0) / .35)), u = $('try-url');
+  u.textContent = url.slice(0, n) || ' ';
+  if (n > 0) show(u, true, uf.o, `translate(-50%,-50%) translate(${uf.x}px,${uf.y}px) rotate(${uf.r}deg)`); else show(u, false);
 }
 
 function outro(T) {
@@ -977,9 +1077,20 @@ function outro(T) {
 }
 
 function white(T) {
-  // the clean white world: the hook, connect, built, chair, AI
-  const on = T < T_SPLIT || (T >= T_PUSH && T < T_REVEAL + PUSH_LEN + .15) || (T >= C('iwsdk') - .02 && T < C('try') - .3);
+  // the clean white world: the hook, and the clear inbox that mirrors it (v60: the agent scenes are retro now, below;
+  // built for web and seated are over footage)
+  const on = T < T_SPLIT || (T >= T_PUSH && T < T_REVEAL + PUSH_LEN + .15) || (T >= C('iwsdk') - .02 && T < C('try') + .2);      // (v63: the agent scenes are white again)
   show($('white'), on, 1, '');
+  // v60: "make the Agent scenes ... look more retro, pixel font, and match the style": dark indigo lit pink and mint (the
+  // game's loading screen), a faint pixel grid, slow drifting pixel dust; it comes up under the agent's window
+  const r1 = false, r2 = false;      // (v63: no retro backdrop)
+  const ro = r2 && T < M2_IN + .3 ? eo((T - (M2_IN - .12)) / .3) : 1;
+  show($('retro'), r1 || r2, ro, '');
+  if (r1 || r2) dust.forEach((d, k) => {
+    const sp = 8 + 18 * rnd(k + 1), t = T + rnd(k + 2) * 40, y = ((rnd(k + 3) * 1200 - t * sp) % 1200 + 1200) % 1200 - 60;
+    d.style.transform = `translate(${rnd(k) * 1920 + 14 * Math.sin(t * .4 + k)}px,${y}px)`;
+    d.style.opacity = (.25 + .5 * rnd(k + 4)) * (.6 + .4 * Math.sin(t * 1.3 + k));
+  });
 }
 
 /* ---------- sound ---------- */
@@ -1019,7 +1130,7 @@ function buildSfx() {
   sfx(T_REALLY + .95, 'kyoto/keep1.wav', .6);
   sfx(T_OKAY, 'blip.wav', .7); sfx(W('deleted', 'deleted'), 'space/ping.wav', .45);
   for (let i = 0; i < 7; i++) sfx(C("seven") + .25 + i * .11, 'blip.wav', .3);
-  sfx(W('hero', 'hero') - .05, 'kyoto/stinger2.wav', .8);
+  
   BADGE_AT.forEach((t, i) => sfx(t, i ? 'sort.wav' : 'kyoto/keep1.wav', .55));
 }
 const SOUND = false;      // v7: "remove all sound effects" (the old full set, kept off)
@@ -1027,54 +1138,94 @@ if (SOUND) buildSfx();
 // v18: "add sound effects for sword, cut, fire, melt, and keyboard to add more umph" — hits only, each on its picture
 function buildHits() {
   const h = (t, file, g = 1) => sfx(t, file, g);
-  // v24: a keyboard hit with more punch: the swing, the crunch, and LumberHack's axe chop on the impact
-  const kb = (t, g = 1) => { h(t - .1, 'lumber/slash1.flac', .5 * g); h(t, 'lumber/chop.flac', 1.1 * g); h(t, 'office/glass.flac', .7 * g); };
-  // v30: a notification ping as each banner lands (ElevenLabs takes, work/audio/notify: a two-note knock and a single pop,
-  // alternated so eight in six seconds don't machine-gun; the "reminder about reminders" one a touch louder)
-  const PING = ['a', 'b', 'a', 'b', 'a', 'a', 'a', 'a'];
-  // (no ping within a quarter second before another one, and none under the sword slash)
-  NOTE_AT.forEach(([at], k) => { if (at < T_SWORD - .45 && !NOTE_AT.some(([o], j) => j !== k && o > at && o - at < .25)) SFX.push({ t: +(at + .1).toFixed(3), file: `../work/audio/notify/ping-${PING[k]}.wav`, gain: k === 6 ? .85 : k < 2 ? .8 : .7 }); });
-  // the hook: the sword through the inbox, the slash clip, the flamethrower catching
-  h(T_SWORD - .12, 'kyoto/slash1.flac');
-  h(T_SPLIT - .01, 'kyoto/slash2.flac', 1); h(T_SPLIT, 'office/glass.flac', .55);      // v21: more weight on the split
-  h(T_SPLIT + (24 - 10) / FPS - .03, 'kyoto/slash3.flac', .9);      // v26: the sword clip's own cut (frame 24)
-  h(W('flame', 'flamethrower') + .03, 'inferno/flare.flac');
-  // Slash, burn, and smash (the long smash's keyboard hits at its frames 13, 46, 78)
-  h(C('slash') + (24 - 13) / FPS - .03, 'space/slash1.flac');      // v29: the saber's swing
-  h(W('slash', 'burn') + .02, 'lab/melt1.flac');
-  // v25: the smash-intro clip's impacts (its frames), from "smash" to the agent scene
+  // v61: the user's ElevenLabs hits (work/audio/v), each placed so its loudest moment lands on the hit in the picture
+  // (VPEAK: seconds into each file to its peak, measured), and rotated through variants so repeats don't sound the same
+  const VPEAK = {"v-fireburst": 0.3, "v-fireimpact": 0.095, "v-glasshit": 0.33, "v-heavy-hit": 0.105, "v-katana-alt": 0.13, "v-melt": 0.12, "v-punch": 0.11, "v-reveal": 0.075, "v-saber-power": 0.47, "v-slash-1": 0.215, "v-slash-2": 0.175, "v-slash-metal": 0.275, "v-woodstrike-2": 0.035, "v-woodstrike": 0.305};
+  // (per-file trims, measured in the mix: the saber swing is mostly hum, so levelling pulls its swing down; the reveal and the
+  // melt are peaky)
+  const VGAIN = { 'v-saber-power': 2.8, 'v-reveal': .55, 'v-melt': .75 };
+  const v = (t, name, g = 1) => SFX.push({ t: +(t - VPEAK[name]).toFixed(3), file: `../work/audio/v/${name}.mp3`, gain: +(g * (VGAIN[name] || 1)).toFixed(3) });
+  const rot = (names, i) => names[i % names.length];
+  // a keyboard smash: three mixes of the heavy hit, the glass and the punch, taken in turn
+  let kbN = 0;
+  const kb = (t, g = 1) => { const k = kbN++ % 3;
+    if (k === 0) { v(t, 'v-heavy-hit', 1.0 * g); v(t, 'v-glasshit', .55 * g); }
+    else if (k === 1) { v(t, 'v-punch', .95 * g); v(t, 'v-heavy-hit', .6 * g); }
+    else { v(t, 'v-glasshit', .9 * g); v(t, 'v-heavy-hit', .75 * g); v(t, 'v-punch', .4 * g); } };
+  const SLASH = ['v-katana-alt', 'v-slash-1', 'v-slash-2'];
+  // the notification clicks as each banner lands (kept: v53)
+  NOTE_AT.forEach(([at], k) => { if (at < T_SWORD - .45 && !NOTE_AT.some(([o], j) => j !== k && o > at && o - at < .25)) SFX.push({ t: +(at + .1).toFixed(3), file: `../work/audio/notify/ping-new.mp3`, gain: k === 6 ? .85 : k < 2 ? .8 : .7 }); });
+  // the hook (kept: the user's sword slash and grunt on the split, the glass under it, the flamethrower)
+  SFX.push({ t: +(T_SPLIT - .30).toFixed(3), file: '../work/audio/sword/sword-slash.mp3', gain: 1.6 });
+  SFX.push({ t: +(T_SPLIT - .08).toFixed(3), file: '../work/audio/sword/grunt.mp3', gain: 1.0 });
+  h(T_SPLIT, 'office/glass.flac', .55);
+  v(T_SPLIT + (24 - 10) / FPS, 'v-katana-alt', .9);      // (the sword clip's own cut, its frame 24)
+  SFX.push({ t: +(W('flame', 'flamethrower') - .08).toFixed(3), file: '../work/audio/sword/flame.wav', gain: 1.4 });
+  // slash, burn and smash
+  v(C('slash') + (24 - 13) / FPS, 'v-saber-power', .9);      // (the saber's swing, its frame 24)
+  SFX.push({ t: +(W('slash', 'burn') - .05).toFixed(3), file: '../work/audio/sword/flame-short.wav', gain: 1.3 });      // (v65: "0:10 - use flame thrower sfx", a second of the intro's)
   [[7, 1], [61, .85], [89, .8], [115, .8], [166, .85], [198, .85], [213, .7], [252, .9], [263, .8]].forEach(([fr, g]) => {
-    const t = W('slash', 'smash') + (fr - 1) / FPS - .02, under = t > T_LOGO - .1 && t < E('round') + .5;      // v31: behind the overlay and her voice, the hits sit back
+    const t = W('slash', 'smash') + (fr - 1) / FPS, under = t > T_LOGO - .1 && t < E('round') + .5;      // (behind the logo and the headline, the hits sit back)
     if (t < T_PUSH + .2) kb(t, under ? g * .5 : g);
   });
-  h(T_LOGO - .06, 'swoosh2.flac', .45);
-  { const a = W('game', 'clear') - .05, b = W('round', 'time') + .1;      // v33: the icon's ten cuts
+  v(T_LOGO + .02, 'v-reveal', .9);      // (the Keyboard Smash logo landing at 0:12)
+  // "one round at a time": the icon's ten cuts (kept)
+  { const a = W('game', 'clear') - .05, b = W('round', 'time') + .1;
     for (let k = 0; k < 10; k++) h(lerp(a, b, k / 9) - .02, `office/slash${1 + k % 6}.flac`, .32);
-    h(b + .02, 'office/glass.flac', .4); } h(T_PUSH - .02, 'swoosh1.flac', .6);      // v31: the logo's arrival, and the lift into the agent scene
-  // the round: the keyboard smashes at the 7 s clip's frames 125 and 178
-
-  // how it works: cut it up into tiny little pieces
-  h(T_REVEAL + 219 / FPS - .03, 'kyoto/slash3.flac'); h(T_REVEAL + 220 / FPS, 'office/glass.flac', .45);      // v32: the slash through the How to Play panel
-  // the levels and the gameplay outro: every cut in the long shots, the first loudest
-  const HIT = { 'office2-long': 'office/glass.flac', 'castle-long': 'castle/slash2.flac', 'lab-long': 'lab/melt2.flac', 'inferno-long': 'inferno/flare.flac', 'kyoto-long': 'kyoto/slash4.flac', 'lumber-long': 'lumber/chop.flac', 'space-long': 'space/slash2.flac' };
-  for (const [clip, from, to, at, key0] of SEG) {
-    if (!HIT[clip] || !CUTS[clip]) continue;
-    const key = keyOf(clip, key0), outro = from >= T_OUT;
-    CUTS[clip].forEach((c, i) => { const t = at + (c - key) / FPS, g = outro ? .55 : i === 0 || c === key ? 1 : .6; if (t >= from && t < to - .05) clip === 'office2-long' ? kb(t - .03, g) : h(t - .03, HIT[clip], g); });
-  }
-  // v35: the user's level clips: a hit on each clip's biggest impacts (found by how much the picture changes), the first loudest
-  const LV = {"lvl-keyboard": [7, 61, 89, 166, 198], "lvl-haunted": [53, 82, 112, 156], "lvl-toxic": [18, 82, 107, 163], "lvl-inferno": [63, 84, 107, 138, 168], "lvl-kyoto": [7, 29, 69, 118, 149], "lvl-lumber": [41, 76, 105, 140], "lvl-space": [97, 133, 173]};
-  const LVS = { 'lvl-haunted': 'castle/slash1.flac', 'lvl-toxic': 'lab/melt1.flac', 'lvl-inferno': 'inferno/flare.flac', 'lvl-kyoto': 'kyoto/slash4.flac', 'lvl-lumber': 'lumber/chop.flac', 'lvl-space': 'space/slash2.flac' };
+    h(b + .02, 'office/glass.flac', .4); }
+  h(T_PUSH - .02, 'swoosh1.flac', .6);      // (the lift into the agent scene)
+  // how it works: the slash through the How to Play panel
+  v(T_REVEAL + 220 / FPS, 'v-slash-1', 1.0); v(T_REVEAL + 220 / FPS, 'v-glasshit', .45);
+  // v64: round two in the reply take: a reply sent (the game's send: a swoosh and a blip) as SENT shows, and the game's
+  // recording blip (its blip, a fifth up) as the email reaches the mic
+  { const sentAt = W('hold', 'like') - .2 + (5.75 - 5.0) * ((W('pull', 'say') + .05) - (W('hold', 'like') - .2)) / (7.25 - 5.0);
+    // (v65: "for send reply and recording - just use the same sound as the notification from start of video")
+    SFX.push({ t: +(sentAt - .02).toFixed(3), file: '../work/audio/notify/ping-new.mp3', gain: .8 });
+    /* (v67: no sound for the recording) */ }
+  // 0:48, the throw: the email thrown up, then sliced (webvr-chair.mp4's frames 38 and 55, through its playback line)
+  { const at = sec => T_THROW + (sec - .67) * (C('monitor') - T_THROW) / (3.2 - .67);
+    v(at(37 / FPS), 'v-slash-2', .45); v(at(54 / FPS), 'v-katana-alt', .85); }
+  // the levels: each clip's biggest impacts (found by how much the picture changes), the first loudest, in its own sounds
+  // v65: the level hits, placed on the frames where each thing happens (looked at frame by frame), per the user's notes:
+  // Keyboard: the keyboard slashing an email at 0:55 (its frame 47); Haunted: the first swing only (the second, frame 76,
+  // was misplaced); Toxic: melts on the two sprays (37, 82) and the late one; Kyoto: cuts at 1:10.3, 1:10.8, 1:11.7 and
+  // 1:13 (26, 42, 69, 108); LumberHack: chops at 1:14.8, 1:16.5 and a smaller one at 1:16.9 (41, 92, 105); Super Space:
+  // the saber's swings (48, 67, 103). Inferno's flamethrower, the spray's hiss: below
+  const LV = {"lvl-keyboard": [7, 47, 61, 89], "lvl-haunted": [53, 98], "lvl-toxic": [37, 82, 107], "lvl-kyoto": [26, 42, 69, 108, 117], "lvl-lumber": [41, 92, 109], "superspace": [48, 67, 103]};      // (v67: Haunted's second swing at its frame 98 (1:00.7); Kyoto's swipe at 117 (1:13.3); the axe's double hit, 92 and 109)
+  const LVS = { 'lvl-haunted': ['v-slash-metal', 'v-katana-alt'], 'lvl-kyoto': ['v-katana-alt', 'v-slash-1', 'v-slash-2', 'v-katana-alt', 'v-slash-2'], 'lvl-lumber': ['v-woodstrike', 'v-woodstrike-2', 'v-woodstrike'], 'superspace': ['v-saber-power', 'v-saber-power', 'v-saber-power'] };
+  const LVG = { 'lvl-haunted': [1.2, 1.3], 'lvl-kyoto': [1.2, 1.15, 1.2, 1.2, 1.15], 'lvl-lumber': [1.25, 1.25, 1.2], 'superspace': [1.25, .85, .85] };
   for (const [clip, from, to] of SEG) {
     if (!LV[clip]) continue;
-    const key = SEG.find(g => g[0] === clip)[4];      // (v42: a clip may start part way in)
-    LV[clip].forEach((fr, i) => { const t = from + (fr - key) / FPS - .02; if (t >= from && t < to - .05) clip === 'lvl-keyboard' ? kb(t, i ? .7 : 1) : h(t, LVS[clip], i ? .65 : 1); });
+    const key = SEG.find(g => g[0] === clip)[4];
+    LV[clip].forEach((fr, i) => { const t = from + (fr - key) / FPS; if (t < from || t >= to - .05) return;
+      if (clip === 'lvl-keyboard') return i === 1 ? (v(t, 'v-woodstrike', 1.15), v(t, 'v-heavy-hit', .5)) : kb(t, i ? .7 : 1);      // (v67: 0:55, a thunk, not a knife)
+      if (clip === 'superspace') return h(t - .03, `space/slash${[1, 4, 2][i]}.flac`, i ? 1.15 : 1.35);      // (v67: Super Space's own saber sounds only)
+      if (clip === 'lvl-toxic') return h(t - .02, `lab/melt${1 + i % 6}.flac`, i === 2 ? .45 : .6);      // (v65: quieter)
+      v(t, LVS[clip][i % LVS[clip].length], LVG[clip][i]);
+      if (clip === 'lvl-haunted') { v(t, 'v-heavy-hit', .35); if (i === 1) v(t, 'v-slash-metal', .9); } });      // (v67: Haunted's second sword stronger)
   }
-  // v41: the ending clip's monitor smashes, before the overlay comes in
-  [[4, .9], [25, .7], [55, .8], [76, .7], [108, .8], [142, .7]].forEach(([fr, g]) => kb(T_OUT + .4 + (fr - 1) / FPS - .02, g * .8));
-  // the seated player's three cuts (the take's 6.4, 7.5 and 12.0 s), through the same playback curve as the picture
-  const a = C('chair') - .05, b = C('really') - .3, slash = W('come', 'stretching') - a, end = b + .3 - a;
-  [6.4, 7.5, 12.0].forEach((src, i) => h(a + slash + (src - 6.4) / (13.9 - 6.4) * (end - slash) - .03, 'kyoto/slash5.flac', i ? .7 : 1));
+  // v65: Toxic Danger's spray, the game's own hiss, on each of the two sprays (its frames 34 and 80), lower
+  [[34, 'spray-a', .5], [74, 'spray-b', .5]]      /* (v67: the second a little earlier) */.forEach(([fr, f, g]) => SFX.push({ t: +(C('lab') + (fr - 1) / FPS).toFixed(3), file: `../work/audio/game/${f}.wav`, gain: g }));
+  // v65: Inferno's flamethrower: the intro's as it first fires (its frame 73, 1:06.8), then the game's own flamethrower roar
+  // (inferno/hum, with its flare) as it flares again at 1:08 (frame 108)
+  SFX.push({ t: +(C('inferno') + (73 - 31) / FPS - .05).toFixed(3), file: '../work/audio/sword/flame.wav', gain: 1.2 });
+  SFX.push({ t: +(C('inferno') + (108 - 31) / FPS - .03).toFixed(3), file: '../work/audio/game/inferno-flame.wav', gain: 1.0 });
+  h(C('inferno') + (108 - 31) / FPS - .05, 'inferno/flare.flac', .5);
+  SFX.push({ t: +(C('inferno') + (141 - 31) / FPS - .05).toFixed(3), file: '../work/audio/sword/flame-short.wav', gain: 1.2 });      // (v67: and again as it fires at 1:09)
+  // Super Space's saber lighting (kept)
+  h(C('or') + 31 / FPS - .08, 'space/arm.flac', 2.0);
+  // the seated player's two cuts, through the same playback curve as the picture
+  [6.4, 7.5].forEach((src, i) => { const t = seatAt(src); if (t !== null && t < SEAT_B + .2) v(t, i ? 'v-slash-2' : 'v-katana-alt', i ? .75 : 1); });
+  // the clear: the confirm ticks as the count runs down (kept), the icon slashed at zero, the tick landing
+  for (let k = 0; k < 5; k++) h(lerp(T_CLR_GO + .02, T_ZERO - .1, k / 4), 'ui/confirm.flac', k === 4 ? .6 : .5);
+  v(T_ZERO + .12, 'v-slash-1', 1.0); v(T_ZERO + .12, 'v-glasshit', .35); v(T_ZERO + .34, 'v-reveal', .7);
+  // the ending clip's monitor smashes (on its curve: real speed once the try card clears)
+  // v62: the longer ending's hits (its frames, found by how much the picture changes): soft ones on the last emails once the
+  // voice has finished, then the monitor being smashed, louder, through the anthem's chorus
+  [[108, .45], [121, .4], [149, .5]].forEach(([fr, g]) => kb(OUTRO_AT + (fr - 1) / FPS, g));
+  [[175, 1.0], [205, .75], [226, .85], [258, .9], [273, .7], [312, .85], [323, .95], [353, .95], [375, .85], [407, .8]].forEach(([fr, g]) => kb(OUTRO_AT + (fr - 1) / FPS, g));
+  // the end card's logo landing, on "No more email tonight"
+  v(SONG(9.25) + .35, 'v-reveal', .8);
 }
 buildHits();
 
@@ -1099,5 +1250,5 @@ async function renderAt(T) {
   await Promise.all(imgs.map(i => i.decode().catch(() => {})));
   if (!$('foot-img').complete) await $('foot-img').decode().catch(() => {});
 }
-Object.assign(window, { renderAt, SFX, AMB, DUR, FPS });
+Object.assign(window, { renderAt, SFX, AMB, DUR, FPS, ANTHEM_AT: T_ANTHEM });
 document.fonts.ready.then(() => { window.READY = true; });

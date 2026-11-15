@@ -167,17 +167,5 @@ The game never touches your inbox
 and each round is deleted once it's done
 
 43
-00:01:44,950 --> 00:01:48,300
+00:01:45,750 --> 00:01:49,880
 Try it yourself at InboxZeroVR.com!
-
-44
-00:01:48,320 --> 00:01:50,260
-Play the demo in all seven levels
-
-45
-00:01:50,280 --> 00:01:52,880
-or connect your agent and play your own inbox
-
-46
-00:01:52,910 --> 00:01:56,150
-Become a hero with inbox zero!

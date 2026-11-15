@@ -11,8 +11,8 @@ fx = json.load(open(os.path.join(ROOT, 'work', 'sfx.json'))); DUR = fx['dur']
 SR = 44100
 VOICE_FX = False              # v40: "remove the effect on the voice over voice" (True: the How to Play chain, tools/voicefx.py)
 MUSIC = True                  # v18: "add the inferno level music...", v23: "use the kyoto song instead of inferno"
-MUSIC_FILE = os.path.join(ROOT, '..', 'vr3', 'play', 'public', 'audio', 'office', 'music.m4a')      # v42: the Keyboard Smash song for the whole film (v23: Kyoto's, before that Inferno's)
-MUSIC_LEN = 281.20            # the track's length
+MUSIC_FILE = os.path.join(ROOT, '..', 'vr3', 'play', 'public', 'audio', 'kyoto', 'music.m4a')      # v70: "lets try the kyoto level sound track for music" (v68-v69: Keyboard Smash's, v59-v67: Inferno's)
+MUSIC_LEN = 298.72            # the track's length
 MUSIC_FROM = None             # v21: None = start where the track's own ending lands on the film's end (its loudest stretch, from the first frame)
 DUCK_DB = -13.0               # music under the voice (kept well under it: the voice must stay very clear)
 HOOK_DUCK_DB = -7.0           # v21: lighter under the 7 s hook, so the music is heard from the start (about 12 dB under her)
@@ -21,8 +21,12 @@ DUCKING = False               # v34: "make the background music be same level th
 END_SONG = os.path.join(ROOT, '..', 'vr3', 'play', 'public', 'audio', 'office', 'music.m4a')      # v41: the Keyboard Smash song over the ending clip
 END_SONG_LEN = 281.2          # its length: its own ending lands on the film's last frame
 END_LUFS = -23.0              # louder than the bed: no voice over the ending
-T_OUT = cues['cues']['hero']['end'] + 1.6      # where the ending clip takes over (OUT_HOLD in scenes/film.js)
+ANTHEM = os.path.join(ROOT, '..', 'vr3', 'play', 'public', 'audio', 'office', 'anthem.m4a')      # v43: Keyboard Smash's end anthem over the ending
+ANTHEM_LUFS = -19.0           # the chorus up front, about level with the voice sections after mastering
+T_OUT = cues['cues']['try']['end'] + 1.6      # (v57: the last line is 'try' now)      # where the ending clip takes over (OUT_HOLD in scenes/film.js)
 MUSIC_LUFS = -31.0            # about 13 dB under the voice, everywhere
+MUSIC_IN, MUSIC_IN_LEN = C('sword'), 1.1      # v64: "start of video, make music 0% then fade in to normal level on the have you tried a sword" (in by the split, 0:06.5)
+GAP_BOOST_DB = 1.5            # v59: "when voice over is silent, increase background music 10%": about 10% louder (+1.5 dB) in the voice's pauses
 SFX_DB = -7.0                 # v18 hits: "there but not overboard"
 SFX_NORM = -20.0              # each hit is first levelled to this (they range from -16 to -32 LUFS as made)
 
@@ -48,7 +52,18 @@ if MUSIC:
         run('ffmpeg', '-y', '-ss', f'{start - pre:.3f}', '-t', f'{DUR + pre:.3f}', '-i', MUSIC_FILE, '-ac', '2', '-ar', str(SR),
             '-af', f'dynaudnorm=f=500:g=31:p=0.9:m=8:s=0,atrim={pre:.3f},asetpts=PTS-STARTPTS,afade=t=in:d=0.02', '-c:a', 'pcm_s16le', wav('music-even.wav'))
         g = MUSIC_LUFS - _lufs(wav('music-even.wav'))
-        if END_SONG:
+        if ANTHEM and fx.get('anthem') is not None:
+            # v43: "when the end plays with keyboard smash outro - play the keyboard smash level end song anthem, so it ends
+            # with the power metal chorus": the levelled bed runs until the anthem starts (scenes/film.js puts its first
+            # "Smash" on the ending clip's first hit), fading under its opening; the anthem plays whole, unlevelled, to the end
+            X = fx['anthem']
+            run('ffmpeg', '-y', '-i', ANTHEM, '-ac', '2', '-ar', str(SR), '-c:a', 'pcm_s16le', wav('anthem-raw.wav'))
+            eg = ANTHEM_LUFS - _lufs(wav('anthem-raw.wav')); ms = int(X * 1000)
+            run('ffmpeg', '-y', '-i', wav('music-even.wav'), '-i', wav('anthem-raw.wav'), '-filter_complex',
+                f'[0]volume={g:.2f}dB,afade=t=out:st={X - .15:.3f}:d=0.6,atrim=0:{X + .5:.3f}[a];[1]volume={eg:.2f}dB,adelay={ms}|{ms}[b];'
+                f'[a][b]amix=inputs=2:normalize=0:duration=longest,apad=whole_dur={DUR:.3f},atrim=0:{DUR:.3f},afade=t=out:st={DUR - 0.25:.3f}:d=0.25', '-c:a', 'pcm_s16le', wav('bed.wav'))
+            print('bed until', round(X, 2), 's, then the anthem whole (', round(eg, 1), 'dB )')
+        elif END_SONG:
             # v42: one song from start to end (END_SONG is the same file): the levelled bed until the ending, then the same song
             # unlevelled and louder, so its real last hits and ring-out close the film; the two are on one timeline, so the
             # handover at T_OUT is only a level change
@@ -71,7 +86,7 @@ if MUSIC:
             tgt = act[i] if i < len(act) else 0.0
             cur += (tgt - cur) * (0.35 if tgt > cur else 0.05)        # fast down, slow back up
             t = i / 100
-            base = END_DB if t > C('hero') + cues['cues']['hero']['end'] - C('hero') else BED_DB
+            base = END_DB if t > cues['cues']['try']['end'] else BED_DB
             db = base + (HOOK_DUCK_DB if t < C('slash') else DUCK_DB) * cur
             gains.append(10 ** (db / 20))
         # write the envelope as a stereo wav at full rate and multiply
@@ -83,6 +98,36 @@ if MUSIC:
         run('ffmpeg', '-y', '-i', wav('music.wav'), '-f', 'f32le', '-ar', str(SR), '-ac', '2', '-i', wav('duck.raw'),
             '-filter_complex', '[0][1]amultiply,atrim=0:%.3f' % DUR, '-c:a', 'pcm_s16le', wav('bed.wav'))
 
+# v59: lift the bed in the voice's pauses (only pauses of 0.4 s or more, starting a beat after the voice stops and back
+# down just before it starts again, with soft ramps), up to the ending anthem, which keeps its own level
+if MUSIC and GAP_BOOST_DB:
+    e = env(wav('vo.wav'), 100); n = int(DUR * 100) + 2
+    on = [(e[i] > 0.012) if i < len(e) else False for i in range(n)]
+    tgt = [0.0] * n; i = 0
+    while i < n:
+        if on[i]: i += 1; continue
+        j = i
+        while j < n and not on[j]: j += 1
+        if j - i >= 40:
+            for k in range(i + 12, max(i + 12, j - 15)): tgt[k] = 1.0
+        i = j
+    stop = int((fx.get('anthem') or DUR) * 100) - 30
+    gains, cur = [], 0.0
+    for i in range(n):
+        t_ = tgt[i] if i < stop else 0.0
+        cur += (t_ - cur) * (0.06 if t_ > cur else 0.3)      # (up over about a third of a second, down fast)
+        fin = (lambda q: q * q * (3 - 2 * q))(min(1.0, max(0.0, (i / 100 - MUSIC_IN) / MUSIC_IN_LEN)))      # v64: silent, then in on "have you tried a sword"
+        gains.append(10 ** (GAP_BOOST_DB * cur / 20) * fin)
+    step = SR // 100
+    with open(wav('boost.raw'), 'wb') as f:
+        for i in range(len(gains) - 1):
+            a, b = gains[i], gains[i + 1]
+            f.write(b''.join(struct.pack('<ff', a + (b - a) * k / step, a + (b - a) * k / step) for k in range(step)))
+    os.replace(wav('bed.wav'), wav('bed-flat.wav'))
+    run('ffmpeg', '-y', '-i', wav('bed-flat.wav'), '-f', 'f32le', '-ar', str(SR), '-ac', '2', '-i', wav('boost.raw'),
+        '-filter_complex', '[0]aformat=channel_layouts=stereo[m];[m][1]amultiply,atrim=0:%.3f' % DUR, '-c:a', 'pcm_s16le', wav('bed.wav'))
+    print('bed lifted %.1f dB in the pauses: %.1f s of them' % (GAP_BOOST_DB, sum(tgt[:stop]) / 100))
+
 # 3. effects, from the game's own sounds, and each level's own room tone under its shot (looped, faded at the cuts)
 ins, parts = [], []
 amb = fx.get('amb', [])
@@ -91,7 +136,7 @@ for k, m in enumerate(amb):
     ins += ['-stream_loop', '-1', '-i', path]
     ms = max(0, int(m['t'] * 1000))
     parts.append(f"[{k}]aformat=channel_layouts=stereo:sample_rates={SR},atrim=0:{m['dur']:.3f},asetpts=PTS-STARTPTS,afade=t=in:d=0.25,afade=t=out:st={m['dur'] - 0.3:.3f}:d=0.3,"
-                 f"volume={m['gain'] * 10 ** (SFX_DB / 20):.4f},adelay={ms}|{ms}[a{k}]")
+                 f"volume={m['gain'] * 10 ** (SFX_DB / 20):.4f},adelay={ms}|{ms},apad=whole_dur={DUR:.3f},atrim=0:{DUR:.3f}[a{k}]")      # (v65: padded to the film's length too: with duration=first, an unpadded room tone ended the whole effects track early)
 _lv = {}
 def level_of(path):
     if path not in _lv:

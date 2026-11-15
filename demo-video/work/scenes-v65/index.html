@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Inbox Zero VR demo film</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Silkscreen:wght@400;700&display=block" rel="stylesheet">
+<link rel="stylesheet" href="film.css">
+</head>
+<body>
+<div id="stage">
+  <!-- backdrops -->
+  <div id="white" class="layer"></div>
+  <!-- v60: the retro backdrop for the agent scenes (dark indigo lit pink and mint, as the game's loading screen, with a faint pixel grid) -->
+  <div id="retro" class="layer"><div id="retro-dust"></div></div>
+  <div id="night" class="layer"><img id="night-img" src="../work/footage/home/0001.jpg" alt=""></div>
+  <!-- real game footage, one frame at a time -->
+  <div id="foot" class="layer"><img id="foot-img" alt=""><img id="foot-prev" alt=""></div>
+
+  <!-- hook: the inbox -->
+  <div id="inbox-wrap" class="layer center">
+    <!-- v12: mail piling up around the icon: notification banners and little envelopes flying in -->
+    <div id="notes"></div>
+    <div id="flies"></div>
+    <!-- v11: the hook is an app icon with a badge, iPhone home screen style (a generic mail icon, not Apple's) -->
+    <div id="app" class="app"><div class="appicon" id="appicon"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="appbadge" id="appbadge">122</span><span class="appdone" id="appdone"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div><i class="appring" id="appring"></i><div class="ch" id="ch-a"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ch" id="ch-b"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><i id="clr-streak"></i><i id="clr-ring"></i><div id="clr-tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div class="applabel" id="applabel">Inbox</div></div>
+    <div id="clear-parts"></div>
+    <div id="tried" class="chips"><span class="mini" id="chip-filters"><span class="mi fil"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6.2 7.4v5.4l-3.6 1.9v-7.3z"/></svg></span><i class="nope"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i><span class="ml">Filters</span></span><span class="chip-slot" id="slot-rem"><span class="mini" id="chip-rem"><span class="mi rem"><svg viewBox="0 0 24 24"><path d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5v3.6L4.8 15.5h14.4l-1.7-2.9V9A5.5 5.5 0 0 0 12 3.5z"/><path d="M10 18.5a2 2 0 0 0 4 0" class="clap"/></svg></span><i class="nope"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i><span class="ml">Reminders</span></span></span></div>
+    <div id="inbox" class="card inbox">
+      <div class="ihead"><span class="ititle">Inbox</span><span class="badge"><b id="count">181</b> unread</span></div>
+      <div class="rows" id="rows"></div>
+      <div class="empty" id="empty"><div class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div><div class="empty-t">Inbox zero</div></div>
+    </div>
+    <div id="slash" class="slash"></div>
+  </div>
+  <div id="half-a" class="layer center half"></div>
+  <div id="half-b" class="layer center half"></div>
+  <div id="flash" class="layer"></div>
+
+  <!-- the logo slam and the glide into the home screen -->
+  <div id="logo-shade"></div>
+  <div id="end-black"></div>      <!-- v41: the end goes to black under the logo -->
+  <img id="logo-slam" src="../work/assets/logos/kyoto.webp" alt="">
+  <!-- v27: after the logo, on the same shade -->
+  <div id="round-line"><span class="rl1"><b>Clear</b><b>your</b><b>email</b><b>inbox</b></span><span class="kcs" id="kcs"></span><span class="rl2"><b>one</b><b>round</b><b>at</b><b>a</b><b>time</b></span></div>
+  <!-- v33: the mail icon again, in Keyboard Smash colours, cut down to zero -->
+  <div id="ks-cut">
+    <div id="ks-parts"></div>
+    <div id="ks-icon"><div class="ptile"><svg viewBox="-1 -1 18 13" width="162" height="117" shape-rendering="crispEdges"><rect x="0" y="0" width="1" height="1" fill="#f4fff9"/><rect x="0" y="1" width="1" height="1" fill="#f4fff9"/><rect x="0" y="2" width="1" height="1" fill="#f4fff9"/><rect x="0" y="3" width="1" height="1" fill="#f4fff9"/><rect x="0" y="4" width="1" height="1" fill="#f4fff9"/><rect x="0" y="5" width="1" height="1" fill="#f4fff9"/><rect x="0" y="6" width="1" height="1" fill="#f4fff9"/><rect x="0" y="7" width="1" height="1" fill="#f4fff9"/><rect x="0" y="8" width="1" height="1" fill="#f4fff9"/><rect x="0" y="9" width="1" height="1" fill="#f4fff9"/><rect x="0" y="10" width="1" height="1" fill="#f4fff9"/><rect x="1" y="0" width="1" height="1" fill="#f4fff9"/><rect x="1" y="1" width="1" height="1" fill="#1f9f7a"/><rect x="1" y="2" width="1" height="1" fill="#1f9f7a"/><rect x="1" y="3" width="1" height="1" fill="#f4fff9"/><rect x="1" y="4" width="1" height="1" fill="#f4fff9"/><rect x="1" y="5" width="1" height="1" fill="#f4fff9"/><rect x="1" y="6" width="1" height="1" fill="#f4fff9"/><rect x="1" y="7" width="1" height="1" fill="#f4fff9"/><rect x="1" y="8" width="1" height="1" fill="#f4fff9"/><rect x="1" y="9" width="1" height="1" fill="#f4fff9"/><rect x="1" y="10" width="1" height="1" fill="#f4fff9"/><rect x="2" y="0" width="1" height="1" fill="#f4fff9"/><rect x="2" y="1" width="1" height="1" fill="#f4fff9"/><rect x="2" y="2" width="1" height="1" fill="#1f9f7a"/><rect x="2" y="3" width="1" height="1" fill="#f4fff9"/><rect x="2" y="4" width="1" height="1" fill="#f4fff9"/><rect x="2" y="5" width="1" height="1" fill="#f4fff9"/><rect x="2" y="6" width="1" height="1" fill="#f4fff9"/><rect x="2" y="7" width="1" height="1" fill="#f4fff9"/><rect x="2" y="8" width="1" height="1" fill="#f4fff9"/><rect x="2" y="9" width="1" height="1" fill="#f4fff9"/><rect x="2" y="10" width="1" height="1" fill="#f4fff9"/><rect x="3" y="0" width="1" height="1" fill="#f4fff9"/><rect x="3" y="1" width="1" height="1" fill="#f4fff9"/><rect x="3" y="2" width="1" height="1" fill="#f4fff9"/><rect x="3" y="3" width="1" height="1" fill="#1f9f7a"/><rect x="3" y="4" width="1" height="1" fill="#f4fff9"/><rect x="3" y="5" width="1" height="1" fill="#f4fff9"/><rect x="3" y="6" width="1" height="1" fill="#f4fff9"/><rect x="3" y="7" width="1" height="1" fill="#f4fff9"/><rect x="3" y="8" width="1" height="1" fill="#f4fff9"/><rect x="3" y="9" width="1" height="1" fill="#f4fff9"/><rect x="3" y="10" width="1" height="1" fill="#f4fff9"/><rect x="4" y="0" width="1" height="1" fill="#f4fff9"/><rect x="4" y="1" width="1" height="1" fill="#f4fff9"/><rect x="4" y="2" width="1" height="1" fill="#f4fff9"/><rect x="4" y="3" width="1" height="1" fill="#f4fff9"/><rect x="4" y="4" width="1" height="1" fill="#1f9f7a"/><rect x="4" y="5" width="1" height="1" fill="#f4fff9"/><rect x="4" y="6" width="1" height="1" fill="#f4fff9"/><rect x="4" y="7" width="1" height="1" fill="#f4fff9"/><rect x="4" y="8" width="1" height="1" fill="#f4fff9"/><rect x="4" y="9" width="1" height="1" fill="#f4fff9"/><rect x="4" y="10" width="1" height="1" fill="#f4fff9"/><rect x="5" y="0" width="1" height="1" fill="#f4fff9"/><rect x="5" y="1" width="1" height="1" fill="#f4fff9"/><rect x="5" y="2" width="1" height="1" fill="#f4fff9"/><rect x="5" y="3" width="1" height="1" fill="#f4fff9"/><rect x="5" y="4" width="1" height="1" fill="#f4fff9"/><rect x="5" y="5" width="1" height="1" fill="#1f9f7a"/><rect x="5" y="6" width="1" height="1" fill="#f4fff9"/><rect x="5" y="7" width="1" height="1" fill="#f4fff9"/><rect x="5" y="8" width="1" height="1" fill="#f4fff9"/><rect x="5" y="9" width="1" height="1" fill="#f4fff9"/><rect x="5" y="10" width="1" height="1" fill="#f4fff9"/><rect x="6" y="0" width="1" height="1" fill="#f4fff9"/><rect x="6" y="1" width="1" height="1" fill="#f4fff9"/><rect x="6" y="2" width="1" height="1" fill="#f4fff9"/><rect x="6" y="3" width="1" height="1" fill="#f4fff9"/><rect x="6" y="4" width="1" height="1" fill="#f4fff9"/><rect x="6" y="5" width="1" height="1" fill="#f4fff9"/><rect x="6" y="6" width="1" height="1" fill="#1f9f7a"/><rect x="6" y="7" width="1" height="1" fill="#f4fff9"/><rect x="6" y="8" width="1" height="1" fill="#f4fff9"/><rect x="6" y="9" width="1" height="1" fill="#f4fff9"/><rect x="6" y="10" width="1" height="1" fill="#f4fff9"/><rect x="7" y="0" width="1" height="1" fill="#f4fff9"/><rect x="7" y="1" width="1" height="1" fill="#f4fff9"/><rect x="7" y="2" width="1" height="1" fill="#f4fff9"/><rect x="7" y="3" width="1" height="1" fill="#f4fff9"/><rect x="7" y="4" width="1" height="1" fill="#f4fff9"/><rect x="7" y="5" width="1" height="1" fill="#f4fff9"/><rect x="7" y="6" width="1" height="1" fill="#f4fff9"/><rect x="7" y="7" width="1" height="1" fill="#1f9f7a"/><rect x="7" y="8" width="1" height="1" fill="#f4fff9"/><rect x="7" y="9" width="1" height="1" fill="#f4fff9"/><rect x="7" y="10" width="1" height="1" fill="#f4fff9"/><rect x="8" y="0" width="1" height="1" fill="#f4fff9"/><rect x="8" y="1" width="1" height="1" fill="#f4fff9"/><rect x="8" y="2" width="1" height="1" fill="#f4fff9"/><rect x="8" y="3" width="1" height="1" fill="#f4fff9"/><rect x="8" y="4" width="1" height="1" fill="#f4fff9"/><rect x="8" y="5" width="1" height="1" fill="#f4fff9"/><rect x="8" y="6" width="1" height="1" fill="#f4fff9"/><rect x="8" y="7" width="1" height="1" fill="#1f9f7a"/><rect x="8" y="8" width="1" height="1" fill="#f4fff9"/><rect x="8" y="9" width="1" height="1" fill="#f4fff9"/><rect x="8" y="10" width="1" height="1" fill="#f4fff9"/><rect x="9" y="0" width="1" height="1" fill="#f4fff9"/><rect x="9" y="1" width="1" height="1" fill="#f4fff9"/><rect x="9" y="2" width="1" height="1" fill="#f4fff9"/><rect x="9" y="3" width="1" height="1" fill="#f4fff9"/><rect x="9" y="4" width="1" height="1" fill="#f4fff9"/><rect x="9" y="5" width="1" height="1" fill="#f4fff9"/><rect x="9" y="6" width="1" height="1" fill="#1f9f7a"/><rect x="9" y="7" width="1" height="1" fill="#f4fff9"/><rect x="9" y="8" width="1" height="1" fill="#f4fff9"/><rect x="9" y="9" width="1" height="1" fill="#f4fff9"/><rect x="9" y="10" width="1" height="1" fill="#f4fff9"/><rect x="10" y="0" width="1" height="1" fill="#f4fff9"/><rect x="10" y="1" width="1" height="1" fill="#f4fff9"/><rect x="10" y="2" width="1" height="1" fill="#f4fff9"/><rect x="10" y="3" width="1" height="1" fill="#f4fff9"/><rect x="10" y="4" width="1" height="1" fill="#f4fff9"/><rect x="10" y="5" width="1" height="1" fill="#1f9f7a"/><rect x="10" y="6" width="1" height="1" fill="#f4fff9"/><rect x="10" y="7" width="1" height="1" fill="#f4fff9"/><rect x="10" y="8" width="1" height="1" fill="#f4fff9"/><rect x="10" y="9" width="1" height="1" fill="#f4fff9"/><rect x="10" y="10" width="1" height="1" fill="#f4fff9"/><rect x="11" y="0" width="1" height="1" fill="#f4fff9"/><rect x="11" y="1" width="1" height="1" fill="#f4fff9"/><rect x="11" y="2" width="1" height="1" fill="#f4fff9"/><rect x="11" y="3" width="1" height="1" fill="#f4fff9"/><rect x="11" y="4" width="1" height="1" fill="#1f9f7a"/><rect x="11" y="5" width="1" height="1" fill="#f4fff9"/><rect x="11" y="6" width="1" height="1" fill="#f4fff9"/><rect x="11" y="7" width="1" height="1" fill="#f4fff9"/><rect x="11" y="8" width="1" height="1" fill="#f4fff9"/><rect x="11" y="9" width="1" height="1" fill="#f4fff9"/><rect x="11" y="10" width="1" height="1" fill="#f4fff9"/><rect x="12" y="0" width="1" height="1" fill="#f4fff9"/><rect x="12" y="1" width="1" height="1" fill="#f4fff9"/><rect x="12" y="2" width="1" height="1" fill="#f4fff9"/><rect x="12" y="3" width="1" height="1" fill="#1f9f7a"/><rect x="12" y="4" width="1" height="1" fill="#f4fff9"/><rect x="12" y="5" width="1" height="1" fill="#f4fff9"/><rect x="12" y="6" width="1" height="1" fill="#f4fff9"/><rect x="12" y="7" width="1" height="1" fill="#f4fff9"/><rect x="12" y="8" width="1" height="1" fill="#f4fff9"/><rect x="12" y="9" width="1" height="1" fill="#f4fff9"/><rect x="12" y="10" width="1" height="1" fill="#f4fff9"/><rect x="13" y="0" width="1" height="1" fill="#f4fff9"/><rect x="13" y="1" width="1" height="1" fill="#f4fff9"/><rect x="13" y="2" width="1" height="1" fill="#1f9f7a"/><rect x="13" y="3" width="1" height="1" fill="#f4fff9"/><rect x="13" y="4" width="1" height="1" fill="#f4fff9"/><rect x="13" y="5" width="1" height="1" fill="#f4fff9"/><rect x="13" y="6" width="1" height="1" fill="#f4fff9"/><rect x="13" y="7" width="1" height="1" fill="#f4fff9"/><rect x="13" y="8" width="1" height="1" fill="#f4fff9"/><rect x="13" y="9" width="1" height="1" fill="#f4fff9"/><rect x="13" y="10" width="1" height="1" fill="#f4fff9"/><rect x="14" y="0" width="1" height="1" fill="#f4fff9"/><rect x="14" y="1" width="1" height="1" fill="#1f9f7a"/><rect x="14" y="2" width="1" height="1" fill="#1f9f7a"/><rect x="14" y="3" width="1" height="1" fill="#f4fff9"/><rect x="14" y="4" width="1" height="1" fill="#f4fff9"/><rect x="14" y="5" width="1" height="1" fill="#f4fff9"/><rect x="14" y="6" width="1" height="1" fill="#f4fff9"/><rect x="14" y="7" width="1" height="1" fill="#f4fff9"/><rect x="14" y="8" width="1" height="1" fill="#f4fff9"/><rect x="14" y="9" width="1" height="1" fill="#f4fff9"/><rect x="14" y="10" width="1" height="1" fill="#f4fff9"/><rect x="15" y="0" width="1" height="1" fill="#f4fff9"/><rect x="15" y="1" width="1" height="1" fill="#f4fff9"/><rect x="15" y="2" width="1" height="1" fill="#f4fff9"/><rect x="15" y="3" width="1" height="1" fill="#f4fff9"/><rect x="15" y="4" width="1" height="1" fill="#f4fff9"/><rect x="15" y="5" width="1" height="1" fill="#f4fff9"/><rect x="15" y="6" width="1" height="1" fill="#f4fff9"/><rect x="15" y="7" width="1" height="1" fill="#f4fff9"/><rect x="15" y="8" width="1" height="1" fill="#f4fff9"/><rect x="15" y="9" width="1" height="1" fill="#f4fff9"/><rect x="15" y="10" width="1" height="1" fill="#f4fff9"/></svg></div><span id="ks-badge"><span class="pxb"><b id="ks-num">10</b></span></span></div>
+    <div id="ks-streak"></div>
+  </div>
+  <!-- v22: under the round's logo -->
+  <div id="logo-credit"><svg viewBox="0 0 26 12" width="104" height="48" shape-rendering="crispEdges"><rect x="0" y="5" width="1" height="1" fill="#0864e6"/><rect x="0" y="6" width="1" height="1" fill="#0864e6"/><rect x="1" y="3" width="1" height="1" fill="#0864e6"/><rect x="1" y="4" width="1" height="1" fill="#0864e6"/><rect x="1" y="5" width="1" height="1" fill="#0864e6"/><rect x="1" y="6" width="1" height="1" fill="#0864e6"/><rect x="1" y="7" width="1" height="1" fill="#0864e6"/><rect x="1" y="8" width="1" height="1" fill="#0864e6"/><rect x="2" y="2" width="1" height="1" fill="#0864e6"/><rect x="2" y="3" width="1" height="1" fill="#0864e6"/><rect x="2" y="4" width="1" height="1" fill="#0864e6"/><rect x="2" y="5" width="1" height="1" fill="#0864e6"/><rect x="2" y="6" width="1" height="1" fill="#0864e6"/><rect x="2" y="7" width="1" height="1" fill="#0864e6"/><rect x="2" y="8" width="1" height="1" fill="#0864e6"/><rect x="2" y="9" width="1" height="1" fill="#0864e6"/><rect x="3" y="1" width="1" height="1" fill="#0864e6"/><rect x="3" y="2" width="1" height="1" fill="#0864e6"/><rect x="3" y="3" width="1" height="1" fill="#0864e6"/><rect x="3" y="8" width="1" height="1" fill="#0864e6"/><rect x="3" y="9" width="1" height="1" fill="#0864e6"/><rect x="3" y="10" width="1" height="1" fill="#0864e6"/><rect x="4" y="1" width="1" height="1" fill="#0864e6"/><rect x="4" y="2" width="1" height="1" fill="#0864e6"/><rect x="4" y="9" width="1" height="1" fill="#0864e6"/><rect x="4" y="10" width="1" height="1" fill="#0864e6"/><rect x="5" y="0" width="1" height="1" fill="#0864e6"/><rect x="5" y="1" width="1" height="1" fill="#0864e6"/><rect x="5" y="2" width="1" height="1" fill="#0864e6"/><rect x="5" y="9" width="1" height="1" fill="#0864e6"/><rect x="5" y="10" width="1" height="1" fill="#0864e6"/><rect x="5" y="11" width="1" height="1" fill="#0864e6"/><rect x="6" y="0" width="1" height="1" fill="#0864e6"/><rect x="6" y="1" width="1" height="1" fill="#0864e6"/><rect x="6" y="2" width="1" height="1" fill="#0864e6"/><rect x="6" y="9" width="1" height="1" fill="#0864e6"/><rect x="6" y="10" width="1" height="1" fill="#0864e6"/><rect x="6" y="11" width="1" height="1" fill="#0864e6"/><rect x="7" y="1" width="1" height="1" fill="#1a7ef2"/><rect x="7" y="2" width="1" height="1" fill="#1a7ef2"/><rect x="7" y="9" width="1" height="1" fill="#1a7ef2"/><rect x="7" y="10" width="1" height="1" fill="#1a7ef2"/><rect x="8" y="1" width="1" height="1" fill="#1a7ef2"/><rect x="8" y="2" width="1" height="1" fill="#1a7ef2"/><rect x="8" y="9" width="1" height="1" fill="#1a7ef2"/><rect x="8" y="10" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="1" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="2" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="3" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="8" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="9" width="1" height="1" fill="#1a7ef2"/><rect x="9" y="10" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="2" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="3" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="4" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="7" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="8" width="1" height="1" fill="#1a7ef2"/><rect x="10" y="9" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="3" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="4" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="5" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="6" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="7" width="1" height="1" fill="#1a7ef2"/><rect x="11" y="8" width="1" height="1" fill="#1a7ef2"/><rect x="12" y="4" width="1" height="1" fill="#1a7ef2"/><rect x="12" y="5" width="1" height="1" fill="#1a7ef2"/><rect x="12" y="6" width="1" height="1" fill="#1a7ef2"/><rect x="12" y="7" width="1" height="1" fill="#1a7ef2"/><rect x="13" y="4" width="1" height="1" fill="#2f98fb"/><rect x="13" y="5" width="1" height="1" fill="#2f98fb"/><rect x="13" y="6" width="1" height="1" fill="#2f98fb"/><rect x="13" y="7" width="1" height="1" fill="#2f98fb"/><rect x="14" y="3" width="1" height="1" fill="#2f98fb"/><rect x="14" y="4" width="1" height="1" fill="#2f98fb"/><rect x="14" y="5" width="1" height="1" fill="#2f98fb"/><rect x="14" y="6" width="1" height="1" fill="#2f98fb"/><rect x="14" y="7" width="1" height="1" fill="#2f98fb"/><rect x="14" y="8" width="1" height="1" fill="#2f98fb"/><rect x="15" y="2" width="1" height="1" fill="#2f98fb"/><rect x="15" y="3" width="1" height="1" fill="#2f98fb"/><rect x="15" y="4" width="1" height="1" fill="#2f98fb"/><rect x="15" y="7" width="1" height="1" fill="#2f98fb"/><rect x="15" y="8" width="1" height="1" fill="#2f98fb"/><rect x="15" y="9" width="1" height="1" fill="#2f98fb"/><rect x="16" y="1" width="1" height="1" fill="#2f98fb"/><rect x="16" y="2" width="1" height="1" fill="#2f98fb"/><rect x="16" y="3" width="1" height="1" fill="#2f98fb"/><rect x="16" y="8" width="1" height="1" fill="#2f98fb"/><rect x="16" y="9" width="1" height="1" fill="#2f98fb"/><rect x="16" y="10" width="1" height="1" fill="#2f98fb"/><rect x="17" y="1" width="1" height="1" fill="#2f98fb"/><rect x="17" y="2" width="1" height="1" fill="#2f98fb"/><rect x="17" y="9" width="1" height="1" fill="#2f98fb"/><rect x="17" y="10" width="1" height="1" fill="#2f98fb"/><rect x="18" y="1" width="1" height="1" fill="#2f98fb"/><rect x="18" y="2" width="1" height="1" fill="#2f98fb"/><rect x="18" y="9" width="1" height="1" fill="#2f98fb"/><rect x="18" y="10" width="1" height="1" fill="#2f98fb"/><rect x="19" y="0" width="1" height="1" fill="#2f98fb"/><rect x="19" y="1" width="1" height="1" fill="#2f98fb"/><rect x="19" y="2" width="1" height="1" fill="#2f98fb"/><rect x="19" y="9" width="1" height="1" fill="#2f98fb"/><rect x="19" y="10" width="1" height="1" fill="#2f98fb"/><rect x="19" y="11" width="1" height="1" fill="#2f98fb"/><rect x="20" y="0" width="1" height="1" fill="#4db3ff"/><rect x="20" y="1" width="1" height="1" fill="#4db3ff"/><rect x="20" y="2" width="1" height="1" fill="#4db3ff"/><rect x="20" y="9" width="1" height="1" fill="#4db3ff"/><rect x="20" y="10" width="1" height="1" fill="#4db3ff"/><rect x="20" y="11" width="1" height="1" fill="#4db3ff"/><rect x="21" y="1" width="1" height="1" fill="#4db3ff"/><rect x="21" y="2" width="1" height="1" fill="#4db3ff"/><rect x="21" y="9" width="1" height="1" fill="#4db3ff"/><rect x="21" y="10" width="1" height="1" fill="#4db3ff"/><rect x="22" y="1" width="1" height="1" fill="#4db3ff"/><rect x="22" y="2" width="1" height="1" fill="#4db3ff"/><rect x="22" y="3" width="1" height="1" fill="#4db3ff"/><rect x="22" y="8" width="1" height="1" fill="#4db3ff"/><rect x="22" y="9" width="1" height="1" fill="#4db3ff"/><rect x="22" y="10" width="1" height="1" fill="#4db3ff"/><rect x="23" y="2" width="1" height="1" fill="#4db3ff"/><rect x="23" y="3" width="1" height="1" fill="#4db3ff"/><rect x="23" y="4" width="1" height="1" fill="#4db3ff"/><rect x="23" y="5" width="1" height="1" fill="#4db3ff"/><rect x="23" y="6" width="1" height="1" fill="#4db3ff"/><rect x="23" y="7" width="1" height="1" fill="#4db3ff"/><rect x="23" y="8" width="1" height="1" fill="#4db3ff"/><rect x="23" y="9" width="1" height="1" fill="#4db3ff"/><rect x="24" y="3" width="1" height="1" fill="#4db3ff"/><rect x="24" y="4" width="1" height="1" fill="#4db3ff"/><rect x="24" y="5" width="1" height="1" fill="#4db3ff"/><rect x="24" y="6" width="1" height="1" fill="#4db3ff"/><rect x="24" y="7" width="1" height="1" fill="#4db3ff"/><rect x="24" y="8" width="1" height="1" fill="#4db3ff"/><rect x="25" y="5" width="1" height="1" fill="#4db3ff"/><rect x="25" y="6" width="1" height="1" fill="#4db3ff"/></svg><span>Built for Meta VR Hackathon</span></div>
+
+  <!-- the agent: a Muse window, rebuilt from the user's screenshot (work/assets/muse-example.webp) -->
+  <div id="muse" class="layer center">
+    <div class="mwin" id="mwin">
+      <div class="mrail"><span class="lights"><i></i><i></i><i></i></span><span class="ri on"><svg viewBox="0 0 24 24"><path d="M12 4c-4.6 0-8 3-8 7 0 1.7.7 3.2 1.8 4.4L5 20l4.3-1.4c.9.3 1.8.4 2.7.4 4.6 0 8-3 8-7s-3.4-8-8-8z"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="13" height="16" rx="2"/><path d="M4 8v10M10 8h5"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><path d="M9 17h6M10 20h4M12 3a6 6 0 0 0-3.5 10.9c.6.5.9 1 1 1.6h5c.1-.6.4-1.1 1-1.6A6 6 0 0 0 12 3z"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><circle cx="7.5" cy="16.5" r="3"/><rect x="13.5" y="13.5" width="6" height="6" rx="1"/><path d="M7.5 4.5l3 5h-6zM16.5 4.5l3 2.5-3 2.5-3-2.5z"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span></div>
+      <div class="mmain">
+        <div class="mtop"><span class="mback"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span><span class="mpill">New side chat</span></div>
+        <div class="mwho"><span class="mbot"><svg viewBox="0 0 24 24"><path d="M12 3.2v3"/><circle cx="12" cy="2.6" r=".9"/><rect x="4.5" y="6.2" width="15" height="12" rx="3.4"/><circle cx="9.3" cy="11.6" r="1.35" fill="#fff" stroke="none"/><circle cx="14.7" cy="11.6" r="1.35" fill="#fff" stroke="none"/><path d="M9.6 15.2h4.8"/><path d="M2.6 10.5v3.6M21.4 10.5v3.6"/></svg></span><span class="mname">Muse</span><span class="mconn" id="mconn"><i></i>Inbox Zero VR connected</span></div>
+        <div class="mchat" id="mchat">
+          <div class="msg user" id="m-ask">Set up an Inbox Zero game</div>
+          <div class="msg tool" id="m-read"><span class="tk" id="t-read"></span>Reading your newest unread emails<b id="m-count"></b></div>
+          <div class="msg tool" id="m-round"><span class="tk" id="t-round"></span>Inbox Zero VR, create_round</div>
+          <div class="msg bot" id="m-ready">Your game is ready, open it on your Quest
+            <div class="linkcard" id="m-link"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg><span class="lurl" id="m-lurl">inboxzerovr.com/play?code=4821</span><span class="lopen" id="m-open">Open</span></div>
+          </div>
+          <div class="msg bot" id="m-done">Round done, here's what you chose
+            <div class="rlist" id="rcard">
+              <div class="res" id="r-arch"><span class="ric" style="background:#0a9a7a"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"/></svg></span><span class="rl">Archive</span><span class="rn">6 emails</span><span class="tk"></span><i class="rfill"></i></div>
+              <div class="res" id="r-send"><span class="ric" style="background:#3b6df0"><svg viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg></span><span class="rl">Send</span><span class="rn">2 replies</span><span class="tk"></span><i class="rfill"></i></div>
+              <div class="res" id="r-later"><span class="ric" style="background:#ff9a2e"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="rl">Leave for tomorrow</span><span class="rn">2 emails</span><span class="tk"></span><i class="rfill"></i></div>
+            </div>
+          </div>
+          <!-- v64: the agent asks, you say okay in the message box, and it does it (an inline tool step) -->
+          <div class="msg bot" id="m-ask2">Want me to send these replies and archives? Just say the word!</div>
+          <div class="msg user" id="m-yes">Okay!</div>
+          <div class="msg tool" id="m-act"><span class="tk" id="t-act"></span>Archiving 6 emails, sending 2 replies</div>
+        </div>
+        <div class="mconnect card" id="mconnect"><div class="ctitle">Add a connector</div><div class="crow"><span class="cfield">inboxzerovr.com/mcp</span><span class="mbtn primary" id="c-btn">Connect</span></div></div>
+        <div class="mbar"><span class="mplus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="mtext" id="mtext">Message</span><span class="mmic"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="msend" id="msend"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- built: the browser (v43: the address types, Play in browser is clicked, the game runs in the window, then fills the screen) -->
+  <div id="browser" class="layer">
+    <div class="win" id="win">
+      <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="addr"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span id="addr-t"></span><i id="addr-caret"></i></span></div>
+      <div class="shot" id="shot">
+        <img id="site-img" src="../work/assets/site-hero.png" alt=""><span class="hide-badge"></span>
+        <div id="b-loading"><div class="bl-inner"><img class="bl-logo" id="bl-logo" src="../work/assets/logos/site.webp" alt=""><div class="bl-bar"><span id="bl-sweep"></span></div><p class="bl-text" id="bl-text">loading</p></div></div>
+        <img id="game-img" alt="">
+        <img id="level-img" alt="">
+        <i id="b-k1" class="bk"></i><i id="b-k2" class="bk"></i><i id="b-k3" class="bk"></i><i id="b-k4" class="bk"></i><i id="b-k5" class="bk"></i>
+        <i id="b-pick"><b><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></b></i>
+        <i id="b-play"></i><i id="b-go"></i>
+        <i id="b-load"></i>
+      </div>
+    </div>
+    <div class="sticker" id="st-sdk"><span class="sk-b"><span class="sk-in"><span class="sk-ic" id="ic-sdk"></span>Meta Immersive Web SDK</span></span></div>
+    <div class="sticker mint" id="st-nodl"><span class="sk-b"><span class="sk-in"><span class="sk-ic" id="ic-nodl"></span>Nothing to download</span></span></div>
+  </div>
+
+  <!-- seated -->
+  <div id="seated" class="layer center">
+    <!-- v8: the transparent take in the bottom left; v43: over the level select (home footage), carried on from the browser -->
+    <div id="seat-bg"><img id="seat-bgimg" alt=""></div>
+    <div id="seat-motes"></div>
+    <div id="seat-shade"></div>
+    <img id="seat-img" alt="">
+  </div>
+
+  <!-- the game never touches your inbox (v55: redesigned: your agent in the middle, your inbox and it in a private zone,
+       only a short summary crosses to the game, no way from the game to your email, and the round deleted after) -->
+  <div id="flow" class="layer">
+    <div id="pz"><span class="pz-tag" id="pz-tag"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Only your agent reads your email</span></div>
+    <svg id="flow-arc" viewBox="0 0 1920 1080" width="1920" height="1080"><path id="arc" d="M1520 650 C1520 900 400 900 400 650" fill="none" stroke="#c9c1d6" stroke-width="5" stroke-dasharray="2 16" stroke-linecap="round"/></svg>
+    <div class="fwire" id="w-ia"></div><div class="fwire" id="w-ag"></div>
+    <span class="fchip" id="c-ag"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg>Just a summary</span>
+    <div class="fnode" id="n-inbox"><div class="fic fi-inbox"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="fl">Your inbox</span></div>
+    <div class="fnode" id="n-agent"><div class="fic fi-agent"><span class="frobot"><svg viewBox="0 0 24 24"><path d="M12 3.2v3"/><circle cx="12" cy="2.6" r=".9"/><rect x="4.5" y="6.2" width="15" height="12" rx="3.4"/><circle cx="9.3" cy="11.6" r="1.35" fill="#fff" stroke="none"/><circle cx="14.7" cy="11.6" r="1.35" fill="#fff" stroke="none"/><path d="M9.6 15.2h4.8"/><path d="M2.6 10.5v3.6M21.4 10.5v3.6"/></svg></span></div><span class="fl">Your agent</span></div>
+    <div class="fnode" id="n-game"><div class="fic fi-game" id="fi-game"><span id="fg-icon"></span><span class="fgb" id="fg-badge">0</span></div><span class="fl">The game</span></div>
+    <span class="nox" id="nox"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span>
+    <span class="fnever" id="fnever">Never reads, stores or touches your email</span>
+    <div class="pixels" id="pixels"></div>
+    <div id="packets"></div>
+    <span class="delstamp" id="delstamp">round deleted</span>
+  </div>
+
+  <!-- overlays on the footage -->
+  <img id="level-logo" class="level-logo" alt="">
+  <img id="hand-l" class="hand left" alt="">
+  <img id="hand-r" class="hand right" alt="">
+  <div id="home-code" class="homecode">Game 4821</div>
+  <div id="phrases"></div>
+  <div id="mic" class="bubble"><span class="micdot"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span id="mic-t"></span></div>
+
+  <!-- the close -->
+  <div id="close" class="layer">
+    <!-- v43: Inferno gameplay behind (the footage layer), darkened; the address, two rows of levels and the agent in the pixel style -->
+    <div id="close-shade"></div>
+    <div id="close-white"></div>
+    <img id="end-logo" src="../work/assets/logos/site.webp" alt="">
+    <img id="try-logo" src="../work/assets/logos/site.webp" alt="">
+    <div id="try-url">inboxzerovr.com</div>
+    <div id="try-line"><b>try</b><b>it</b><b>yourself</b></div>
+    <div id="url" class="purl"><span class="pu-b"><span class="pu-in"><span id="url-t"></span><i id="caret"></i></span></span></div>
+    <div id="cards" class="cards"></div>
+    <div id="pick"></div>
+    <div id="agent-chip" class="pchip"><span class="pc-b"><span class="pc-in"><span class="pc-av"><img src="../work/assets/billbo.png" alt=""></span><span class="pc-tt"><span class="pc-t">or connect your agent</span><span class="pc-sub">inboxzerovr.com/mcp</span></span></span></span></div>
+  </div>
+  <div id="petals" class="layer"></div>
+  <!-- v40: the level's name, top right; pink bits flung off the sword split -->
+  <div id="level-name"></div>
+  <div id="split-parts"></div>
+  <!-- the outro: gameplay, and what's in the game -->
+  <div id="outro" class="layer">
+    <div class="shade"></div>
+    <img id="out-logo" src="../work/assets/logos/site.webp" alt="">
+    <div id="badges" class="badges"></div>
+    <div id="out-url" class="url small">inboxzerovr.com</div>
+  </div>
+
+  <svg id="cursor" viewBox="0 0 32 32" width="44" height="44"><path d="M5 3l20 11-9 2-4 9z" fill="#17131f" stroke="#fff" stroke-width="2" stroke-linejoin="round"/></svg>
+  <div id="ripple"></div>
+</div>
+<script src="../work/cues.js"></script>
+<script src="../work/footage.js"></script>
+<script src="film.js"></script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Levels</title><link rel="stylesheet" href="style.css">
+<style>
+  .card { height: 1140px; }
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; padding: 168px 64px 0; }
+  .intro { display: flex; flex-direction: column; justify-content: center; padding-right: 20px; }
+  .intro h1 { font-size: 76px; }
+  .intro .sub { font-size: 28px; }
+  .lv {
+    position: relative; height: 420px; border-radius: 26px; overflow: hidden;
+    border: 1.5px solid var(--line);
+    box-shadow: 0 24px 50px rgba(0, 0, 0, .5);
+  }
+  .lv .paint { position: absolute; inset: 0; background-size: cover; background-position: center; }
+  .lv .show {
+    position: absolute; left: 50%; top: 42%; width: 116%; transform: translate(-50%, -50%);
+  }
+  .lv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(8, 4, 20, .92) 0%, rgba(8, 4, 20, .35) 34%, transparent 55%); }
+  .lv .name { position: absolute; left: 26px; right: 26px; bottom: 24px; z-index: 2; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+  .lv .name b { font-size: 38px; font-weight: 600; letter-spacing: -.02em; line-height: 1.05; }
+  .lv .chip { font-size: 17px; padding: 6px 11px 7px; background: rgba(10, 6, 24, .6); }
+</style></head><body>
+<div class="card">
+  <img class="logo" src="assets/logo-small.webp" alt="Inbox Zero">
+  <div class="built"><img src="assets/meta-mark.svg">Built for Meta VR Hackathon</div>
+  <div class="grid">
+    <div class="intro">
+      <h1>Seven levels, <em>seven weapons</em></h1>
+      <p class="sub">Each with its own art, music, sounds and a winning celebration at the end.</p>
+    </div>
+    <div class="lv"><div class="paint" style="background-image:url(assets/card-kyoto.webp)"></div><img class="show" src="assets/show-kyoto.png"><div class="name"><b>Kyoto Nights</b><span class="chip">Katana</span></div></div>
+    <div class="lv"><div class="paint" style="background-image:url(assets/card-office2.webp)"></div><img class="show" src="assets/show-office.png"><div class="name"><b>Keyboard Smash</b><span class="chip">Keyboard</span></div></div>
+    <div class="lv"><div class="paint" style="background-image:url(assets/card-castle.webp)"></div><img class="show" src="assets/show-castle.png"><div class="name"><b>Haunted Halls</b><span class="chip">Sword</span></div></div>
+    <div class="lv"><div class="paint" style="background-image:url(assets/card-lab.webp)"></div><img class="show" src="assets/show-lab.png"><div class="name"><b>Toxic Danger</b><span class="chip">Spray</span></div></div>
+    <div class="lv"><div class="paint" style="background-image:url(assets/card-space.webp)"></div><img class="show" src="assets/show-space.png"><div class="name"><b>Super Space</b><span class="chip">Saber</span></div></div>
+    <div class="lv"><div class="paint" style="background-image:url(assets/card-inferno.webp)"></div><img class="show" src="assets/show-inferno.png"><div class="name"><b>Inferno</b><span class="chip">Flame thrower</span></div></div>
+    <div class="lv"><div class="paint" style="background-image:url(assets/card-lumber.webp)"></div><img class="show" src="assets/show-lumber.png"><div class="name"><b>LumberHack</b><span class="chip">Axe</span></div></div>
+  </div>
+</div></body></html>

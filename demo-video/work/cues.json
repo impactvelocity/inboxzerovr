@@ -1,5 +1,5 @@
 {
- "duration": 115.52,
+ "duration": 109.04,
  "cues": {
   "unread": {
    "start": 0.4,
@@ -212,24 +212,9 @@
    "text": "and each round is deleted once it's done"
   },
   "try": {
-   "start": 104.95,
-   "end": 108.08,
+   "start": 105.75,
+   "end": 108.88,
    "text": "Try it yourself at InboxZeroVR.com!"
-  },
-  "seven": {
-   "start": 108.32,
-   "end": 110.19,
-   "text": "Play the demo in all seven levels,"
-  },
-  "agent": {
-   "start": 110.28,
-   "end": 112.63,
-   "text": "or connect your agent and play your own inbox"
-  },
-  "hero": {
-   "start": 112.91,
-   "end": 115.15,
-   "text": "Become a hero with inbox zero!"
   }
  },
  "words": [
@@ -1691,137 +1676,27 @@
   {
    "s": "try",
    "w": "try",
-   "t": 104.95
+   "t": 105.75
   },
   {
    "s": "try",
    "w": "it",
-   "t": 105.303
+   "t": 106.103
   },
   {
    "s": "try",
    "w": "yourself",
-   "t": 105.556
+   "t": 106.356
   },
   {
    "s": "try",
    "w": "at",
-   "t": 106.414
+   "t": 107.214
   },
   {
    "s": "try",
    "w": "inboxzerovrcom",
-   "t": 106.666
-  },
-  {
-   "s": "seven",
-   "w": "play",
-   "t": 108.32
-  },
-  {
-   "s": "seven",
-   "w": "the",
-   "t": 108.621
-  },
-  {
-   "s": "seven",
-   "w": "demo",
-   "t": 108.854
-  },
-  {
-   "s": "seven",
-   "w": "in",
-   "t": 109.155
-  },
-  {
-   "s": "seven",
-   "w": "all",
-   "t": 109.322
-  },
-  {
-   "s": "seven",
-   "w": "seven",
-   "t": 109.556
-  },
-  {
-   "s": "seven",
-   "w": "levels",
-   "t": 109.923
-  },
-  {
-   "s": "agent",
-   "w": "or",
-   "t": 110.28
-  },
-  {
-   "s": "agent",
-   "w": "connect",
-   "t": 110.439
-  },
-  {
-   "s": "agent",
-   "w": "your",
-   "t": 110.915
-  },
-  {
-   "s": "agent",
-   "w": "agent",
-   "t": 111.201
-  },
-  {
-   "s": "agent",
-   "w": "and",
-   "t": 111.55
-  },
-  {
-   "s": "agent",
-   "w": "play",
-   "t": 111.773
-  },
-  {
-   "s": "agent",
-   "w": "your",
-   "t": 112.058
-  },
-  {
-   "s": "agent",
-   "w": "own",
-   "t": 112.344
-  },
-  {
-   "s": "agent",
-   "w": "inbox",
-   "t": 112.566
-  },
-  {
-   "s": "hero",
-   "w": "become",
-   "t": 112.91
-  },
-  {
-   "s": "hero",
-   "w": "a",
-   "t": 113.492
-  },
-  {
-   "s": "hero",
-   "w": "hero",
-   "t": 113.627
-  },
-  {
-   "s": "hero",
-   "w": "with",
-   "t": 114.03
-  },
-  {
-   "s": "hero",
-   "w": "inbox",
-   "t": 114.433
-  },
-  {
-   "s": "hero",
-   "w": "zero",
-   "t": 114.926
+   "t": 107.466
   }
  ]
 }

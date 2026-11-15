@@ -1,0 +1,30 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Backdrop</title><link rel="stylesheet" href="style.css">
+<style>
+  .card { height: 1060px; }
+  .head { padding-top: 168px; }
+  .row { display: grid; grid-template-columns: 1.62fr 90px 1fr; align-items: end; padding: 78px 64px 0; }
+  .row figure { margin: 0; }
+  .pano { aspect-ratio: 3 / 1; }
+  .shot.hs { aspect-ratio: 16 / 9; }
+  figcaption { margin-top: 26px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 28px; color: var(--soft); }
+  figcaption b { color: var(--text); font-weight: 600; }
+  .plus { align-self: center; display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: -50px; }
+  .plus svg { width: 46px; height: 46px; }
+  .three { display: flex; justify-content: center; gap: 18px; padding-top: 74px; }
+  .three .chip { font-size: 22px; padding: 12px 20px 13px; }
+  .three span.lbl { align-self: center; font-size: 28px; color: var(--soft); margin-right: 6px; }
+</style></head><body>
+<div class="card">
+  <img class="logo" src="assets/logo-small.webp" alt="Inbox Zero">
+  <div class="built"><img src="assets/meta-mark.svg">Built for Meta VR Hackathon</div>
+  <div class="head center">
+    <h1>One painting, <em>wrapped around you</em></h1>
+    <p class="sub">Atmosphere particles and a few depth tricks make it feel like a real place, and it stays fast on the Quest.</p>
+  </div>
+  <div class="row">
+    <figure><img class="shot pano" src="assets/kyoto-painting.webp"><figcaption><b>The painting</b> one flat image per level</figcaption></figure>
+    <div class="plus"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path fill="#ff4fb8" d="M3 1h1v1h1v1h1v1h1v2H6v1H5v1H4v1H3z"/></svg></div>
+    <figure><img class="shot hs" src="assets/kyoto-headset.jpg"><figcaption><b>In the headset</b> with particles and depth</figcaption></figure>
+  </div>
+  <div class="three"><span class="lbl">The only real 3D:</span><span class="chip pink">The weapon</span><span class="chip cyan">The emails</span><span class="chip">The particles</span></div>
+</div></body></html>

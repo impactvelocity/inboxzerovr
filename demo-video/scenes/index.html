@@ -11,9 +11,11 @@
 <div id="stage">
   <!-- backdrops -->
   <div id="white" class="layer"></div>
+  <!-- v60: the retro backdrop for the agent scenes (dark indigo lit pink and mint, as the game's loading screen, with a faint pixel grid) -->
+  <div id="retro" class="layer"><div id="retro-dust"></div></div>
   <div id="night" class="layer"><img id="night-img" src="../work/footage/home/0001.jpg" alt=""></div>
   <!-- real game footage, one frame at a time -->
-  <div id="foot" class="layer"><img id="foot-img" alt=""></div>
+  <div id="foot" class="layer"><img id="foot-img" alt=""><img id="foot-prev" alt=""></div>
 
   <!-- hook: the inbox -->
   <div id="inbox-wrap" class="layer center">
@@ -21,7 +23,7 @@
     <div id="notes"></div>
     <div id="flies"></div>
     <!-- v11: the hook is an app icon with a badge, iPhone home screen style (a generic mail icon, not Apple's) -->
-    <div id="app" class="app"><div class="appicon" id="appicon"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="appbadge" id="appbadge">122</span><span class="appdone" id="appdone"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div><i class="appring" id="appring"></i><div class="applabel" id="applabel">Inbox</div></div>
+    <div id="app" class="app"><div class="appicon" id="appicon"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="appbadge" id="appbadge">122</span><span class="appdone" id="appdone"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span></div><i class="appring" id="appring"></i><div class="ch" id="ch-a"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div class="ch" id="ch-b"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><i id="clr-streak"></i><i id="clr-ring"></i><div id="clr-tick"><svg viewBox="0 0 10 7" width="130" height="91" shape-rendering="crispEdges"><rect x="8" y="0" width="1.02" height="1.02" fill="#ffffff"/><rect x="9" y="0" width="1.02" height="1.02" fill="#ffffff"/><rect x="7" y="1" width="1.02" height="1.02" fill="#ffffff"/><rect x="8" y="1" width="1.02" height="1.02" fill="#ffffff"/><rect x="0" y="2" width="1.02" height="1.02" fill="#ffffff"/><rect x="6" y="2" width="1.02" height="1.02" fill="#ffffff"/><rect x="7" y="2" width="1.02" height="1.02" fill="#ffffff"/><rect x="0" y="3" width="1.02" height="1.02" fill="#ffffff"/><rect x="1" y="3" width="1.02" height="1.02" fill="#ffffff"/><rect x="5" y="3" width="1.02" height="1.02" fill="#ffffff"/><rect x="6" y="3" width="1.02" height="1.02" fill="#ffffff"/><rect x="1" y="4" width="1.02" height="1.02" fill="#ffffff"/><rect x="2" y="4" width="1.02" height="1.02" fill="#ffffff"/><rect x="4" y="4" width="1.02" height="1.02" fill="#ffffff"/><rect x="5" y="4" width="1.02" height="1.02" fill="#ffffff"/><rect x="2" y="5" width="1.02" height="1.02" fill="#ffffff"/><rect x="3" y="5" width="1.02" height="1.02" fill="#ffffff"/><rect x="4" y="5" width="1.02" height="1.02" fill="#ffffff"/><rect x="3" y="6" width="1.02" height="1.02" fill="#ffffff"/></svg></div><div class="applabel" id="applabel">Inbox</div></div>
     <div id="clear-parts"></div>
     <div id="tried" class="chips"><span class="mini" id="chip-filters"><span class="mi fil"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6.2 7.4v5.4l-3.6 1.9v-7.3z"/></svg></span><i class="nope"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i><span class="ml">Filters</span></span><span class="chip-slot" id="slot-rem"><span class="mini" id="chip-rem"><span class="mi rem"><svg viewBox="0 0 24 24"><path d="M12 3.5a5.5 5.5 0 0 0-5.5 5.5v3.6L4.8 15.5h14.4l-1.7-2.9V9A5.5 5.5 0 0 0 12 3.5z"/><path d="M10 18.5a2 2 0 0 0 4 0" class="clap"/></svg></span><i class="nope"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></i><span class="ml">Reminders</span></span></span></div>
     <div id="inbox" class="card inbox">
@@ -56,23 +58,25 @@
       <div class="mrail"><span class="lights"><i></i><i></i><i></i></span><span class="ri on"><svg viewBox="0 0 24 24"><path d="M12 4c-4.6 0-8 3-8 7 0 1.7.7 3.2 1.8 4.4L5 20l4.3-1.4c.9.3 1.8.4 2.7.4 4.6 0 8-3 8-7s-3.4-8-8-8z"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l4 4"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><rect x="6" y="4" width="13" height="16" rx="2"/><path d="M4 8v10M10 8h5"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><path d="M9 17h6M10 20h4M12 3a6 6 0 0 0-3.5 10.9c.6.5.9 1 1 1.6h5c.1-.6.4-1.1 1-1.6A6 6 0 0 0 12 3z"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8.5 12.5l2.5 2.5 4.5-5.5"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><circle cx="7.5" cy="16.5" r="3"/><rect x="13.5" y="13.5" width="6" height="6" rx="1"/><path d="M7.5 4.5l3 5h-6zM16.5 4.5l3 2.5-3 2.5-3-2.5z"/></svg></span><span class="ri"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M12 8v8M8 12h8"/></svg></span></div>
       <div class="mmain">
         <div class="mtop"><span class="mback"><svg viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></svg></span><span class="mpill">New side chat</span></div>
-        <div class="mwho"><img src="../work/assets/billbo.png" alt=""><span class="mname">Billbo</span><span class="mconn" id="mconn"><i></i>Inbox Zero VR connected</span></div>
+        <div class="mwho"><span class="mbot"><span class="meyes" id="meyes"><svg viewBox="0 0 8 4" width="48" height="24" shape-rendering="crispEdges"><rect x="0" y="0" width="1.02" height="1.02" fill="#ffffff"/><rect x="1" y="0" width="1.02" height="1.02" fill="#ffffff"/><rect x="6" y="0" width="1.02" height="1.02" fill="#ffffff"/><rect x="7" y="0" width="1.02" height="1.02" fill="#ffffff"/><rect x="0" y="1" width="1.02" height="1.02" fill="#ffffff"/><rect x="1" y="1" width="1.02" height="1.02" fill="#ffffff"/><rect x="6" y="1" width="1.02" height="1.02" fill="#ffffff"/><rect x="7" y="1" width="1.02" height="1.02" fill="#ffffff"/><rect x="0" y="2" width="1.02" height="1.02" fill="#ffffff"/><rect x="1" y="2" width="1.02" height="1.02" fill="#ffffff"/><rect x="6" y="2" width="1.02" height="1.02" fill="#ffffff"/><rect x="7" y="2" width="1.02" height="1.02" fill="#ffffff"/><rect x="0" y="3" width="1.02" height="1.02" fill="#ffffff"/><rect x="1" y="3" width="1.02" height="1.02" fill="#ffffff"/><rect x="6" y="3" width="1.02" height="1.02" fill="#ffffff"/><rect x="7" y="3" width="1.02" height="1.02" fill="#ffffff"/></svg></span></span><span class="mname">Muse</span><span class="mconn" id="mconn"><i></i>Inbox Zero VR connected</span></div>
         <div class="mchat" id="mchat">
           <div class="msg user" id="m-ask">Set up an Inbox Zero game</div>
           <div class="msg tool" id="m-read"><span class="tk" id="t-read"></span>Reading your newest unread emails<b id="m-count"></b></div>
           <div class="msg tool" id="m-round"><span class="tk" id="t-round"></span>Inbox Zero VR, create_round</div>
           <div class="msg bot" id="m-ready">Your game is ready, open it on your Quest
-            <div class="linkcard" id="m-link"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg><span class="lurl">inboxzerovr.com/play?code=4821</span><span class="lopen" id="m-open">Open</span></div>
+            <div class="linkcard" id="m-link"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg><span class="lurl" id="m-lurl">inboxzerovr.com/play?code=4821</span><span class="lopen" id="m-open">Open</span></div>
           </div>
-          <div class="msg bot" id="m-done">Round done, here's what you chose
-            <div class="rcard" id="rcard">
-              <div class="rhead"><span class="rgame"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg></span><span class="rtitle">Inbox Zero VR</span><span class="rround">round 4821</span><span class="rstate" id="rstate"><i></i><b id="rstate-t">10 emails</b></span></div>
+          <div class="msg bot" id="m-done">Game done, here are your results...
+            <div class="rlist" id="rcard">
               <div class="res" id="r-arch"><span class="ric" style="background:#0a9a7a"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1.5"/><path d="M5 9v9a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V9M10 13h4"/></svg></span><span class="rl">Archive</span><span class="rn">6 emails</span><span class="tk"></span><i class="rfill"></i></div>
               <div class="res" id="r-send"><span class="ric" style="background:#3b6df0"><svg viewBox="0 0 24 24"><path d="M21 3L10 14M21 3l-7 18-4-7-7-4z"/></svg></span><span class="rl">Send</span><span class="rn">2 replies</span><span class="tk"></span><i class="rfill"></i></div>
               <div class="res" id="r-later"><span class="ric" style="background:#ff9a2e"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span class="rl">Leave for tomorrow</span><span class="rn">2 emails</span><span class="tk"></span><i class="rfill"></i></div>
             </div>
-            <div class="mbtns"><span class="mbtn primary" id="m-ok">Okay</span><span class="mbtn" id="m-edit">Edit</span></div>
           </div>
+          <!-- v64: the agent asks, you say okay in the message box, and it does it (an inline tool step) -->
+          <div class="msg bot" id="m-ask2">Want me to send these replies and archives? Just say the word!</div>
+          <div class="msg user" id="m-yes">Okay!</div>
+          <div class="msg tool" id="m-act"><span class="tk" id="t-act"></span>Archiving 6 emails, sending 2 replies</div>
         </div>
         <div class="mconnect card" id="mconnect"><div class="ctitle">Add a connector</div><div class="crow"><span class="cfield">inboxzerovr.com/mcp</span><span class="mbtn primary" id="c-btn">Connect</span></div></div>
         <div class="mbar"><span class="mplus"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span class="mtext" id="mtext">Message</span><span class="mmic"><svg viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span><span class="msend" id="msend"><svg viewBox="0 0 24 24"><path d="M12 19V5M6 11l6-6 6 6"/></svg></span></div>
@@ -86,8 +90,12 @@
       <div class="bar"><span class="dots"><i></i><i></i><i></i></span><span class="addr"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><span id="addr-t"></span><i id="addr-caret"></i></span></div>
       <div class="shot" id="shot">
         <img id="site-img" src="../work/assets/site-hero.png" alt=""><span class="hide-badge"></span>
+        <div id="b-loading"><div class="bl-inner"><img class="bl-logo" id="bl-logo" src="../work/assets/logos/site.webp" alt=""><div class="bl-bar"><span id="bl-sweep"></span></div><p class="bl-text" id="bl-text">loading</p></div></div>
         <img id="game-img" alt="">
-        <i id="b-play"></i>
+        <img id="level-img" alt="">
+        <i id="b-k1" class="bk"></i><i id="b-k2" class="bk"></i><i id="b-k3" class="bk"></i><i id="b-k4" class="bk"></i><i id="b-k5" class="bk"></i>
+        <i id="b-pick"><b><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></b></i>
+        <i id="b-play"></i><i id="b-go"></i>
         <i id="b-load"></i>
       </div>
     </div>
@@ -104,15 +112,18 @@
     <img id="seat-img" alt="">
   </div>
 
-  <!-- the game never touches your inbox -->
+  <!-- the game never touches your inbox (v55: redesigned: your agent in the middle, your inbox and it in a private zone,
+       only a short summary crosses to the game, no way from the game to your email, and the round deleted after) -->
   <div id="flow" class="layer">
-    <svg id="flow-arc" viewBox="0 0 1920 1080" width="1920" height="1080"><path id="arc" d="M1580 668 C1580 890 340 890 340 668" fill="none" stroke="#bdb5c9" stroke-width="4" stroke-dasharray="4 14" stroke-linecap="round"/></svg>
-    <div class="wire" id="w-ia"></div><div class="wire" id="w-ag"></div>
-    <span class="chip wchip" id="c-ia">your emails</span><span class="chip wchip" id="c-ag">round 4821</span>
-    <div class="node card" id="n-inbox"><span class="nic" style="background:#e0127a"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 8l9 6 9-6"/></svg></span><span class="nl">Your inbox</span></div>
-    <div class="node card" id="n-agent"><img class="nav" src="../work/assets/billbo.png" alt=""><span class="nl">Your agent</span></div>
-    <div class="node card" id="n-game"><span class="nic" style="background:#3b2f52"><svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="11" rx="4"/><circle cx="8" cy="12.5" r="2"/><circle cx="16" cy="12.5" r="2"/></svg></span><span class="nl">The game</span></div>
+    <div id="pz"><span class="pz-tag" id="pz-tag"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Only your agent reads your email</span></div>
+    <svg id="flow-arc" viewBox="0 0 1920 1080" width="1920" height="1080"><path id="arc" d="M1520 650 C1520 900 400 900 400 650" fill="none" stroke="#c9c1d6" stroke-width="5" stroke-dasharray="2 16" stroke-linecap="round"/></svg>
+    <div class="fwire" id="w-ia"></div><div class="fwire" id="w-ag"></div>
+    <span class="fchip" id="c-ag"><svg viewBox="0 0 24 24"><path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z"/></svg>Just a summary</span>
+    <div class="fnode" id="n-inbox"><div class="fic fi-inbox"><svg viewBox="0 0 120 120"><rect x="14" y="28" width="92" height="64" rx="10" fill="#fff"/><path d="M18 34l42 30 42-30" fill="none" stroke="#7cc4ff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg></div><span class="fl">Your Inbox</span></div>
+    <div class="fnode" id="n-agent"><div class="fic fi-agent"><span class="frobot"><svg viewBox="0 0 24 24"><path d="M12 3.2v3"/><circle cx="12" cy="2.6" r=".9"/><rect x="4.5" y="6.2" width="15" height="12" rx="3.4"/><circle cx="9.3" cy="11.6" r="1.35" fill="#fff" stroke="none"/><circle cx="14.7" cy="11.6" r="1.35" fill="#fff" stroke="none"/><path d="M9.6 15.2h4.8"/><path d="M2.6 10.5v3.6M21.4 10.5v3.6"/></svg></span></div><span class="fl">Your Agent</span></div>
+    <div class="fnode" id="n-game"><div class="fic fi-game" id="fi-game"><span id="fg-icon"></span><span class="fgb" id="fg-badge">0</span></div><span class="fl">Inbox Zero</span></div>
     <span class="nox" id="nox"><svg viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></svg></span>
+    <span class="fnever" id="fnever">Never reads, stores or touches your email</span>
     <div class="pixels" id="pixels"></div>
     <div id="packets"></div>
     <span class="delstamp" id="delstamp">round deleted</span>
@@ -132,6 +143,9 @@
     <div id="close-shade"></div>
     <div id="close-white"></div>
     <img id="end-logo" src="../work/assets/logos/site.webp" alt="">
+    <img id="try-logo" src="../work/assets/logos/site.webp" alt="">
+    <div id="try-url">inboxzerovr.com</div>
+    <div id="try-line"><b>try</b><b>it</b><b>yourself</b></div>
     <div id="url" class="purl"><span class="pu-b"><span class="pu-in"><span id="url-t"></span><i id="caret"></i></span></span></div>
     <div id="cards" class="cards"></div>
     <div id="pick"></div>

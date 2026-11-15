@@ -37,9 +37,8 @@ SECTIONS = [
     ('built', 'built-chair', 5.63, 10.42, SEAT_HOLD),      # v9: room for the seated take after "stretching"
     ('built', 'built-clear', 10.42, 12.85, 0.3),
     ('built', 'built-agent', 12.85, 16.96, 0.9),
-    ('built', 'built-private', 16.96, 21.24, 0.7),
-    ('close', 'close', 0.00, 7.88, 0.05),
-    ('close', 'hero', 7.88, 10.61, 0.0),
+    ('built', 'built-private', 16.96, 21.24, 1.5),      # v55: more time to read the privacy diagram (was 0.7)
+    ('close', 'close', 0.00, 3.38, 0.0),      # v57: "cut the voice over at inbox zero vr dot com" (was to 7.88, then 'hero' to 10.61)
 ]
 # id, source, start, end, text (as said)
 SENTENCES = [
@@ -86,9 +85,7 @@ SENTENCES = [
     ('never', 'built', 17.16, 18.96, 'The game never touches your inbox,'),
     ('deleted', 'built', 19.08, 21.00, "and each round is deleted once it's done"),
     ('try', 'close', 0.09, 3.22, 'Try it yourself at InboxZeroVR.com!'),
-    ('seven', 'close', 3.46, 5.33, 'Play the demo in all seven levels,'),
-    ('agent', 'close', 5.42, 7.77, 'or connect your agent and play your own inbox'),
-    ('hero', 'close', 8.00, 10.24, 'Become a hero with inbox zero!'),
+    # (v57: "drop the play the demo, seven levels and the become a hero": 'seven', 'agent' and 'hero' are gone)
 ]
 
 def run(*a): subprocess.run(a, check=True, capture_output=True)

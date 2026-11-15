@@ -1,16 +1,17 @@
 # Inbox Zero VR: clear your inbox with a sword | Meta Start Hackathon
 
-Your unread email flies at you, one letter at a time. Grab one with your left hand to read it, throw it to keep it, or cut it to pieces with your right. Every email you keep comes back in round two with two short replies from your agent: hold it up to one, or say your own.
+🎮 Play free in your Quest browser: https://inboxzerovr.com
+🏆 Built for the Meta Start Hackathon: https://start-developer-competition-26.devpost.com/
 
-It plays your real inbox without ever touching it. Connect our MCP to your own agent and ask it to set up a game. It reads your newest unread emails and gives you a link that opens on your Meta Quest. When the round is over, your agent archives what you cut and sends your replies, after you say okay. Each round is deleted once it's done.
+Have you tried a sword? Inbox Zero VR turns your unread email into a game. Mail flies at you one letter at a time: grab it with your left hand to read it, throw it to keep it, or cut it to pieces with your right. Every email you keep comes back in round two with two short replies from your agent. Hold one up to send it, or pull it close and say your own.
 
-Seven levels, seven weapons: a katana in Kyoto, a keyboard in the office, a sword in the haunted castle, a spray gun in the lab, a flamethrower in the Inferno, an axe on the farm and a laser sword in deep space.
+It plays your real inbox without ever touching it. Connect our MCP to your own agent and ask it to set up a game. Your agent reads your newest unread emails and sends the game only a short summary, then gives you a link that opens right on your Meta Quest. When the round is over, your agent archives what you cut and sends your replies, after you say okay. The game never reads, stores or touches your email, and each round is deleted once it's done.
 
-Built with Meta's Immersive Web SDK, so it runs in the Quest browser with nothing to download. It's made to play seated: the emails come to you.
+Seven levels, seven weapons: a katana in Kyoto, a keyboard in the office, a sword in the haunted hall, a spray gun in the toxic lab, a flamethrower in the Inferno, an axe on the farm and a laser sword in deep space.
 
-🎮 Try it: https://inboxzerovr.com
+Built with Meta's Immersive Web SDK, so it runs in the Quest browser with nothing to download. It's made to play from your chair: the emails come to you, and your weapons do the stretching.
+
 🤖 Connect your agent: https://inboxzerovr.com/mcp
-🏆 Hackathon: https://start-developer-competition-26.devpost.com/
 🛠 Built with: Immersive Web SDK, three.js, Next.js, MCP, Claude, ElevenLabs
 
 0:00 Have you tried a sword?
@@ -19,8 +20,9 @@ Built with Meta's Immersive Web SDK, so it runs in the Quest browser with nothin
 0:33 Grab, throw, cut
 0:40 Round two: replies from your agent
 0:53 Seven levels
-1:21 How it's built
-1:38 Your agent does the rest, after you say okay
-1:48 Try it
+1:21 Built for the web, made to play seated
+1:32 Your agent does the rest, after you say okay
+1:40 Your email stays private
+1:45 Try it
 
 #VR #MetaQuest #WebXR #InboxZero #MCP #AIagents #Hackathon

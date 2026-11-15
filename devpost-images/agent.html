@@ -1,0 +1,66 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Agent flow</title><link rel="stylesheet" href="style.css">
+<style>
+  .card { height: 1290px; }
+  .head { padding-top: 168px; }
+  .flow { display: grid; grid-template-columns: 1fr 70px 1fr 70px 1fr 70px 1fr; align-items: stretch; padding: 70px 64px 0; }
+  .step {
+    background: var(--panel); border: 1.5px solid var(--line); border-radius: 26px;
+    padding: 34px 32px 36px; backdrop-filter: blur(4px);
+  }
+  .step .n { font-family: 'Silkscreen', monospace; font-size: 22px; color: var(--pink); }
+  .step h2 { margin: 18px 0 0; font-size: 38px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
+  .step p { margin: 14px 0 0; font-size: 25px; line-height: 1.42; color: var(--soft); }
+  .step .chip { margin-top: 22px; font-size: 17px; }
+  .arrow { display: flex; align-items: center; justify-content: center; }
+  .arrow svg { width: 40px; height: 40px; }
+  .back {
+    margin: 26px 64px 0; height: 58px; position: relative;
+    border: 2px dashed rgba(63, 240, 255, .35); border-top: none; border-radius: 0 0 26px 26px;
+  }
+  .back span { position: absolute; left: 50%; bottom: -20px; transform: translateX(-50%); background: var(--bg); padding: 0 18px; font-family: 'Silkscreen', monospace; font-size: 22px; color: var(--cyan); white-space: nowrap; }
+  .bottom { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; padding: 64px 64px 0; align-items: start; }
+  pre {
+    margin: 0; padding: 28px 32px; border-radius: 22px;
+    background: rgba(8, 5, 20, .82); border: 1.5px solid var(--line);
+    font: 21px/1.5 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--soft);
+  }
+  pre .k { color: var(--lav); } pre .s { color: #ffd6ef; } pre .c { color: var(--faint); }
+  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1.5px solid var(--line); }
+  .fact { padding: 26px 8px 24px 0; border-bottom: 1.5px solid var(--line); }
+  .fact b { display: block; font-size: 52px; font-weight: 600; letter-spacing: -.02em; }
+  .fact span { font-size: 24px; color: var(--soft); }
+</style></head><body>
+<div class="card">
+  <img class="logo" src="assets/logo-small.webp" alt="Inbox Zero">
+  <div class="built"><img src="assets/meta-mark.svg">Built for Meta VR Hackathon</div>
+  <div class="head center">
+    <h1>Your agent does <em>the email part</em></h1>
+    <p class="sub">Inbox Zero VR is an MCP server. Give it to the agent that already has your email.</p>
+  </div>
+  <div class="flow">
+    <div class="step"><div class="n">01</div><h2>Your agent</h2><p>Summarizes and sorts your unread, and writes the replies.</p><span class="chip">MCP</span></div>
+    <div class="arrow"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path fill="#ff4fb8" d="M3 1h1v1h1v1h1v1h1v2H6v1H5v1H4v1H3z"/></svg></div>
+    <div class="step"><div class="n">02</div><h2>Inbox Zero VR</h2><p>Turns it into a game with a unique code.</p><span class="chip">Code + link</span></div>
+    <div class="arrow"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path fill="#ff4fb8" d="M3 1h1v1h1v1h1v1h1v2H6v1H5v1H4v1H3z"/></svg></div>
+    <div class="step"><div class="n">03</div><h2>Your Quest</h2><p>Open the link and play both rounds.</p><span class="chip">WebXR</span></div>
+    <div class="arrow"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path fill="#ff4fb8" d="M3 1h1v1h1v1h1v1h1v2H6v1H5v1H4v1H3z"/></svg></div>
+    <div class="step"><div class="n">04</div><h2>Back to your agent</h2><p>It gets what you replied to and archived, and acts on your inbox.</p><span class="chip cyan">Results</span></div>
+  </div>
+  <div class="back"><span>Then everything on my end is deleted</span></div>
+  <div class="bottom">
+<pre><span class="c">// all the game ever sees of one email</span>
+{
+  <span class="k">"from"</span>: <span class="s">"Conference Spam"</span>,
+  <span class="k">"subject"</span>: <span class="s">"Call for papers: Blockchain Yoga"</span>,
+  <span class="k">"summary"</span>: <span class="s">"Submit your abstract by Friday."</span>,
+  <span class="k">"category"</span>: <span class="s">"Spam"</span>,
+  <span class="k">"replies"</span>: [<span class="s">"Please take me off this list. Thank you!"</span>]
+}</pre>
+    <div class="facts">
+      <div class="fact"><b>20</b><span>emails a game, at most</span></div>
+      <div class="fact"><b>0</b><span>full emails, only summaries</span></div>
+      <div class="fact"><b>24 h</b><span>at most on my server</span></div>
+      <div class="fact"><b>Any</b><span>email provider your agent can reach</span></div>
+    </div>
+  </div>
+</div></body></html>

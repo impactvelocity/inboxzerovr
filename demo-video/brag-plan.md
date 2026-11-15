@@ -1,5 +1,185 @@
 # Inbox Zero VR demo film, plan
 
+## v70 (2026-11-14)
+
+- Music: the Kyoto level's song (`kyoto/music.m4a`) under the film instead of Keyboard Smash's, from 2:50 into it; the same fade-in on the sword, steady level, lift in the pauses, and fade under the Keyboard Smash anthem at the end. Picture unchanged (v69's).
+
+## v69 (2026-11-14)
+
+- The main Inbox Zero logo (pink and mint, `logos/site.webp`) at 0:12 and on the end card at 1:56, in place of Keyboard Smash's.
+- 1:48: a little more room between "try it yourself", the logo and the address.
+
+## v68 (2026-11-14)
+
+- Muse in the chat (0:22 and 1:36) is the diagram's agent: a purple pixel tile (stepped corners, banded) with two white pixel eyes that glance about and blink now and then.
+- 0:28: more room above "Your game is ready, open it on your Quest".
+- Music: back to the Keyboard Smash level song (`office/music.m4a`), from 2:33 into it, with the same fade-in on the sword, steady level, lift in the voice's pauses, and fade under the anthem.
+
+## v67 (2026-11-14)
+
+- Sounds: no sound for the recording at 0:47; 0:55 is a thunk (wood strike and heavy hit) instead of a knife; Haunted Hall's second sword moved onto its swing at 1:00.7 (frame 98, was 112) and made stronger (katana, metal slash, heavy hit); the second spray starts a little earlier (1:03.9); a second of the intro's flamethrower again at 1:09 (frame 141); another Kyoto swipe at 1:13.3 (frame 117); the axe's double hit at full strength (1:16.4 and 1:17.0, frames 92 and 109); Super Space uses only its own in-game saber sounds.
+- 1:26: the browser window, chrome and all, fades away with the level select as Clean your inbox loads the level, straight onto the game behind (nothing of the browser is left over the game).
+- 1:34: the tick at zero is a pixel plate (stepped corners, banded green, a pixel check) with a square ring; the "Inbox zero" text is gone (the label leaves with the icon).
+- 1:36: "Game done, here are your results..." with more room above the list.
+
+## v66 (2026-11-14), the privacy diagram again
+
+- The private zone is a pixel panel: a thick purple border with stepped corners and a pale lavender fill; "Only your agent reads your email" is a bigger purple pixel tag.
+- The agent is a purple pixel tile with just two white pixel eyes, which glance side to side and blink now and then.
+- The game is "Inbox Zero"; its tile has stepped pixel corners like the others, and its count badge is a pink pixel plate.
+- Labels "Your Inbox", "Your Agent", "Inbox Zero"; "Never reads, stores or touches your email" in black; no "Just a summary" chip.
+- The whole diagram sits 50 px lower, centred now the crossed path is gone.
+
+## v65 (2026-11-14)
+
+- Fix: in v64 the effects track stopped at 1:05.4. The spray's room tone was the first input to the effects mix and wasn't padded to the film's length (`amix duration=first`), so nothing after it played; every effects input is padded now. v64 had also added the spray hiss and the Inferno flamethrowers six times over (inside the levels loop); each is added once now.
+- Level hits placed on the frames where each thing happens (looked at frame by frame): Haunted Hall keeps its first swing only (the second was misplaced); Toxic Danger's game spray hiss starts on each spray (1:02.5, 1:04.1), quieter, with quieter melts on them; Inferno: the intro's flamethrower as it first fires (1:06.8) and the game's own flamethrower roar with its flare as it flares again (1:08); Kyoto: cuts at 1:10.3, 1:10.8, 1:11.7 and 1:13; LumberHack: chops at 1:14.8 and 1:16.5, and a smaller one at 1:16.9.
+- 0:10: a second of the intro's flamethrower on "burn" (in place of the melt).
+- 0:45 and 0:47: the reply sent and the recording use the intro's notification click.
+- 0:21: the connector without a card, more room above "Reading your newest unread emails", and the game's link as a plain blue underlined link (no icon, card, shadow or Open button); the cursor clicks the link itself, which only darkens (the old click scaled the card and shifted the address).
+
+## v64 (2026-11-14)
+
+- Music: silent at the start, fading in on "have you tried a sword" (from 0:05.4) to its normal level by the split at 0:06.5 (`MUSIC_IN` in `tools/mix.py`).
+- Sounds: 0:45 a reply sent (the game's send: a swoosh and a blip) as SENT shows; 0:47 the game's recording blip (a fifth up) as the email reaches the mic; 0:55 a slash on the keyboard cutting through an email (its frame 47); 1:00 a louder slash on Haunted Hall's swing (frame 76, was 82); 1:02 Toxic Danger back on the game's own melt/spray sounds, with the spray's hiss under the shot; 1:05 and 1:07 Inferno's two flamethrower bursts with the intro's flamethrower (frames 31 and 78), in place of the fire hits; 1:12 Kyoto's two cuts (frames 70 and 82) as loud katana and slash; 1:16.5 LumberHack's second chop moved to where the axe lands (frame 92, was 76); 1:19 the game's own saber slash on each Super Space swing (frame 48 first, louder).
+- 1:22: both badges come in together, the SDK one purple (`#b794ff`) instead of pale pink.
+- 1:26: the browser no longer grows to fill the screen (its edge stayed visible for half a second, the "chrome"): the whole window, chrome and picture together, fades out a little larger as the take behind sharpens.
+- 1:27: the seated scene's dark overlay a bit darker.
+- 1:36 to 1:40: the results are a plain list (small rounded icons, no card); the agent asks "Want me to send these replies and archives? Just say the word!", "Okay!" is typed in the message box and sent, then the agent does it ("Archiving 6 emails, sending 2 replies" with its tick) and the first two rows are ticked. No Okay/Edit buttons, no cursor click.
+- 1:42: the inbox and the robot are pixel art on banded tiles with stepped corners (a blue tile with a pixel envelope, a purple tile with a pixel robot); the dashed line and the cross from the game to the inbox are gone; "Never reads, stores or touches your email" sits under the private zone.
+- 1:48: "InboxZeroVR.com" capitalised, the normal Inbox Zero logo (pink and purple) instead of Keyboard Smash's green one, the three closer together and quicker in.
+
+## v63 (2026-11-14), the agent scenes white and simple again
+
+- 0:21 and 1:35: the agent's chat is clean and white with no window around it (no sidebar, top bar or frame): the agent is "Muse" with a robot icon (a purple gradient circle, white robot) at the top, the "Inbox Zero VR connected" chip beside it, the chat, and the message box at the bottom. Geist again, as before v60.
+- 1:42: the privacy diagram is white again (as v55) and a little simpler: the agent is a purple robot tile like the inbox's app icon, no pulsing ring, and no summary trying the crossed path.
+- 1:46: "try it yourself" in plain white pixel letters (no shadow), the Keyboard Smash logo landing under it on "at", and "inboxzerovr.com" in small plain white text, widely spaced, typed in as it's said; all of it hops and falls away as the card clears.
+- 1:26: fixed the browser glitch as the level select gives way to Super Space: the patches hiding Kyoto's old selection stayed on top of the game (a ghost rectangle near the top left); they fade with the level select now.
+- The cursor is the smooth arrow again (the retro backdrop is kept in the CSS but unused).
+
+## v62 (2026-11-14)
+
+- The ending is `vr-video/02-keyboard/longer-outro.mp4` (18 s), whole and at real speed, from the moment try it yourself comes in (1:45.5): the last emails smashed at the desk under the shaded try card, the card clearing just as the monitor comes into view, the monitor smashed to bits through the anthem's chorus, then the empty office under the end card.
+- The anthem starts a second before the card clears, so its first "Smash" lands on the clip's first monitor hit (its frame 175, 1:51.3); the end card comes in on "No more email tonight" as the monitor is finished, goes to black as the clip runs out, and the film ends on the song's last note.
+- Keyboard hits on the clip's own impacts: soft ones on the last emails once the voice has finished, then ten on the monitor through the chorus.
+- The film is 2:08.2.
+
+## v61 (2026-11-14), new hits
+
+- Every gameplay hit uses the user's ElevenLabs effects (`work/audio/v/`), each placed so its loudest moment lands on the hit in the picture (`VPEAK`, measured from each file), with per-file trims (`VGAIN`) from measuring the mix. Kept as they were: the intro's sword slash and grunt, the flamethrower, the ten "one round at a time" strikes, Super Space's saber ignite, the notification clicks, the confirm ticks.
+- Keyboard smashes (the 0:10 to 0:19 smash, Keyboard Smash's level, the ending): heavy hit, glass hit and punch in three mixes taken in turn.
+- The sword clip's own cut at 0:07 and Kyoto's cuts: katana, slash 1 and slash 2 in turn; the saber at 0:10 and Super Space: the saber power swing (and a slash for variety); "burn": melt with a fire impact under it; Haunted Hall: the metal slash (a heavy hit under the first); Toxic Danger: melt, a fire hiss under every other; Inferno: fire impact and fire burst in turn; LumberHack: the two wood strikes.
+- New hits: the How to Play panel slash (slash 1 and a glass hit), the throw at 0:48 (a swish as it's thrown, the katana on the slice), the seated cuts (katana, then slash 2), the clear's slash at zero (slash 1 and glass) and its tick (the grade reveal), the Keyboard Smash logo at 0:12 and the end card's logo (the grade reveal).
+- The level hits are a touch louder than before, and the ending's smashes too. Picture unchanged.
+
+## v60 (2026-11-14), the agent scenes go retro
+
+- The agent scenes (the MCP setup from 0:19, the approval at 1:35, the privacy diagram at 1:40) are in the game's own look instead of white: a dark indigo backdrop lit pink and mint (the loading screen's), a faint pixel grid and scanlines, slow drifting pixel dust.
+- The agent's window: notched pixel borders in the game's blue with a hard offset shadow, Silkscreen for every word, square traffic lights, a pixelated Billbo in a mint frame, "Inbox Zero VR connected" as a mint chip in the window's top right, the user's message as a hot pink block, tool steps with square mint ticks, the link card and the connector as pixel panels, pink pixel buttons (mint when done), the results card as a pixel panel with square icon tiles and mint sweeps as each is done.
+- The privacy diagram: the inbox as a banded pixel tile with a pixel envelope, Billbo pixelated in a mint frame, the game's tile banded with stepped corners, pixel labels, square-dotted wires, pixel cream emails and summaries travelling, a mint "Only your agent reads your email" tag, a pink "Just a summary" chip, the crossed path in pink pixels.
+- The cursor is a pixel arrow, and its click ripple a pink square.
+- The agent's results window comes up 0.2 s later (on "your agent"), after the clear inbox's tick has cleared, so the white doesn't muddy into the dark.
+- Try it yourself is over the Keyboard Smash ending instead of white, like "one round at a time": the clip's opening plays slowed (0.26x) under a dark shade, "try it yourself" stamps in white pixel letters with a pink shadow, the address types into the pink pixel button; as the card clears the words hop and fall away, the button drops, the shade lifts and the clip runs at full speed, its frame 55 (a monitor hit) still on the anthem's first "Smash". Keyboard hits on the clip's monitor hits from there (frames 55 to 225).
+
+## v59 (2026-11-14)
+
+- Music: the Inferno level's song (`inferno/music.m4a`) under the film, from 2:51 into it (its loudest, busiest stretch), held steady at about -31 LUFS under the voice as before, fading under the Keyboard Smash anthem at the end.
+- In the voice's pauses (0.4 s or longer) the music lifts about 10% (+1.5 dB, `GAP_BOOST_DB` in `tools/mix.py`), coming up over about a third of a second a beat after the voice stops and dropping just before it starts again; about 17 s of the film gets the lift. The anthem keeps its own level.
+- Picture unchanged.
+
+## v58 (2026-11-14)
+
+- 1:18.5: Super Space's saber ignite (`space/arm.flac`) as the blade lights in the take (its frame 32), at about the level of the other hits.
+- 1:21: the browser window opens on the game's own loading screen instead of a white page (from `vr3/play/index.html` `#loading`, drawn larger for the window): the logo floating on dark indigo lit pink and mint, a pixel bar sweeping pink to mint in steps, "loading" blinking; the level select fades in over it about 1.5 s later.
+- 1:26.9: the browser chrome no longer slides off the top as the window grows: the address bar fades out over the first fifth of the grow.
+
+## v57 (2026-11-14), a shorter close
+
+- The voice ends on "Try it yourself at InboxZeroVR.com!": "Play the demo in all seven levels", "or connect your agent and play your own inbox" and "Become a hero with inbox zero!" are gone (`tools/build_vo.py`), and with them the Inferno backdrop, the two rows of levels, the agent chip, the hero logo and its burst.
+- Try it yourself is on white, carrying on from the privacy diagram: "try it yourself" stamps in word by word (pixel font, dark with a pink offset shadow), the address pops under it as the pink pixel button and types itself, holds 1.6 s, then zooms away into the Keyboard Smash ending.
+- The ending is unchanged: the anthem starts under that hold, its first "Smash" on the clip's first hit. The film is 2:07.9.
+
+## v56 (2026-11-14)
+
+- The notification banners' icons are in the levels' colours (Kyoto pink, Haunted purple, Inferno red, Super Space blue, Toxic green, Keyboard mint, LumberHack gold, magenta), in the intro and in the clear inbox (`NOTE_COL` in `scenes/film.js`).
+- Clear inbox (1:33): the game's confirm sound (`ui/confirm.flac`) ticks five times as the count runs down (in place of the swish); zero now lands on "your" (was "inbox") so there's room for the next bit.
+- At zero the icon is slashed away, like the Keyboard Smash icon at 0:15: a pink streak across it, it splits along the cut into two halves that fly apart and fall with a burst of blue, white and pink bits, then a big green tick lands where it was, a ring goes out and the label reads "Inbox zero". The intro's sword slash sound (peak on the cut) with a light glass under it, in place of the chime.
+
+## v55 (2026-11-14), the privacy diagram redesigned
+
+- 1:40, "The game never touches your inbox, and each round is deleted once it's done": your agent (Billbo) in the middle, your inbox on the left (the intro's blue mail icon), the game on the right (a dark tile with the pixel headset in mint).
+- Your inbox and your agent share a private zone (pale teal, dashed edge) tagged "Only your agent reads your email" with a lock; envelopes run from the inbox to the agent the whole time.
+- Only short summaries cross out of the zone to the game, under "Just a short summary": ten little summary cards fly over and the game's badge counts them in.
+- No way back: a dashed path from the game to your inbox is crossed out in pink, "Never reads, stores or touches your email", and a summary that tries it is stopped at the cross.
+- On "deleted" the game's badge goes, its summaries burst into pixels, and a pixel "round deleted" stamp lands on it.
+- 0.8 s more hold after the line, to read it (`built-private` pause 0.7 to 1.5 in `tools/build_vo.py`); everything after is 0.8 s later, the anthem ending included. The film is 2:15.0; the "Try it" chapter is now 1:45.
+
+## v54 (2026-11-14)
+
+- Built for web: the window loads the game's level select (no site). On "browser" the cursor picks Super Space: Kyoto's pink ring and tick are covered with nearby bits of the same frame, and a pink ring and tick land on Super Space. Then it clicks Clean your inbox (just after "nothing"), the address gains `?level=space`, Super Space loads in the window on the same frame as the take behind it, and the window grows to fill the screen, straight into the seated scene.
+- Seated: the player is just left of centre (380 px further right) over a black faded overlay, so he stands out from the Super Space take.
+
+## v53 (2026-11-14)
+
+- The intro's notification banners each land with the user's ElevenLabs click (`work/audio/notify/ping-new.mp3`, from `UIClick-soft,_appealing,_cut-Elevenlabs (1).mp3`) instead of the two alternating pings; same times and gains, a touch softer.
+- Picture unchanged.
+
+## v52 (2026-11-14)
+
+- 1:17 to 1:32 is one take: `vr-video/05-space/superspace-longer.mp4` (15 s), whole, at real speed, as the Super Space level shot and then behind built for web (softened) and seated (fading out with the player). It replaces `lvl-space` and the webvr-chair take there (webvr-chair is still the throw at 0:48).
+- Super Space's hits are on this take's own saber impacts (its frames 47, 67 and 103), found by how much the picture changes.
+
+## v51 (2026-11-14)
+
+- "Clear your email inbox, one round at a time": the Keyboard Smash icon being cut and the headline are one group about the middle of the screen, about 50 px apart (the icon's centre at 430 px, was 372; the headline's at 695 px, was 745).
+
+## v50 (2026-11-14)
+
+- "Have you tried a sword": the user's ElevenLabs warrior grunt (`work/audio/sword/grunt.mp3`) on the cut, on top of the sword slash.
+- "Or a flamethrower": the user's ElevenLabs flamethrower (`work/audio/sword/flame.wav`, the first 1.8 s of the 10 s take, faded out over its last 0.4 s) from just before "flamethrower" until the slash, in place of the game's flare hit; a touch louder than the other hits, since it's a steady roar rather than a hit.
+- Picture unchanged.
+
+## v49 (2026-11-14)
+
+- 0:41: How to Play's Round 1 now crossfades into the Round 2 take over 0.4 s instead of cutting (`XFADE` in `scenes/film.js`; a second picture layer, `#foot-prev`, carries the clip before as it fades).
+- The sword sound at "have you tried a sword" is the user's ElevenLabs slash (`work/audio/sword/sword-slash.mp3`, from `WEAPSwrd-Quick_sword_slash_so-Elevenlabs (2).mp3`), its peak on the split at 0:06.5, a little louder than the banner pings before it. It replaces the game's slash1 and slash2 there; the glass crack stays under it.
+- (v48 was the sword sound alone, at a lower level.)
+
+## v47 (2026-11-14)
+
+- 0:46.8 to 0:53.4 runs at one steady speed (about 1.2x), not timed to the voice: the recording from the email at the mic to Send it, then the throw from `webvr-chair.mp4` through LATER and the slice into the courtyard (`GAP_RATE` in `scenes/film.js`).
+- Same length and soundtrack.
+
+## v46 (2026-11-14)
+
+- 0:47 to 0:53 is all the new takes now: the recording (about 4x) up to Send it, then the throw from `webvr-chair.mp4` at real speed to LATER on "leave it", then slowed (about 0.4x) through the slice and the quiet courtyard until 0:53. The Inbox Zero screen under "just a few minutes a day" is gone.
+- 1:21: the webvr-chair take behind the browser now starts 3.7 s in (its frame 110), after everything used at 0:48.
+- "One round at a time": fewer particles. 8 per word instead of 12 (5 keycaps, 3 pixels), and the icon's cut bursts are 10 bits instead of 14.
+- Same length and soundtrack.
+
+## v45 (2026-11-14)
+
+- 0:47 to 0:53: the recording now runs about 5.6x and reaches Send it as "or throw" is said, then cuts to `webvr-chair.mp4`'s own throw (its 0.7 s on): the next email grabbed and thrown up, LATER landing on "leave it for tomorrow". Under "just a few minutes a day" is the round's Inbox Zero screen (cleared 10 emails), as before v44.
+- 1:21: the webvr-chair take behind the browser now starts 2.5 s in (its frame 75), after the throw, so the throw isn't seen twice.
+- Same length and soundtrack.
+
+## v44 (2026-11-14), two new takes
+
+- 0:40 to 0:53 is one take now, `vr-video/10-new-take/reply-short.mp4` (14 s), in place of the four clips that were there: the Round 2 countdown, the reply boards on "two short replies", the email held up to Reply A through "hold it up to the one you like", SENT, the next email at the mic on "say your own", the listening panel filling in, and Send it / Redo at the end. Real speed except the stretch round SENT (1.5x), so the mic lands on "say your own". "Leave it for tomorrow" is gone from this stretch: the take is recording there, not throwing an email away.
+- 1:21 to 1:32: `vr-video/10-new-take/webvr-chair.mp4` plays behind the browser (softened and a little darker while the window is up) and then behind the seated player, at real speed from its frame 10. The end-song words being slashed show behind the player. The browser window now drops away at the end instead of filling the screen, and the take fades out with the player into the clear inbox. The level select still plays inside the window after Play in browser.
+- Same length (2:14.2), same soundtrack as v43.
+
+## v43 (2026-11-14), everything after the levels rebuilt
+
+- Built for web (1:21): a bigger browser window. The address types itself, a pink loading line runs and the site settles in. On "browser" the cursor clicks the site's own Play in browser button, the address becomes inboxzerovr.com/play, and the game's level select plays inside the window. "Meta Immersive Web SDK" and "Nothing to download" slap onto the window's bottom edge as pixel stickers (Silkscreen, stepped corners, hard offset shadow, pixel headset and crossed-out download icons). On "download" the stickers drop away and the game fills the screen.
+- Seated (1:27): the level select carries straight on from the browser as the backdrop (the same clip on one clock), easing into soft focus and a little darker. The player slides in from the left, 10% bigger. The take plays a third faster (from 0.9 s in, its cut on "stretching"), and the 3.2 s of quiet after the line is gone (`SEAT_HOLD` 3.5 to 0.35 in `tools/build_vo.py`), so everything after it is 3.2 s earlier.
+- Clear inbox (1:32): the intro's app icon again instead of the white card. Its banners come back to their places, then are swiped off to either side one after another, envelopes fly out of the icon (the intro's, the other way) and the badge runs down from 189 to 0. At zero the red badge pops off for a green tick, the icon squashes and springs, a green ring goes out with a burst of bits, and the label reads "Inbox zero". The agent's window now comes in 0.2 s later to give zero a beat.
+- Agent approval (1:35): no empty window: the message is there as it rises. The results are a card ("Inbox Zero VR, round 4821, 10 emails") that fills in row by row as she says them, each with its own icon (archive, send, a clock). After Okay each row is done in turn (a green sweep and tick) and the card reads "all done".
+- Deleted (1:40): bigger nodes that float, dashed wires with envelopes running along them, and a packet that heads from the game back to the inbox and is stopped at the cross (twice). On "deleted" the round chip shatters into pink pixels and a pixel "round deleted" stamp slams into its place.
+- Try it yourself (1:44): Inferno gameplay behind (`inferno-long` from its frame 45, at 0.85x) under a dark shade, with embers rising. "Try it yourself" stamps in word by word, big, in the pixel font, then the address pops under it as a pink pixel button and types itself. For "play the demo in all seven levels" the title goes, the address rises and the seven levels land in two rows (4 and 3), bigger (360 x 203), each with its name in its own colour, and a pink selector hops across them on "all seven levels". "Connect your agent" is a pixel chip under them. On "become a hero" the cards drop away, the logo slams in with a shake, punches on "hero", "inbox" and "zero", bursts pixel bits, and the address settles under it. ("Built for the Meta Start Hackathon" is gone from this card; the end card carries the Meta line.)
+- Ending: Keyboard Smash's end anthem (`office/anthem.m4a`, 18.6 s) plays whole over the ending clip. It starts under the hero card's hold, so its first "Smash" lands on the clip's first monitor hit; the film runs on to the song's last note. The end card comes in on "No more email tonight", the logo punches on "Inbox zero" and "We won!", and fades with the song. The bed fades out under the anthem's opening. The anthem is at about -21 LUFS before mastering.
+- The film is 2:14.2.
+
 ## v42 (2026-11-14)
 
 - Every level shot is 4 s (was 5); the pauses after the level lines are now 0.6 to 2.0 s. The film is 2:13.3.

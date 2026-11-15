@@ -380,3 +380,195 @@ html,body{width:1920px;height:1080px;overflow:hidden;background:#fff;font-family
 .pc-sub{font:700 24px/1 var(--pixel);color:#7dffc9;white-space:nowrap}
 #close #end-logo{width:1180px;margin-left:-590px;filter:drop-shadow(0 10px 0 #170d15) drop-shadow(0 30px 50px #000c)}
 #petals i{border-radius:0}
+#close .ember{position:absolute;left:0;top:0;display:block;box-shadow:0 0 10px 2px #ff7a2a99}
+#pick{-webkit-mask:none;mask:none;background:none;padding:0;filter:drop-shadow(0 0 14px #ff2e93) drop-shadow(0 0 2px #ff2e93)}
+#pick::before{content:"";position:absolute;inset:0;background:#ff2e93;--s:7px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,0 0,10px 10px,10px calc(100% - 10px),calc(100% - 10px) calc(100% - 10px),calc(100% - 10px) 10px,10px 10px)}
+/* v43 fixes */
+.lc-in{display:block}
+#try-line{position:absolute;left:50%;top:0;display:flex;gap:.32em;white-space:nowrap;font:700 104px/1 var(--pixel);letter-spacing:-.03em;color:#fff;text-shadow:7px 7px 0 #ff2e93,0 0 40px #0009;visibility:hidden}
+#try-line b{display:inline-block;font-weight:700}
+.pc-in{gap:24px;padding:16px 38px 16px 18px}
+.pc-av{width:80px;height:80px}
+.pc-t{font-size:38px}
+.pc-sub{font-size:28px}
+.delstamp{font-size:21px;padding:10px 16px 11px}
+#seat-img{transform-origin:0 100%}
+.mchat.done{bottom:108px}
+.mwin .res{padding:20px 28px;font-size:34px}
+.ric{width:60px;height:60px}
+.rhead{padding:22px 28px}
+.rcard{width:1000px}
+.rcard{width:980px}
+#foot-prev{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;visibility:hidden}
+/* v51: "make the icon slashing for one round at a time and the headline text closer together and center / middle of screen":
+   one group about the middle: the icon's centre at 430 (was 372), the headline's at 695 (was 69%, 745), 50 px between them */
+#ks-cut{top:430px}
+#round-line{top:695px}
+/* v54: the level select in the browser, its pick, Super Space loading in */
+#level-img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;opacity:0}
+.bk{position:absolute;display:block;background-repeat:no-repeat;opacity:0}
+#b-pick{position:absolute;display:block;opacity:0;border:4px solid #ffb3d1;border-radius:9px;box-shadow:0 0 18px #ff8cc0aa;transform-origin:50% 50%}
+#b-pick b{position:absolute;right:6px;top:6px;width:26px;height:26px;border-radius:6px;background:#ffb3d1;display:grid;place-items:center}
+#b-pick svg{width:18px;height:18px;fill:none;stroke:#2a1530;stroke-width:3.4;stroke-linecap:round;stroke-linejoin:round}
+#b-go{position:absolute;display:block;border-radius:8px}
+#b-play{border-radius:8px}
+/* v54: "add a black faded overlay so the 3d guy is more visible against background" */
+#seat-shade{background:radial-gradient(ellipse 55% 70% at 44% 62%,#000000a6 0%,#0000008c 55%,#000000b8 100%)}
+/* ===== v55: the privacy diagram, redesigned ===== */
+#flow{overflow:hidden}
+#pz{position:absolute;left:190px;top:236px;width:990px;height:450px;border-radius:44px;background:linear-gradient(180deg,#eefaf6,#e3f6f0);box-shadow:inset 0 0 0 3px #0a9a7a33;visibility:hidden;transform-origin:50% 50%}
+#pz::after{content:"";position:absolute;inset:0;border-radius:44px;border:3px dashed #0a9a7a88}
+.pz-tag{position:absolute;left:50%;top:-30px;transform:translateX(-50%);display:inline-flex;align-items:center;gap:12px;height:60px;padding:0 26px 0 20px;border-radius:30px;background:#0a9a7a;color:#fff;font:600 27px/1 var(--text);white-space:nowrap;box-shadow:0 12px 26px -14px #0a6a54aa}
+.pz-tag svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round}
+.fnode{position:absolute;top:0;left:0;width:300px;margin-left:-150px;display:flex;flex-direction:column;align-items:center;gap:22px;visibility:hidden}
+.fic{position:relative;width:210px;height:210px;display:grid;place-items:center}
+.fi-inbox{border-radius:50px;background:linear-gradient(180deg,#5ac8fa 0%,#1f8cff 55%,#1668f0 100%);box-shadow:0 30px 60px -26px #1650d077,inset 0 3px 0 #ffffff40,inset 0 -6px 14px #0b3ea833}
+.fi-inbox svg{width:140px;height:140px}
+.fi-agent{width:230px;height:230px}
+.fi-agent img{width:230px;height:230px;border-radius:50%;box-shadow:0 0 0 8px #fff,0 30px 60px -26px #16101f66;position:relative}
+.fring{position:absolute;inset:-22px;border-radius:50%;border:4px solid #0a9a7a;opacity:.35}
+.fi-game{border-radius:50px;background:linear-gradient(180deg,#3a2d5c 0%,#211a33 60%,#160f24 100%);box-shadow:0 30px 60px -26px #16101f99,inset 0 3px 0 #ffffff26}
+.fgb{position:absolute;top:-26px;right:-34px;min-width:84px;height:84px;padding:0 20px;border-radius:42px;background:var(--hot);color:#fff;font:700 44px/84px var(--text);text-align:center;font-variant-numeric:tabular-nums;box-shadow:0 0 0 7px #fff;transform:scale(0)}
+.fl{font:700 40px/1 var(--text);letter-spacing:-.02em;white-space:nowrap}
+.fwire{position:absolute;top:0;height:6px;margin-top:-3px;border-radius:3px;background:repeating-linear-gradient(90deg,#cfc8db 0 16px,transparent 16px 26px);visibility:hidden;transform-origin:0 50%}
+#w-ia{background:repeating-linear-gradient(90deg,#7fd3bd 0 16px,transparent 16px 26px)}
+.fchip{position:absolute;left:0;top:0;display:inline-flex;align-items:center;gap:10px;height:58px;padding:0 24px 0 18px;border-radius:29px;background:#fff;color:var(--ink);font:600 26px/1 var(--text);white-space:nowrap;box-shadow:0 0 0 1px var(--line),0 12px 26px -16px #16101f60;visibility:hidden}
+.fchip svg{width:26px;height:26px;fill:var(--hot);stroke:none}
+.fnever{position:absolute;left:960px;top:0;transform:translateX(-50%);font:600 30px/1 var(--text);color:var(--hot);white-space:nowrap;visibility:hidden}
+#flow .nox{width:72px;height:72px;margin:-36px 0 0 -36px}
+#flow .nox svg{width:38px;height:38px}
+#packets i{position:absolute;left:0;top:0;display:block;opacity:0}
+#packets i.env{width:56px;height:40px}
+#packets i.env svg{width:100%;height:100%;filter:drop-shadow(0 6px 10px #16101f40)}
+#packets i.sum{width:92px;height:52px;border-radius:12px;background:#fff;box-shadow:0 0 0 1px var(--line),0 10px 20px -10px #16101f66}
+#packets i.sum::before{content:"";position:absolute;left:12px;top:12px;width:12px;height:12px;border-radius:3px;background:var(--hot);transform:rotate(45deg)}
+#packets i.sum::after{content:"";position:absolute;left:34px;right:12px;top:14px;height:7px;border-radius:4px;background:#d9d3e3;box-shadow:0 14px 0 -0px #e8e3ef}
+#flow .delstamp{font-size:26px;padding:12px 20px 13px}
+#n-agent .fl{margin-top:-10px}
+/* v56: the clear inbox's icon slashed away at zero */
+.ch{position:absolute;left:0;top:0;width:300px;height:300px;border-radius:70px;background:linear-gradient(180deg,#5ac8fa 0%,#1f8cff 55%,#1668f0 100%);box-shadow:inset 0 3px 0 #ffffff40,inset 0 -6px 14px #0b3ea833;display:grid;place-items:center;visibility:hidden}
+.ch svg{width:200px;height:200px;filter:drop-shadow(0 6px 10px #0b3ea84d)}
+#ch-a{clip-path:polygon(0 0,100% 0,100% 37.5%,0 62.5%)}
+#ch-b{clip-path:polygon(0 62.5%,100% 37.5%,100% 100%,0 100%)}
+#clr-streak{position:absolute;left:-200px;top:144px;width:700px;height:12px;border-radius:6px;opacity:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent,#fff 30%,#ffd1e6 50%,#ff2e93 72%,transparent);box-shadow:0 0 26px 8px #ff2e9366;transform-origin:50% 50%}
+#clr-tick{position:absolute;left:40px;top:40px;width:220px;height:220px;border-radius:50%;background:#14b88a;box-shadow:0 0 0 10px #fff,0 30px 60px -24px #0a7a5a99;display:grid;place-items:center;transform:scale(0)}
+#clr-tick svg{width:130px;height:130px;fill:none;stroke:#fff;stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round}
+#clr-ring{position:absolute;left:30px;top:30px;width:240px;height:240px;border-radius:50%;border:12px solid #14b88a;opacity:0;pointer-events:none}
+/* v57: try it yourself on white */
+#try-line{color:var(--ink);text-shadow:7px 7px 0 #ff2e93}
+/* v58: the game's loading screen in the browser window, larger */
+#b-loading{position:absolute;inset:0;display:grid;place-items:center;
+  background:radial-gradient(ellipse 55% 45% at 22% 30%,#ff1a8c14 0%,#ff1a8c00 70%),radial-gradient(ellipse 55% 45% at 80% 72%,#3df5c210 0%,#3df5c200 70%),radial-gradient(ellipse 80% 60% at 50% 50%,#140f33 0%,#0b0820 55%,#040310 100%)}
+.bl-inner{display:flex;flex-direction:column;align-items:center;gap:34px}
+.bl-logo{width:520px;height:auto;filter:drop-shadow(0 10px 30px #ff1a8c40) drop-shadow(0 0 40px #3df5c220)}
+.bl-bar{position:relative;width:330px;height:20px;background:#07061acc;box-shadow:0 -4px 0 0 #3d4fe8,0 4px 0 0 #3d4fe8,-4px 0 0 0 #3d4fe8,4px 0 0 0 #3d4fe8;overflow:hidden}
+.bl-bar span{position:absolute;top:4px;bottom:4px;left:0;width:30%;background:repeating-linear-gradient(90deg,transparent 0 14px,#07061a 14px 19px),linear-gradient(90deg,#ff1a8c,#3df5c2)}
+.bl-text{margin:0;font:700 22px/1 var(--pixel);letter-spacing:.42em;color:#ffffffd0}
+#b-loading .bl-logo{width:560px;height:auto;display:block}
+
+/* ======================= v60: the agent scenes, retro (the game's own look) ======================= */
+/* palette: night indigo #0b0820 / #140f33, panel #161033, pixel blue #3d4fe8, hot pink #ff1a8c / #ff2e93, mint #3df5c2 / #7dffc9,
+   lavender text #b9b0e8, paper cream #efe4c8; Silkscreen everywhere; borders drawn as four box-shadows (notched corners) */
+#retro{background:radial-gradient(ellipse 55% 45% at 22% 30%,#ff1a8c1a 0%,#ff1a8c00 70%),radial-gradient(ellipse 55% 45% at 80% 72%,#3df5c214 0%,#3df5c200 70%),radial-gradient(ellipse 80% 60% at 50% 50%,#140f33 0%,#0b0820 55%,#040310 100%)}
+#retro::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,#ffffff07 0 2px,transparent 2px 48px),repeating-linear-gradient(90deg,#ffffff07 0 2px,transparent 2px 48px)}
+#retro::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,#0000001a 0 2px,transparent 2px 4px)}
+#retro-dust{position:absolute;inset:0}
+#retro-dust i{position:absolute;left:0;top:0;display:block;box-shadow:0 0 8px currentColor}
+/* (v63: the retro agent window, results card, diagram, pixel cursor and polish rules are gone: the agent scenes are white again; work/scenes-v62/film.css has them) */
+/* try it yourself over the ending clip */
+#close-shade{background:radial-gradient(ellipse 75% 70% at 50% 48%,#0b0912f0 0%,#0b0912dd 55%,#0b0912c4 100%)}
+#try-line{color:#fff;text-shadow:7px 7px 0 #ff2e93}
+
+/* ======================= v63: the agent scenes clean and white, simpler ======================= */
+/* the chat on its own: no window, no sidebar or top bar; Muse (a robot icon) at the top, the chat, the message box */
+#muse .mwin{width:1240px;height:900px;background:transparent;box-shadow:none;border-radius:0;overflow:visible}
+#muse .mrail,#muse .mtop{display:none}
+#muse .mwho{top:22px;flex-direction:row;justify-content:center;align-items:center;gap:18px}
+.mbot{width:84px;height:84px;border-radius:50%;background:linear-gradient(160deg,#a58bff 0%,#7150f5 55%,#4f2fd8 100%);display:grid;place-items:center;flex:none;box-shadow:0 14px 30px -14px #4f2fd8aa,inset 0 2px 0 #ffffff40}
+#muse .mbot svg{width:52px;height:52px;fill:none;stroke:#fff;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#muse .mname{font:700 46px/1 var(--text);letter-spacing:-.025em;color:var(--ink);padding:0;margin:0;background:none;box-shadow:none}
+#muse .mconn{margin:0 0 0 8px}
+#muse .mchat{left:120px;right:120px;top:160px;bottom:140px}
+#muse .mchat.done{bottom:110px}
+#muse .mbar{bottom:18px;width:1000px;margin-left:-500px;border-radius:39px;box-shadow:0 0 0 1px var(--line),0 18px 40px -22px #16101f55}
+#muse .mconnect{top:250px}
+/* the diagram: the agent as a robot tile, like the inbox's app icon */
+.fi-agent{width:210px;height:210px}
+.frobot{width:210px;height:210px;border-radius:50px;background:linear-gradient(160deg,#a58bff 0%,#7150f5 55%,#4f2fd8 100%);display:grid;place-items:center;box-shadow:0 30px 60px -26px #4f2fd877,inset 0 3px 0 #ffffff40,inset 0 -6px 14px #2a138833}
+.frobot svg{width:132px;height:132px;fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+#n-agent .fl{margin-top:0}
+/* the try card: plain white, no shadow; the logo; the address small, plain and wide */
+#try-line{color:#fff;text-shadow:none;font-size:92px}
+#try-logo{position:absolute;left:50%;top:540px;width:860px;visibility:hidden;filter:drop-shadow(0 18px 40px #000a)}
+#try-url{position:absolute;left:50%;top:735px;font:500 40px/1 var(--text);letter-spacing:.24em;color:#fff;white-space:nowrap;visibility:hidden}
+
+/* v64 */
+#st-sdk .sk-in{background:#b794ff}      /* "make web sdk badge more purple (pink too pale)" */
+#seat-shade{background:radial-gradient(ellipse 55% 70% at 44% 62%,#000000b8 0%,#000000a3 55%,#000000c9 100%)}      /* a bit darker */
+.rlist{margin-top:12px;display:flex;flex-direction:column;gap:4px}
+#muse .rlist .res{padding:6px 0;border:0;font:500 30px/1.2 var(--text);background:none}
+#muse .rlist .ric{width:42px;height:42px;border-radius:12px}
+#muse .rlist .ric svg{width:24px;height:24px}
+#muse .rlist .tk{width:30px;height:30px;margin-left:18px}
+#muse .rlist .rn{color:var(--soft)}
+#m-ask2{margin-top:6px}
+#m-act{font-size:28px}
+.fi-inbox{border-radius:0;clip-path:polygon(0 28px,14px 28px,14px 14px,28px 14px,28px 0,calc(100% - 28px) 0,calc(100% - 28px) 14px,calc(100% - 14px) 14px,calc(100% - 14px) 28px,100% 28px,100% calc(100% - 28px),calc(100% - 14px) calc(100% - 28px),calc(100% - 14px) calc(100% - 14px),calc(100% - 28px) calc(100% - 14px),calc(100% - 28px) 100%,28px 100%,28px calc(100% - 14px),14px calc(100% - 14px),14px calc(100% - 28px),0 calc(100% - 28px));
+  background:linear-gradient(180deg,#8fdcff 0,#8fdcff 22px,#4fb0ff 22px,#4fb0ff 50%,#1f8cff 50%,#1f8cff calc(100% - 26px),#1668f0 calc(100% - 26px));box-shadow:none;filter:drop-shadow(0 22px 26px #1650d055)}
+.frobot{border-radius:0;clip-path:polygon(0 28px,14px 28px,14px 14px,28px 14px,28px 0,calc(100% - 28px) 0,calc(100% - 28px) 14px,calc(100% - 14px) 14px,calc(100% - 14px) 28px,100% 28px,100% calc(100% - 28px),calc(100% - 14px) calc(100% - 28px),calc(100% - 14px) calc(100% - 14px),calc(100% - 28px) calc(100% - 14px),calc(100% - 28px) 100%,28px 100%,28px calc(100% - 14px),14px calc(100% - 14px),14px calc(100% - 28px),0 calc(100% - 28px));
+  background:linear-gradient(180deg,#d4c4ff 0,#d4c4ff 22px,#a58bff 22px,#a58bff 50%,#7150f5 50%,#7150f5 calc(100% - 26px),#4f2fd8 calc(100% - 26px));box-shadow:none}
+#n-agent .fic{filter:drop-shadow(0 22px 26px #4f2fd855)}
+.fnever{font:600 30px/1 var(--text);color:var(--hot)}
+#try-logo{top:518px;width:840px}
+#try-url{top:652px;letter-spacing:.2em}
+.frobot svg{stroke:none;width:128px;height:96px}
+
+/* v65: the setup chat, simpler: the connector without a card, room above the first tool step, the link as a plain coloured link */
+#muse .mconnect{background:none;box-shadow:none;padding:0;width:880px;margin-left:-440px}
+#muse .mconnect .ctitle{font-size:30px;margin-bottom:16px;color:var(--soft);font-weight:600}
+#m-read{margin-top:30px}
+#muse .linkcard{background:none;box-shadow:none;padding:0;margin-top:10px;gap:0}
+#muse .linkcard svg,#muse .linkcard .lopen{display:none}
+#muse .lurl{font:600 32px/1.2 var(--text);color:#2f63f0;text-decoration:underline;text-decoration-thickness:3px;text-underline-offset:6px}
+
+/* v66: the diagram: a pixel purple zone (thick stepped border, a lighter fill), a bigger purple tag, the game's tile and
+   badge in pixels, the agent as two pixel eyes, black "never reads" line */
+#pz{background:#8b6cff;border-radius:0;box-shadow:none;clip-path:polygon(0 20px,10px 20px,10px 10px,20px 10px,20px 0,calc(100% - 20px) 0,calc(100% - 20px) 10px,calc(100% - 10px) 10px,calc(100% - 10px) 20px,100% 20px,100% calc(100% - 20px),calc(100% - 10px) calc(100% - 20px),calc(100% - 10px) calc(100% - 10px),calc(100% - 20px) calc(100% - 10px),calc(100% - 20px) 100%,20px 100%,20px calc(100% - 10px),10px calc(100% - 10px),10px calc(100% - 20px),0 calc(100% - 20px))}
+#pz::after{content:"";position:absolute;inset:8px;border:0;border-radius:0;background:#f7f4ff;clip-path:polygon(0 16px,8px 16px,8px 8px,16px 8px,16px 0,calc(100% - 16px) 0,calc(100% - 16px) 8px,calc(100% - 8px) 8px,calc(100% - 8px) 16px,100% 16px,100% calc(100% - 16px),calc(100% - 8px) calc(100% - 16px),calc(100% - 8px) calc(100% - 8px),calc(100% - 16px) calc(100% - 8px),calc(100% - 16px) 100%,16px 100%,16px calc(100% - 8px),8px calc(100% - 8px),8px calc(100% - 16px),0 calc(100% - 16px))}
+#pz .pz-tag{z-index:2}
+#pz{overflow:visible;clip-path:none;background:none}
+#pz::before{content:"";position:absolute;inset:0;background:#8b6cff;clip-path:polygon(0 20px,10px 20px,10px 10px,20px 10px,20px 0,calc(100% - 20px) 0,calc(100% - 20px) 10px,calc(100% - 10px) 10px,calc(100% - 10px) 20px,100% 20px,100% calc(100% - 20px),calc(100% - 10px) calc(100% - 20px),calc(100% - 10px) calc(100% - 10px),calc(100% - 20px) calc(100% - 10px),calc(100% - 20px) 100%,20px 100%,20px calc(100% - 10px),10px calc(100% - 10px),10px calc(100% - 20px),0 calc(100% - 20px))}
+.pz-tag{top:-38px;height:76px;padding:0 34px 0 28px;gap:14px;font:700 34px/1 var(--text);letter-spacing:-.01em;background:#7150f5;color:#fff;border-radius:0;
+  clip-path:polygon(0 12px,6px 12px,6px 6px,12px 6px,12px 0,calc(100% - 12px) 0,calc(100% - 12px) 6px,calc(100% - 6px) 6px,calc(100% - 6px) 12px,100% 12px,100% calc(100% - 12px),calc(100% - 6px) calc(100% - 12px),calc(100% - 6px) calc(100% - 6px),calc(100% - 12px) calc(100% - 6px),calc(100% - 12px) 100%,12px 100%,12px calc(100% - 6px),6px calc(100% - 6px),6px calc(100% - 12px),0 calc(100% - 12px));box-shadow:none}
+.pz-tag svg{width:32px;height:32px}
+.fnever{color:var(--ink)}
+.fi-game{border-radius:0;clip-path:polygon(0 28px,14px 28px,14px 14px,28px 14px,28px 0,calc(100% - 28px) 0,calc(100% - 28px) 14px,calc(100% - 14px) 14px,calc(100% - 14px) 28px,100% 28px,100% calc(100% - 28px),calc(100% - 14px) calc(100% - 28px),calc(100% - 14px) calc(100% - 14px),calc(100% - 28px) calc(100% - 14px),calc(100% - 28px) 100%,28px 100%,28px calc(100% - 14px),14px calc(100% - 14px),14px calc(100% - 28px),0 calc(100% - 28px));background:linear-gradient(180deg,#4a3c78 0,#4a3c78 22px,#2e2452 22px,#2e2452 50%,#211a3d 50%,#211a3d calc(100% - 26px),#160f2c calc(100% - 26px));box-shadow:none;overflow:visible}
+#n-game .fic{filter:drop-shadow(0 22px 26px #16101f55)}
+.fgb{border-radius:0;clip-path:polygon(0 12px,6px 12px,6px 6px,12px 6px,12px 0,calc(100% - 12px) 0,calc(100% - 12px) 6px,calc(100% - 6px) 6px,calc(100% - 6px) 12px,100% 12px,100% calc(100% - 12px),calc(100% - 6px) calc(100% - 12px),calc(100% - 6px) calc(100% - 6px),calc(100% - 12px) calc(100% - 6px),calc(100% - 12px) 100%,12px 100%,12px calc(100% - 6px),6px calc(100% - 6px),6px calc(100% - 12px),0 calc(100% - 12px));box-shadow:none;background:var(--hot);font:700 40px/84px var(--pixel);top:-30px;right:-38px}
+.feyes{display:block;transform-origin:50% 50%}
+.frobot svg{width:auto;height:auto}
+/* v66: the game tile's pixel corners on a layer under it, so its badge isn't clipped */
+.fi-game{clip-path:none;background:none}
+.fi-game::before{content:"";position:absolute;inset:0;clip-path:polygon(0 28px,14px 28px,14px 14px,28px 14px,28px 0,calc(100% - 28px) 0,calc(100% - 28px) 14px,calc(100% - 14px) 14px,calc(100% - 14px) 28px,100% 28px,100% calc(100% - 28px),calc(100% - 14px) calc(100% - 28px),calc(100% - 14px) calc(100% - 14px),calc(100% - 28px) calc(100% - 14px),calc(100% - 28px) 100%,28px 100%,28px calc(100% - 14px),14px calc(100% - 14px),14px calc(100% - 28px),0 calc(100% - 28px));background:linear-gradient(180deg,#4a3c78 0,#4a3c78 22px,#2e2452 22px,#2e2452 50%,#211a3d 50%,#211a3d calc(100% - 26px),#160f2c calc(100% - 26px))}
+#fg-icon{position:relative;z-index:1}
+.fgb{z-index:2}
+
+/* v67: the clear's tick as a pixel plate (stepped corners, banded green, a pixel check), its ring square */
+#clr-tick{border-radius:0;box-shadow:none;background:linear-gradient(180deg,#7ff0c8 0,#7ff0c8 20px,#2fd3a0 20px,#2fd3a0 50%,#14b88a 50%,#14b88a calc(100% - 22px),#0a9a72 calc(100% - 22px));
+  clip-path:polygon(0 28px,14px 28px,14px 14px,28px 14px,28px 0,calc(100% - 28px) 0,calc(100% - 28px) 14px,calc(100% - 14px) 14px,calc(100% - 14px) 28px,100% 28px,100% calc(100% - 28px),calc(100% - 14px) calc(100% - 28px),calc(100% - 14px) calc(100% - 14px),calc(100% - 28px) calc(100% - 14px),calc(100% - 28px) 100%,28px 100%,28px calc(100% - 14px),14px calc(100% - 14px),14px calc(100% - 28px),0 calc(100% - 28px))}
+#clr-tick svg{width:130px;height:91px;fill:none;stroke:none}
+#app .appicon~#clr-tick,#clr-tick{filter:none}
+#clr-ring{border-radius:0}
+/* v67: more room under "Game done, here are your results..." */
+.rlist{margin-top:26px}
+
+/* v68: Muse in the chat as the pixel agent (the diagram's tile, smaller), and more room above "Your game is ready" */
+#muse .mbot{border-radius:0;box-shadow:none;clip-path:polygon(0 12px,6px 12px,6px 6px,12px 6px,12px 0,calc(100% - 12px) 0,calc(100% - 12px) 6px,calc(100% - 6px) 6px,calc(100% - 6px) 12px,100% 12px,100% calc(100% - 12px),calc(100% - 6px) calc(100% - 12px),calc(100% - 6px) calc(100% - 6px),calc(100% - 12px) calc(100% - 6px),calc(100% - 12px) 100%,12px 100%,12px calc(100% - 6px),6px calc(100% - 6px),6px calc(100% - 12px),0 calc(100% - 12px));background:linear-gradient(180deg,#d4c4ff 0,#d4c4ff 9px,#a58bff 9px,#a58bff 50%,#7150f5 50%,#7150f5 calc(100% - 11px),#4f2fd8 calc(100% - 11px))}
+#muse .mwho .mbot{filter:drop-shadow(0 10px 14px #4f2fd855)}
+.meyes{display:block;transform-origin:50% 50%}
+#muse .meyes svg{width:48px;height:24px;stroke:none;fill:initial}
+#m-ready{margin-top:26px}
+/* v69: a little more room between the try card lines */
+#try-logo{top:530px}
+#try-url{top:688px}

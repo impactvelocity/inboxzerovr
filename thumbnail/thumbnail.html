@@ -1,0 +1,203 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Inbox Zero VR thumbnail</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=block" rel="stylesheet">
+<style>
+  :root {
+    --ink: #140c2a;
+    --paper: #f4efff;
+    --paper-shade: #c3b4ee;
+    --pink: #ff4fb8;
+    --cyan: #3ff0ff;
+    --lav: #b9a6ff;
+  }
+  html, body { margin: 0; padding: 0; background: #0b0718; }
+  .card {
+    position: relative;
+    width: 1500px; height: 1000px;
+    overflow: hidden;
+    background: #0b0718 url(bg-space.png) center / cover no-repeat;
+    image-rendering: pixelated;
+    font-family: 'Press Start 2P', monospace;
+  }
+  /* soft glow behind the logo so it lifts off the stars */
+  .card::before {
+    content: ""; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse 46% 30% at 50% 54%, rgba(120, 70, 255, .32), transparent 70%),
+      radial-gradient(ellipse 80% 70% at 50% 50%, transparent 55%, rgba(5, 2, 14, .55) 100%);
+  }
+  .logo {
+    position: absolute; left: 50%; top: 390px;
+    width: 1240px; transform: translateX(-50%);
+    filter: drop-shadow(0 14px 0 rgba(10, 4, 30, .7));
+  }
+  .vr {
+    position: absolute; left: 1150px; top: 610px;
+    transform: rotate(-6deg);
+    font-size: 64px; line-height: 1;
+    color: var(--ink);
+    background: var(--cyan);
+    padding: 22px 22px 16px 26px;
+    box-shadow:
+      0 0 0 8px var(--ink),
+      14px 14px 0 8px var(--pink);
+  }
+  .tag {
+    position: absolute; left: 0; right: 0; top: 700px;
+    text-align: center;
+    font-size: 34px; letter-spacing: 4px;
+    color: var(--paper);
+    text-shadow: 5px 5px 0 var(--ink);
+  }
+  .tag b { color: var(--pink); font-weight: normal; }
+  .tag i { color: var(--cyan); font-style: normal; }
+  svg { position: absolute; shape-rendering: crispEdges; overflow: visible; }
+  .press {
+    position: absolute; left: 0; right: 0; bottom: 200px;
+    text-align: center; font-size: 46px; letter-spacing: 5px;
+    color: var(--lav);
+    text-shadow: 6px 6px 0 var(--ink);
+  }
+  .pt { position: absolute; }
+  .pt.spark {
+    background: transparent !important;
+  }
+  .press .play {
+    position: static; display: inline-block;
+    vertical-align: top; margin: 0 44px 0 0;
+    filter: drop-shadow(6px 6px 0 var(--ink));
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div id="far"></div>
+  <div id="mid"></div>
+  <!-- sliced envelope, upper left -->
+  <svg id="cut" style="left:250px; top:165px" width="200" height="160"></svg>
+  <!-- burning envelope, upper right -->
+  <svg id="burn" style="left:1080px; top:105px" width="200" height="200"></svg>
+
+  <img class="logo" src="logo-space.webp" alt="Inbox Zero">
+  <div class="vr">VR</div>
+  <div class="press"><svg class="play" width="36" height="42" viewBox="0 0 6 7"><g fill="currentColor"><rect x="0" y="0" width="1" height="1"/><rect x="0" y="1" width="3" height="1"/><rect x="0" y="2" width="5" height="1"/><rect x="0" y="3" width="6" height="1"/><rect x="0" y="4" width="5" height="1"/><rect x="0" y="5" width="3" height="1"/><rect x="0" y="6" width="1" height="1"/></g></svg>PRESS START</div>
+  <div id="near"></div>
+</div>
+
+<script>
+// 16 x 12 pixel envelope. K = ink outline, W = paper, S = shade, F = flap line
+const ENV = [
+  'KKKKKKKKKKKKKKKK',
+  'KFWWWWWWWWWWWWFK',
+  'KSFWWWWWWWWWWFSK',
+  'KWSFWWWWWWWWFSWK',
+  'KWWSFWWWWWWFSWWK',
+  'KWWWSFWWWWFSWWWK',
+  'KWWWWSFFFFSWWWWK',
+  'KWWWWWSSSSWWWWWK',
+  'KWWWWWWWWWWWWWWK',
+  'KSSSSSSSSSSSSSSK',
+  'KKKKKKKKKKKKKKKK',
+];
+const COL = { K: '#140c2a', W: '#f4efff', S: '#c3b4ee', F: '#8f7ad8' };
+const P = 12; // screen pixels per art pixel
+
+function envelope(g, ox, oy, keep) {
+  ENV.forEach((row, y) => [...row].forEach((c, x) => {
+    if (keep && !keep(x, y)) return;
+    g.insertAdjacentHTML('beforeend',
+      `<rect x="${ox + x * P}" y="${oy + y * P}" width="${P}" height="${P}" fill="${COL[c]}"/>`);
+  }));
+}
+function px(g, x, y, c, s = P) {
+  g.insertAdjacentHTML('beforeend', `<rect x="${x}" y="${y}" width="${s}" height="${s}" fill="${c}"/>`);
+}
+
+// --- sliced envelope: two halves split on a diagonal, pushed apart
+const cut = document.getElementById('cut');
+cut.insertAdjacentHTML('beforeend', '<g id="a" transform="translate(-14 -16) rotate(-8 80 50)"></g><g id="b" transform="translate(16 18) rotate(7 80 60)"></g><g id="s"></g>');
+envelope(cut.querySelector('#a'), 0, 0, (x, y) => x + y * 1.1 < 14);
+envelope(cut.querySelector('#b'), 0, 0, (x, y) => x + y * 1.1 >= 14);
+// slash streak through the gap
+const s = cut.querySelector('#s');
+for (let i = -5; i <= 18; i++) {
+  const x = 150 - i * 9, y = -30 + i * 10;
+  px(s, x, y, i % 3 === 0 ? '#3ff0ff' : '#ffffff', 8);
+}
+[[175, -40, '#ff4fb8'], [195, -10, '#3ff0ff'], [-40, 190, '#ff4fb8'], [-20, 215, '#ffffff'], [205, 30, '#ffffff']]
+  .forEach(([x, y, c]) => px(s, x, y, c, 10));
+
+// --- burning envelope with a pixel flame on top
+const burn = document.getElementById('burn');
+burn.insertAdjacentHTML('beforeend', '<g transform="rotate(9 80 150)" id="bg"></g>');
+const bg = burn.querySelector('#bg');
+const FLAME = [
+  '.......R........',
+  '......RR....R...',
+  '.....RRO...RR...',
+  '..R..ROOR..RO...',
+  '..RR.ROYOR.ROR..',
+  '.RROROOYYORROOR.',
+  '.ROOOOYYYYOOYOR.',
+  'ROOYYYYWWYYYYOOR',
+];
+const FC = { R: '#ff3d6e', O: '#ff9a2e', Y: '#ffe14d', W: '#fff8d6' };
+FLAME.forEach((row, y) => [...row].forEach((c, x) => {
+  if (c !== '.') px(bg, x * P, y * P, FC[c]);
+}));
+envelope(bg, 0, 80);
+// embers
+[[-30, 10, '#ff9a2e'], [175, -20, '#ffe14d'], [190, 40, '#ff3d6e'], [-20, -40, '#ffe14d']]
+  .forEach(([x, y, c]) => px(bg, x, y, c, 10));
+
+// --- depth particles: far (tiny, dim), mid (glowing pixels + sparkles), near (big, soft focus)
+let seed = 7;
+const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+const pick = a => a[Math.floor(rnd() * a.length)];
+// keep the logo, VR badge and Press Start clear
+const busy = (x, y, pad) =>
+  (x > 120 - pad && x < 1380 + pad && y > 385 - pad && y < 655 + pad) ||
+  (x > 1130 - pad && x < 1370 + pad && y > 585 - pad && y < 745 + pad) ||
+  (x > 400 - pad && x < 1100 + pad && y > 735 - pad && y < 815 + pad);
+function place(pad) {
+  for (let t = 0; t < 200; t++) {
+    const x = rnd() * 1500, y = rnd() * 1000;
+    if (!busy(x, y, pad)) return [x, y];
+  }
+  return [-100, -100];
+}
+function dot(layer, x, y, size, color, extra = '') {
+  document.getElementById(layer).insertAdjacentHTML('beforeend',
+    `<div class="pt" style="left:${x}px;top:${y}px;width:${size}px;height:${size}px;background:${color};${extra}"></div>`);
+}
+function sparkle(layer, x, y, u, color, extra = '') {
+  // 4-point pixel star from one square and its box-shadows
+  const sh = [[u,0],[-u,0],[0,u],[0,-u],[2*u,0],[-2*u,0],[0,2*u],[0,-2*u]]
+    .map(([a,b]) => `${a}px ${b}px 0 ${color}`).join(',');
+  dot(layer, x, y, u, color, `box-shadow:${sh};${extra}`);
+}
+const GLOW = ['#ff4fb8', '#3ff0ff', '#b9a6ff', '#ffffff'];
+for (let i = 0; i < 70; i++) {
+  const [x, y] = place(0);
+  dot('far', x, y, pick([4, 4, 6]), pick(['#b9a6ff', '#ffffff', '#8f7ad8']), `opacity:${0.35 + rnd() * 0.3}`);
+}
+for (let i = 0; i < 26; i++) {
+  const [x, y] = place(20), c = pick(GLOW), sz = pick([8, 10, 12]);
+  dot('mid', x, y, sz, c, `box-shadow:0 0 ${sz * 1.6}px ${c};opacity:.9`);
+}
+for (let i = 0; i < 9; i++) {
+  const [x, y] = place(30), c = pick(GLOW);
+  sparkle('mid', x, y, pick([6, 8]), c, `filter:drop-shadow(0 0 8px ${c})`);
+}
+// near layer: few, big, blurred, pushed to the edges for depth of field
+[[60, 420, 30, '#ff4fb8'], [1430, 250, 34, '#3ff0ff'], [120, 880, 26, '#b9a6ff'],
+ [1390, 860, 30, '#ff4fb8'], [700, 40, 22, '#3ff0ff'], [40, 120, 20, '#ffffff'],
+ [1240, 960, 22, '#3ff0ff'], [520, 950, 18, '#ff4fb8']]
+  .forEach(([x, y, sz, c], i) => dot('near', x, y, sz, c,
+    `filter:blur(${3 + (i % 3) * 1.5}px);opacity:.6;transform:rotate(${i % 2 ? 45 : 0}deg);box-shadow:0 0 ${sz}px ${c}`));
+</script>
+</body>
+</html>

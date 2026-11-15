@@ -1,0 +1,103 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Silkscreen&display=block');
+
+:root {
+  --bg: #0b0718;
+  --ink: #140c2a;
+  --text: #f4efff;
+  --soft: rgba(225, 214, 255, .72);
+  --faint: rgba(225, 214, 255, .45);
+  --line: rgba(200, 180, 255, .16);
+  --panel: rgba(32, 20, 64, .55);
+  --pink: #ff4fb8;
+  --cyan: #3ff0ff;
+  --lav: #b9a6ff;
+  --gold: #ffd27a;
+}
+
+html, body { margin: 0; padding: 0; background: var(--bg); }
+* { box-sizing: border-box; }
+
+.card {
+  position: relative;
+  width: 2000px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Geist', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+/* the thumbnail's pixel star field, dimmed so words stay easy to read */
+.card::before {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background: url(assets/bg-space.png) center top / cover no-repeat;
+  image-rendering: pixelated;
+}
+.card::after {
+  content: ""; position: absolute; inset: 0; z-index: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(120, 70, 255, .22), transparent 70%),
+    radial-gradient(ellipse 90% 80% at 50% 50%, transparent 50%, rgba(5, 2, 14, .7) 100%),
+    linear-gradient(rgba(11, 7, 24, .58), rgba(11, 7, 24, .58));
+}
+.card > * { position: relative; z-index: 1; }
+
+/* corners: logo top left, Built for top right */
+.logo {
+  position: absolute; left: 64px; top: 52px;
+  height: 46px;
+  filter: drop-shadow(0 4px 0 rgba(10, 4, 30, .6));
+}
+.built {
+  position: absolute; right: 64px; top: 44px;
+  display: flex; align-items: center; gap: 16px;
+  height: 62px; padding: 0 28px 0 22px;
+  border-radius: 999px;
+  background: rgba(40, 26, 80, .55);
+  border: 1.5px solid var(--line);
+  font-size: 25px; font-weight: 500; color: var(--text);
+
+}
+.built img { height: 22px; image-rendering: pixelated; }
+
+h1 {
+  margin: 0;
+  font-size: 84px; line-height: 1.04; font-weight: 600;
+  letter-spacing: -.025em;
+}
+h1 em { font-style: normal; color: var(--pink); }
+.sub {
+  margin: 18px 0 0;
+  font-size: 30px; line-height: 1.4; color: var(--soft);
+}
+.center { text-align: center; }
+
+.chip {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: 'Silkscreen', monospace; font-size: 20px; letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 8px 14px 9px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .07);
+  border: 1.5px solid var(--line);
+  color: var(--lav);
+  white-space: nowrap;
+}
+.chip.pink { color: var(--pink); border-color: rgba(255, 79, 184, .4); background: rgba(255, 79, 184, .1); }
+.chip.cyan { color: var(--cyan); border-color: rgba(63, 240, 255, .35); background: rgba(63, 240, 255, .08); }
+
+.shot {
+  display: block; width: 100%;
+  border-radius: 22px;
+  border: 1.5px solid var(--line);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, .55), 0 0 0 6px rgba(255, 255, 255, .03);
+  object-fit: cover;
+}
+
+/* a solid pixel button, readable over footage */
+.btn {
+  display: inline-flex; align-items: center; gap: 12px;
+  font-family: 'Silkscreen', monospace; font-size: 26px; letter-spacing: .03em;
+  color: var(--ink); background: var(--pink);
+  padding: 12px 22px 14px;
+  box-shadow: 0 0 0 4px var(--ink), 8px 8px 0 4px rgba(10, 4, 30, .8);
+}

@@ -6,7 +6,7 @@
  */
 export const SITE = {
   /** The demo video's YouTube id (the part after v=). Empty: the player shows "coming soon". */
-  demoVideo: '',
+  demoVideo: '1M4B0hSwFXw',
   competition: { name: 'Meta VR Start Developer Competition 2026', url: 'https://start-developer-competition-26.devpost.com/' },
   segments: 'https://developers.meta.com/vr/blog/know-your-players-understanding-your-audience-with-2025-quest-gamer-segments/',
   author: { name: 'Dylan Jones', url: 'https://hidylanjones.com', linkedin: 'https://www.linkedin.com/in/hidylanjones', avatar: '/site/dylan.webp' },

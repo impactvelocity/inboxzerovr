@@ -34,7 +34,7 @@ const AUDIT = () => {
   return out;
 };
 if (mode === 'sfx') {
-  fs.writeFileSync(out, JSON.stringify(await page.evaluate(() => ({ dur: DUR, sfx: SFX, amb: AMB })), null, 1));
+  fs.writeFileSync(out, JSON.stringify(await page.evaluate(() => ({ dur: DUR, sfx: SFX, amb: AMB, anthem: window.ANTHEM_AT ?? null })), null, 1));
 } else if (mode === 'stills') {
   fs.mkdirSync(out, { recursive: true });
   // render frames in order up to each still, so anything built on the way (the split card) is there
@@ -48,7 +48,7 @@ if (mode === 'sfx') {
 } else {
   fs.mkdirSync(out, { recursive: true });
   const fps = 30, dur = await page.evaluate(() => DUR);
-  const from = Math.round((+rest[0] || 0) * fps), to = Math.round((+rest[1] || dur) * fps);
+  const from = Math.round((+rest[0] || 0) * fps), to = Math.round(Math.min(+rest[1] || dur, dur) * fps);      // (never past the end)
   const t0 = Date.now();
   for (let f = from; f < to; f++) {
     await page.evaluate(t => renderAt(t), f / fps);

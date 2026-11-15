@@ -1,0 +1,547 @@
+{
+ "dur": 134.2,
+ "sfx": [
+  {
+   "t": 0.4,
+   "file": "../work/audio/notify/ping-new.mp3",
+   "gain": 0.8
+  },
+  {
+   "t": 0.8,
+   "file": "../work/audio/notify/ping-new.mp3",
+   "gain": 0.8
+  },
+  {
+   "t": 1.2,
+   "file": "../work/audio/notify/ping-new.mp3",
+   "gain": 0.7
+  },
+  {
+   "t": 1.65,
+   "file": "../work/audio/notify/ping-new.mp3",
+   "gain": 0.7
+  },
+  {
+   "t": 2.5,
+   "file": "../work/audio/notify/ping-new.mp3",
+   "gain": 0.7
+  },
+  {
+   "t": 3.15,
+   "file": "../work/audio/notify/ping-new.mp3",
+   "gain": 0.7
+  },
+  {
+   "t": 4.965,
+   "file": "../work/audio/notify/ping-new.mp3",
+   "gain": 0.85
+  },
+  {
+   "t": 5.89,
+   "file": "../work/audio/notify/ping-new.mp3",
+   "gain": 0.7
+  },
+  {
+   "t": 6.22,
+   "file": "../work/audio/sword/sword-slash.mp3",
+   "gain": 1.6
+  },
+  {
+   "t": 6.44,
+   "file": "../work/audio/sword/grunt.mp3",
+   "gain": 1
+  },
+  {
+   "t": 6.52,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.55
+  },
+  {
+   "t": 6.957,
+   "file": "../../vr3/play/public/audio/kyoto/slash3.flac",
+   "gain": 0.9
+  },
+  {
+   "t": 7.947,
+   "file": "../work/audio/sword/flame.wav",
+   "gain": 1.4
+  },
+  {
+   "t": 10.037,
+   "file": "../../vr3/play/public/audio/space/slash1.flac",
+   "gain": 1
+  },
+  {
+   "t": 10.295,
+   "file": "../../vr3/play/public/audio/lab/melt1.flac",
+   "gain": 1
+  },
+  {
+   "t": 11.151,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.5
+  },
+  {
+   "t": 11.251,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 1.1
+  },
+  {
+   "t": 11.251,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.7
+  },
+  {
+   "t": 12.951,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.2125
+  },
+  {
+   "t": 13.051,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.4675
+  },
+  {
+   "t": 13.051,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.2975
+  },
+  {
+   "t": 13.884,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.2
+  },
+  {
+   "t": 13.984,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.44000000000000006
+  },
+  {
+   "t": 13.984,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.27999999999999997
+  },
+  {
+   "t": 14.751,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.2
+  },
+  {
+   "t": 14.851,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.44000000000000006
+  },
+  {
+   "t": 14.851,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.27999999999999997
+  },
+  {
+   "t": 16.451,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.2125
+  },
+  {
+   "t": 16.551,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.4675
+  },
+  {
+   "t": 16.551,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.2975
+  },
+  {
+   "t": 17.518,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.2125
+  },
+  {
+   "t": 17.618,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.4675
+  },
+  {
+   "t": 17.618,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.2975
+  },
+  {
+   "t": 18.018,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.175
+  },
+  {
+   "t": 18.118,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.385
+  },
+  {
+   "t": 18.118,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.24499999999999997
+  },
+  {
+   "t": 19.318,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.45
+  },
+  {
+   "t": 19.418,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.9900000000000001
+  },
+  {
+   "t": 19.418,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.63
+  },
+  {
+   "t": 19.684,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.4
+  },
+  {
+   "t": 19.784,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.8800000000000001
+  },
+  {
+   "t": 19.784,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.5599999999999999
+  },
+  {
+   "t": 11.94,
+   "file": "../../vr3/play/public/audio/swoosh2.flac",
+   "gain": 0.45
+  },
+  {
+   "t": 15.95,
+   "file": "../../vr3/play/public/audio/office/slash1.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 16.191,
+   "file": "../../vr3/play/public/audio/office/slash2.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 16.432,
+   "file": "../../vr3/play/public/audio/office/slash3.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 16.674,
+   "file": "../../vr3/play/public/audio/office/slash4.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 16.915,
+   "file": "../../vr3/play/public/audio/office/slash5.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 17.156,
+   "file": "../../vr3/play/public/audio/office/slash6.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 17.397,
+   "file": "../../vr3/play/public/audio/office/slash1.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 17.639,
+   "file": "../../vr3/play/public/audio/office/slash2.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 17.88,
+   "file": "../../vr3/play/public/audio/office/slash3.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 18.121,
+   "file": "../../vr3/play/public/audio/office/slash4.flac",
+   "gain": 0.32
+  },
+  {
+   "t": 18.161,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.4
+  },
+  {
+   "t": 19.57,
+   "file": "../../vr3/play/public/audio/swoosh1.flac",
+   "gain": 0.6
+  },
+  {
+   "t": 37.4,
+   "file": "../../vr3/play/public/audio/kyoto/slash3.flac",
+   "gain": 1
+  },
+  {
+   "t": 37.463,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.45
+  },
+  {
+   "t": 53.51,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.5
+  },
+  {
+   "t": 53.61,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 1.1
+  },
+  {
+   "t": 53.61,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.7
+  },
+  {
+   "t": 55.31,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.35
+  },
+  {
+   "t": 55.41,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.77
+  },
+  {
+   "t": 55.41,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.48999999999999994
+  },
+  {
+   "t": 56.243,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.35
+  },
+  {
+   "t": 56.343,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.77
+  },
+  {
+   "t": 56.343,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.48999999999999994
+  },
+  {
+   "t": 59.143,
+   "file": "../../vr3/play/public/audio/castle/slash1.flac",
+   "gain": 1
+  },
+  {
+   "t": 60.11,
+   "file": "../../vr3/play/public/audio/castle/slash1.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 61.11,
+   "file": "../../vr3/play/public/audio/castle/slash1.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 61.977,
+   "file": "../../vr3/play/public/audio/lab/melt1.flac",
+   "gain": 1
+  },
+  {
+   "t": 64.11,
+   "file": "../../vr3/play/public/audio/lab/melt1.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 64.943,
+   "file": "../../vr3/play/public/audio/lab/melt1.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 66.477,
+   "file": "../../vr3/play/public/audio/inferno/flare.flac",
+   "gain": 1
+  },
+  {
+   "t": 67.177,
+   "file": "../../vr3/play/public/audio/inferno/flare.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 67.943,
+   "file": "../../vr3/play/public/audio/inferno/flare.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 68.977,
+   "file": "../../vr3/play/public/audio/inferno/flare.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 69.61,
+   "file": "../../vr3/play/public/audio/kyoto/slash4.flac",
+   "gain": 1
+  },
+  {
+   "t": 70.343,
+   "file": "../../vr3/play/public/audio/kyoto/slash4.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 71.677,
+   "file": "../../vr3/play/public/audio/kyoto/slash4.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 73.31,
+   "file": "../../vr3/play/public/audio/kyoto/slash4.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 74.743,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 1
+  },
+  {
+   "t": 75.91,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 76.877,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 78.943,
+   "file": "../../vr3/play/public/audio/space/slash2.flac",
+   "gain": 1
+  },
+  {
+   "t": 79.61,
+   "file": "../../vr3/play/public/audio/space/slash2.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 80.81,
+   "file": "../../vr3/play/public/audio/space/slash2.flac",
+   "gain": 0.65
+  },
+  {
+   "t": 117.13,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.36000000000000004
+  },
+  {
+   "t": 117.23,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.7920000000000001
+  },
+  {
+   "t": 117.23,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.504
+  },
+  {
+   "t": 117.83,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.27999999999999997
+  },
+  {
+   "t": 117.93,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.616
+  },
+  {
+   "t": 117.93,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.39199999999999996
+  },
+  {
+   "t": 118.83,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.32000000000000006
+  },
+  {
+   "t": 118.93,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.7040000000000002
+  },
+  {
+   "t": 118.93,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.44800000000000006
+  },
+  {
+   "t": 119.53,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.27999999999999997
+  },
+  {
+   "t": 119.63,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.616
+  },
+  {
+   "t": 119.63,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.39199999999999996
+  },
+  {
+   "t": 120.597,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.32000000000000006
+  },
+  {
+   "t": 120.697,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.7040000000000002
+  },
+  {
+   "t": 120.697,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.44800000000000006
+  },
+  {
+   "t": 121.73,
+   "file": "../../vr3/play/public/audio/lumber/slash1.flac",
+   "gain": 0.27999999999999997
+  },
+  {
+   "t": 121.83,
+   "file": "../../vr3/play/public/audio/lumber/chop.flac",
+   "gain": 0.616
+  },
+  {
+   "t": 121.83,
+   "file": "../../vr3/play/public/audio/office/glass.flac",
+   "gain": 0.39199999999999996
+  },
+  {
+   "t": 91.213,
+   "file": "../../vr3/play/public/audio/kyoto/slash5.flac",
+   "gain": 1
+  },
+  {
+   "t": 92.042,
+   "file": "../../vr3/play/public/audio/kyoto/slash5.flac",
+   "gain": 0.7
+  },
+  {
+   "t": 93.087,
+   "file": "../../vr3/play/public/audio/swoosh1.flac",
+   "gain": 0.35
+  },
+  {
+   "t": 94.027,
+   "file": "../../vr3/play/public/audio/kyoto/keep1.flac",
+   "gain": 0.5
+  }
+ ],
+ "amb": [],
+ "anthem": 115.49
+}
