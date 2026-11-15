@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import { Geist, Silkscreen } from 'next/font/google';
+import { Analytics } from './_site/Analytics';
 import './globals.css';
 
 // Geist for all the words (asked for on 2026-11-12), and pixel letters kept for small labels and buttons (the game's own rule: words stay easy to read, pixels are a hint).
@@ -27,7 +28,7 @@ export const viewport: Viewport = { themeColor: '#0b0912', width: 'device-width'
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${text.variable} ${pixel.variable}`}>
-      <body>{children}</body>
+      <body>{children}<Analytics /></body>
     </html>
   );
 }

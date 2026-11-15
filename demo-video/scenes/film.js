@@ -137,8 +137,8 @@ const SEG = [
   // the stretch round SENT runs 1.5x so the email is at the mic on "say your own" (a map of [film time, clip seconds])
   // v47: "make the speed fit that 6 second gap, it doesnt need to line up with voice over": from the email at the mic to
   // 0:53 is one steady speed (about 1.2x) across the recording (to Send it) and the throw (through LATER and the slice)
-  ['reply-short', C('replies'), T_THROW, 0, [[C('replies'), .33], [W('hold', 'like') - .2, 5.0], [W('pull', 'say') + .05, 7.25], [T_THROW, 12.9]]],
-  ['webvr-chair', T_THROW, C('monitor'), 0, [[T_THROW, .67], [C('monitor'), 3.2]]],
+  // v71: "use this footage for 0:40 to 0:53": vr-video/11-take-1107/reply-record-footage.mp4 (13 s), whole, fitted to the gap (1.01x)
+  ['reply-rec', C('replies'), C('monitor'), 0, [[C('replies'), 0], [C('monitor'), 13.0]]],
   // v4: the long level shots (one cut on the word, then the view opens up while more mail is cut), each held 5 s past its line
   ['lvl-keyboard', C('monitor'), C('castle'), C('monitor'), 1],      // v35: the user's level clip, whole, at real speed
   ['lvl-haunted', C('castle'), C('lab'), C('castle'), 1],      // v35: the user's level clip, whole, at real speed
@@ -1178,13 +1178,11 @@ function buildHits() {
   v(T_REVEAL + 220 / FPS, 'v-slash-1', 1.0); v(T_REVEAL + 220 / FPS, 'v-glasshit', .45);
   // v64: round two in the reply take: a reply sent (the game's send: a swoosh and a blip) as SENT shows, and the game's
   // recording blip (its blip, a fifth up) as the email reaches the mic
-  { const sentAt = W('hold', 'like') - .2 + (5.75 - 5.0) * ((W('pull', 'say') + .05) - (W('hold', 'like') - .2)) / (7.25 - 5.0);
-    // (v65: "for send reply and recording - just use the same sound as the notification from start of video")
-    SFX.push({ t: +(sentAt - .02).toFixed(3), file: '../work/audio/notify/ping-new.mp3', gain: .8 });
-    /* (v67: no sound for the recording) */ }
+  // v71: the new reply take: the notification click on SENT (its 8.0 s)
+  const recAt = sec => C('replies') + sec * (C('monitor') - C('replies')) / 13.0;
+  SFX.push({ t: +(recAt(8.0) - .02).toFixed(3), file: '../work/audio/notify/ping-new.mp3', gain: .8 });
   // 0:48, the throw: the email thrown up, then sliced (webvr-chair.mp4's frames 38 and 55, through its playback line)
-  { const at = sec => T_THROW + (sec - .67) * (C('monitor') - T_THROW) / (3.2 - .67);
-    v(at(37 / FPS), 'v-slash-2', .45); v(at(54 / FPS), 'v-katana-alt', .85); }
+  v(recAt(12.0), 'v-slash-2', .5);      // (v71: a soft swish as it's thrown to LATER)
   // the levels: each clip's biggest impacts (found by how much the picture changes), the first loudest, in its own sounds
   // v65: the level hits, placed on the frames where each thing happens (looked at frame by frame), per the user's notes:
   // Keyboard: the keyboard slashing an email at 0:55 (its frame 47); Haunted: the first swing only (the second, frame 76,

@@ -242,19 +242,14 @@
    "gain": 0.45
   },
   {
-   "t": 45.754,
+   "t": 48.479,
    "file": "../work/audio/notify/ping-new.mp3",
    "gain": 0.8
   },
   {
-   "t": 51.648,
+   "t": 52.269,
    "file": "../work/audio/v/v-slash-2.mp3",
-   "gain": 0.45
-  },
-  {
-   "t": 52.156,
-   "file": "../work/audio/v/v-katana-alt.mp3",
-   "gain": 0.85
+   "gain": 0.5
   },
   {
    "t": 53.3,

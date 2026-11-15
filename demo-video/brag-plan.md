@@ -1,5 +1,10 @@
 # Inbox Zero VR demo film, plan
 
+## v71 (2026-11-15)
+
+- 0:40 to 0:53 is one take, `vr-video/11-take-1107/reply-record-footage.mp4` (13 s), whole and fitted to the gap (1.01x): the Round 2 countdown, the reply boards, an email held up to Reply A and SENT, the next at the mic, then thrown to LATER. It replaces the reply take and the throw from webvr-chair.
+- Sounds re-timed to it: the notification click on SENT (0:48.5), a soft swish as the email is thrown (0:52.3). Kyoto's song still under the film.
+
 ## v70 (2026-11-14)
 
 - Music: the Kyoto level's song (`kyoto/music.m4a`) under the film instead of Keyboard Smash's, from 2:50 into it; the same fade-in on the sword, steady level, lift in the pauses, and fade under the Keyboard Smash anthem at the end. Picture unchanged (v69's).

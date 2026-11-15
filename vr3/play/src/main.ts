@@ -14,6 +14,7 @@ import { createFlame } from './flame';
 import { createMist } from './spray';
 import { createHome } from './home';
 import { bindHomeMic, bindSetupMic, dictate } from './dictate';
+import { bindMicDebug } from './micdebug';
 import { bindMailUi } from './mailui';
 import { mail } from './mail/source';
 import { WEAPON_VERB, createHowto } from './howto';
@@ -21,6 +22,7 @@ import { bindResults } from './results';
 import { LEVELS, SHOWN, levelById, shownById, type Level } from './levels';
 import { createStage, type RoundProgress } from './levels/backdrop';
 import { createHeld, type Weapon } from './weapons/held';
+import { track } from './analytics';
 import './style.css';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -301,9 +303,12 @@ async function main() {
     letters.setActive(on);
     syncSound(); refresh();
   }
+  // A level chosen, to PostHog: on the home screen (a click or the arrow keys), from the menu in VR, or opened by a link (?level=)
+  const trackPick = (level: Level, from: 'home' | 'vr_menu' | 'link') =>
+    track('level_selected', { level: level.id, level_name: level.name, level_number: level.number, from, previous: now.level.id, in_vr: world.renderer.xr.isPresenting });
   const home = createHome({
     levels: SHOWN,
-    pick: level => { playStinger(level.stinger); void choose(level); },
+    pick: level => { playStinger(level.stinger); trackPick(level, 'home'); void choose(level); },
     start: where => {
       sounds.unlock();
       const go = () => { dictate.hold(); if (where === 'vr') world.launchXR(); else { setPlaying(true); $('scene').focus(); } };
@@ -314,6 +319,7 @@ async function main() {
   });
   bindSetupMic();      // the mic line and Allow mic on the Setup card (dictate.ts)
   bindHomeMic();       // and Connect mic beside Setup: the mic is only ever asked for here, never in VR
+  bindMicDebug();      // and Debug Mic beside it: a real take on the home page, saying what works and what doesn't (micdebug.ts)
   // (and on the first click anywhere on the home page, so round two hears real words in the demo too: 2026-11-13)
   { const home = $('home') ?? document.body; const first = (e: Event) => { if ((e.target as HTMLElement | null)?.closest?.('#start, #just-play')) return; home.removeEventListener('pointerdown', first, true); if (dictate.unasked && !world.renderer.xr.isPresenting) void dictate.ask(); }; home.addEventListener('pointerdown', first, true); }
   bindMailUi();        // Enter Code / Just Play: an agent's game code, or the demo (mailui.ts, mail/source.ts)
@@ -336,7 +342,7 @@ async function main() {
     if (kind === 'home') { const xr = world.renderer.xr.getSession(); if (world.renderer.xr.isPresenting && xr) void xr.end().catch(() => setPlaying(false)); else setPlaying(false); return; }
     // in the menu: a level's card cut (its name said, then once the view is black the level changes and the
     // menu comes again), START cut (a game begins), EXIT cut (out of VR, to the home screen)
-    if (kind === 'pick') { const level = levelById(id ?? null); if (level) { playStinger(level.stinger); void choose(level).then(() => { if (world.renderer.xr.isPresenting) void letters.showMenu(menuLevels(), now.level.id, true); }); } return; }
+    if (kind === 'pick') { const level = levelById(id ?? null); if (level) { playStinger(level.stinger); trackPick(level, 'vr_menu'); void choose(level).then(() => { if (world.renderer.xr.isPresenting) void letters.showMenu(menuLevels(), now.level.id, true); }); } return; }
     if (kind === 'start') { setPlaying(true); return; }
     if (kind === 'exit') { void world.renderer.xr.getSession()?.end(); return; } if (kind === 'arrive') now.place.pulse?.(1); else if (kind === 'melt') now.place.pulse?.(0.9); else if (kind === 'cut') now.place.pulse?.(0.3); now.place.onLetter?.(kind, at); };
 
@@ -356,7 +362,7 @@ async function main() {
       letters.setBeat(music.pulse());      // the end of a game moves to the music
       letters.setEndSong(music.celebrating(), music.celebrationProgress(), music.celebrationTime());      // and waits for its song to end, going dark with it
       dictate.update(dt, letters.progress.recording);      // the real mic (dictate.ts): its take ends by itself, and stops if the game moves on
-      music.setSoft(letters.progress.recording ? (dictate.live ? 0.12 : 0.3) : howto.running ? 0.5 : 1);      // (softer under How to Play's voice)
+      music.setSoft(letters.progress.recording || dictate.debugging ? (dictate.live ? 0.12 : 0.3) : howto.running ? 0.5 : 1);      // (softer under How to Play's voice)
       sounds.setRecordSoft(letters.progress.recording ? (dictate.live ? 1 : 0.75) : howto.running ? 0.55 : 0);      // (How to Play's voice over the level's sounds too)      // (and the level's background steps back too: 2026-11-13)      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
       // the end of a game: a level with a celebration song crossfades into it as the last email is dealt with
       { const p = letters.progress, lastDone = p.phase === 'play' && p.round === 2 && p.total > 0 && p.marks.length >= p.total;
@@ -436,6 +442,7 @@ async function main() {
   const first = levelById(query.get('level')) ?? shownById(query.get('level')) ?? shownById(remembered('vr3.level')) ?? LEVELS[0];      // (shownById: an old ?level=office opens Keyboard Smash)
   letters.setActive(false);        // the home screen comes first: nothing arrives until Start
   enter(now);
+  if (query.get('level') && first.id === (levelById(query.get('level')) ?? shownById(query.get('level')))?.id) trackPick(first, 'link');
   if (first.id !== 'kyoto') await choose(first); else home.select('kyoto');
   const supported=!!(await navigator.xr?.isSessionSupported('immersive-vr').catch(()=>false));
   home.vr(supported);

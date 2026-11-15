@@ -72,6 +72,10 @@ function createDictate() {
     trouble: '',
     /** Is there a mic at all (false: none plugged in or built in), and can the server give Scribe tokens (null: not known yet)? */
     hasDevice: true, scribe: null as boolean | null,
+    /** The mic's name, once approved (the browser only tells it then), for the mic test. */
+    device: '',
+    /** Why Scribe can't be had here, from the server's check ('' when it can, or not known): 'no-key', 'invite-only', 'no-server'. */
+    scribeWhy: '',
   };
   const listeners = new Set<() => void>();
   const told = () => listeners.forEach(f => f());
@@ -114,6 +118,7 @@ function createDictate() {
     try {
       const inputs = (await navigator.mediaDevices.enumerateDevices()).filter(device => device.kind === 'audioinput');
       d.hasDevice = inputs.length > 0;
+      d.device = inputs.find(device => device.label)?.label ?? d.device;
       if (!known && inputs.some(device => device.label)) d.permission = 'granted';
     } catch { /* no device list: assume there is a mic */ }
     told();
@@ -130,8 +135,9 @@ function createDictate() {
   let checking = false;
   function checkScribe() {
     if (checking) return; checking = true;
-    void fetch('/api/scribe-token?check', { cache: 'no-store' }).then(r => r.ok ? r.json() : { ready: false })
-      .then((r: { ready?: boolean }) => { d.scribe = !!r.ready; }).catch(() => { d.scribe ??= false; })
+    void fetch('/api/scribe-token?check', { cache: 'no-store' }).then(r => r.ok ? r.json() : { ready: false, why: 'no-server' })
+      .then((r: { ready?: boolean; why?: string }) => { d.scribe = !!r.ready; d.scribeWhy = r.ready ? '' : r.why ?? ''; })
+      .catch(() => { d.scribe ??= false; d.scribeWhy = 'no-server'; })
       .finally(() => { checking = false; told(); });
   }
   checkScribe();
@@ -213,11 +219,15 @@ function createDictate() {
     let token = '', url = '';
     try {
       const reply = await fetch('/api/scribe-token', { cache: 'no-store' });
-      if (!reply.ok) { if (reply.status !== 501) d.trouble = `token: ${reply.status}`; d.scribe = false; return null; }
+      if (!reply.ok) {
+        // (the server's reason too, so the mic test can say it: "invite only" online without an access code)
+        const why = await reply.json().then((b: { error?: string }) => b.error ?? '', () => '');
+        d.trouble = `token ${reply.status}${why ? `: ${why}` : ''}`; d.scribe = false; return null;
+      }
       const body = (await reply.json()) as { token?: string; url?: string };
       token = body.token ?? ''; url = body.url ?? '';
       if (token && url) d.scribe = true;
-    } catch { return null; }
+    } catch { d.trouble = 'token: the server could not be reached'; return null; }
     if (!token || !url) return null;
     // (a browser's WebSocket can't send headers, so the secret rides the subprotocols, as the gateway's own client does)
     const socket = new WebSocket(url, ['ai-gateway-transcription.v1', `ai-gateway-auth.${token}`]);
@@ -293,6 +303,8 @@ function createDictate() {
    */
   const possible = () => !DEMO_MIC && canMic && (d.permission === 'granted' || (d.permission === 'unknown' && remembered()) || !!stream) && (d.hasDevice || !!stream);
   let testing: ReturnType<typeof setTimeout> | null = null;
+  /** The home page's mic test is running a take (2026-11-15): the game's loop leaves it alone. */
+  let debugging = false;
   const extra = {
     /** Whether real words are on their way (not the mock), for the music to go softer. */
     get live() { return d.engine !== 'mock' && (d.phase === 'opening' || d.phase === 'listening' || d.phase === 'finishing'); },
@@ -315,7 +327,7 @@ function createDictate() {
       if (d.scribe !== true) checkScribe();
     },
     /** For the console (gardenDiagnostics): how the mic stands. */
-    diagnostics() { return { permission: d.permission, remembered: remembered(), hasDevice: d.hasDevice, scribe: d.scribe, speech: !!Speech, possible: possible(), held, open: !!stream, phase: d.phase, engine: d.engine, trouble: d.trouble }; },
+    diagnostics() { return { secure: window.isSecureContext, permission: d.permission, remembered: remembered(), hasDevice: d.hasDevice, device: d.device, scribe: d.scribe, scribeWhy: d.scribeWhy, speech: !!Speech, possible: possible(), held, open: !!stream, phase: d.phase, engine: d.engine, trouble: d.trouble }; },
     /**
      * Ask if need be, then keep the mic open for a few seconds so `level` shows it hearing (the home
      * page's Connect mic). Only from a click: this is where the browser's prompt may appear.
@@ -365,8 +377,28 @@ function createDictate() {
     },
     /** Drop the take (the letter went elsewhere, the round ended). */
     cancel() { take++; hangUp(); d.phase = 'idle'; d.engine = 'mock'; d.text = ''; settled = ''; partial = ''; close(); },
+    /**
+     * The mic test on the home page (2026-11-15: "a debug mic button next to mic icon to test mic setup and transcription so its
+     * easier than playing a game"): a real take, the same path as round two, asking for the mic if need be (it is a click).
+     */
+    async debugTake() {
+      const ok = await open(true);
+      void refresh(); checkScribe();
+      if (!ok) return false;
+      held = true; debugging = true;
+      extra.start();
+      return true;
+    },
+    /** End the mic test's take now (the last words still come in). */
+    debugStop() { extra.finish(); },
+    /** The mic test is closed: drop its take. */
+    debugEnd() { if (!debugging) return; debugging = false; extra.cancel(); },
+    get debugging() { return debugging; },
+    /** Look again at the mic and the server, without asking (the mic test opening). */
+    recheck() { void refresh(); checkScribe(); },
     /** Every frame. `wanted`: the game is still recording. */
     update(dt: number, wanted: boolean) {
+      if (debugging) wanted = true;
       if (d.phase === 'idle' || d.phase === 'done') {
         if (d.phase === 'done' && !wanted) { d.phase = 'idle'; d.engine = 'mock'; }
         if ((stream || early) && d.phase === 'idle' && !testing && (warmAge += dt) > tune.warmFor) { warmAge = -1e9; close(); dropEarly(); }
@@ -405,6 +437,8 @@ export const dictate = createDictate();
  */
 export function bindHomeMic() {
   const button = document.getElementById('connect-mic') as HTMLButtonElement | null, wrap = button?.parentElement, bar = wrap?.querySelector<HTMLElement>('.mic-meter span');
+  // (2026-11-15: "add a message if mic is connected or not": said in words beside the icon, not only its edge)
+  const note = document.getElementById('mic-note');
   if (!button || !wrap) return;
   let shown = '';
   function show() {
@@ -419,6 +453,12 @@ export function bindHomeMic() {
     wrap!.classList.toggle('testing', dictate.testing);
     if (label !== shown) { shown = label; button!.setAttribute('aria-label', label); }
     button!.title = `${label}. ${title}`;
+    if (note) {
+      const on = p === 'granted' && dictate.hasDevice;
+      note.textContent = on ? (dictate.testing ? 'Mic listening…' : 'Mic connected') : `Mic not connected${label === 'Connect mic' ? '' : ` · ${label.replace(/^Mic /, '')}`}`;
+      note.className = `mic-note ${on ? 'on' : 'off'}`;
+      note.title = title;
+    }
   }
   drawMic(button.querySelector<HTMLCanvasElement>('canvas.mic'));
   // the meter under the button while it listens

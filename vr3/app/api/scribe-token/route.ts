@@ -17,7 +17,8 @@ import { hasAccess, hasRound } from '@/lib/session';
 export async function GET(req: Request) {
   const allowed = process.env.SCRIBE_PUBLIC === '1' || process.env.NODE_ENV === 'development' || (await hasAccess()) || (await hasRound());
   const ready = env.gatewayKey && allowed;
-  if (new URL(req.url).searchParams.has('check')) return json({ ready });
+  // (why not, for the home page's mic test: 'no-key' or 'invite-only')
+  if (new URL(req.url).searchParams.has('check')) return json({ ready, why: ready ? '' : !env.gatewayKey ? 'no-key' : 'invite-only' });
   if (!env.gatewayKey) return json({ error: 'AI_GATEWAY_API_KEY is not set' }, 501);
   if (!allowed) return json({ error: 'The mic service is invite only' }, 403);
   try {

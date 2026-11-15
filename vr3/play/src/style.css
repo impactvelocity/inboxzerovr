@@ -214,6 +214,31 @@ button.link:hover{background:none;opacity:1}
 #home .pix.mic-off:disabled{cursor:default;opacity:.7}
 #home .pix.mic-ask{animation:mic-ask 1.6s ease-in-out infinite}
 @keyframes mic-ask{50%{filter:brightness(1.4)}}
+/* beside the mic icon (2026-11-15): Debug Mic, and in words whether the mic is connected */
+#home #debug-mic.pix{padding:9px 12px 11px;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+.mic-note{font:12px/1.2 'Helvetica Neue',Arial,sans-serif;letter-spacing:.04em;text-shadow:0 1px 6px #000;white-space:nowrap}
+.mic-note.on{color:#7dffc9}
+.mic-note.off{color:#ff8fa3}
+@media(max-width:600px){.mic-note{display:none}}
+/* the mic test card (src/micdebug.ts) */
+.mic-debug h2{margin:0 0 12px;font-size:18px;letter-spacing:.04em}
+.mic-checks{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0 0 14px;font-size:13px}
+.mic-checks dt{opacity:.6}
+.mic-checks dd{margin:0}
+.mic-checks dd.on{color:#7dffc9}
+.mic-checks dd.off{color:#ff8fa3}
+.mic-access{display:flex;gap:8px;margin:0 0 14px}
+.mic-access[hidden]{display:none}
+.mic-access input{flex:1;min-width:0;font:13px 'Helvetica Neue',Arial,sans-serif;padding:8px 10px;border:1px solid #ffffff30;border-radius:4px;background:#0006;color:#fff}
+.mic-debug-meter{height:6px;background:#ffffff1f;margin:0 0 12px}
+.mic-debug-meter span{display:block;height:100%;width:0;background:#7dffc9;transition:width 60ms linear}
+.mic-said{min-height:48px;margin:0 0 6px;padding:10px 12px;background:#0005;border-radius:6px;font-size:16px;line-height:1.4}
+.mic-said.empty{opacity:.6;font-size:13px}
+.mic-line{min-height:18px;margin:0;font-size:12px;opacity:.8}
+.mic-line.on{color:#7dffc9;opacity:1}
+.mic-line.off{color:#ff8fa3;opacity:1}
+.mic-details{margin-top:10px;font-size:12px;opacity:.75}
+.mic-details pre{margin:6px 0 0;max-height:180px;overflow:auto;white-space:pre-wrap;word-break:break-all;font-size:11px}
 .mic-state{display:block;margin-top:4px;font-size:12px;opacity:.75}
 .mic-state.on{color:#7dffc9;opacity:1}
 .mic-state.off{color:#ff8fa3;opacity:1}
