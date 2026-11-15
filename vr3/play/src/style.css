@@ -349,6 +349,7 @@ summary{font-size:10px;opacity:.65;cursor:pointer;padding:6px 0}
 .find-line:empty{display:none}
 .find-line canvas{margin-top:2px}
 .code-find .find-line{margin-top:-12px}      /* (the line under INBOX READY / NO INBOX FOUND sits closer to it: 2026-11-14) */
+.code-find[data-state=found] .find-line{margin-top:-4px}      /* (the game's title, now the big line, a little room under INBOX READY: 2026-11-15) */
 .find-dots{display:flex;gap:10px;height:14px}
 .find-dots i{width:14px;height:14px;background:color-mix(in srgb,var(--accent,#f6b3cc) 80%,#fff);opacity:.55;box-shadow:0 2px 0 #000c;animation:find-step 1s steps(1) infinite}      /* (2026-11-14: "more solid brighter color") */
 .find-dots i:nth-child(2){animation-delay:.2s}.find-dots i:nth-child(3){animation-delay:.4s}.find-dots i:nth-child(4){animation-delay:.6s}.find-dots i:nth-child(5){animation-delay:.8s}

@@ -125,10 +125,10 @@ export function bindMailUi() {
     if (left > 0) { wait = window.setTimeout(settle, left); return; }
     if (r.state === 'ready') {
       // (2026-11-14: "make it Inbox Ready ( not Found it )", "sub title pixel font and say something - Your 18 Emails are Ready to Play")
-      pixelLabel(findTitle, 'Inbox Ready', 4, accent(), KEYPAD_SHADOW);
+      pixelLabel(findTitle, 'Inbox Ready', 2.5, accent(), KEYPAD_SHADOW);      // (a size down, the game's title a size up: 2026-11-15)
       // (2026-11-15: "intead of "5 emails to do" or whatever, use the game title": the title the agent gave the round, a size up when short)
       const title = r.title.trim() || (r.count === 1 ? 'Your 1 email is ready to play' : `Your ${r.count} emails are ready to play`);
-      pixelLabel(findLine, title, title.length <= 22 ? 2 : 1.5, '#ffffff', KEYPAD_SHADOW);
+      pixelLabel(findLine, title, title.length <= 20 ? 3 : title.length <= 28 ? 2.5 : 2, '#ffffff', KEYPAD_SHADOW);
       setView('found');
       uiSound('found');      // (a retro fanfare: the inbox is ready)
       requestAnimationFrame(() => findPlay.focus({ preventScroll: true }));
