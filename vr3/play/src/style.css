@@ -240,6 +240,13 @@ button.link:hover{background:none;opacity:1}
 .mic-line.off{color:#ff8fa3;opacity:1}
 .mic-details{margin-top:10px;font-size:12px;opacity:.75}
 .mic-details pre{margin:6px 0 0;max-height:180px;overflow:auto;white-space:pre-wrap;word-break:break-all;font-size:11px}
+/* Video, top left, and its card (src/videocard.ts, 2026-11-15) */
+#home .pix.video-btn{grid-auto-flow:column;gap:8px;padding:9px 13px 11px 11px}
+#home .pix.video-btn .video-word{position:relative;display:block;line-height:0}
+.video-card{width:min(94vw,1000px);max-width:none;padding:14px 14px 16px;overflow:hidden}
+.video-frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;overflow:hidden}
+.video-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.video-card .dialog-actions{justify-content:center;margin-top:14px}
 /* MCP, top right, and its card (src/mcpcard.ts, 2026-11-15) */
 #home .pix.mcp-btn{padding:9px 12px 11px}
 /* (2026-11-15: "make the typography better on this, better spacing / games and drop the periods": all in the pixel letters) */

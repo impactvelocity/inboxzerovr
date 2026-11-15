@@ -16,6 +16,7 @@ import { createHome } from './home';
 import { bindHomeMic, bindSetupMic, dictate } from './dictate';
 import { bindMicDebug } from './micdebug';
 import { bindMcpCard } from './mcpcard';
+import { bindVideoCard, videoOpen } from './videocard';
 import { bindMailUi } from './mailui';
 import { mail } from './mail/source';
 import { WEAPON_VERB, createHowto } from './howto';
@@ -320,6 +321,7 @@ async function main() {
   });
   bindSetupMic();      // the mic line and Allow mic on the Setup card (dictate.ts)
   bindHomeMic();       // and Connect mic beside Setup: the mic is only ever asked for here, never in VR
+  bindVideoCard();     // Video beside the mic: the demo video in a card, to watch on the Quest (videocard.ts)
   bindMcpCard();       // MCP by the hackathon badge: the address an AI agent makes a round from (mcpcard.ts)
   bindMicDebug();      // and Debug Mic beside it: a real take on the home page, saying what works and what doesn't (micdebug.ts)
   // (and on the first click anywhere on the home page, so round two hears real words in the demo too: 2026-11-13)
@@ -364,7 +366,7 @@ async function main() {
       letters.setBeat(music.pulse());      // the end of a game moves to the music
       letters.setEndSong(music.celebrating(), music.celebrationProgress(), music.celebrationTime());      // and waits for its song to end, going dark with it
       dictate.update(dt, letters.progress.recording);      // the real mic (dictate.ts): its take ends by itself, and stops if the game moves on
-      music.setSoft(letters.progress.recording || dictate.debugging ? (dictate.live ? 0.12 : 0.3) : howto.running ? 0.5 : 1);      // (softer under How to Play's voice)
+      music.setSoft(videoOpen() ? 0 : letters.progress.recording || dictate.debugging ? (dictate.live ? 0.12 : 0.3) : howto.running ? 0.5 : 1);      // (softer under How to Play's voice)
       sounds.setRecordSoft(letters.progress.recording ? (dictate.live ? 1 : 0.75) : howto.running ? 0.55 : 0);      // (How to Play's voice over the level's sounds too)      // (and the level's background steps back too: 2026-11-13)      // round two's dictation: the song goes soft while it records (softer for a real mic, so it is not heard)
       // the end of a game: a level with a celebration song crossfades into it as the last email is dealt with
       { const p = letters.progress, lastDone = p.phase === 'play' && p.round === 2 && p.total > 0 && p.marks.length >= p.total;

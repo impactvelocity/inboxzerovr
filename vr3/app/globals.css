@@ -227,7 +227,17 @@ h1 em{display:inline-block;font-style:normal;color:var(--accent);animation:swap 
 .scene-shade{position:absolute;inset:0;background:radial-gradient(ellipse 60% 70% at 50% 58%,#0d0a1680,#0d0a1626 70%,#0d0a1600),linear-gradient(#0d0a1666,#0d0a1600 34%);transition:opacity .5s}
 .scene-3d{position:absolute;inset:0;width:100%;height:100%;border:0;background:none;pointer-events:none;opacity:0;transition:opacity .7s}
 .scene.live .scene-3d{opacity:1}
-.scene-logo{position:absolute;left:50%;top:5%;width:44%;height:auto;translate:-50% 0;filter:drop-shadow(0 6px 16px #000000a6);transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+/* hovered: the level being played on a small screen in the middle, the painting dimmed behind it, the 3D view and
+   logo out of the way (LevelScene.tsx). The screen: a dark bezel inside a pixel frame in the level's colour, scanlines. */
+.scene-tv{position:absolute;z-index:2;left:50%;top:50%;width:min(72%,440px);aspect-ratio:400/226;padding:7px;background:#09070f;
+  translate:-50% -50%;scale:.9;opacity:0;pointer-events:none;transition:opacity .35s ease,scale .45s cubic-bezier(.2,1.4,.4,1);
+  box-shadow:0 -3px 0 0 var(--accent),0 3px 0 0 var(--accent),-3px 0 0 0 var(--accent),3px 0 0 0 var(--accent),0 0 40px -4px color-mix(in srgb,var(--accent) 70%,transparent),0 18px 40px -10px #000}
+.scene-tv img{display:block;width:100%;height:100%;object-fit:cover}
+.scene-tv::after{content:'';position:absolute;inset:7px;background:repeating-linear-gradient(#0000 0 2px,#0000002e 2px 3px),radial-gradient(120% 120% at 50% 50%,#0000 60%,#00000059);pointer-events:none}
+.scene.playing .scene-tv{opacity:1;scale:1}
+.scene.playing :is(.scene-3d,.scene-logo){opacity:0}
+.scene.scene.playing .scene-art{filter:brightness(.38) saturate(.85) blur(1px)}      /* (doubled: beats the hover brightening below) */
+.scene-logo{position:absolute;z-index:3;left:50%;top:5%;width:44%;height:auto;translate:-50% 0;filter:drop-shadow(0 6px 16px #000000a6);transition:transform .5s cubic-bezier(.2,.7,.2,1),opacity .35s}
 /* pointed at: the painting comes closer and brighter, and the frame lights in the level's colour */
 @media (hover:hover){
   .scene:hover{transform:translateY(-3px);box-shadow:0 0 0 2px var(--accent),0 0 44px -6px var(--accent),0 34px 70px -26px color-mix(in srgb,var(--accent) 70%,#16101f)}
