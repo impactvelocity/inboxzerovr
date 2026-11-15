@@ -1,5 +1,19 @@
 # Inbox Zero VR
 
+[![Play at InboxZeroVR.com](https://img.shields.io/badge/Play-InboxZeroVR.com-ff4d6d?style=for-the-badge)](https://inboxzerovr.com)
+[![Meta Quest](https://img.shields.io/badge/Meta_Quest-VR-0467DF?style=for-the-badge&logo=meta&logoColor=white)](https://inboxzerovr.com)
+[![Devpost: Meta VR Start Developer Competition 2026](https://img.shields.io/badge/Devpost-Meta_VR_Start_2026-003E54?style=for-the-badge&logo=devpost&logoColor=white)](https://start-developer-competition-26.devpost.com/)
+
+[![WebXR](https://img.shields.io/badge/WebXR-browser_VR-6e44ff)](https://immersiveweb.dev/)
+[![Immersive Web SDK](https://img.shields.io/badge/Immersive_Web_SDK-1.1-0467DF?logo=meta&logoColor=white)](https://iwsdk.dev/)
+[![three.js](https://img.shields.io/badge/three.js-0.185-black?logo=threedotjs)](https://threejs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs)](https://nextjs.org/)
+[![MCP server](https://img.shields.io/badge/MCP-server-555?logo=modelcontextprotocol)](vr3/public/agent.md)
+[![Built with Claude](https://img.shields.io/badge/Built_with-Claude-D97757?logo=anthropic&logoColor=white)](https://www.anthropic.com/claude)
+[![ElevenLabs](https://img.shields.io/badge/Sound-ElevenLabs-black?logo=elevenlabs)](https://elevenlabs.io/)
+
+![Inbox Zero VR: Slash, Burn and Smash Your Way to Inbox Zero](https://www.inboxzerovr.com/site/devpost/hero.png)
+
 Turn your unread email into a short VR game on the Meta Quest. Slice and smash the newsletters and spam, and reply to the real ones.
 
 **[Play it at InboxZeroVR.com](https://inboxzerovr.com)**: open it in the Quest browser and play with a demo inbox. Nothing to install.
@@ -16,6 +30,8 @@ So I wanted to make a productivity app that feels like a game. Something anyone 
 
 A game has at most 20 emails, so you can finish it in a few minutes. It's built for sitting down. You never have to move around.
 
+![How to play: Round One, grab to read and slash to clear; Round Two, pick a reply or say your own](https://www.inboxzerovr.com/site/devpost/rounds.png)
+
 **Round 1 is sorting.** Close your left hand to grab an email, and it comes closer so you can read it. Throw it to keep it for round two if you want to reply, or close your right fist to make the weapon live and smash the email into tiny little pieces.
 
 **Round 2 is replying.** All the emails you kept come back. Use one of the two pre-written replies (drag and hover to send), or use your mic to say your reply out loud and it's transcribed to text.
@@ -27,6 +43,8 @@ It works with tracked hands or Quest controllers. On a monitor you can try it to
 ## The levels
 
 Each level has its own weapon, art, music and sounds.
+
+![Seven levels, seven weapons](https://www.inboxzerovr.com/site/devpost/levels.png)
 
 | # | Level | Weapon |
 | --- | --- | --- |
@@ -41,6 +59,8 @@ Each level has its own weapon, art, music and sounds.
 ## Your inbox comes from your own agent
 
 I first built a way to connect Gmail and do the sorting and summarizing with AI. Then I thought of a simpler way for anyone to use it. Everybody has their favourite agent, and it's already connected to their email. So Inbox Zero VR is an MCP server you give to your agent:
+
+![How the MCP works: your agent, Inbox Zero VR, your Quest, and results back to your agent](https://www.inboxzerovr.com/site/devpost/agent.png)
 
 1. You tell your agent "let's play Inbox Zero". It reads your newest unread emails, summarizes and categorizes them, and writes the pre-written replies.
 2. It sends that to Inbox Zero VR, which creates a game under a 4-digit code.
@@ -63,6 +83,8 @@ The instructions agents read are in [`vr3/public/agent.md`](vr3/public/agent.md)
 ### The levels are paintings
 
 Each level is a painted image that wraps around you, 270° wide. Only the weapon, the emails and the particles are real 3D, which keeps it running well on the Quest. I tried full 3D scenes first and they were too hard to keep smooth.
+
+![One painting wrapped around you: the flat Kyoto painting and the same scene in the headset](https://www.inboxzerovr.com/site/devpost/backdrop.png)
 
 A few tricks make the painting feel like a place:
 
