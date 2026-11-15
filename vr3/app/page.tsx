@@ -29,10 +29,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
   return (
     <div className={vr ? 'site in-vr' : 'site'}>
       <nav className="nav">
-        <a className="nav-logo" href="#top" aria-label="Inbox Zero VR"><img src="/play/logos/site.webp" alt="Inbox Zero" width={146} height={30} /></a>
         <div className="nav-links">
           <a href="#how">How it works</a>
-          <a href="#ai">The AI</a>
           <a href="#why">Why</a>
           <a href="#levels">Levels</a>
         </div>
@@ -45,8 +43,6 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
         {/* ───────── the demo video ───────── */}
         <section className="band demo" id="demo">
           <div className="wrap">
-            <h2>Watch one inbox get cleared.</h2>
-            <p className="sub">Ten emails, from the countdown to the last one.</p>
             <Demo />
           </div>
         </section>
@@ -148,8 +144,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<Par
           </div>
         </section>
 
-        {/* ───────── the AI ───────── */}
-        <section className="band ai" id="ai">
+        {/* ───────── the AI (hidden for now; drop `hidden` and put the nav link back to show it) ───────── */}
+        <section className="band ai" id="ai" hidden>
           <div className="wrap">
             <h2>It has read your mail before you pick up the sword.</h2>
             <div className="bento">

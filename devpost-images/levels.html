@@ -1,38 +1,38 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Levels</title><link rel="stylesheet" href="style.css">
 <style>
-  .card { height: 1140px; }
-  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; padding: 168px 64px 0; }
-  .intro { display: flex; flex-direction: column; justify-content: center; padding-right: 20px; }
-  .intro h1 { font-size: 76px; }
-  .intro .sub { font-size: 28px; }
-  .lv {
-    position: relative; height: 420px; border-radius: 26px; overflow: hidden;
-    border: 1.5px solid var(--line);
-    box-shadow: 0 24px 50px rgba(0, 0, 0, .5);
+  .card { height: 990px; }
+  .grid { display: flex; flex-wrap: wrap; justify-content: center; column-gap: 37px; row-gap: 84px; padding: 186px 60px 0; }
+  .slot { width: 442px; }
+  .slot b {
+    display: block; position: relative; z-index: 4; margin: 0 0 16px 4px;
+    font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 28px; color: #fff; letter-spacing: .02em;
+    text-shadow: 3px 3px 0 var(--ink);
   }
-  .lv .paint { position: absolute; inset: 0; background-size: cover; background-position: center; }
-  .lv .show {
-    position: absolute; left: 50%; top: 42%; width: 116%; transform: translate(-50%, -50%);
+  .wrap { position: relative; }
+  .frame {
+    --s: 10px;
+    position: relative; aspect-ratio: 16 / 9; padding: 6px; background: var(--ink);
+    clip-path: polygon(0 var(--s), var(--s) var(--s), var(--s) 0, calc(100% - var(--s)) 0, calc(100% - var(--s)) var(--s), 100% var(--s), 100% calc(100% - var(--s)), calc(100% - var(--s)) calc(100% - var(--s)), calc(100% - var(--s)) 100%, var(--s) 100%, var(--s) calc(100% - var(--s)), 0 calc(100% - var(--s)));
   }
-  .lv::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(8, 4, 20, .92) 0%, rgba(8, 4, 20, .35) 34%, transparent 55%); }
-  .lv .name { position: absolute; left: 26px; right: 26px; bottom: 24px; z-index: 2; display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
-  .lv .name b { font-size: 38px; font-weight: 600; letter-spacing: -.02em; line-height: 1.05; }
-  .lv .chip { font-size: 17px; padding: 6px 11px 7px; background: rgba(10, 6, 24, .6); }
+  .paint { position: absolute; inset: 6px; background-size: cover; background-position: center; }
+  .weapon { position: absolute; z-index: 3; filter: url(#outline) drop-shadow(0 14px 16px rgba(5,2,14,.6)); }
 </style></head><body>
+<svg width="0" height="0" style="position:absolute"><filter id="outline" x="-10%" y="-10%" width="120%" height="120%">
+  <feMorphology in="SourceAlpha" operator="dilate" radius="4" result="grown"/>
+  <feFlood flood-color="#140c2a" flood-opacity=".45"/>
+  <feComposite in2="grown" operator="in" result="edge"/>
+  <feMerge><feMergeNode in="edge"/><feMergeNode in="SourceGraphic"/></feMerge>
+</filter></svg>
 <div class="card">
   <img class="logo" src="assets/logo-small.webp" alt="Inbox Zero">
   <div class="built"><img src="assets/meta-mark.svg">Built for Meta VR Hackathon</div>
   <div class="grid">
-    <div class="intro">
-      <h1>Seven levels, <em>seven weapons</em></h1>
-      <p class="sub">Each with its own art, music, sounds and a winning celebration at the end.</p>
-    </div>
-    <div class="lv"><div class="paint" style="background-image:url(assets/card-kyoto.webp)"></div><img class="show" src="assets/show-kyoto.png"><div class="name"><b>Kyoto Nights</b><span class="chip">Katana</span></div></div>
-    <div class="lv"><div class="paint" style="background-image:url(assets/card-office2.webp)"></div><img class="show" src="assets/show-office.png"><div class="name"><b>Keyboard Smash</b><span class="chip">Keyboard</span></div></div>
-    <div class="lv"><div class="paint" style="background-image:url(assets/card-castle.webp)"></div><img class="show" src="assets/show-castle.png"><div class="name"><b>Haunted Halls</b><span class="chip">Sword</span></div></div>
-    <div class="lv"><div class="paint" style="background-image:url(assets/card-lab.webp)"></div><img class="show" src="assets/show-lab.png"><div class="name"><b>Toxic Danger</b><span class="chip">Spray</span></div></div>
-    <div class="lv"><div class="paint" style="background-image:url(assets/card-space.webp)"></div><img class="show" src="assets/show-space.png"><div class="name"><b>Super Space</b><span class="chip">Saber</span></div></div>
-    <div class="lv"><div class="paint" style="background-image:url(assets/card-inferno.webp)"></div><img class="show" src="assets/show-inferno.png"><div class="name"><b>Inferno</b><span class="chip">Flame thrower</span></div></div>
-    <div class="lv"><div class="paint" style="background-image:url(assets/card-lumber.webp)"></div><img class="show" src="assets/show-lumber.png"><div class="name"><b>LumberHack</b><span class="chip">Axe</span></div></div>
+    <div class="slot"><b>Kyoto Nights</b><div class="wrap"><div class="frame"><div class="paint" style="background-image:url(assets/select-kyoto.webp)"></div></div><img class="weapon" src="assets/weapon-kyoto.png" style="height:290px; right:-30px; bottom:-60px; transform: rotate(-92deg)"></div></div>
+    <div class="slot"><b>Keyboard Smash</b><div class="wrap"><div class="frame"><div class="paint" style="background-image:url(assets/select-office.webp)"></div></div><img class="weapon" src="assets/weapon-office.png" style="height:165px; right:-28px; bottom:-34px; transform: rotate(8deg)"></div></div>
+    <div class="slot"><b>Haunted Halls</b><div class="wrap"><div class="frame"><div class="paint" style="background-image:url(assets/select-castle.webp)"></div></div><img class="weapon" src="assets/weapon-castle.png" style="height:300px; right:40px; bottom:-90px; transform: rotate(-28deg)"></div></div>
+    <div class="slot"><b>Toxic Danger</b><div class="wrap"><div class="frame"><div class="paint" style="background-image:url(assets/select-lab.webp)"></div></div><img class="weapon" src="assets/weapon-lab.png" style="height:175px; right:-46px; bottom:-42px; transform: rotate(18deg)"></div></div>
+    <div class="slot"><b>Super Space</b><div class="wrap"><div class="frame"><div class="paint" style="background-image:url(assets/select-space.webp)"></div></div><img class="weapon" src="assets/weapon-space.png" style="height:140px; right:-40px; bottom:-14px; transform: rotate(16deg)"></div></div>
+    <div class="slot"><b>Inferno</b><div class="wrap"><div class="frame"><div class="paint" style="background-image:url(assets/select-inferno.webp)"></div></div><img class="weapon" src="assets/weapon-inferno.png" style="height:150px; right:-46px; bottom:-40px; transform: rotate(16deg)"></div></div>
+    <div class="slot"><b>LumberHack</b><div class="wrap"><div class="frame"><div class="paint" style="background-image:url(assets/select-lumber.webp)"></div></div><img class="weapon" src="assets/weapon-lumber.png" style="height:205px; right:-36px; bottom:-28px; transform: rotate(8deg)"></div></div>
   </div>
 </div></body></html>

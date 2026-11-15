@@ -1,0 +1,33 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Share card</title><link rel="stylesheet" href="style.css">
+<!-- The link preview for inboxzerovr.com (1200 x 630). node render-og.mjs writes it to vr3/app/opengraph-image.jpg and twitter-image.jpg. -->
+<style>
+  .card { width: 1200px; height: 630px; }
+  .art {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 820px;
+    background: url(assets/hero-slash.webp) 24% 40% / cover;
+    -webkit-mask-image: linear-gradient(to right, transparent 0, rgba(0,0,0,.55) 24%, #000 52%);
+  }
+  .art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(11,7,24,.6), transparent 45%); }
+  .left { position: absolute; left: 64px; top: 0; bottom: 0; width: 640px; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; }
+  .event { font-family: 'Silkscreen', monospace; font-size: 22px; letter-spacing: .06em; color: var(--lav); margin: 0 0 6px 2px; text-shadow: 3px 3px 0 var(--ink); }
+  .lockup { position: relative; display: block; line-height: 0; }
+  .big { width: 540px; margin-left: -10px; filter: drop-shadow(0 9px 0 rgba(10,4,30,.7)); }
+  .vr {
+    position: absolute; right: -70px; top: -12px; transform: rotate(6deg);
+    font-family: 'Silkscreen', monospace; font-size: 32px; line-height: 1; color: var(--ink);
+    background: var(--cyan); padding: 10px 14px 12px;
+    box-shadow: 0 0 0 5px var(--ink), 9px 9px 0 5px var(--pink);
+  }
+  .tag { margin: 18px 0 0; font-family: 'Silkscreen', monospace; font-size: 36px; line-height: 1.25; font-weight: 400; text-shadow: 4px 4px 0 var(--ink); }
+  .tag em { font-style: normal; color: var(--pink); }
+  .url { margin-top: 44px; font-size: 24px; background: #fff; color: var(--ink); box-shadow: 0 0 0 4px var(--ink), 8px 8px 0 4px var(--pink); }
+</style></head><body>
+<div class="card">
+  <div class="art"></div>
+  <div class="left">
+    <div class="event">Meta Start Hackathon</div>
+    <span class="lockup"><img class="big" src="assets/logo-space.webp" alt="Inbox Zero"><span class="vr">VR</span></span>
+    <p class="tag">Slash, Burn and Smash<br><em>Your Way to Inbox Zero</em></p>
+    <span class="btn url">▶ Play at InboxZeroVR.com</span>
+  </div>
+</div></body></html>

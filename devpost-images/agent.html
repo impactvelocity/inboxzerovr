@@ -1,66 +1,150 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Agent flow</title><link rel="stylesheet" href="style.css">
 <style>
-  .card { height: 1290px; }
-  .head { padding-top: 168px; }
-  .flow { display: grid; grid-template-columns: 1fr 70px 1fr 70px 1fr 70px 1fr; align-items: stretch; padding: 70px 64px 0; }
-  .step {
-    background: var(--panel); border: 1.5px solid var(--line); border-radius: 26px;
-    padding: 34px 32px 36px; backdrop-filter: blur(4px);
+  .card { height: 1130px; }
+  .head { padding-top: 160px; }
+  .head h1 { font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 66px; letter-spacing: 0; text-shadow: 5px 5px 0 var(--ink); }
+
+  /* a pixel box: stepped corners, a 4 px edge, a dark face */
+  .px {
+    --edge: rgba(246, 179, 204, .9); --face: #120d1f;
+    position: relative; background: var(--edge);
+    clip-path: polygon(0 8px, 8px 8px, 8px 0, calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px));
   }
-  .step .n { font-family: 'Silkscreen', monospace; font-size: 22px; color: var(--pink); }
-  .step h2 { margin: 18px 0 0; font-size: 38px; font-weight: 600; letter-spacing: -.02em; line-height: 1.1; }
-  .step p { margin: 14px 0 0; font-size: 25px; line-height: 1.42; color: var(--soft); }
-  .step .chip { margin-top: 22px; font-size: 17px; }
-  .arrow { display: flex; align-items: center; justify-content: center; }
-  .arrow svg { width: 40px; height: 40px; }
-  .back {
-    margin: 26px 64px 0; height: 58px; position: relative;
-    border: 2px dashed rgba(63, 240, 255, .35); border-top: none; border-radius: 0 0 26px 26px;
+  .px::before {
+    content: ""; position: absolute; inset: 6px; background: var(--face);
+    clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px));
   }
-  .back span { position: absolute; left: 50%; bottom: -20px; transform: translateX(-50%); background: var(--bg); padding: 0 18px; font-family: 'Silkscreen', monospace; font-size: 22px; color: var(--cyan); white-space: nowrap; }
-  .bottom { display: grid; grid-template-columns: 1.15fr 1fr; gap: 40px; padding: 64px 64px 0; align-items: start; }
-  pre {
-    margin: 0; padding: 28px 32px; border-radius: 22px;
-    background: rgba(8, 5, 20, .82); border: 1.5px solid var(--line);
-    font: 21px/1.5 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--soft);
-  }
+  .px > * { position: relative; }
+
+  .flowwrap { position: relative; margin: 60px 64px 0; }
+  .flow { display: grid; grid-template-columns: 1fr 56px 1fr 56px 1fr 56px 1fr; align-items: stretch; }
+  .step { padding: 32px 30px 36px; }
+  .step .icon { display: block; margin: 0 0 22px; shape-rendering: crispEdges; filter: drop-shadow(4px 4px 0 var(--ink)); }
+  .step h2 { margin: 0; font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 30px; line-height: 1.15; letter-spacing: .01em; text-shadow: 3px 3px 0 var(--ink); }
+  .step p { margin: 16px 0 0; font-size: 25px; line-height: 1.42; color: var(--soft); }
+  .link { position: relative; }
+  .link::before { content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 6px; margin-top: -3px; background: rgba(246, 179, 204, .9); }
+
+  /* results go back: from under the last card to under the first */
+  .back { position: absolute; left: 213px; right: 213px; top: 100%; height: 58px; }
+  .back::before { content: ""; position: absolute; inset: 0; border: 6px solid var(--cyan); border-top: none; }
+  .back i { position: absolute; top: -10px; width: 22px; height: 22px; background: var(--cyan); }
+  .back i.a { left: -8px; } .back i.b { right: -8px; }
+
+  .bottom { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; padding: 120px 64px 0; align-items: center; }
+  pre code { font: inherit; }
+  pre { margin: 0; padding: 30px 34px; font: 21px/1.5 ui-monospace, 'SF Mono', Menlo, monospace; color: var(--soft); }
+  pre.px { --edge: rgba(185, 166, 255, .45); --face: rgba(8, 5, 20, .92); }
   pre .k { color: var(--lav); } pre .s { color: #ffd6ef; } pre .c { color: var(--faint); }
-  .facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0; border-top: 1.5px solid var(--line); }
-  .fact { padding: 26px 8px 24px 0; border-bottom: 1.5px solid var(--line); }
-  .fact b { display: block; font-size: 52px; font-weight: 600; letter-spacing: -.02em; }
-  .fact span { font-size: 24px; color: var(--soft); }
+
+  /* how long a game lives */
+  .life h3 { margin: 0 0 34px; font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 34px; text-shadow: 3px 3px 0 var(--ink); }
+  .life h3 em { font-style: normal; color: var(--cyan); }
+  .track { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); }
+  .track::before { content: ""; position: absolute; left: 11px; right: calc(33.33% - 11px); top: 9px; height: 6px; background: linear-gradient(to right, rgba(246,179,204,.9), rgba(63,240,255,.9)); }
+  .node { position: relative; width: 24px; height: 24px; background: #f6b3cc; box-shadow: 0 0 0 4px var(--ink); }
+  .node.end { background: var(--cyan); }
+  .stop b { display: block; margin-top: 24px; font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 24px; color: var(--text); text-shadow: 3px 3px 0 var(--ink); }
+  .stop span { display: block; margin-top: 8px; padding-right: 22px; font-size: 22px; line-height: 1.4; color: var(--soft); }
 </style></head><body>
 <div class="card">
   <img class="logo" src="assets/logo-small.webp" alt="Inbox Zero">
   <div class="built"><img src="assets/meta-mark.svg">Built for Meta VR Hackathon</div>
-  <div class="head center">
-    <h1>Your agent does <em>the email part</em></h1>
-    <p class="sub">Inbox Zero VR is an MCP server. Give it to the agent that already has your email.</p>
+  <div class="head center"><h1>How the <em>MCP</em> works</h1></div>
+  <div class="flowwrap">
+    <div class="flow">
+      <div class="step px"><svg class="icon" data-icon="agent"></svg><h2>Your agent</h2><p>Summarizes and sorts your unread, and writes the replies.</p></div>
+      <div class="link"></div>
+      <div class="step px"><svg class="icon" data-icon="mail"></svg><h2>Inbox Zero VR</h2><p>Turns it into a game with a unique code.</p></div>
+      <div class="link"></div>
+      <div class="step px"><svg class="icon" data-icon="quest"></svg><h2>Your Quest</h2><p>Open the link and play both rounds.</p></div>
+      <div class="link"></div>
+      <div class="step px"><svg class="icon" data-icon="back"></svg><h2>Back to Agent</h2><p>It gets what you replied to and archived, and acts on your inbox.</p></div>
+    </div>
+    <div class="back"><i class="a"></i><i class="b"></i></div>
   </div>
-  <div class="flow">
-    <div class="step"><div class="n">01</div><h2>Your agent</h2><p>Summarizes and sorts your unread, and writes the replies.</p><span class="chip">MCP</span></div>
-    <div class="arrow"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path fill="#ff4fb8" d="M3 1h1v1h1v1h1v1h1v2H6v1H5v1H4v1H3z"/></svg></div>
-    <div class="step"><div class="n">02</div><h2>Inbox Zero VR</h2><p>Turns it into a game with a unique code.</p><span class="chip">Code + link</span></div>
-    <div class="arrow"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path fill="#ff4fb8" d="M3 1h1v1h1v1h1v1h1v2H6v1H5v1H4v1H3z"/></svg></div>
-    <div class="step"><div class="n">03</div><h2>Your Quest</h2><p>Open the link and play both rounds.</p><span class="chip">WebXR</span></div>
-    <div class="arrow"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path fill="#ff4fb8" d="M3 1h1v1h1v1h1v1h1v2H6v1H5v1H4v1H3z"/></svg></div>
-    <div class="step"><div class="n">04</div><h2>Back to your agent</h2><p>It gets what you replied to and archived, and acts on your inbox.</p><span class="chip cyan">Results</span></div>
-  </div>
-  <div class="back"><span>Then everything on my end is deleted</span></div>
   <div class="bottom">
-<pre><span class="c">// all the game ever sees of one email</span>
+<pre class="px"><code><span class="c">// all the game ever sees of one email</span>
 {
   <span class="k">"from"</span>: <span class="s">"Conference Spam"</span>,
   <span class="k">"subject"</span>: <span class="s">"Call for papers: Blockchain Yoga"</span>,
   <span class="k">"summary"</span>: <span class="s">"Submit your abstract by Friday."</span>,
   <span class="k">"category"</span>: <span class="s">"Spam"</span>,
   <span class="k">"replies"</span>: [<span class="s">"Please take me off this list. Thank you!"</span>]
-}</pre>
-    <div class="facts">
-      <div class="fact"><b>20</b><span>emails a game, at most</span></div>
-      <div class="fact"><b>0</b><span>full emails, only summaries</span></div>
-      <div class="fact"><b>24 h</b><span>at most on my server</span></div>
-      <div class="fact"><b>Any</b><span>email provider your agent can reach</span></div>
+}</code></pre>
+    <div class="life">
+      <h3>A game lasts <em>a day</em> at most</h3>
+      <div class="track">
+        <div class="stop"><div class="node"></div><b>Sent</b><span>Just enough to play, never the full email</span></div>
+        <div class="stop"><div class="node"></div><b>Played</b><span>Results go back to your agent</span></div>
+        <div class="stop"><div class="node end"></div><b>Deleted</b><span>Gone after you play, or after 24 hours</span></div>
+      </div>
     </div>
   </div>
-</div></body></html>
+</div>
+<script>
+const ICONS = {
+  agent: [
+    '.....CC.....',
+    '.....CC.....',
+    '..KKKKKKKK..',
+    '.KLLLLLLLLK.',
+    '.KLWWLLWWLK.',
+    'KKLWKLLWKLKK',
+    'KKLLLLLLLLKK',
+    '.KLLPPPPLLK.',
+    '.KLLLLLLLLK.',
+    '..KKKKKKKK..',
+    '...KLLLLK...',
+    '..KKKKKKKK..'],
+  mail: [
+    '............',
+    'KKKKKKKKKKKK',
+    'KPWWWWWWWWPK',
+    'KWPWWWWWWPWK',
+    'KWWPWWWWPWWK',
+    'KWWWPWWPWWWK',
+    'KWWWWPPWWWWK',
+    'KWWWWWWWWWWK',
+    'KWWWWWWWWWWK',
+    'KKKKKKKKKKKK',
+    '............',
+    '............'],
+  quest: [
+    '............',
+    '............',
+    '.KKKKKKKKKK.',
+    'KLLLLLLLLLLK',
+    'KLKKKLLKKKLK',
+    'KLKCCKKCCKLK',
+    'KLKCCKKCCKLK',
+    'KLKKKLLKKKLK',
+    'KLLLLKKLLLLK',
+    '.KKKK..KKKK.',
+    '............',
+    '............'],
+  back: [
+    '...C........',
+    '..CC........',
+    '.CCCCCCCCC..',
+    'CCCCCCCCCCC.',
+    '.CCCCCCCCCCC',
+    '..CC.....CCC',
+    '...C......CC',
+    '..........CC',
+    '..........CC',
+    '..CCCCCCCCCC',
+    '..CCCCCCCCC.',
+    '............'],
+};
+const COL = { K: '#140c2a', L: '#b9a6ff', W: '#f4efff', P: '#ff4fb8', C: '#3ff0ff' };
+const CELL = 7;
+for (const svg of document.querySelectorAll('svg.icon')) {
+  const rows = ICONS[svg.dataset.icon];
+  svg.setAttribute('width', rows[0].length * CELL); svg.setAttribute('height', rows.length * CELL);
+  rows.forEach((row, y) => [...row].forEach((c, x) => {
+    if (c !== '.') svg.insertAdjacentHTML('beforeend', `<rect x="${x * CELL}" y="${y * CELL}" width="${CELL}" height="${CELL}" fill="${COL[c]}"/>`);
+  }));
+}
+</script>
+</body></html>

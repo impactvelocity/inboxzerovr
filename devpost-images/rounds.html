@@ -1,0 +1,35 @@
+<!doctype html><html><head><meta charset="utf-8"><title>How to play</title><link rel="stylesheet" href="style.css">
+<style>
+  .card { height: 900px; }
+  .head { padding-top: 160px; }
+  .rounds { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: 90px; margin: 170px 60px 0; }
+  .rounds::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 6px; margin-left: -3px; background: rgba(246, 179, 204, .9); }
+  .round h2 {
+    margin: 0 0 22px; text-align: center; font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 34px;
+    letter-spacing: .02em; text-shadow: 3px 3px 0 var(--ink);
+  }
+  .round h2 em { font-style: normal; color: var(--pink); }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .pair img { display: block; width: 100%; filter: drop-shadow(0 20px 30px rgba(0,0,0,.5)); }
+  .lede {
+    margin: 26px 0 0; text-align: center; font-family: 'Silkscreen', monospace; font-size: 24px;
+    line-height: 1.45; color: var(--text); text-shadow: 3px 3px 0 var(--ink);
+  }
+  .lede b { font-weight: 400; color: #f6b3cc; }
+</style></head><body>
+<div class="card">
+  <img class="logo" src="assets/logo-small.webp" alt="Inbox Zero">
+  <div class="built"><img src="assets/meta-mark.svg">Built for Meta VR Hackathon</div>
+  <div class="rounds">
+    <div class="round">
+      <h2>Round <em>One</em></h2>
+      <div class="pair"><img src="assets/howto-grab.png"><img src="assets/howto-slash.png"></div>
+      <p class="lede">One email at a time:<br><b>keep</b> it or <b>slash</b> to archive</p>
+    </div>
+    <div class="round">
+      <h2>Round <em>Two</em></h2>
+      <div class="pair"><img src="assets/howto-choose.png"><img src="assets/howto-mic.png"></div>
+      <p class="lede"><b>Throw</b> or <b>cut</b> to leave it<br>unread for tomorrow</p>
+    </div>
+  </div>
+</div></body></html>

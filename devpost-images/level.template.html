@@ -1,0 +1,156 @@
+<!doctype html><html><head><meta charset="utf-8"><title>{{TITLE}}</title><link rel="stylesheet" href="style.css">
+<!-- written by make-levels.py from level.template.html: edit those, not this -->
+<style>
+  /* 3:2, one level's parts at a glance */
+  .card { width: 2400px; height: 1600px; }
+  .card::before { background: url({{NIGHT}}) center 40% / cover; filter: blur(38px) saturate(1.2); transform: scale(1.15); image-rendering: auto; }
+  .card::after { background:
+      radial-gradient(ellipse 50% 40% at 20% 0%, rgba({{TINT1}}, .22), transparent 70%),
+      radial-gradient(ellipse 50% 50% at 90% 100%, rgba({{TINT2}}, .10), transparent 70%),
+      linear-gradient(rgba(14, 8, 28, .78), rgba(10, 6, 22, .86)); }
+
+  .grid { position: absolute; inset: 44px 60px 60px; display: grid; gap: 28px;
+    grid-template-columns: repeat(12, 1fr);
+    grid-template-rows: 92px 540px 400px 1fr; }
+
+  .tile { position: relative; border-radius: 24px; overflow: hidden; background: rgba(20, 12, 40, .62); border: 1.5px solid rgba({{GLOW}}, .16); box-shadow: 0 24px 50px rgba(0, 0, 0, .45); }
+  .tag { position: absolute; left: 22px; top: 18px; z-index: 3; font-family: 'Silkscreen', monospace; font-size: 22px; letter-spacing: .16em; color: {{ACC}}; text-shadow: 2px 2px 0 rgba(10, 4, 30, .95), 0 0 14px rgba({{GLOW}}, .45); }
+  .note { position: absolute; left: 22px; right: 22px; bottom: 18px; z-index: 3; font-size: 22px; line-height: 1.3; color: var(--soft); text-shadow: 0 2px 8px rgba(0, 0, 0, .8); }
+
+  /* the header: the level's logo, its name */
+  .title { grid-column: 1 / 13; grid-row: 1; display: flex; align-items: center; justify-content: space-between; padding: 0 6px; }
+  .title .logo-big { height: 92px; margin: 0 0 0 -8px; filter: drop-shadow(0 8px 0 rgba(10, 4, 30, .6)) drop-shadow(0 0 40px rgba({{GLOW}}, .25)); }
+  .title h1 { font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 46px; letter-spacing: .02em; line-height: 1; margin: 0; text-shadow: 5px 5px 0 {{SHADOW}}; }
+
+  /* the painting: start lighting on the left, end lighting on the right, as a game goes */
+  .paint { grid-column: 1 / 13; grid-row: 2; }
+  .paint .day, .paint .night { position: absolute; inset: 0; background-size: cover; background-position: center 46%; }
+  .paint .day { background-image: url({{DAY}}); }
+  .paint .night { background-image: url({{NIGHT}}); -webkit-mask-image: linear-gradient(100deg, transparent 46%, #000 58%); }
+  .paint::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(8, 4, 20, .78), transparent 28%), linear-gradient(to bottom, rgba(8, 4, 20, .5), transparent 18%); }
+  .paint .ends { position: absolute; right: 22px; top: 16px; z-index: 3; display: flex; gap: 10px; }
+  .paint .ends .chip { font-size: 17px; padding: 6px 11px 7px; background: rgba(10, 6, 24, .6); }
+
+  /* weapon */
+  .weapon { grid-column: 1 / 5; grid-row: 3; background: radial-gradient(circle at 50% 46%, rgba({{GLOW}}, .2), transparent 62%), rgba(20, 12, 40, .62); }
+  .weapon img { position: absolute; left: 50%; top: 45%; transform: translate(-50%, -50%); max-width: 74%; max-height: 290px; filter: drop-shadow(0 16px 20px rgba(0, 0, 0, .55)); }
+  .weapon::after, .air::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 130px; z-index: 2; background: linear-gradient(to top, rgba(14, 8, 30, .9), transparent); }
+
+  /* particles */
+  .air { grid-column: 5 / 9; grid-row: 3; }
+  .air canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .swatches { position: absolute; right: 20px; top: 16px; z-index: 3; display: flex; gap: 7px; }
+  .swatches i { width: 22px; height: 22px; border-radius: 6px; border: 1.5px solid rgba(255, 255, 255, .25); }
+
+  /* in the headset */
+  .play { grid-column: 9 / 13; grid-row: 3; background: url({{PLAY}}) {{PLAY_AT}} / cover; }
+  .play::after { content: ""; position: absolute; inset: 0; background: linear-gradient(to top, rgba(8, 4, 20, .82), transparent 34%); }
+
+  /* the early GPT image model concepts */
+  .gpt { grid-column: 1 / 13; grid-row: 4; padding: 62px 22px 22px; }
+  .gpt .row { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; height: 100%; }
+  .gpt figure { margin: 0; position: relative; border-radius: 14px; overflow: hidden; background: #120a24; border: 1.5px solid rgba(255, 255, 255, .08); }
+  .gpt figure img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gpt figure.split img { height: 50%; }
+  .gpt figure.fx img { position: absolute; inset: 0; object-fit: contain; }
+  .gpt figure.fx img.blur { object-fit: cover; filter: blur(22px) brightness(.75); transform: scale(1.15); }
+  .gpt figcaption { position: absolute; left: 0; right: 0; bottom: 0; padding: 26px 14px 10px; font-size: 19px; color: var(--soft); background: linear-gradient(to top, rgba(8, 4, 20, .9), transparent); }
+  .gpt .tag { color: #ddd3ff; text-shadow: 2px 2px 0 rgba(10, 4, 30, .95), 0 0 14px rgba(185, 166, 255, .45); }
+  .gpt .model { position: absolute; right: 22px; top: 18px; font-size: 20px; color: var(--faint); }
+</style></head><body>
+<div class="card">
+  <div class="grid">
+
+    <div class="title">
+      <img class="logo-big" src="{{A}}/logo.webp" alt="Inbox Zero, {{TITLE}}">
+      <h1>{{NAME}}</h1>
+    </div>
+
+    <div class="tile paint">
+      <div class="day"></div><div class="night"></div>
+      <div class="tag">Background</div>
+      <div class="ends">{{PHASES}}</div>
+      <div class="note">{{PAINT_NOTE}}</div>
+    </div>
+
+    <div class="tile weapon">
+      <div class="tag">Weapon</div>
+      <img src="{{A}}/weapon.png" alt="{{WEAPON}}">
+      <div class="note">{{WEAPON}}</div>
+    </div>
+
+    <div class="tile air">
+      <canvas id="air" width="1480" height="800"></canvas>
+      <div class="tag">Particles</div>
+      <div class="swatches">{{SWATCHES}}</div>
+      <div class="note">{{AIR_NOTE}}</div>
+    </div>
+
+    <div class="tile play">
+      <div class="tag">In the headset</div>
+      <div class="note">Quest 3S, seated</div>
+    </div>
+
+    <div class="tile gpt">
+      <div class="tag">Early concepts</div>
+      <div class="model">GPT image model</div>
+      <div class="row">
+{{FIGURES}}
+      </div>
+    </div>
+
+  </div>
+</div>
+<script>
+// The level's air, drawn in the game's own colours (vr3/play/src/showcase.ts SHOWS, swingfx.ts, the levels' files)
+(() => {
+  const AIR = {{AIR}};
+  const c = document.getElementById('air'), g = c.getContext('2d');
+  let s = 7; const r = () => (s = (s * 16807) % 2147483647) / 2147483647;
+  const pick = list => list[(r() * list.length) | 0];
+  const W = c.width, H = c.height;
+  const bg = g.createRadialGradient(W * .5, H * .45, 40, W * .5, H * .5, W * .75);
+  bg.addColorStop(0, AIR.bg[0]); bg.addColorStop(1, AIR.bg[1]); g.fillStyle = bg; g.fillRect(0, 0, W, H);
+  const rgba = (rgb, a) => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${a})`;
+  const hex = h => [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16));
+  const glow = (x, y, rad, rgb, a) => { const q = g.createRadialGradient(x, y, 0, x, y, rad); q.addColorStop(0, rgba(rgb, a)); q.addColorStop(.35, rgba(rgb, a * .45)); q.addColorStop(1, rgba(rgb, 0)); g.fillStyle = q; g.beginPath(); g.arc(x, y, rad, 0, 7); g.fill(); };
+  const top = H * .74;   // keep clear of the caption
+  const draw = {
+    // soft lights: motes, fireflies, stars
+    glow([rgb, core, n, k0, kk, y0, yy]) { for (let i = 0; i < n; i++) { const x = r() * W, y = H * y0 + r() * H * yy, k = k0 + r() * kk; glow(x, y, k * 3.3, rgb, .55 + r() * .3); g.fillStyle = core; g.beginPath(); g.arc(x, y, k * .28, 0, 7); g.fill(); } },
+    // torn paper, parchment, ash, chips
+    scraps([cols, n]) { for (let i = 0; i < n; i++) { const x = r() * W, y = 20 + r() * top; g.save(); g.translate(x, y); g.rotate(r() * 6.3); g.globalAlpha = .75; g.fillStyle = pick(cols);
+      const w = 18 + r() * 26, h = 12 + r() * 20; g.beginPath(); g.moveTo(-w / 2, -h / 2); g.lineTo(w / 2, -h / 2 + r() * 6); g.lineTo(w / 2 - r() * 8, h / 2); g.lineTo(-w / 2 + r() * 5, h / 2 - r() * 5); g.closePath(); g.fill(); g.restore(); } },
+    petals([cols, n]) { for (let i = 0; i < n; i++) { const d = r(), k = 7 + d * d * 30, x = r() * W, y = 30 + r() * top, a = r() * 6.3, col = pick(cols);
+      g.save(); g.translate(x, y); g.rotate(a); g.scale(k, k * (.55 + r() * .3)); g.globalAlpha = .55 + d * .45;
+      const p = g.createLinearGradient(-1, 0, 1, 0); p.addColorStop(0, col); p.addColorStop(1, '#fff3f7'); g.fillStyle = p;
+      g.beginPath(); g.moveTo(-1, 0); g.bezierCurveTo(-.6, -.95, .55, -.9, .95, -.22); g.lineTo(.72, 0); g.lineTo(.95, .22); g.bezierCurveTo(.55, .9, -.6, .95, -1, 0); g.fill(); g.restore(); } },
+    // maple leaves: five points and a stem
+    leaves([cols, n]) { for (let i = 0; i < n; i++) { const d = r(), k = 12 + d * d * 34, x = r() * W, y = 30 + r() * top;
+      g.save(); g.translate(x, y); g.rotate(r() * 6.3); g.scale(k, k * (.7 + r() * .3)); g.globalAlpha = .6 + d * .4; g.fillStyle = pick(cols);
+      g.beginPath(); g.moveTo(-1, 0); g.bezierCurveTo(-.55, -.7, .45, -.75, 1, 0); g.bezierCurveTo(.45, .75, -.55, .7, -1, 0); g.fill();
+      g.strokeStyle = 'rgba(90,35,10,.45)'; g.lineWidth = .07; g.beginPath(); g.moveTo(-1.25, 0); g.lineTo(.85, 0);
+      for (const t of [-.45, 0, .4]) { g.moveTo(t, 0); g.lineTo(t + .3, -.32); g.moveTo(t, 0); g.lineTo(t + .3, .32); } g.stroke(); g.restore(); } },
+    // square pixels, some glowing
+    pixels([cols, n]) { for (let i = 0; i < n; i++) { const d = r(), k = 4 + d * d * 18, x = r() * W, y = 20 + r() * top, col = pick(cols);
+      if (d > .5) glow(x, y, k * 2.2, hex(col), .35); g.globalAlpha = .45 + d * .55; g.fillStyle = col; g.fillRect(Math.round(x - k / 2), Math.round(y - k / 2), Math.round(k), Math.round(k)); g.globalAlpha = 1; } },
+    // embers rising: a hot dot with a short trail under it
+    embers([cols, n]) { for (let i = 0; i < n; i++) { const d = r(), k = 2 + d * 6, x = r() * W, y = 20 + r() * top, col = pick(cols), rgb = hex(col), len = 10 + r() * 40, lean = (r() - .5) * 14;
+      const t = g.createLinearGradient(x, y, x - lean, y + len); t.addColorStop(0, rgba(rgb, .8)); t.addColorStop(1, rgba(rgb, 0));
+      g.strokeStyle = t; g.lineWidth = k * .8; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.lineTo(x - lean, y + len); g.stroke();
+      glow(x, y, k * 4, rgb, .6); g.fillStyle = '#fff6e0'; g.beginPath(); g.arc(x, y, k * .45, 0, 7); g.fill(); } },
+    // spray mist: soft puffs from wisps to solid dabs
+    mist([cols, n]) { for (let i = 0; i < n; i++) { const band = r(), a = band < .45 ? .04 + r() * .16 : band < .78 ? .25 + r() * .35 : .8 + r() * .2, k = band < .78 ? 30 + r() * 90 : 8 + r() * 22;
+      glow(r() * W, 20 + r() * top, k, hex(pick(cols)), a); } },
+    bubbles([cols, n]) { for (let i = 0; i < n; i++) { const d = r(), k = 5 + d * d * 26, x = r() * W, y = 20 + r() * top, rgb = hex(pick(cols));
+      g.fillStyle = rgba(rgb, .1); g.strokeStyle = rgba(rgb, .55 + d * .4); g.lineWidth = 1.5 + d * 2; g.beginPath(); g.arc(x, y, k, 0, 7); g.fill(); g.stroke();
+      g.fillStyle = 'rgba(255,255,255,.75)'; g.beginPath(); g.arc(x - k * .35, y - k * .35, k * .18, 0, 7); g.fill(); } },
+    // stars streaking past: a bright head, a long tail behind it
+    streaks([cols, n]) { for (let i = 0; i < n; i++) { const d = r(), x = r() * W, y = 20 + r() * top, rgb = hex(pick(cols)), len = 30 + d * d * 260, w = .8 + d * 2.6;
+      const t = g.createLinearGradient(x, y, x + len, y); t.addColorStop(0, rgba(rgb, .95)); t.addColorStop(1, rgba(rgb, 0));
+      g.strokeStyle = t; g.lineWidth = w; g.lineCap = 'round'; g.beginPath(); g.moveTo(x, y); g.lineTo(x + len, y); g.stroke(); if (d > .6) glow(x, y, w * 6, rgb, .6); } },
+  };
+  for (const [kind, ...args] of AIR.layers) draw[kind](args);
+})();
+</script>
+</body></html>

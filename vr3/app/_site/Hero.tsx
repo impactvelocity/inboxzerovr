@@ -54,7 +54,7 @@ export function Hero({ vr, judge, playHref }: { vr: boolean; judge: boolean; pla
           {LEVELS.map((l, i) => (seen.has(i) || i === 0) && <img key={l.id} className={i === at ? 'on' : ''} src={`/play/logos/${l.id}.webp`} alt={i === 0 ? 'Inbox Zero' : ''} />)}
         </div>
 
-        <h1>Clear your inbox<br /><span className="with">with <em key={level.id}>{level.hero}</em>.</span></h1>
+        <h1>Clear your inbox<br /><span className="with">with <em key={level.id}>{level.hero}</em></span></h1>
         {vr
           ? <p className="lede">Ten unread emails are about to fly at you. Hit the junk. Grab the ones that matter and throw them to keep them.</p>
           : <p className="lede">Put on a headset and your unread email flies at you, one letter at a time. Hit the junk. Grab the ones that matter and throw them to keep them. Ten letters later you are done.</p>}

@@ -1,30 +1,32 @@
 <!doctype html><html><head><meta charset="utf-8"><title>Backdrop</title><link rel="stylesheet" href="style.css">
 <style>
-  .card { height: 1060px; }
-  .head { padding-top: 168px; }
-  .row { display: grid; grid-template-columns: 1.62fr 90px 1fr; align-items: end; padding: 78px 64px 0; }
+  .card { height: 860px; }
+  .head { padding-top: 160px; }
+  .head h1 { font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 60px; letter-spacing: 0; text-shadow: 5px 5px 0 var(--ink); }
+  .row { display: grid; grid-template-columns: 1140px 676px; gap: 56px; align-items: start; padding: 64px 64px 0; }
   .row figure { margin: 0; }
-  .pano { aspect-ratio: 3 / 1; }
-  .shot.hs { aspect-ratio: 16 / 9; }
-  figcaption { margin-top: 26px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; font-size: 28px; color: var(--soft); }
-  figcaption b { color: var(--text); font-weight: 600; }
-  .plus { align-self: center; display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: -50px; }
-  .plus svg { width: 46px; height: 46px; }
-  .three { display: flex; justify-content: center; gap: 18px; padding-top: 74px; }
-  .three .chip { font-size: 22px; padding: 12px 20px 13px; }
-  .three span.lbl { align-self: center; font-size: 28px; color: var(--soft); margin-right: 6px; }
+  .row h2 {
+    margin: 0 0 20px 4px; font-family: 'Silkscreen', monospace; font-weight: 400; font-size: 30px;
+    letter-spacing: .02em; text-shadow: 3px 3px 0 var(--ink);
+  }
+  .row p { margin: 20px 0 0 4px; font-size: 26px; color: var(--soft); }
+  /* the pixel frame of the other images: stepped corners, a pink edge */
+  .frame {
+    padding: 6px; background: rgba(246, 179, 204, .9);
+    clip-path: polygon(0 8px, 8px 8px, 8px 0, calc(100% - 8px) 0, calc(100% - 8px) 8px, 100% 8px, 100% calc(100% - 8px), calc(100% - 8px) calc(100% - 8px), calc(100% - 8px) 100%, 8px 100%, 8px calc(100% - 8px), 0 calc(100% - 8px));
+  }
+  .frame img {
+    display: block; width: 100%; object-fit: cover;
+    clip-path: polygon(0 4px, 4px 4px, 4px 0, calc(100% - 4px) 0, calc(100% - 4px) 4px, 100% 4px, 100% calc(100% - 4px), calc(100% - 4px) calc(100% - 4px), calc(100% - 4px) 100%, 4px 100%, 4px calc(100% - 4px), 0 calc(100% - 4px));
+  }
+  .pano, .hs { height: 368px; }
 </style></head><body>
 <div class="card">
   <img class="logo" src="assets/logo-small.webp" alt="Inbox Zero">
   <div class="built"><img src="assets/meta-mark.svg">Built for Meta VR Hackathon</div>
-  <div class="head center">
-    <h1>One painting, <em>wrapped around you</em></h1>
-    <p class="sub">Atmosphere particles and a few depth tricks make it feel like a real place, and it stays fast on the Quest.</p>
-  </div>
+  <div class="head center"><h1>One painting, <em>wrapped around you</em></h1></div>
   <div class="row">
-    <figure><img class="shot pano" src="assets/kyoto-painting.webp"><figcaption><b>The painting</b> one flat image per level</figcaption></figure>
-    <div class="plus"><svg viewBox="0 0 10 10" shape-rendering="crispEdges"><path fill="#ff4fb8" d="M3 1h1v1h1v1h1v1h1v2H6v1H5v1H4v1H3z"/></svg></div>
-    <figure><img class="shot hs" src="assets/kyoto-headset.jpg"><figcaption><b>In the headset</b> with particles and depth</figcaption></figure>
+    <figure><h2>The painting</h2><div class="frame"><img class="pano" src="assets/kyoto-painting.webp"></div><p>One flat image per level</p></figure>
+    <figure><h2>In the headset</h2><div class="frame"><img class="hs" src="assets/kyoto-headset.jpg"></div><p>With particles and depth</p></figure>
   </div>
-  <div class="three"><span class="lbl">The only real 3D:</span><span class="chip pink">The weapon</span><span class="chip cyan">The emails</span><span class="chip">The particles</span></div>
 </div></body></html>

@@ -5,7 +5,7 @@
  * game's own, served from its build at /play/.
  */
 export const SITE = {
-  /** The demo video's YouTube id (the part after v=). Empty: the player shows "coming soon". */
+  /** The demo video's YouTube id (the part after v=). */
   demoVideo: '1M4B0hSwFXw',
   competition: { name: 'Meta VR Start Developer Competition 2026', url: 'https://start-developer-competition-26.devpost.com/' },
   segments: 'https://developers.meta.com/vr/blog/know-your-players-understanding-your-audience-with-2025-quest-gamer-segments/',

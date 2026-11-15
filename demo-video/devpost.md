@@ -17,11 +17,9 @@ There are two rounds.
 
 **Round 1 is sorting.** Close your left hand to grab an email, and it comes closer so you can read it. Throw it to keep it for round two if you want to reply, or smash it into tiny little pieces.
 
-![Round 1: grab an email with your left hand, slash it with your right](https://www.inboxzerovr.com/site/devpost/round1.png)
-
 **Round 2 is replying.** All the emails you kept come back. Use one of the two pre-written replies (just drag and hover to send), or use your mic to say your reply out loud and AI transcribes it to text.
 
-![Round 2: pick a pre-written reply or say it with the mic](https://www.inboxzerovr.com/site/devpost/round2.png)
+![How to play: Round One, grab to read and slash to clear; Round Two, pick a reply or say your own](https://www.inboxzerovr.com/site/devpost/rounds.png)
 
 There are 7 levels, each with its own weapon, art, music and sounds: Kyoto Nights (katana), Keyboard Smash (keyboard), Haunted Halls (sword), Toxic Danger (spray), Super Space (saber), Inferno (flame thrower) and LumberHack (axe). Every level ends with a winning celebration, so clearing your inbox feels like you won. Because you did! Email can be scary.
 
@@ -36,7 +34,7 @@ I first built a way to connect Gmail and do the sorting and summarizing with AI.
 3. The code goes back to your agent, and you get a link you open on your Quest.
 4. When you finish, your agent gets the results (what you replied to, what you archived) and takes action on your inbox like normal.
 
-![Your agent does the email part: agent, Inbox Zero VR, Quest, results back to the agent](https://www.inboxzerovr.com/site/devpost/agent.png)
+![How the MCP works: your agent, Inbox Zero VR, your Quest, and results back to your agent](https://www.inboxzerovr.com/site/devpost/agent.png)
 
 The game only gets a JSON of email summaries: sender name, subject line, type and so on. It never sees the full email. It's stored on my server for 24 hours at most and deleted after you play. Once the results go back to your agent, everything on my end is deleted and forgotten.
 
