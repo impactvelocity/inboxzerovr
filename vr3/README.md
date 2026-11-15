@@ -52,6 +52,8 @@ The no-sign-in way to play your own mail (2026-11-13). The player's own AI agent
 
 **Connect an agent.** Claude (claude.ai or desktop): Settings, Connectors, Add custom connector, paste `https://<site>/mcp`. Claude Code: `claude mcp add --transport http inbox-zero-vr https://<site>/mcp`. ChatGPT, Cursor and others: a remote MCP server with no authentication. The agent also needs its own email access (a Gmail or Outlook connector). claude.ai and ChatGPT reach only a public https address, so they need the deployed site; Claude Code works with localhost.
 
+**Links** (2026-11-15: "use proper url not localhost"): every address an agent is given (`play_url`, the Open in VR link, the guide's) is `https://www.inboxzerovr.com` (`SITE_URL` in `lib/session.ts`), even from a dev server; `PUBLIC_ORIGIN` changes it (`http://localhost:5183` to send players to the local game). The dev server and the site share one Upstash database, so a round made locally plays on the site.
+
 **Storage** is Upstash Redis (`lib/store.ts`, `UPSTASH_REDIS_REST_URL` / `_TOKEN` or Vercel's `KV_REST_API_*`). Without them it is a Map in memory: fine on `npm run dev`, wrong on Vercel. Every key has an expiry; the key is stored only as a hash.
 
 **Guessing codes.** 4 digits is 10,000 codes, so wrong codes are limited to 8 per address per 10 minutes (30 opens in all), and results need the key, not just the code. A stranger who guessed a live code could see that round's summaries until it is played; that is the trade for a code easy to type in a headset.

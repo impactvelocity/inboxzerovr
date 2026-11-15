@@ -26,13 +26,16 @@ export async function secure(): Promise<boolean> {
   return (h.get('x-forwarded-proto') ?? '').split(',')[0].trim() === 'https' || env.publicOrigin.startsWith('https');
 }
 
-/** The origin the browser sees: through the game's dev proxy (5183) or Next itself (3000) or the deployed site. */
+/** The site's own address, for every link an agent is given. */
+export const SITE_URL = 'https://www.inboxzerovr.com';
+
+/**
+ * The address agents hand out (play_url, the Open in VR link, the MCP guide): the real site, always, even from a dev server
+ * (2026-11-15: "use proper url not localhost"). The dev server and the site share the Upstash database, so a round made
+ * locally plays on the site. PUBLIC_ORIGIN changes it, e.g. http://localhost:5183 to test the game's own changes locally.
+ */
 export async function origin(): Promise<string> {
-  if (env.publicOrigin) return env.publicOrigin.replace(/\/$/, '');
-  const h = await headers();
-  const host = (h.get('x-forwarded-host') ?? h.get('host') ?? 'localhost:3000').split(',')[0].trim();
-  const proto = (h.get('x-forwarded-proto') ?? (host.startsWith('localhost') || host.startsWith('127.') ? 'http' : 'https')).split(',')[0].trim();
-  return `${proto}://${host}`;
+  return (env.publicOrigin || SITE_URL).replace(/\/$/, '');
 }
 
 async function grant(name: string, seconds: number) {
