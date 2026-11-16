@@ -127,6 +127,9 @@ export function buildSprayer(renderer: THREE.WebGLRenderer): HeldSpec {
   const spec: HeldSpec = {
     name: 'Disinfectant sprayer — right grip', model,
     hold: pistolHold({ rake: AIM_RAKE, turn: TURN, shift: SHIFT }), tilt: HANDLE_RAKE - AIM_RAKE,
+    // (a phone: further to the right, out from under the middle: 2026-11-15, "flamethrower and spray ... make the hand more to the
+    // right of the screen")
+    desktop: { phone: { side: [0.45, -0.22] } },
     aim: { origin: new THREE.Vector3(0, AXIS_Y, TIP_Z - 0.001), direction: new THREE.Vector3(0, 0, -1) },
     onLive(level) {
       // the trigger squeezes in, and the nozzle's collar brightens

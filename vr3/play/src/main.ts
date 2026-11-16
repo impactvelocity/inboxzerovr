@@ -146,6 +146,13 @@ async function main() {
   // play and center code, and mic").
   const phone = desktop.touch && !/OculusBrowser|Quest|Pacific|Pico|Wolvic/i.test(navigator.userAgent);
   document.body.classList.toggle('phone', phone);
+  if (phone) dictate.never();      // (and the mic is never asked for, nor opened: dictate.ts)
+  if (phone) {
+    // no zooming by accident (2026-11-15): iPhone Safari ignores the viewport's user-scalable=no, so its pinch gestures and a
+    // second finger's move are stopped here (a double tap is no zoom by the page's touch-action: style.css body.phone)
+    for (const type of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(type, e => e.preventDefault(), { passive: false });
+    document.addEventListener('touchmove', e => { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  }
   // (a phone is played upright; turned sideways, the game waits for it to come back: index.html #turn-phone)
   const wrongWay = () => desktop.touch && innerWidth > innerHeight;
   letters.setHold(() => howto.running || browserIntro.open || (playing && !world.renderer.xr.isPresenting && wrongWay()));
@@ -425,6 +432,15 @@ async function main() {
   grabButton.addEventListener('pointerdown', e => { e.preventDefault(); desktop.setGrab(true); grabButton.classList.add('pressed'); try { grabButton.setPointerCapture(e.pointerId); } catch { /* (no capture: let go still lets go) */ } });
   for (const type of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) grabButton.addEventListener(type, () => { desktop.setGrab(false); grabButton.classList.remove('pressed'); });
   grabButton.addEventListener('contextmenu', e => e.preventDefault());
+  // a mouse or a finger on Inferno: how far along the jet the email in front is, if the jet is on it, so the flames end there (flame.ts)
+  const flameTo = new Vector3();
+  const flameStop = () => {
+    const now = letters.debug.current(); if (!now || !tool.valid) return 0;
+    const to = flameTo.copy(now.body.mesh.position).sub(tool.origin), along = to.dot(tool.direction);
+    if (along <= 0.1) return 0;
+    const off = Math.sqrt(Math.max(0, to.lengthSq() - along * along));
+    return off < 0.35 * now.body.size + 0.05 ? along : 0;
+  };
   const reticle = document.createElement('div'); reticle.id = 'reticle'; reticle.hidden = true; document.body.append(reticle);      // (where a mouse aims: src/controls/desktop.ts)
   class LevelSystem extends createSystem({}) {
     update(delta:number) {
@@ -500,7 +516,7 @@ async function main() {
       {const hit=letters.impact();if(hit>0)now.weapon?.spec.onImpact?.(hit);}      // Knockout: the glove squashes as it lands
       now.weapon?.setLive(live);now.weapon?.spec.onArmed?.(letters.armed());liveBlade.update(dt,now.weapon?0:live,blade);sounds.live(live,blade.speed);
       const fiery=now.level.jet==='flame';
-      mist.update(dt,aim&&!fiery?tool:null,pixelRatio);flame.update(dt,aim&&fiery?tool:null,eye);
+      mist.update(dt,aim&&!fiery?tool:null,pixelRatio);flame.update(dt,aim&&fiery?tool:null,eye,fiery&&desktop.active?flameStop():0);
       const hot=fiery?Math.max(letters.hazard(),tool.valid&&tool.on>.25?.85:0):letters.hazard();now.place.setHot?.(hot);sounds.setHot(hot);      // (Inferno: the room is lit by your own fire, too)
       // No controller meshes or pointer rays in this quiet seated experience; outline hands if asked for.
       world.player.raySpaces.left.visible=false;world.player.raySpaces.right.visible=false;

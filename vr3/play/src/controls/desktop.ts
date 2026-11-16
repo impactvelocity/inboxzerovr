@@ -40,7 +40,10 @@ type Point = { x: number; y: number };
 export const narrow = (camera: Camera) => Math.min(1, ((camera as Camera & { aspect?: number }).aspect ?? 1.5) / 1.5);
 /** How one weapon sits on a monitor (held.ts HeldSpec.desktop.mouse): out along the cursor's line `depth` metres, moved
  * `side` metres (right, up), rolled `roll` degrees about its hit line; `upright`: a pointing tool kept the right way up. */
-export type MouseHold = { depth?: number; side?: [number, number]; roll?: number; upright?: boolean };
+export type MouseHold = { depth?: number; side?: [number, number]; roll?: number; upright?: boolean;
+  /** Degrees the drawn weapon (and the fist on it) leans up at the hand, about the view's sideways line, like a hammer held
+   * up rather than a point: only how it looks, its hit line still runs out to the cursor (held.ts measures from `aimed`). */
+  tilt?: number };
 /** Turn a matrix by `q` about the point `at` (world). */
 function turnAbout(matrix: Matrix4, at: Vector3, q: Quaternion) {
   m2.makeTranslation(-at.x, -at.y, -at.z).premultiply(m1.makeRotationFromQuaternion(q)).premultiply(m1.makeTranslation(at.x, at.y, at.z));
@@ -73,6 +76,8 @@ export const desktop = {
   depth: 1.4, depthWanted: 1.4,
   /** The right hand's grip this frame (world), once a weapon has been put in it; for the drawn fist (desktophands.ts). */
   grip: new Matrix4(), gripValid: false,
+  /** The weapon's world matrix as aimed, before any `tilt`: what its hits are measured from (held.ts). */
+  aimed: new Matrix4(),
   /** The hold's numbers above, to try others from the console (__vr3.desktop.look). */
   look,
   /** Where the drawn left hand's fingers close, world space (desktophands.ts), and whether it is known: the thread to a
@@ -82,7 +87,13 @@ export const desktop = {
   /** Is the weapon live: the left button held. */
   live() { return this.swing; },
   /** Nothing held (a game starting or ending). */
-  reset() { this.swing = false; this.grab = false; this.sinceGrab = 99; },
+  reset() {
+    this.swing = false; this.grab = false; this.sinceGrab = 99;
+    // and the weapon back to where it rests, a little under the middle, not where it was left last game (2026-11-15: "when
+    // starting a level - reset the weapon position - keeps old position"); the next move of the mouse or finger takes it from here
+    for (const p of [this.cursor, this.pointer, this.shown]) { p.x = 0; p.y = -0.2; }
+    this.depth = this.depthWanted = 1.4;
+  },
 
   /** Every frame, while playing on a monitor. */
   update(dt: number) {
@@ -146,6 +157,12 @@ export const desktop = {
       if (o.roll) turnAbout(this.grip, from, q1.setFromAxisAngle(along, o.roll * Math.PI / 180));
     }
     this.gripValid = true;
+    this.aimed.multiplyMatrices(this.grip, toWeapon);
+    if (o.tilt) {
+      // lean the drawn weapon up about the fist, across the view (the hit line stays as aimed)
+      camera.getWorldQuaternion(q2);
+      turnAbout(this.grip, v3.setFromMatrixPosition(this.grip), q1.setFromAxisAngle(v4.set(1, 0, 0).applyQuaternion(q2), o.tilt * Math.PI / 180));
+    }
     return out.multiplyMatrices(this.grip, toWeapon);
   },
 

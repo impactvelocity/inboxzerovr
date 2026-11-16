@@ -205,7 +205,8 @@ export function createFlame(world: World) {
    * Every frame: the muzzle (world space) and how hard the trigger is held, or null when the flame
    * thrower is not in the hand; and the eye, which the flames on a letter are spread across the view of.
    */
-  function update(dt: number, nozzle: { origin: THREE.Vector3; direction: THREE.Vector3; valid: boolean; on: number } | null, eye: THREE.Vector3) {
+  /** `stopAt`: metres along the jet to the email it is on, where its flames end (a mouse or a finger, main.ts); none in a headset. */
+  function update(dt: number, nozzle: { origin: THREE.Vector3; direction: THREE.Vector3; valid: boolean; on: number } | null, eye: THREE.Vector3, stopAt = 0) {
     clock += dt;
     const renderer = world.renderer, light_ = settings.quality === 'low';
     const firing = !!nozzle && nozzle.valid && nozzle.on > 0.25;
@@ -218,12 +219,14 @@ export function createFlame(world: World) {
         for (; owed >= 1; owed--) {
           const speed = between(jet.speed), a = rand(jet.cone), b = rand(jet.cone), lead = Math.random() * dt * speed;
           const vx = (d.x + side.x * a + up.x * b) * speed, vy = (d.y + side.y * a + up.y * b) * speed, vz = (d.z + side.z * a + up.z * b) * speed;
-          lick(o.x + d.x * lead, o.y + d.y * lead, o.z + d.z * lead, vx, vy, vz, between(jet.life), between(jet.size), between(jet.grow), jet.lift);
+          // (on an email, the lick burns out as it reaches it, not flying on to show behind the paper)
+          const life = stopAt > 0 ? Math.min(between(jet.life), stopAt / speed * 1.15) : between(jet.life);
+          lick(o.x + d.x * lead, o.y + d.y * lead, o.z + d.z * lead, vx, vy, vz, life, between(jet.size), between(jet.grow), jet.lift);
         }
         // embers torn off the jet along its length
         owedEmbers += 46 * dt;
         for (; owedEmbers >= 1; owedEmbers--) {
-          const along = 0.15 + Math.random() * 1.3, speed = 1 + Math.random() * 2.6;
+          const along = 0.15 + Math.random() * (stopAt > 0 ? Math.max(0.1, stopAt - 0.15) : 1.3), speed = 1 + Math.random() * 2.6;
           ember(o.x + d.x * along + rand(0.05), o.y + d.y * along + rand(0.05), o.z + d.z * along + rand(0.05),
             d.x * speed + rand(1.1), d.y * speed + 0.3 + rand(1.1), d.z * speed + rand(1.1), 0.5 + Math.random() * 1);
         }

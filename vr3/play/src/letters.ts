@@ -2251,7 +2251,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     if (shows.some(x => (x.kind === 'logo' || x.kind === 'bar' || x.kind === 'line') && x.body === body)) { const turn = Math.random() * Math.PI; slice(body, at.x, at.y, Math.cos(turn), Math.sin(turn), v1.copy(tool.direction).multiplyScalar(3), 0.6); return true; }
     const x = Math.max(-W / 2 + 0.03, Math.min(W / 2 - 0.03, at.x)), y = Math.max(-H / 2 + 0.03, Math.min(H / 2 - 0.03, at.y));
     body.contact = clock - body.touchedAt <= spray.gap ? body.contact + dt : dt; body.touchedAt = clock;
-    const hold = theme.id === 'lab' ? spray.labHold : spray.hold;
+    // (the lab's sprayer at one touch; Inferno's flame after a moment, in a headset. With a mouse or a finger the flame catches at
+    // once too, as the sprayer does: 2026-11-15, "the fire ... takes a bit to catch, make it feel like the spray gun")
+    const hold = theme.id === 'lab' || (!world.renderer.xr.isPresenting && desktop.active) ? spray.labHold : spray.hold;
     if (body.contact < hold) {
       // not yet: froth (or scorch) gathers where it lands, growing as it is held there
       const u = body.sheet.material.uniforms, k = body.contact / hold;

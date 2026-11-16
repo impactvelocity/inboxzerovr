@@ -151,9 +151,10 @@ function createDictate() {
   const join = () => (settled + ' ' + partial).replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/\s+/g, ' ').trim();
 
   /** Open the mic (asking, if it has not been asked). True if it is open. `asking`: from a click on the home page, where a refusal means blocked. */
+  let never = false;
   function open(asking = false): Promise<boolean> {
     if (stream) { stream.getAudioTracks().forEach(t => { t.enabled = true; }); return Promise.resolve(true); }
-    if (!canMic) return Promise.resolve(false);
+    if (!canMic || never) return Promise.resolve(false);      // (never: a phone, which has no round two: main.ts)
     opening ??= navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 } })
       .then(async s => {
         stream = s; d.permission = 'granted'; openedOnce = true; remember(true); told();
@@ -319,7 +320,10 @@ function createDictate() {
      * Never asked yet (2026-11-13: "make the mic always record the reply even in just play demo, so anyone can see it
      * work"): the home page asks on the first click there, and Start / Just Play ask before going in, never in VR.
      */
-    get unasked() { return !DEMO_MIC && !d.micOff && d.scribe !== null && canMic && d.permission === 'unknown' && !remembered() && !stream; },
+    get unasked() { return !never && !DEMO_MIC && !d.micOff && d.scribe !== null && canMic && d.permission === 'unknown' && !remembered() && !stream; },
+    /** Never open the mic on this page, nor ask for it (a phone: round two, the only part that listens, is skipped there. 2026-11-15:
+     * "can you make it not ask for mic on mobile?"). Nothing here asks the browser then, so no prompt can come up. */
+    never() { never = true; },
     /** Ask for the mic now (from a click on the home page), then let it go again: the browser remembers. */
     async ask() { const ok = await open(true); if (ok && d.phase === 'idle') close(); void refresh(); return ok; },
     /**

@@ -142,6 +142,9 @@ export function buildFlameThrower(renderer: THREE.WebGLRenderer): HeldSpec {
   const spec: HeldSpec = {
     name: 'Flame thrower — right grip', model,
     hold: pistolHold({ rake: AIM_RAKE, turn: TURN, shift: SHIFT }), tilt: HANDLE_RAKE - AIM_RAKE,
+    // (a phone: further to the right, out from under the middle: 2026-11-15, "flamethrower and spray ... make the hand more to the
+    // right of the screen")
+    desktop: { phone: { side: [0.42, -0.14] } },      // (a little higher than the sprayer: it is bigger and sat off the bottom)
     aim: { origin: new THREE.Vector3(0, AXIS_Y, TIP_Z - 0.004), direction: new THREE.Vector3(0, 0, -1) },
     onLive(level) { squeezed = level; },
     onUpdate(dt, clock, _speed, night) {

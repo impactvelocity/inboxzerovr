@@ -33,7 +33,9 @@ export interface HeldSpec {
     /** Its preview is a punch (a jab straight out along base to tip and back), not a swing. */
     punch?: boolean;
     /** Played with a mouse (src/controls/desktop.ts): how far out, moved how far, rolled how much. */
-    mouse?: MouseHold };
+    mouse?: MouseHold;
+    /** And on a phone, laid over `mouse` (a narrow screen held upright wants things nearer: 2026-11-15). */
+    phone?: MouseHold };
   /** Worn over the fist (the boxing glove): the outline hand on that side is not drawn. */
   hidesHand?: boolean;
   /** It has just hit something, this hard (0 to 1): squash, recoil, flash. */
@@ -191,7 +193,12 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
     root.add(glow);
   }
 
-  const hit = spec.hit ? { root: root as THREE.Object3D, tip: spec.hit.tip, base: spec.hit.base } : null;
+  // What hits things is measured from `hitFrame`: in a headset exactly where the weapon is drawn; on a screen where its hit
+  // line is aimed (to the cursor or finger), which the drawn weapon may lean away from to look held, like a hammer (2026-11-15)
+  const hitFrame = new THREE.Object3D(); hitFrame.name = `${spec.name}: what hits`; hitFrame.matrixAutoUpdate = false; hitFrame.visible = false;
+  world.scene.add(hitFrame);
+  let aimedOn = false;
+  const hit = spec.hit ? { root: hitFrame, tip: spec.hit.tip, base: spec.hit.base } : null;
   const aim = spec.aim ? { origin: new THREE.Vector3(), direction: new THREE.Vector3(0, 0, -1), valid: false } : null;
   const deskHold = new THREE.Matrix4();
   const currentBase = new THREE.Vector3(), currentTip = new THREE.Vector3(), lastTip = new THREE.Vector3(), staged = new THREE.Vector3(), jabTo = new THREE.Vector3();
@@ -199,7 +206,7 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
 
   function clearTrail() { births.fill(-10); strengths.fill(0); tracked = false; activeSamples = 0; trail.visible = false; }
   function previewSwing() { if (world.renderer.xr.isPresenting) return; if (spec.aim) pressedFor = 2; else swingTime = 0; }
-  function hide() { root.visible = false; clearTrail(); if (aim) aim.valid = false; live = 0; liveLevel = 0; pressedFor = 0; if (glow) glow.visible = false; spec.onLive?.(0, clock); }
+  function hide() { root.visible = false; hitFrame.visible = false; clearTrail(); if (aim) aim.valid = false; live = 0; liveLevel = 0; pressedFor = 0; if (glow) glow.visible = false; spec.onLive?.(0, clock); }
 
   function update(dt: number, frame: XRFrame | undefined, motion: boolean, night: number) {
     clock += dt; pressedFor = Math.max(0, pressedFor - dt);
@@ -219,8 +226,8 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
       // the reticle (src/controls/desktop.ts)
       root.matrixAutoUpdate = false;
       deskHold.copy(tweaks.matrix()).multiply(spec.hold);
-      const own = spec.desktop?.mouse;
-      if (spec.hit) desktop.holdWeapon(world.camera, deskHold, spec.hit.base, spec.hit.tip, root.matrix, own);
+      const own = desktop.touch ? { ...spec.desktop?.mouse, ...spec.desktop?.phone } : spec.desktop?.mouse;
+      if (spec.hit) { desktop.holdWeapon(world.camera, deskHold, spec.hit.base, spec.hit.tip, root.matrix, own); aimedOn = true; }
       else desktop.holdWeapon(world.camera, deskHold, spec.aim!.origin, jabTo.copy(spec.aim!.origin).add(spec.aim!.direction), root.matrix, { upright: true, ...own });
       root.matrixWorldNeedsUpdate = true; valid = true;
     } else {
@@ -246,9 +253,10 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
       }
       valid = true;
     }
-    root.visible = valid;
-    if (!valid) { clearTrail(); if (aim) aim.valid = false; return; }
+    root.visible = valid; hitFrame.visible = valid;
+    if (!valid) { clearTrail(); if (aim) aim.valid = false; aimedOn = false; return; }
     root.updateMatrixWorld(true);
+    hitFrame.matrix.copy(aimedOn ? desktop.aimed : root.matrixWorld); hitFrame.matrixWorld.copy(hitFrame.matrix); aimedOn = false;
     if (aim && spec.aim) {
       aim.origin.copy(spec.aim.origin).applyMatrix4(root.matrixWorld);
       aim.direction.copy(spec.aim.direction).transformDirection(root.matrixWorld);
@@ -287,6 +295,6 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
     setRod: next => { if (!spec.rod) return; Object.assign(spec.rod, next); spec.hold.copy(rodHold(spec.rod)); spec.tilt = spec.rod.tilt; },
     pressed: () => (pressedFor > 0 ? 1 : 0),
     diagnostics: () => ({ visible: root.visible, trailSegments: activeSamples, live: Number(liveLevel.toFixed(2)) }),
-    dispose: () => { trailGeometry.dispose(); trailMaterial.dispose(); glow?.geometry.dispose(); glowMaterial?.dispose(); spec.dispose?.(); root.removeFromParent(); trail.removeFromParent(); },
+    dispose: () => { trailGeometry.dispose(); trailMaterial.dispose(); glow?.geometry.dispose(); glowMaterial?.dispose(); spec.dispose?.(); root.removeFromParent(); trail.removeFromParent(); hitFrame.removeFromParent(); },
   };
 }
