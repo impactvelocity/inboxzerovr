@@ -557,6 +557,7 @@ export function createHowto(world: World, sounds: Sounds) {
 
       // ---- slash to skip: the weapon's line through the panel, or the sprayer on it
       if (T > 0.3 && T < END) {
+        if (!blade) hadBlade = false;      // (the weapon not live: a swing starts afresh once it is)
         const through = blade ? bladeThrough(blade) : null, sprayed = !through && tool ? sprayedOn(tool, dt) : null;
         const hit = through ?? sprayed;
         if (hit) slash(hit.point, hit.dir);

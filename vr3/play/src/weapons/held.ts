@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { tweaks } from '../tweak';
-import { controls } from '../controls';
+import { controls, desktop } from '../controls';
+import type { MouseHold } from '../controls/desktop';
 import type { World } from '@iwsdk/core';
 
 /**
@@ -30,7 +31,9 @@ export interface HeldSpec {
   /** On a monitor: where it sits from the camera, and how it is turned (radians, applied X then Y then Z). */
   desktop?: { position?: [number, number, number]; rotateX?: number; rotateY?: number; rotateZ?: number;
     /** Its preview is a punch (a jab straight out along base to tip and back), not a swing. */
-    punch?: boolean };
+    punch?: boolean;
+    /** Played with a mouse (src/controls/desktop.ts): how far out, moved how far, rolled how much. */
+    mouse?: MouseHold };
   /** Worn over the fist (the boxing glove): the outline hand on that side is not drawn. */
   hidesHand?: boolean;
   /** It has just hit something, this hard (0 to 1): squash, recoil, flash. */
@@ -190,6 +193,7 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
 
   const hit = spec.hit ? { root: root as THREE.Object3D, tip: spec.hit.tip, base: spec.hit.base } : null;
   const aim = spec.aim ? { origin: new THREE.Vector3(), direction: new THREE.Vector3(0, 0, -1), valid: false } : null;
+  const deskHold = new THREE.Matrix4();
   const currentBase = new THREE.Vector3(), currentTip = new THREE.Vector3(), lastTip = new THREE.Vector3(), staged = new THREE.Vector3(), jabTo = new THREE.Vector3();
   let clock = 0, tracked = false, swingTime = -1, activeSamples = 0, live = 0, liveLevel = 0, pressedFor = 0;
 
@@ -210,6 +214,15 @@ export function createHeld(world: World, spec: HeldSpec): Weapon {
         root.matrix.multiply(spec.hold).premultiply(world.player.matrixWorld);
         root.matrixWorldNeedsUpdate = true; valid = true;
       }
+    } else if (desktop.active && swingTime < 0 && !spec.desktop?.punch && (spec.hit || spec.aim)) {
+      // A mouse: held in a stand-in controller grip with the controller's own hold, its hit line (or nozzle) aimed through
+      // the reticle (src/controls/desktop.ts)
+      root.matrixAutoUpdate = false;
+      deskHold.copy(tweaks.matrix()).multiply(spec.hold);
+      const own = spec.desktop?.mouse;
+      if (spec.hit) desktop.holdWeapon(world.camera, deskHold, spec.hit.base, spec.hit.tip, root.matrix, own);
+      else desktop.holdWeapon(world.camera, deskHold, spec.aim!.origin, jabTo.copy(spec.aim!.origin).add(spec.aim!.direction), root.matrix, { upright: true, ...own });
+      root.matrixWorldNeedsUpdate = true; valid = true;
     } else {
       // On a monitor it is staged in front of the camera, not held.
       const d = spec.desktop ?? {}, p = d.position ?? (spec.aim ? [0.27, -0.2, -0.52] : [0.32, -0.3, -0.65]);

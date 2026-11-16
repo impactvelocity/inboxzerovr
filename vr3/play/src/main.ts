@@ -9,10 +9,11 @@ import { createSwingFx } from './swingfx';
 import { createLetters, type SprayTool } from './letters';
 import { createLiveBlade } from './liveblade';
 import { fist, useControllerHands } from './hands';
-import { controls } from './controls';
+import { controls, desktop } from './controls';
+import { createDesktopHands } from './controls/desktophands';
 import { createFlame } from './flame';
 import { createMist } from './spray';
-import { createHome } from './home';
+import { createHome, pixelLabel, pixelWords } from './home';
 import { bindHomeMic, bindSetupMic, dictate } from './dictate';
 import { bindMicDebug } from './micdebug';
 import { bindMcpCard } from './mcpcard';
@@ -59,7 +60,6 @@ $('depth').addEventListener('input',e=>{settings.depth=Number((e.target as HTMLI
 $('quality').addEventListener('change',e=>{settings.quality=(e.target as HTMLSelectElement).value;});
 const toggleSettings = (open?: boolean) => document.body.classList.toggle('settings-open', open);
 $('close-settings').addEventListener('click',()=>toggleSettings(false));
-$('hud-settings').addEventListener('click',()=>toggleSettings());
 // The katana in the hand (Kyoto): where the fist sits under the guard, forward lean, blade length. Set before entering VR.
 const swordInputs = { reach: $<HTMLInputElement>('reach'), tilt: $<HTMLInputElement>('lean'), turn: $<HTMLInputElement>('turn'), blade: $<HTMLInputElement>('blade') };
 function showSwordHold() {
@@ -120,6 +120,13 @@ async function main() {
   $('sounds').addEventListener('change', e => sounds.setEnabled((e.target as HTMLInputElement).checked));
   $('sounds-volume').addEventListener('input', e => sounds.setVolume(Number((e.target as HTMLInputElement).value)));
   $('effects-volume').addEventListener('input', e => sounds.setEffectsVolume(Number((e.target as HTMLInputElement).value)));
+  // ?mute=1: no music and no sounds from the start, for checks in a test tab (2026-11-15: "mute the tab for now")
+  if (new URLSearchParams(location.search).get('mute') === '1') {
+    for (const id of ['music', 'sounds']) { const box = $<HTMLInputElement>(id); box.checked = false; box.dispatchEvent(new Event('change')); }
+    // and every clip of its own (the voice-overs, the level names, the menu's clicks)
+    const play = HTMLMediaElement.prototype.play;
+    HTMLMediaElement.prototype.play = function (this: HTMLMediaElement) { this.muted = true; return play.call(this); };
+  }
   // What is in the right hand, as the sounds, the swing's sparks and the letters all see it (src/blade.ts, src/swingfx.ts).
   const blade = new BladeTracker();
   const swingFx = createSwingFx(world);
@@ -132,7 +139,19 @@ async function main() {
   const flame = createFlame(world);         // the flame thrower's, and the fire on what it lights (src/flame.ts)
   // How to Play in VR before every game from a code, and the demo's first (src/howto.ts): the game waits at its start while it runs.
   const howto = createHowto(world, sounds);
-  letters.setHold(() => howto.running);
+  // (on a screen, a card instead: index.html #browser-intro, and the game waits while it is open)
+  const browserIntro = $<HTMLDialogElement>('browser-intro');
+  letters.setHold(() => howto.running || browserIntro.open);
+  $('browser-intro-play').addEventListener('click', () => browserIntro.close('play'));
+  // its words in the game's pixel letters, as the home screen's are (home.ts)
+  browserIntro.querySelectorAll<HTMLElement>('.px-words').forEach(pixelWords);
+  const introWords = () => {
+    const accent = now.level.accent; browserIntro.style.setProperty('--accent', accent);
+    pixelLabel($('browser-intro-title'), 'VR Game', 5, accent, 'rgba(0,0,0,.85)');
+    pixelLabel(browserIntro.querySelector<HTMLElement>('.intro-sub')!, 'Desktop is only Round 1', 2.5, '#ffffff');
+    pixelLabel($('browser-intro-play'), 'Play', 2, '#14121a');
+  };
+  browserIntro.addEventListener('cancel', () => { browserIntro.returnValue = 'home'; });      // (Esc: home, as it is in a game)
   const triggerCut = $<HTMLInputElement>('trigger-cut');
   triggerCut.checked = letters.tune.triggerToCut;
   triggerCut.addEventListener('change',()=>{letters.tune.triggerToCut=triggerCut.checked;remember('vr3.hold.triggerCut',triggerCut.checked?'1':'0');});
@@ -149,7 +168,7 @@ async function main() {
     hello(); setInterval(hello, 3000);
   }
   const made = new Map<string, Played>([['kyoto', { level: LEVELS[0], place: garden, weapon: null }]]);
-  let now = made.get('kyoto')!, choosing = 0, playing = false;
+  let now = made.get('kyoto')!, choosing = 0, playing = false, restoreLook = () => {};
   let session: XRSession | null = null;
   // Not heard from a tab that is out of sight, nor while a sound picker page (public/spray.html, flame.html) is open:
   // the song kept playing behind them (2026-11-13: "remove background music, its playing somewhere"). In VR the session decides.
@@ -175,7 +194,7 @@ async function main() {
     ground.set(level.ground);
     document.body.dataset.level = level.id; document.body.style.setProperty('--accent', level.accent);
     $('end-a').textContent = level.ends[0]; $('end-b').textContent = level.ends[1];
-    $('hud-level').textContent = `${level.number} · ${level.name}`;
+    pixelLabel($('hud-level'), level.name, 2, '#ffffff', 'rgba(0,0,0,.85)');      // (the name alone, no number, in the game's pixel letters at the top right: 2026-11-15)
     $('swing').textContent = now.weapon?.aim ? (level.jet === 'flame' ? 'Fire' : 'Spray') : level.letters.mechanic === 'punch' ? 'Throw a punch' : `Swing the ${level.weapon.toLowerCase()}`;
     // How this level's weapon sits in the fist, if it is one that can be changed (set before entering VR; remembered per level).
     const rod = now.weapon?.spec.rod;
@@ -281,6 +300,7 @@ async function main() {
   /** At the home screen nothing arrives and nothing is heard; playing, the level's title letter comes. */
   function setPlaying(on: boolean) {
     playing = on;
+    desktop.reset(); if (!on) restoreLook();      // (nothing held by the mouse; the view as it was for looking round at home: src/controls/desktop.ts)
     document.body.classList.toggle('at-home', !on); document.body.classList.toggle('playing', on);
     results.refresh();      // (back home after a real game: its results)
     if (on) { toggleSettings(false); settings.elapsed = 0; settings.blend = 0; settings.playing = true; }
@@ -292,7 +312,14 @@ async function main() {
       // Before a game from a code (always) or the demo's first, How to Play first (src/howto.ts, 2026-11-14): the level's name
       // waits for it ("after skipping / watching, it starts the level with announcement"), but the song plays from the
       // start under it, softer while the voice talks ("play level music at start of level even when how to play intro", 2026-11-14).
-      if (howto.wanted()) {
+      if (!world.renderer.xr.isPresenting) {
+        // On a screen: no How to Play, but a card saying it is round one only and what the keys do (2026-11-15); the level's
+        // name once it is closed. Play (or Enter) starts; Esc goes home.
+        introWords();
+        const go = () => { browserIntro.removeEventListener('close', go); if (playing && browserIntro.returnValue !== 'home') home.announce(now.level.id); else if (playing) setPlaying(false); };
+        browserIntro.returnValue = ''; browserIntro.addEventListener('close', go);
+        if (!browserIntro.open) browserIntro.showModal();
+      } else if (howto.wanted()) {
         const theme = now.level.letters;
         howto.start({ accent: now.level.accent, colours: theme.bar ?? [now.level.accent, now.level.accent], at: theme.dock?.intro ?? theme.intro,
           vr: world.renderer.xr.isPresenting, verb: WEAPON_VERB[now.level.id],
@@ -301,7 +328,7 @@ async function main() {
           done: () => { if (playing) home.announce(now.level.id); } });
       } else home.announce(now.level.id);
     }
-    else { stopStinger(); howto.stop(); }
+    else { stopStinger(); howto.stop(); if (browserIntro.open) browserIntro.close('home'); }
     letters.setActive(on);
     syncSound(); refresh();
   }
@@ -332,6 +359,7 @@ async function main() {
   // After a real game, its results instead of the level select (src/results.ts); Play Again shows How to Play again.
   const results = bindResults();
   $('menu').addEventListener('click', () => setPlaying(false));
+  pixelLabel($('menu'), 'Menu', 2, '#ffffff');      // (a pixel button, as the home screen's are)
   const useWeapon = () => { sounds.unlock(); if (now.weapon) now.weapon.previewSwing(); else sword.previewSwing(); };
   $('swing').addEventListener('click', useWeapon);
   // The menu in VR (letters.showMenu): every level as a card, each with its home-screen picture.
@@ -353,6 +381,8 @@ async function main() {
   // The sprayer's nozzle and trigger, for the letters and the mist.
   const tool: SprayTool = { origin: new Vector3(), direction: new Vector3(0, 0, -1), on: 0, valid: false };
   const eye = new Vector3();
+  const deskHands = createDesktopHands(world);      // (the outline hands on a monitor: src/controls/desktophands.ts)
+  const reticle = document.createElement('div'); reticle.id = 'reticle'; reticle.hidden = true; document.body.append(reticle);      // (where a mouse aims: src/controls/desktop.ts)
   class LevelSystem extends createSystem({}) {
     update(delta:number) {
       const dt = document.hidden && !world.renderer.xr.isPresenting ? 0 : Math.min(delta,.25);
@@ -360,6 +390,17 @@ async function main() {
       if (world.renderer.xr.isPresenting) controls.update(world.renderer.xr.getSession(), this.xrFrame, world.renderer.xr.getReferenceSpace(), performance.now() / 1000);
       if(playing) lightFromRounds();      // in a game, the light follows the rounds: day in round one, night falls through round two's intro
       else if(settings.playing){settings.elapsed=Math.min(settings.duration,settings.elapsed+dt);settings.blend=settings.elapsed/settings.duration;if(settings.elapsed===settings.duration)settings.playing=false;}
+      desktop.active = playing && desktop.enabled && !world.renderer.xr.isPresenting;
+      if (desktop.active) {
+        // a mouse: the view is held head on, the seated view, and never moves ("dont move head, its bad experience",
+        // 2026-11-15); the weapon aims out to the letter's distance
+        desktop.update(dt); world.camera.rotation.set(0, 0, 0, 'YXZ');
+        const target = letters.debug.current(); world.camera.getWorldPosition(eye);
+        desktop.depthWanted = target ? Math.max(0.6, Math.min(2.5, target.body.mesh.position.distanceTo(eye))) : 1.5;
+      }
+      // the cursor, drawn as a ring (the system's is hidden over the game)
+      reticle.hidden = !desktop.active; if (desktop.active) { const at = desktop.cursor; reticle.style.transform = `translate(${(at.x * 0.5 + 0.5) * innerWidth}px,${(0.5 - at.y * 0.5) * innerHeight}px)`; reticle.className = desktop.live() ? 'swing' : desktop.grab ? 'grab' : ''; }
+      document.body.classList.toggle('mouse-play', desktop.active);
       world.camera.getWorldPosition(eye); garden.viewPosition.copy(eye);
       const pixelRatio = world.renderer.getPixelRatio();
       now.place.update(dt,eye,pixelRatio,blade);
@@ -375,6 +416,7 @@ async function main() {
       music.update(dt);
       if (now.weapon) now.weapon.update(dt,this.xrFrame,settings.motion,settings.blend); else sword.update(dt,this.xrFrame,settings.motion,settings.blend);
       blade.update(dt,world.scene);
+      deskHands.update(dt,hands.checked,!now.weapon?.spec.hidesHand,fist.tilt());
       sounds.update(dt,settings.blend,settings.wind,world.camera,blade);
       swingFx.update(dt,blade,settings.motion&&letters.armed(),settings.blend,settings.wind,pixelRatio);   // a weapon that is not cutting sheds nothing
       const aim = now.weapon?.aim ?? null;
@@ -383,6 +425,7 @@ async function main() {
         let pull = now.weapon!.pressed();
         const xr = world.renderer.xr.isPresenting ? world.renderer.xr.getSession() : null;
         if (xr) pull = controls.trigger(xr, 'right');      // (src/controls)
+        else if (desktop.active && desktop.swing) pull = 1;      // (a mouse: held, it sprays along the nozzle, which the cursor aims: src/controls/desktop.ts)
         else {
           // on a monitor nobody is aiming: the staged sprayer's mist goes to the letter in front of it
           const target = letters.debug.current();
@@ -391,7 +434,7 @@ async function main() {
         tool.on = pull;
       }
       letters.update(dt,this.xrFrame,blade,eye,settings.blend,aim?tool:undefined);
-      howto.update(dt,eye,blade,aim?tool:null);      // (How to Play before a real game: a swing through it skips it)
+      howto.update(dt,eye,letters.armed()?blade:null,aim?tool:null);      // (How to Play before a real game: a swing through it skips it, only with the weapon live: 2026-11-15, "only breaks / slash apart if weapon is active")
       now.place.setGame?.(letters.progress as RoundProgress);      // (its 'menu' phase, the in-VR menu, is none of a level's business: it compares only the others)
       sounds.watchRound(letters.progress);      // a level's sounds for the end of a round (the castle's door slam and witches)
       const live=letters.live();
@@ -411,16 +454,19 @@ async function main() {
   let dragging=false,lastX=0,lastY=0,yaw=0,pitch=0;
   const canvas=world.renderer.domElement;
   function look(){world.camera.rotation.set(pitch,yaw,0,'YXZ');}
-  canvas.addEventListener('pointerdown',e=>{if(world.renderer.xr.isPresenting)return;dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);$('scene').focus();});
+  restoreLook=look;
+  desktop.attach(canvas,()=>playing&&!world.renderer.xr.isPresenting);      // (a mouse while playing: src/controls/desktop.ts)
+  { const hint=$('hint'),mouse=()=>{hint.textContent=desktop.enabled?'Hold left click and swing · Hold Space to grab, let go to save it for later · Esc: menu':'Drag to look around · X or Space: use your weapon · C: keep · round two: 1 and 2 reply, M mic · Esc: menu';};mouse();canvas.addEventListener('pointerdown',mouse); }
+  canvas.addEventListener('pointerdown',e=>{if(world.renderer.xr.isPresenting||(playing&&desktop.enabled))return;dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);$('scene').focus();});
   canvas.addEventListener('pointermove',e=>{if(!dragging||world.renderer.xr.isPresenting)return;yaw-=(e.clientX-lastX)*.0025;pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-lastY)*.0025));lastX=e.clientX;lastY=e.clientY;look();});
   canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointercancel',()=>dragging=false);
   window.addEventListener('keydown',e=>{
     if((e.target as HTMLElement).matches?.('input,select,button,summary'))return;
-    if(e.key.toLowerCase()==='h')toggleSettings();
+    if(e.key.toLowerCase()==='h'&&!playing)toggleSettings();      // (no Settings while playing: 2026-11-15)
     if(world.renderer.xr.isPresenting)return;
     if(e.key==='Escape'&&playing)setPlaying(false);
     if(howto.running&&(e.key.toLowerCase()==='x'||e.key===' '||e.key==='Enter')){e.preventDefault();howto.skip();return;}      // (How to Play: skip it)
-    if(e.key===' '&&playing){e.preventDefault();if(!e.repeat)useWeapon();}
+    if(e.key===' '&&playing&&!desktop.enabled){e.preventDefault();if(!e.repeat)useWeapon();}      // (with a mouse, Space is the left hand: src/controls/desktop.ts)
     if(e.key.startsWith('Arrow')){e.preventDefault();if(e.key==='ArrowLeft')yaw+=.08;if(e.key==='ArrowRight')yaw-=.08;if(e.key==='ArrowUp')pitch=Math.min(1.2,pitch+.06);if(e.key==='ArrowDown')pitch=Math.max(-1.2,pitch-.06);look();}
   });
   const startSession = () => {
@@ -455,7 +501,7 @@ async function main() {
   else if(query.get('play')==='1') setPlaying(true);            // straight in, for checks
   { const loading=$('loading'); loading.classList.add('gone'); setTimeout(()=>loading.remove(),700); } refresh();      // (the loading screen fades out)
   // Read-only diagnostics for verification and tuning, no per-frame DOM work.
-  if (import.meta.env.DEV) Object.assign(window,{__vr3:{world,garden,blade,letters,liveBlade,sounds,made,howto,mail,choose:(id:string)=>choose(levelById(id)??LEVELS[0]),setPlaying,flame,get now(){return now;},
+  if (import.meta.env.DEV) Object.assign(window,{__vr3:{world,garden,blade,letters,desktop,liveBlade,sounds,made,howto,mail,choose:(id:string)=>choose(levelById(id)??LEVELS[0]),setPlaying,flame,get now(){return now;},
     // run the game forward by hand, for checks where the page gets few animation frames (a hidden or background pane)
     step:(seconds:number,rate=60)=>{let t=performance.now()/1000;for(let i=Math.round(seconds*rate);i>0;i--){t+=1/rate;world.update(1/rate,t);}world.renderer.render(world.scene,world.camera);}}});   // for poking at from the console while developing
   Object.assign(window,{gardenDiagnostics:()=>({level:now.level.id,playing,blend:settings.blend,elapsed:settings.elapsed,duration:settings.duration,depth:settings.depth,motion:settings.motion,quality:settings.quality,calls:world.renderer.info.render.calls,triangles:world.renderer.info.render.triangles,textures:world.renderer.info.memory.textures,xr:world.renderer.xr.isPresenting,music:music.diagnostics(),sounds:sounds.diagnostics(),swingFx:swingFx.diagnostics(),letters:letters.diagnostics(),sword:now.weapon?now.weapon.diagnostics():sword.diagnostics(),mist:mist.diagnostics(),dictate:dictate.diagnostics()})});

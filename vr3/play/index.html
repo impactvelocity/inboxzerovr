@@ -132,7 +132,24 @@ html,body{margin:0;background:#06050a}
   <div class="guide-close"><button class="pix close-dialog">Close</button></div>
  </dialog>
 </section>
-<header id="hud"><span id="hud-level"></span><button id="menu" class="quiet">Menu</button><button id="hud-settings" class="quiet">Settings</button></header>
+<!-- (2026-11-15: "remove the settings menu in browser game, also make menu button more like the game styling": no Settings
+     while playing, and Menu is one of the home screen's pixel buttons, its words drawn by src/main.ts) -->
+<header id="hud"><span id="hud-level"></span><button id="menu" class="pix">Menu</button></header>
+<!-- Before a game on a screen, in place of How to Play (src/main.ts): round one only, and the controls. 2026-11-15: "a modal
+     before game starts ... saying VR Game - desktop is only round 1 / then explain in text to space bar to grab email, mouse
+     click to activate weapon and mouse to slash / this would replace the intro how to play in browser" -->
+<dialog id="browser-intro" class="card-dialog browser-intro" aria-labelledby="browser-intro-title">
+ <!-- (2026-11-15, "make look nicer and more like the rest of the UI": the pixel letters, boxes and buttons of the home screen's
+      How to Play, floating over the blurred level. Words drawn by src/main.ts with home.ts pixelLabel / pixelWords.) -->
+ <h2 id="browser-intro-title" class="intro-title">VR Game</h2>
+ <p class="intro-sub">Desktop is only Round 1</p>
+ <div class="intro-keys">
+  <div class="intro-key pixbox"><span class="keycap pixbox"><span class="px-words">Space bar</span></span><span class="px-words">Grab email</span><span class="px-words dim">Let go to save it</span></div>
+  <div class="intro-key pixbox"><span class="keycap pixbox"><span class="px-words">Mouse click</span></span><span class="px-words">Activate weapon</span><span class="px-words dim">Hold it down</span></div>
+  <div class="intro-key pixbox"><span class="keycap pixbox"><span class="px-words">Mouse</span></span><span class="px-words">Slash</span><span class="px-words dim">Move through emails</span></div>
+ </div>
+ <div class="guide-close"><button id="browser-intro-play" class="pix close-dialog" autofocus>Play</button></div>
+</dialog>
 <p id="hint">Drag to look around · X or Space: use your weapon · C: keep · round two: 1 and 2 reply, M mic · Esc: menu</p>
 <aside id="controls" aria-label="Settings">
  <div class="time-label"><span id="phase">Dusk</span><span id="progress">00:00 / 00:20</span></div>

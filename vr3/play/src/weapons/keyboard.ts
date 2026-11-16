@@ -103,7 +103,7 @@ export function buildKeyboard(renderer: THREE.WebGLRenderer): HeldSpec {
     // Upright, as the knight's sword is (asked for on 2026-11-11): about 60 degrees up with the controller level.
     hold: rodHold({ guardY: GUARD_Y, reach: 0.03, tilt: -15, turn: 8 }), tilt: -15, rod: { guardY: GUARD_Y, reach: 0.03, tilt: -15, turn: 8 },
     // on a monitor it stands at the right of the view with its keys towards the middle
-    desktop: { rotateY: -0.8 },
+    desktop: { rotateY: -0.8, mouse: { roll: 180, depth: 0.6, side: [0.22, -0.26] } },      // (a mouse: turned so its keys face you, and further out, it is big: 2026-11-15)
     hit: { base: new THREE.Vector3(0, 0.1, 0), tip: new THREE.Vector3(0, LENGTH, 0) },
     trail: [1, 0.93, 0.82],
     glow: { halo: [0.16, 1, 0.5], core: [0.75, 1, 0.88], width: 0.1 },

@@ -10,7 +10,7 @@ import * as PixelFont from './mail/pixelFont';
 import { createRoundUi, MARKS } from './roundui';
 import { dictate } from './dictate';
 import { thumb } from './thumbs';
-import { controls } from './controls';
+import { controls, desktop } from './controls';
 import { endingFor, lastSungAt, lastWordAt, lyricLayout, lyricWords, LYRICS_TUNE, type LyricWord } from './endlyrics';
 import { ANTHEM_SECONDS } from './levels/anthems';
 /** The word for one left for later in round two. */
@@ -137,12 +137,28 @@ const handTune: Record<'left' | 'right', Partial<typeof tune>> = {
     swordReachSpeed: 1.6, // (2.0) m/s the tip must be moving for that reach to count
   },
 };
+/**
+ * A mouse on a monitor (2026-11-15, src/controls/desktop.ts): the hit line runs out through the reticle, so the far
+ * reach counts at a gentler swing. First guesses.
+ */
+const mouseTune: Record<'left' | 'right', Partial<typeof tune>> = {
+  left: {},             // (Space takes the letter in front wherever the cursor is: nothing to reach)
+  right: {
+    hitDepth: 0.16,       // (0.12)
+    hitMargin: 0.07,      // (0.05)
+    swordWiden: 0.22,     // (0.18)
+    swordReachSpeed: 0.8, // (2.0) m/s at the tip: the reticle's line counts out to the letter at this
+  },
+};
 const controllerTune = { ...tune };
-/** Lay the hand numbers on, side by side, or put the controller numbers back. */
-function tuneForHands(left: boolean, right: boolean) {
-  for (const [side, on] of [['left', left], ['right', right]] as const) {
-    const set = handTune[side] as Record<string, number>, numbers = tune as unknown as Record<string, number>, saved = controllerTune as unknown as Record<string, number>;
-    for (const key in set) numbers[key] = on ? set[key] : saved[key];
+type Holding = 'controller' | 'hand' | 'mouse';
+/** Lay the hand or mouse numbers on, side by side, or put the controller numbers back. */
+function tuneFor(left: Holding, right: Holding) {
+  const numbers = tune as unknown as Record<string, number>, saved = controllerTune as unknown as Record<string, number>;
+  for (const sets of [handTune, mouseTune]) for (const side of ['left', 'right'] as const) for (const key in sets[side]) numbers[key] = saved[key];
+  for (const [side, kind] of [['left', left], ['right', right]] as const) {
+    const set = (kind === 'hand' ? handTune : kind === 'mouse' ? mouseTune : null)?.[side] as Record<string, number> | undefined;
+    if (set) for (const key in set) numbers[key] = set[key];
   }
 }
 const SHEETS = 5, STREAKS = 3, MAX_LOOSE = 24;
@@ -782,6 +798,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   // ---------------------------------------------------------------- bodies
 
   const v1 = new Vector3(), v2 = new Vector3(), v3 = new Vector3(), v4 = new Vector3(), q1 = new Quaternion(), m1 = new Matrix4(), look = new Object3D();
+  const swayZ = new Quaternion();
   function add(sheet: Sheet, soup: Soup, wholeLetter: boolean): Body {
     const mesh = new Mesh(wholeLetter ? wholeGeometry : geometryOf(soup), sheet.material);
     mesh.frustumCulled = false; root.add(mesh);
@@ -1743,6 +1760,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function readHand(dt: number, frame: XRFrame | undefined, head: Vector3) {
     hand.valid = false;
     const session = world.renderer.xr.getSession(), space = world.renderer.xr.getReferenceSpace();
+    if (!world.renderer.xr.isPresenting && desktop.active) { mouseHand(dt); return; }
     if (!world.renderer.xr.isPresenting || !frame || !session || !space) { hand.tracked = false; hand.pressed = false; return; }
     // (the controller's reads are src/controls: the first left source with a grip, trigger or grip to close)
     const source = controls.gripSource(session, 'left'), pose = source ? controls.poseOf(source, frame, space) : null;
@@ -1773,6 +1791,24 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       hand.last.copy(hand.pos); hand.tracked = true; hand.valid = true;
     }
     if (!hand.valid) { hand.tracked = false; hand.pressed = false; }
+  }
+  /**
+   * The left hand on a monitor (src/controls/desktop.ts): there while Space is held, and a moment after it is let go of,
+   * so the letter leaves from it. It stays still (2026-11-15: "stationary hand"), in the middle of the view where a
+   * letter it takes is held up; Space takes the letter in front wherever the cursor is (`mouseHold` in update()).
+   */
+  function mouseHand(dt: number) {
+    if (!desktop.grab && desktop.sinceGrab > 0.25) { hand.tracked = false; hand.pressed = false; return; }
+    // (where the drawn hand's fingers close, src/controls/desktophands.ts: the thread to the letter runs from there)
+    if (desktop.handAtSet) hand.pos.copy(desktop.handAt); else desktop.holdPoint(world.camera, hand.pos);
+    hand.matrix.compose(hand.pos, world.camera.getWorldQuaternion(q1), v1.set(1, 1, 1));
+    const closed = desktop.grab;
+    hand.pressAge = closed && !hand.pressed ? 0 : hand.pressAge + dt;
+    if (!closed) hand.used = false;
+    hand.pressed = closed;
+    hand.far.copy(hand.pos); hand.pointed.copy(hand.pos); hand.pointing = false;
+    hand.vel.set(0, 0, 0); hand.best.set(0, 0, 0); hand.bestAge = 0;      // (still: it never flings; letting go tosses it, in letGo)
+    hand.last.copy(hand.pos); hand.tracked = true; hand.valid = true;
   }
   /**
    * How close the hand's reach line passes to the sheet, less what the line has widened by at that
@@ -2291,6 +2327,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   window.addEventListener('keydown', onKey);
 
   const GRAB_SETTLE = 0.45;      // seconds a taken letter takes to come to its held size
+  const MOUSE_GROW = 1.8;        // a mouse: held up in the middle, it looks this much bigger than where it was taken from ("scales a bit", 1.2; "make the zoom scale when grabbing larger", 1.55; "make the email a bit larger")
   const smooth01 = (t: number) => { const x = clamp01(t); return x * x * (3 - 2 * x); };
   /**
    * A cut's sound: one of the level's takes (slash1, slash2, ... as many as it has: Kyoto five, Super Space six), never the one
@@ -2355,7 +2392,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     const body = letter.body, u = body.sheet.material.uniforms;
     if (body.mode !== 'kept' || !loose.includes(body) || game.phase !== 'play') { goneAway(); return; }
     let can = false;
-    if (hand.valid && body.going < 0.5) { body.mesh.updateMatrixWorld(true); can = lineTo(body) <= tune.reachRadius || reachTo(body, hand.pos) <= 0; }
+    if (hand.valid && body.going < 0.5) { body.mesh.updateMatrixWorld(true); can = (!world.renderer.xr.isPresenting && desktop.active) || lineTo(body) <= tune.reachRadius || reachTo(body, hand.pos) <= 0; }
     u.hover.value += ((can ? 1 : 0) - u.hover.value) * Math.min(1, dt * 10);
     if (can && hand.pressed && !hand.used && hand.pressAge < 0.6) {
       // taken back: out of the air and in the hand again, as it was
@@ -2377,11 +2414,15 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // target, or while dictating, it floats back to wait (and what was said is kept); thrown, or let go
       // of anywhere else, it is left for tomorrow.
       game.aim = -1; ui.aim(-1, 0);
-      if (speed < 1.1 && (game.stage !== 'pick' || nearTarget(body.mesh.position) >= 0)) { backToWait(letter); return; }
+      // (a mouse never carries it to a reply, so letting go of it in the middle is always "for later" while picking)
+      const mouse = !world.renderer.xr.isPresenting && desktop.active;
+      if (speed < 1.1 && (game.stage !== 'pick' || !mouse && nearTarget(body.mesh.position) >= 0)) { backToWait(letter); return; }
     }
     if (speed < 0.7) {
       // just let go of: it lifts away from whoever held it rather than dropping in their lap
-      body.vel.add(v1.set(0, 0.55, -0.75));
+      // (a mouse: a quick right click is a keep, so it is tossed away properly, up and off into the garden)
+      if (!world.renderer.xr.isPresenting && desktop.active) body.vel.set(rand(1.2), 1.7 + Math.random() * 0.6, -2.4 - Math.random());
+      else body.vel.add(v1.set(0, 0.55, -0.75));
     }
     const n = v1.set(0, 0, 1).applyQuaternion(body.mesh.quaternion);
     body.spin.crossVectors(n, body.vel).multiplyScalar(0.8).add(v2.set(rand(1.2), rand(1.2), rand(2.5)));
@@ -2415,8 +2456,11 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function update(dt: number, frame: XRFrame | undefined, blade: BladeTracker, head: Vector3, night: number, tool?: SprayTool) {
     if (!active) return;
     clock += dt;
-    { const session = world.renderer.xr.isPresenting ? world.renderer.xr.getSession() : null; tuneForHands(controls.isHand(session, 'left'), controls.isHand(session, 'right')); }      // (hands get more room; src/controls)
+    { const session = world.renderer.xr.isPresenting ? world.renderer.xr.getSession() : null, mouse = !session && desktop.active;
+      tuneFor(mouse ? 'mouse' : controls.isHand(session, 'left') ? 'hand' : 'controller', mouse ? 'mouse' : controls.isHand(session, 'right') ? 'hand' : 'controller'); }      // (hands and the mouse get more room; src/controls)
     readHand(dt, frame, head);
+    // a mouse: Space takes the letter in front wherever the cursor is, and it is held up in the middle (src/controls/desktop.ts)
+    const mouseHold = !world.renderer.xr.isPresenting && desktop.active;
     if (away) watchAway(dt, head);
     for (const sheet of sheets) { sheet.material.uniforms.night.value = night; sheet.material.uniforms.time.value = clock; }
     aura.uniforms.time.value = clock; aura.uniforms.level.value = 1;
@@ -2496,7 +2540,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
         mesh.updateMatrixWorld(true);
         // The hand can take it by being at it, or by reaching towards it: its reach line passing close enough.
         const can = hand.valid && (letter.state !== 'arriving' || letter.t > 0.6)
-          && (lineTo(body) <= tune.reachRadius || reachTo(body, hand.pos) <= 0);
+          && (mouseHold || lineTo(body) <= tune.reachRadius || reachTo(body, hand.pos) <= 0);
         const u = body.sheet.material.uniforms;
         u.hover.value += ((can ? 1 : 0) - u.hover.value) * Math.min(1, dt * 10);
         if (can && !hand.onLetter) buzz('left', 0.12, 12);        // a tick as the reach finds it
@@ -2521,8 +2565,23 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           } else if (out > tune.holdDistance) letter.grip.setPosition(v2.multiplyScalar(Math.max(tune.holdDistance / out, Math.exp(-dt * 9))));
           m1.copy(hand.matrix).multiply(letter.grip);
           v1.setFromMatrixPosition(m1); q1.setFromRotationMatrix(m1);
+          if (mouseHold) {
+            // A mouse: held up in the middle of the view, facing you and leaning back a touch (2026-11-15: "animates email
+            // to center, scales a bit and hold up a bit"). The drawn left hand stays low on the left, the thread running from
+            // it to the letter ("only move the hand a bit, and show the line from hand").
+            desktop.holdPoint(world.camera, v1);
+            look.position.copy(v1); look.lookAt(head.x, head.y, head.z);
+            // floating a little, never quite still ("kind of motion of floating a bit so not so static, subtle"): a slow
+            // drift up and down and side to side, and a gentle rock
+            const t = clock + body.seed * 7;
+            v1.addScaledVector(v2.set(0, 1, 0).applyQuaternion(look.quaternion), Math.sin(t * 1.3) * 0.007)
+              .addScaledVector(v2.set(1, 0, 0).applyQuaternion(look.quaternion), Math.sin(t * 0.8 + 1) * 0.005);
+            q1.copy(look.quaternion).multiply(swayZ.setFromAxisAngle(v2.set(1, 0, 0), -0.1 + Math.sin(t * 1.1) * 0.025))
+              .multiply(swayZ.setFromAxisAngle(v2.set(0, 0, 1), Math.sin(t * 0.9 + 2) * 0.03))
+              .multiply(swayZ.setFromAxisAngle(v2.set(0, 1, 0), Math.sin(t * 0.7) * 0.03));
+          }
           letter.free.copy(v1);
-          if (game.round === 2 && game.phase === 'play') {
+          if (game.round === 2 && game.phase === 'play' && !mouseHold) {
             // Near a reply (or KEEP, REDO, the mic) it gets a little smaller so the reply still shows; it is
             // not pulled anywhere: it stays where the hand has it (asked for on 2026-11-11, after a version
             // that drew it into the target's plane).
@@ -2539,7 +2598,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           // while it was still far off, and the size lagged behind it coming in. Now the extra comes in with it, and
           // the size follows the distance exactly until it has settled, so it only ever grows, smoothly.)
           if (letter.heldFor < GRAB_SETTLE) {
-            const grow = 1 + (tune.holdGrow * (theme.grab ?? 1.15) - 1) * smooth01(letter.heldFor / GRAB_SETTLE);      // (15% bigger in the hand in every level but the office, 2026-11-13)
+            const grow = 1 + ((mouseHold ? MOUSE_GROW : tune.holdGrow * (theme.grab ?? 1.15)) - 1) * smooth01(letter.heldFor / GRAB_SETTLE);      // (15% bigger in the hand in every level but the office, 2026-11-13)
             letter.holdSize = Math.max(0.25, Math.min(1.85, letter.seen * grow * head.distanceTo(mesh.position)));      // (up to 1.6 times its own size: the 1 it was capped at would hide a bigger holdGrow)
             body.size = letter.holdSize;
           } else body.size += (letter.holdSize - body.size) * (1 - Math.exp(-dt * 12));
@@ -2600,8 +2659,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     else if (session && tune.triggerToCut && !punching) {
       trigger = controls.trigger(session, 'right');
     }
+    else if (!session && desktop.active && !punching) trigger = desktop.live() ? 1 : 0;      // (a mouse: live through a click's slash, or while the left button is held; src/controls/desktop.ts)
     const live = trigger > 0.25;
-    if (live && !armed && !punching && (spraying || (session && tune.triggerToCut))) {
+    if (live && !armed && !punching && (spraying || (session && tune.triggerToCut) || (!session && desktop.active))) {
       // made ready: a tick in the hand and the sound of a blade drawn (the glow and the hum are liveblade.ts and ambience.ts)
       buzz('right', 0.3, 18);
       // (Kyoto has four takes of its own, one picked each time, never the same twice running, so the sword is not the same each time it is made ready)
@@ -2847,11 +2907,14 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       // (a level that shows its letters on something gives that thing its moment first: the monitor switching off;
       // what is left of the last letter does not hang about through it)
       if (theme.dock && game.timer > 0.7) for (const sheet of sheets) if (sheet.cutAt < Infinity && sheet.burnAt === Infinity) sheet.burnAt = clock;
-      const last = game.round === 2 || !game.kept.length;      // (the game's last letter: the end comes next, not round two)
+      // (on a screen, a browser or a phone, there is no round two: choosing a reply or the mic there is hard with a mouse or a
+      // finger, 2026-11-15: "if playing game in browser / mobile it skips round 2". main.ts says so as the game starts.)
+      const twoRounds = world.renderer.xr.isPresenting;
+      const last = game.round === 2 || !game.kept.length || !twoRounds;      // (the game's last letter: the end comes next, not round two)
       // (the game's last: the end soon, 0.4 s, in every level unless it says otherwise: 2026-11-13, "make the end show the logo sooner")
       if ((game.timer += dt) > (last ? theme.endPause ?? 0.4 : theme.dock?.pause ?? theme.pause ?? 1.1)) {
         // (nothing kept, demo or real mail: nothing to answer, so straight to the ending: 2026-11-12)
-        if (game.round === 1 && game.kept.length) beginIntro(2);
+        if (game.round === 1 && game.kept.length && twoRounds) beginIntro(2);
         else { if (game.round === 1) game.cutInRoundOne = 0; beginSummary(); }      // (round one's own marks are what the summary counts then)
       }
     }
@@ -2992,7 +3055,9 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
       if (game.heardFor > words * tune.wordSeconds + 0.7) { game.stage = 'choose'; game.recording = false; ui.choose(); sounds.play('blip', 1.2, 0.45, ui.targets[2]); buzz('left', 0.3, 25); }
       return;
     }
-    let at = letter.state === 'held' ? targetNear(letter.free, game.aim, false) : letter.state === 'waiting' ? game.keyAim : -1;
+    // (held with a mouse it is answered with the keys too: the hand stays still, so it is never carried to a reply)
+    const keyed = letter.state === 'waiting' || letter.state === 'held' && !world.renderer.xr.isPresenting && desktop.active;
+    let at = keyed ? game.keyAim : letter.state === 'held' ? targetNear(letter.free, game.aim, false) : -1;
     if (game.stage === 'choose' && at === 2) at = -1;
     if (at >= 0 && at < 2 && game.stage === 'pick' && !mail.repliesReady(letter.email)) at = -1;      // (still WRITING: real mail's replies not in yet)
     if (at !== game.aim) {
@@ -3117,7 +3182,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
     /** Is the blade cutting just now? (Always, unless the trigger has to be held and is not.) */
     armed: () => armed,
     /** 1 while the trigger is making the blade live, for its glow and hum; 0 otherwise (and always 0 where no trigger is needed). */
-    live: () => ((theme.mechanic === 'punch' ? false : theme.mechanic === 'spray' ? armed : tune.triggerToCut && world.renderer.xr.isPresenting && armed) ? 1 : 0),
+    live: () => ((theme.mechanic === 'punch' ? false : theme.mechanic === 'spray' ? armed : (tune.triggerToCut && world.renderer.xr.isPresenting || !world.renderer.xr.isPresenting && desktop.active) && armed) ? 1 : 0),
     diagnostics: () => ({ started: game.phase !== 'ready', phase: game.phase, round: game.round, dealt: game.dealt, total: game.total, marks: game.marks.join(','), keptForRoundTwo: game.kept.length, ui: ui.diagnostics(), state: current?.state ?? 'none', subject: current?.email?.subject ?? '', ...counts,
       inTheAir: loose.length, sheetsInUse: sheets.filter(s => s.users > 0 || s.reserved).length, handValid: hand.valid, handPressed: hand.pressed,
       reachOnLetter: hand.onLetter, triggerToCut: tune.triggerToCut, armed,

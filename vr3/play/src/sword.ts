@@ -1,5 +1,5 @@
 import { tweaks } from './tweak';
-import { controls } from './controls';
+import { controls, desktop } from './controls';
 import { AdditiveBlending, BufferAttribute, BufferGeometry, CanvasTexture, CylinderGeometry, DoubleSide, DynamicDrawUsage, EquirectangularReflectionMapping, Float32BufferAttribute, Group, InstancedMesh, Matrix4, Mesh, MeshStandardMaterial, Object3D, PMREMGenerator, RepeatWrapping, ShaderMaterial, SphereGeometry, SRGBColorSpace, Vector3, type World } from '@iwsdk/core';
 
 function canvasTexture(kind: 'cloth'|'ivory'|'steel') {
@@ -133,7 +133,7 @@ export function createSword(world:World) {
   world.createTransformEntity(root);world.createTransformEntity(trail);
   const currentBase=new Vector3(),currentTip=new Vector3(),lastTip=new Vector3();
   const trailStartModel=new Vector3(...point(.15,0)),bladeTipModel=new Vector3(...point(1,2)),trailStart=new Vector3(),bladeTip=new Vector3();
-  let bladeScale=0;
+  let bladeScale=0;const deskHold=new Matrix4();
   // Stretch the blade from its base at the guard; the trail's two ends follow.
   function fitBlade(){
     if(bladeScale===swordHold.blade)return;bladeScale=swordHold.blade;
@@ -151,6 +151,9 @@ export function createSword(world:World) {
       const pose=frame&&space&&session?controls.gripPose(session,frame,space,'right'):null;      // (src/controls: the right controller's grip)
       if(pose){root.matrixAutoUpdate=false;root.matrix.fromArray(pose.transform.matrix).multiply(tweaks.matrix());if(controls.isHand(session,'right'))root.matrix.multiply(tweaks.handMatrix());root.matrix.multiply(hold);      // (a tracked hand: its own tweak on top, src/tweak.ts)
       root.matrix.premultiply(world.player.matrixWorld);root.matrixWorldNeedsUpdate=true;valid=true;}
+    }else if(desktop.active&&swingTime<0){
+      // a mouse: held in a stand-in controller grip with the controller's own hold, aimed through the reticle (src/controls/desktop.ts)
+      root.matrixAutoUpdate=false;deskHold.copy(tweaks.matrix()).multiply(hold);desktop.holdWeapon(world.camera,deskHold,trailStart,bladeTip,root.matrix);root.matrixWorldNeedsUpdate=true;valid=true;
     }else{
       root.matrixAutoUpdate=true;world.camera.getWorldPosition(root.position);root.position.add(currentBase.set(.32,-.30,-.65).applyQuaternion(world.camera.quaternion));root.quaternion.copy(world.camera.quaternion);root.rotateX(-.35);root.rotateZ(-.22);
       if(swingTime>=0){swingTime+=dt;const phase=Math.min(swingTime/.65,1);root.rotateZ(Math.sin(phase*Math.PI)*1.9);root.rotateX(-Math.sin(phase*Math.PI)*.45);if(phase===1)swingTime=-1;}

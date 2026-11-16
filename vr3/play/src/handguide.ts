@@ -147,9 +147,13 @@ export interface Hand {
   grip: { centre: THREE.Vector3; axis: THREE.Vector3 };
 }
 
-export async function buildHand(side: Side, tint: Shared): Promise<Hand> {
-  const gltf = await new GLTFLoader().loadAsync(`${DEFAULT_PROFILES_PATH}/generic-hand/${side}.glb`);
-  const model = gltf.scene, skin = model.getObjectByProperty('type', 'SkinnedMesh') as THREE.SkinnedMesh;
+/**
+ * The card's open hand and fist, for any hand model the SDK loads (desktop play uses it too: src/controls/desktophands.ts,
+ * 2026-11-15, "use the same model for the hand open palm and close in the how to play card"). Call before anything else
+ * moves the model's bones: the flat hand is read from them. curl(0) is the open palm, curl(1) the fist, the little finger
+ * leading and the thumb closing last.
+ */
+export function handPoser(model: THREE.Object3D, side: Side) {
   const matrix = new THREE.Matrix4(), scale = new THREE.Vector3();
   // The SDK's poses are the right hand's, each joint where the controller's grip sees it; the left is their mirror.
   const posed = (pose: Record<string, number[]>, name: string) => {
@@ -175,6 +179,14 @@ export async function buildHand(side: Side, tint: Shared): Promise<Hand> {
     return out.compose(p.lerpVectors(joint.open.p, joint.fist.p, k), q.slerpQuaternions(joint.open.q, joint.fist.q, k), ONE).premultiply(wrist);
   };
   const curl = (amount: number) => { for (const joint of joints) jointAt(joint, amount, matrix).decompose(joint.bone.position, joint.bone.quaternion, scale); };
+  return { curl, jointAt, joints, wrist };
+}
+
+export async function buildHand(side: Side, tint: Shared): Promise<Hand> {
+  const gltf = await new GLTFLoader().loadAsync(`${DEFAULT_PROFILES_PATH}/generic-hand/${side}.glb`);
+  const model = gltf.scene, skin = model.getObjectByProperty('type', 'SkinnedMesh') as THREE.SkinnedMesh;
+  const { curl, jointAt, joints, wrist } = handPoser(model, side);
+  const scale = new THREE.Vector3();
 
   // the look: the nearest surface only (a depth pass), the lit body, and two halos
   const lit = { value: 0 };

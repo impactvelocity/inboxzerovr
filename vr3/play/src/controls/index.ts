@@ -11,6 +11,7 @@ import * as hands from './hand';
 import type { Side } from './controller';
 
 export type { Side } from './controller';
+export { desktop } from './desktop';      // (a mouse and keyboard on a monitor: its own file, read only while no headset is presenting)
 type Pose = { transform: { matrix: Float32Array } };
 
 /** What is in the player's hand on that side: a controller, a tracked hand, or nothing. */

@@ -257,6 +257,10 @@ export function buildAxe(renderer: THREE.WebGLRenderer): HeldSpec {
     // (these two are in the hand's space, not the model's: turned as the model is)
     hit: { base: new THREE.Vector3(base.at[0], base.at[1], 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), TWIST), tip: new THREE.Vector3(...toe).applyAxisAngle(new THREE.Vector3(0, 1, 0), TWIST) },
     trail: [1, 0.74, 0.36],
+    // (a mouse: its hit line runs to the toe, forward of the handle, so aimed at the cursor it lay on its side; a quarter
+    // turn about that line stood it up, head at the top: 2026-11-15. Then "twist the axe blade more to the left, so more
+    // of the end blade is visible on screen": 135, the head's broad face towards you and its edge to the left)
+    desktop: { mouse: { roll: 135 } },
     onLive(level, clock) {
       const beat = level * (0.9 + 0.1 * Math.sin(clock * 8));
       live.liveLevel.value = beat * 0.9; live.liveTime.value = clock;
