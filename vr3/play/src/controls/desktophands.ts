@@ -10,7 +10,7 @@
  */
 import { AnimatedControllerHand, DEFAULT_PROFILES_PATH, Matrix4, Quaternion, Vector3, type Object3D, type World } from '@iwsdk/core';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { desktop } from './desktop';
+import { desktop, narrow } from './desktop';
 import { handPoser } from '../handguide';
 
 type Side = 'left' | 'right';
@@ -82,7 +82,7 @@ export function createDesktopHands(world: World) {
       }
       const hand = made.left;
       if (!hand) return;
-      hand.model.visible = on && shown;
+      hand.model.visible = on && shown && !desktop.touch;      // (a phone: no left hand drawn, the GRAB button is the hand: 2026-11-15)
       if (!on) { left.placed = false; return; }
       const out = desktop.grab || desktop.sinceGrab < 0.25;
       const cam = world.camera; cam.updateMatrixWorld(); cam.getWorldPosition(eye);
@@ -91,7 +91,7 @@ export function createDesktopHands(world: World) {
       cam.getWorldQuaternion(turn);
       if (out) {
         // reaching towards the letter held up in the middle, the back of the hand up and to you
-        desktop.holdPoint(cam, v2); point.copy(LEFT_REST).add(LEFT_REACH).applyQuaternion(turn).add(eye);
+        desktop.holdPoint(cam, v2); point.copy(LEFT_REST).add(LEFT_REACH); point.x *= narrow(cam); point.applyQuaternion(turn).add(eye);
         F.copy(v2).sub(point).normalize();
         B.copy(up).multiplyScalar(0.7).addScaledVector(forward, -0.7).normalize();
       } else {
@@ -104,7 +104,7 @@ export function createDesktopHands(world: World) {
       // from here, its top turns anticlockwise
       if (out) want.premultiply(twist.setFromAxisAngle(F, -desktop.look.leftTwist * Math.PI / 180));
       // where it is wanted: low on the left, and grabbing only a little up and in from there
-      if (!out) point.copy(LEFT_REST).applyQuaternion(turn).add(eye);
+      if (!out) { point.copy(LEFT_REST); point.x *= narrow(cam); point.applyQuaternion(turn).add(eye); }      // (in from the edge on a narrow screen)
       const k = left.placed ? 1 - Math.exp(-dt * FOLLOW) : 1;
       left.at.lerp(point, k); left.q.slerp(want, k); left.placed = true;
       hand.model.matrix.compose(left.at, left.q, unit.set(1, 1, 1)); hand.model.matrixWorldNeedsUpdate = true;
@@ -114,7 +114,7 @@ export function createDesktopHands(world: World) {
       // where its thumb and first finger close: the thread to the letter starts there
       hand.model.updateMatrixWorld(true);
       at(hand.model, 'thumb-tip', thumb); at(hand.model, 'index-finger-tip', finger);
-      desktop.handAt.addVectors(thumb, finger).multiplyScalar(0.5); desktop.handAtSet = true;
+      if (!desktop.touch) { desktop.handAt.addVectors(thumb, finger).multiplyScalar(0.5); desktop.handAtSet = true; }      // (a phone: main.ts puts it at the GRAB button)
     },
   };
 }

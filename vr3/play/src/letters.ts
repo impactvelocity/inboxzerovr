@@ -1800,6 +1800,7 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
   function mouseHand(dt: number) {
     if (!desktop.grab && desktop.sinceGrab > 0.25) { hand.tracked = false; hand.pressed = false; return; }
     // (where the drawn hand's fingers close, src/controls/desktophands.ts: the thread to the letter runs from there)
+    // (where the drawn hand closes; on a phone, just behind the GRAB button, which main.ts finds: the thread runs from there)
     if (desktop.handAtSet) hand.pos.copy(desktop.handAt); else desktop.holdPoint(world.camera, hand.pos);
     hand.matrix.compose(hand.pos, world.camera.getWorldQuaternion(q1), v1.set(1, 1, 1));
     const closed = desktop.grab;
@@ -2600,6 +2601,12 @@ export async function createLetters(world: World, sounds: Sounds, fx: Fx) {
           if (letter.heldFor < GRAB_SETTLE) {
             const grow = 1 + ((mouseHold ? MOUSE_GROW : tune.holdGrow * (theme.grab ?? 1.15)) - 1) * smooth01(letter.heldFor / GRAB_SETTLE);      // (15% bigger in the hand in every level but the office, 2026-11-13)
             letter.holdSize = Math.max(0.25, Math.min(1.85, letter.seen * grow * head.distanceTo(mesh.position)));      // (up to 1.6 times its own size: the 1 it was capped at would hide a bigger holdGrow)
+            if (mouseHold) {
+              // (on a narrow screen, a phone upright, never wider than nine tenths of it)
+              const cam = world.camera as typeof world.camera & { fov?: number; aspect?: number };
+              const across = 2 * head.distanceTo(mesh.position) * Math.tan(((cam.fov ?? 85) * Math.PI / 180) / 2) * (cam.aspect ?? 1.5);
+              letter.holdSize = Math.min(letter.holdSize, 0.9 * across / W);
+            }
             body.size = letter.holdSize;
           } else body.size += (letter.holdSize - body.size) * (1 - Math.exp(-dt * 12));
           mesh.scale.setScalar(body.size * (1 - tune.dockShrink * letter.docked));      // (smaller at a target, so the reply still shows)

@@ -96,6 +96,22 @@ The plan as first written, for reference:
 
 ## Step 3: mobile (touch)
 
+**Built 2026-11-15**, in the same files as desktop (`src/controls/desktop.ts` reads a finger too). Your idea: "swipes are the weapon, and email touch and press is email grab"; your answers: on the sprayer and flame levels "Hold sprays, KEEP button", and "Landscape only".
+
+- **Swipe** to slash: the weapon jumps to where the finger lands and follows it; once it has moved 12 px it is live. A tap does nothing.
+- **The GRAB button**, low on the left in the level's colour, on every level, shown from the start of a game (the ready and the round's title too, so it is seen first: "show grab button on intro so they can see it") but not at the end ("hide grab button at end sequence"); holding it draws the thread from the button to the email: held, the email comes to the middle as Space does on a desktop; let go, it is thrown for later ("add a button lower left corner for grab, so that way it can grab (release to throw) or slash"). It replaced a first try at touch-and-hold on the email, and the KEEP button the spray levels had.
+- **Toxic Danger and Inferno:** a finger down sprays at once, where it is.
+- No left hand is drawn on a phone, no thread to a held email, and no hint line along the bottom ("on mobile - hide the left hand", "also remove the lower text").
+- **Round one only**, with the browser card before every game, now headed "Browser Demo" over "Desktop (or Mobile) plays Round 1 only" and "Play for real on a Meta Quest" (2026-11-15; it was "VR Game - desktop is only round 1"), in the finger's words on a phone ( Swipe / the level's verb, Grab button / Grab email; on the spray levels Hold / Melt or Burn).
+- **Upright only** (after a first try at sideways, which tested fine: "make it protrait only, not landscape"): turned sideways, the card shows only "Turn your phone upright to play" with Play greyed out; mid-game a "Turn your phone upright" screen covers it and everything waits, the letter in front too. Play asks for full screen and an upright lock where the browser allows it. On a narrow screen the weapon's and hands' sideways offsets come in to match (`narrow()` in desktop.ts), the held email is never wider than nine tenths of the screen, and the card's boxes stack.
+- **The phone's home screen fits one screen** ("make the level select smaller on mobile", then "fit the 7 levels nicer, may different layout"): the first level a wide banner, the other six two by three, sized by the screen's height; checked at 375 by 812 and 375 by 560.
+- **The phone's home screen is the demo only:** "on mobile should be only play demo - hiding how to play and center code, and mic". Just Play is the one big button; How to Play, Enter Code and the mic are hidden, and the mic is never asked for (round two is skipped there anyway). A phone is a finger and not a headset (`body.phone`).
+- Nothing on the page is selected, called out or pulled down by a finger while playing.
+
+Checked in the Browser pane's phone emulation (740 by 360 and 360 by 740): tap no cut, swipe cut, hold on the email grabs and lifting saves, hold off it nothing; on the lab a held finger melted the letter and KEEP grabbed and saved; upright the card and the cover screen show and the letter does not move. Desktop and VR re-checked unchanged. **Not tried on a real phone** (`npm run dev:https` over Wi-Fi), so not yet known: how swipes feel at a phone's frame rate, iPhone Safari's own gestures, and whether a phone needs lower quality settings (not changed).
+
+The plan as first written, for reference:
+
 - **The same pointer layer:** swipe to slash; touch and hold (within 10 px for 0.35 s) to grab; lift to throw. A finger gets more hit room and a lower swipe speed.
 - **Fixed camera, no gyro at first:** swiping and gyro look together feel chaotic.
 - **Landscape,** since the levels are wide paintings, with a "turn your phone" card in portrait (open choice 4).

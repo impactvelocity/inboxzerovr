@@ -13,7 +13,7 @@
  *   middle of the view, a bit bigger, held up (letters.ts). Let go of Space and it is thrown away, for later. In round
  *   two, 1, 2 or M while it is held (or waiting) answers it.
  *
- * Touch is not handled here: a finger still drags to look until the phone step. Nothing here touches the controllers or
+ * A finger (a phone, upright) plays the same game: swipe to slash, the GRAB button to grab (CONTROLS-PLAN.md step 3). Nothing here touches the controllers or
  * tracked hands: it is only read while no headset is presenting.
  */
 import { Euler, Matrix4, Quaternion, Vector3, type Camera } from '@iwsdk/core';
@@ -32,8 +32,12 @@ const look = {
 const HOLD_DIST = 0.78, HOLD_UP = 0.02;
 
 const fine = () => { try { return matchMedia('(hover: hover) and (pointer: fine)').matches; } catch { return true; } };
+const coarse = () => { try { return !fine() && matchMedia('(pointer: coarse)').matches; } catch { return false; } };
+const TOUCH_MOVE = 12;             // px a finger moves before it is a swipe
 const v1 = new Vector3(), v2 = new Vector3(), v3 = new Vector3(), v4 = new Vector3(), q1 = new Quaternion(), q2 = new Quaternion(), m1 = new Matrix4(), m2 = new Matrix4();
 type Point = { x: number; y: number };
+/** How much narrower the view is than the wide screen the hold was set on (1 there or wider; a phone upright about 0.3). */
+export const narrow = (camera: Camera) => Math.min(1, ((camera as Camera & { aspect?: number }).aspect ?? 1.5) / 1.5);
 /** How one weapon sits on a monitor (held.ts HeldSpec.desktop.mouse): out along the cursor's line `depth` metres, moved
  * `side` metres (right, up), rolled `roll` degrees about its hit line; `upright`: a pointing tool kept the right way up. */
 export type MouseHold = { depth?: number; side?: [number, number]; roll?: number; upright?: boolean };
@@ -44,16 +48,25 @@ function turnAbout(matrix: Matrix4, at: Vector3, q: Quaternion) {
 }
 
 export const desktop = {
-  /** A mouse is what is being played with (the last pointer seen was a mouse or a pen, or the screen says it has one). */
-  enabled: fine(),
+  /** A mouse or a finger plays on a screen (always, now: a finger once only dragged to look). */
+  enabled: true,
   /** Playing on a monitor just now with the mouse: set every frame by main.ts. */
   active: false,
   /** The cursor, -1 to 1 across and up the view; and where the weapon is following it to (`pointer`, then `shown`). */
   cursor: { x: 0, y: -0.2 } as Point, pointer: { x: 0, y: -0.2 } as Point, shown: { x: 0, y: -0.2 } as Point,
   /** The left button is held. */
   swing: false,
-  /** Space is held: the left hand has closed. */
+  /** Space is held (or the GRAB button on a phone): the left hand has closed. */
   grab: false,
+  /** The last thing played with was a finger (a phone or a tablet): main.ts words the card and the hint for it. */
+  touch: coarse(),
+  /** The weapon in hand sprays (a finger down sprays at once). main.ts sets it. */
+  sprays: false,
+  /** Close or open the left hand (Space, or the GRAB button on a phone). */
+  setGrab(on: boolean) {
+    if (on && !this.grab) { this.grab = true; this.grabFor = 0; this.sinceGrab = 0; }
+    if (!on && this.grab) { this.grab = false; this.sinceGrab = 0; }
+  },
   /** Seconds since the grab was let go (the hand is still there a moment, to throw from), and how long it was held. */
   sinceGrab: 99, grabFor: 0,
   /** How far out the hit line is aimed: the letter's distance, eased (main.ts sets `depthWanted`). */
@@ -104,7 +117,9 @@ export const desktop = {
     camera.updateMatrixWorld();
     camera.getWorldPosition(v4);
     camera.getWorldQuaternion(q1);
-    const at = this.ray(camera, v1).multiplyScalar(depth).add(v4).add(v2.set(side[0], side[1], 0).applyQuaternion(q1));
+    // (sideways offsets were set on a wide screen: on a narrow one, a phone held upright, they come in to match, or the
+    // fist and weapon sit off its edge)
+    const at = this.ray(camera, v1).multiplyScalar(depth).add(v4).add(v2.set(side[0] * narrow(camera), side[1], 0).applyQuaternion(q1));
     this.grip.compose(at, q1.multiply(look.gripTurn), v2.set(1, 1, 1));
     const target = this.ray(camera, v2).multiplyScalar(this.depth).add(v4);
     m1.multiplyMatrices(this.grip, toWeapon);
@@ -145,33 +160,53 @@ export const desktop = {
   /** Wire up the mouse and keys. `playing` says whether a game is on (and no headset is presenting). */
   attach(canvas: HTMLCanvasElement, playing: () => boolean) {
     const typing = (e: Event) => !!(e.target as HTMLElement | null)?.matches?.('input,select,button,summary,textarea');
-    const grabbing = (on: boolean) => {
-      if (on && !this.grab) { this.grab = true; this.grabFor = 0; this.sinceGrab = 0; }
-      if (!on && this.grab) { this.grab = false; this.sinceGrab = 0; }
-    };
     const place = (e: PointerEvent) => {
       const box = canvas.getBoundingClientRect();
       if (box.width < 1 || box.height < 1) return;
       this.cursor.x = Math.max(-1, Math.min(1, ((e.clientX - box.left) / box.width) * 2 - 1));
       this.cursor.y = Math.max(-1, Math.min(1, 1 - ((e.clientY - box.top) / box.height) * 2));
     };
+    // A finger (2026-11-15, "swipes are the weapon"): one finger at a time on the game. It lands and the weapon is there at
+    // once (no sweep from where it was); moved TOUCH_MOVE px it is live and slashes. Where the weapon is a sprayer, a finger
+    // down sprays at once. Grabbing is the GRAB button low on the left, held (main.ts calls setGrab): "add a button lower
+    // left corner for grab, so that way it can grab (release to throw) or slash". (A finger held still on the email grabbed
+    // it at first; the button took its place the same day.)
+    let finger = -1, downX = 0, downY = 0, moved = false;
+    const fingerUp = (e: PointerEvent) => {
+      if (e.pointerId !== finger) return;
+      finger = -1; this.swing = false;
+    };
     canvas.addEventListener('pointerdown', e => {
-      if (e.pointerType === 'touch') { this.enabled = false; return; }
-      this.enabled = true;
+      this.enabled = true; this.touch = e.pointerType === 'touch';
       if (!playing()) return;
+      if (this.touch) {
+        if (finger !== -1) return;
+        finger = e.pointerId; downX = e.clientX; downY = e.clientY; moved = false; place(e);
+        this.pointer.x = this.shown.x = this.cursor.x; this.pointer.y = this.shown.y = this.cursor.y;
+        if (this.sprays) this.swing = true;
+        return;
+      }
       place(e);
       if (e.button === 0) this.swing = true;
     });
     canvas.addEventListener('contextmenu', e => { if (playing()) e.preventDefault(); });
-    window.addEventListener('pointerup', e => { if (e.button === 0) this.swing = false; });
-    window.addEventListener('pointercancel', () => { this.swing = false; });
-    window.addEventListener('pointermove', e => { if (e.pointerType !== 'touch' && this.enabled) place(e); });
+    window.addEventListener('pointerup', e => { if (e.pointerType === 'touch') fingerUp(e); else if (e.button === 0) this.swing = false; });
+    window.addEventListener('pointercancel', e => { if (e.pointerType === 'touch') fingerUp(e); else this.swing = false; });
+    window.addEventListener('pointermove', e => {
+      if (e.pointerType === 'touch') {
+        if (e.pointerId !== finger) return;
+        place(e);
+        if (!moved && Math.hypot(e.clientX - downX, e.clientY - downY) > TOUCH_MOVE) { moved = true; this.swing = true; }
+        return;
+      }
+      if (this.enabled) place(e);
+    });
     window.addEventListener('keydown', e => {
       if (e.key !== ' ' || typing(e) || !playing() || !this.enabled) return;
       e.preventDefault();
-      if (!e.repeat) grabbing(true);
+      if (!e.repeat) this.setGrab(true);
     });
-    window.addEventListener('keyup', e => { if (e.key === ' ') grabbing(false); });
-    window.addEventListener('blur', () => { this.swing = false; grabbing(false); });
+    window.addEventListener('keyup', e => { if (e.key === ' ') this.setGrab(false); });
+    window.addEventListener('blur', () => { this.swing = false; this.setGrab(false); });
   },
 };

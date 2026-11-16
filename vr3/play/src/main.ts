@@ -141,15 +141,50 @@ async function main() {
   const howto = createHowto(world, sounds);
   // (on a screen, a card instead: index.html #browser-intro, and the game waits while it is open)
   const browserIntro = $<HTMLDialogElement>('browser-intro');
-  letters.setHold(() => howto.running || browserIntro.open);
-  $('browser-intro-play').addEventListener('click', () => browserIntro.close('play'));
-  // its words in the game's pixel letters, as the home screen's are (home.ts)
-  browserIntro.querySelectorAll<HTMLElement>('.px-words').forEach(pixelWords);
+  // A phone (a finger, and not a headset, which says so in its name): the demo only, round one, upright. Its home screen is
+  // just Just Play: no How to Play, no Enter Code, no mic (2026-11-15: "on mobile should be only play demo - hiding how to
+  // play and center code, and mic").
+  const phone = desktop.touch && !/OculusBrowser|Quest|Pacific|Pico|Wolvic/i.test(navigator.userAgent);
+  document.body.classList.toggle('phone', phone);
+  // (a phone is played upright; turned sideways, the game waits for it to come back: index.html #turn-phone)
+  const wrongWay = () => desktop.touch && innerWidth > innerHeight;
+  letters.setHold(() => howto.running || browserIntro.open || (playing && !world.renderer.xr.isPresenting && wrongWay()));
+  $('browser-intro-play').addEventListener('click', () => {
+    // a phone: full screen and upright where the browser allows it (Android does; an iPhone keeps its bars)
+    if (desktop.touch) { void document.documentElement.requestFullscreen?.().then(() => (screen.orientation as ScreenOrientation & { lock?(o: string): Promise<void> }).lock?.('portrait')).catch(() => undefined); }
+    browserIntro.close('play');
+  });
+  // its words in the game's pixel letters, as the home screen's are (home.ts); the controls for a mouse or a finger, and for
+  // the level's weapon (a phone, 2026-11-15: "swipes are the weapon, and email touch and press is email grab"; on the
+  // sprayer and flame levels a held finger sprays; on a phone the GRAB button grabs)
+  browserIntro.querySelectorAll<HTMLElement>('.intro-turn .px-words').forEach(pixelWords);
+  document.querySelectorAll<HTMLElement>('#turn-phone .px-words').forEach(pixelWords);
+  // the level's word for what its weapon does: How to Play's (Slash, Smash, Chop, Burn), but the lab's sprayer melts
+  const cardVerb = () => now.level.id === 'lab' ? 'Melt' : WEAPON_VERB[now.level.id] ?? 'Slash';
   const introWords = () => {
     const accent = now.level.accent; browserIntro.style.setProperty('--accent', accent);
-    pixelLabel($('browser-intro-title'), 'VR Game', 5, accent, 'rgba(0,0,0,.85)');
-    pixelLabel(browserIntro.querySelector<HTMLElement>('.intro-sub')!, 'Desktop is only Round 1', 2.5, '#ffffff');
+    // (what the level's weapon does, in its own word: 2026-11-15, "make slash dynamic for level - slash, chop, melt, burn")
+    const sprays = !!now.weapon?.aim, verb = cardVerb(), keys: [string, string, string][] = desktop.touch
+      ? [sprays ? ['Hold', verb, 'Where your finger is'] : ['Swipe', verb, 'Through the emails'], ['Grab button', 'Grab email', 'Let go to save it']]
+      : [['Space bar', 'Grab email', 'Let go to save it'], ['Mouse click', 'Activate weapon', 'Hold it down'], ['Mouse', verb, sprays ? 'Aim at the emails' : 'Move through emails']];
+    const box = browserIntro.querySelector<HTMLElement>('.intro-keys')!;
+    box.style.setProperty('--n', String(keys.length));
+    box.replaceChildren(...keys.map(([key, does, more]) => {
+      const card = document.createElement('div'); card.className = 'intro-key pixbox';
+      card.innerHTML = `<span class="keycap pixbox"><span class="px-words"></span></span><span class="px-words"></span><span class="px-words dim"></span>`;
+      const words = card.querySelectorAll<HTMLElement>('.px-words'); [key, does, more].forEach((text, i) => { words[i].textContent = text; pixelWords(words[i]); });
+      return card;
+    }));
+    // ("VR Game" until 2026-11-15, then "Browser Demo": it is a taste, the real game is in the headset)
+    pixelLabel($('browser-intro-title'), 'Browser Demo', Math.min(5, Math.floor(innerWidth * 0.88 / (12 * 6) * 4) / 4), accent, 'rgba(0,0,0,.85)');
+    // (no wider than the screen: a pixel letter is about six cells across, so a narrow phone gets smaller cells)
+    const fit = (text: string) => Math.min(2.5, Math.floor(innerWidth * 0.88 / (text.length * 6) * 4) / 4);
+    const sub = desktop.touch ? 'Mobile plays Round 1 only' : 'Desktop plays Round 1 only', quest = 'Play for real on a Meta Quest';
+    pixelLabel(browserIntro.querySelector<HTMLElement>('.intro-sub')!, sub, fit(sub), '#ffffff');
+    pixelLabel(browserIntro.querySelector<HTMLElement>('.intro-quest')!, quest, fit(quest), accent, 'rgba(0,0,0,.85)');      // (the whole game, both rounds, is the VR one)
     pixelLabel($('browser-intro-play'), 'Play', 2, '#14121a');
+    grabButton.style.setProperty('--accent-grab', accent); pixelLabel(grabButton, 'Grab', 3, accent);      // (its word in the level's colour, on dark)
+    hintWords();
   };
   browserIntro.addEventListener('cancel', () => { browserIntro.returnValue = 'home'; });      // (Esc: home, as it is in a game)
   const triggerCut = $<HTMLInputElement>('trigger-cut');
@@ -168,7 +203,7 @@ async function main() {
     hello(); setInterval(hello, 3000);
   }
   const made = new Map<string, Played>([['kyoto', { level: LEVELS[0], place: garden, weapon: null }]]);
-  let now = made.get('kyoto')!, choosing = 0, playing = false, restoreLook = () => {};
+  let now = made.get('kyoto')!, choosing = 0, playing = false, restoreLook = () => {}, hintWords = () => {};
   let session: XRSession | null = null;
   // Not heard from a tab that is out of sight, nor while a sound picker page (public/spray.html, flame.html) is open:
   // the song kept playing behind them (2026-11-13: "remove background music, its playing somewhere"). In VR the session decides.
@@ -342,7 +377,7 @@ async function main() {
       sounds.unlock();
       const go = () => { dictate.hold(); if (where === 'vr') world.launchXR(); else { setPlaying(true); $('scene').focus(); } };
       // the mic asked for here on the home page, never in VR (asking there takes the player out): then in
-      if (dictate.unasked) void dictate.ask().then(go); else go();
+      if (dictate.unasked && !phone) void dictate.ask().then(go); else go();      // (a phone plays round one only: no mic to ask for)
     },
     settings: () => toggleSettings(),
   });
@@ -352,8 +387,10 @@ async function main() {
   bindMcpCard();       // MCP by the hackathon badge: the address an AI agent makes a round from (mcpcard.ts)
   bindMicDebug();      // and Debug Mic beside it: a real take on the home page, saying what works and what doesn't (micdebug.ts)
   // (and on the first click anywhere on the home page, so round two hears real words in the demo too: 2026-11-13)
-  { const home = $('home') ?? document.body; const first = (e: Event) => { if ((e.target as HTMLElement | null)?.closest?.('#start, #just-play')) return; home.removeEventListener('pointerdown', first, true); if (dictate.unasked && !world.renderer.xr.isPresenting) void dictate.ask(); }; home.addEventListener('pointerdown', first, true); }
+  { const home = $('home') ?? document.body; const first = (e: Event) => { if ((e.target as HTMLElement | null)?.closest?.('#start, #just-play')) return; home.removeEventListener('pointerdown', first, true); if (dictate.unasked && !world.renderer.xr.isPresenting && !phone) void dictate.ask(); }; home.addEventListener('pointerdown', first, true); }
   bindMailUi();        // Enter Code / Just Play: an agent's game code, or the demo (mailui.ts, mail/source.ts)
+  if (phone) pixelLabel($('just-play'), 'Just Play', 3, '#14121a');      // (a phone: the one button, in the level's colour like Enter Code's)
+  document.querySelectorAll<HTMLElement>('.phone-note .px-words').forEach(pixelWords);      // (and under it, the real game is in VR)
   // A real game is ready (a code is in): its How to Play hands are fetched and made now, so they are there in VR.
   { const ready = () => { if (mail.roundReady()) void howto.prepare(); }; mail.listen(ready); ready(); }      // (the hands fetched as a code is found; the demo's first fetches them as it starts)
   // After a real game, its results instead of the level select (src/results.ts); Play Again shows How to Play again.
@@ -382,6 +419,12 @@ async function main() {
   const tool: SprayTool = { origin: new Vector3(), direction: new Vector3(0, 0, -1), on: 0, valid: false };
   const eye = new Vector3();
   const deskHands = createDesktopHands(world);      // (the outline hands on a monitor: src/controls/desktophands.ts)
+  // the GRAB button (a phone, every level): held, the email in front is grabbed; let go, it is thrown for later (2026-11-15)
+  const grabButton = $<HTMLButtonElement>('grab-button'), grabAt = new Vector3();
+  pixelLabel(grabButton, 'Grab', 3, '#f6b3cc');
+  grabButton.addEventListener('pointerdown', e => { e.preventDefault(); desktop.setGrab(true); grabButton.classList.add('pressed'); try { grabButton.setPointerCapture(e.pointerId); } catch { /* (no capture: let go still lets go) */ } });
+  for (const type of ['pointerup', 'pointercancel', 'lostpointercapture'] as const) grabButton.addEventListener(type, () => { desktop.setGrab(false); grabButton.classList.remove('pressed'); });
+  grabButton.addEventListener('contextmenu', e => e.preventDefault());
   const reticle = document.createElement('div'); reticle.id = 'reticle'; reticle.hidden = true; document.body.append(reticle);      // (where a mouse aims: src/controls/desktop.ts)
   class LevelSystem extends createSystem({}) {
     update(delta:number) {
@@ -391,6 +434,11 @@ async function main() {
       if(playing) lightFromRounds();      // in a game, the light follows the rounds: day in round one, night falls through round two's intro
       else if(settings.playing){settings.elapsed=Math.min(settings.duration,settings.elapsed+dt);settings.blend=settings.elapsed/settings.duration;if(settings.elapsed===settings.duration)settings.playing=false;}
       desktop.active = playing && desktop.enabled && !world.renderer.xr.isPresenting;
+      desktop.sprays = !!now.weapon?.aim;
+      { const touch = desktop.active && desktop.touch, ready = !wrongWay();
+        document.body.classList.toggle('touch-play', touch); document.body.classList.toggle('wrong-way', touch && !ready);
+        grabButton.hidden = !(touch && letters.progress.phase !== 'summary');      // (from the start, so it is seen before the first email; not at the end: 2026-11-15, "show grab button on intro so they can see it, just hide from end")
+        $<HTMLButtonElement>('browser-intro-play').disabled = desktop.touch && !ready; browserIntro.classList.toggle('wrong-way', desktop.touch && !ready); }
       if (desktop.active) {
         // a mouse: the view is held head on, the seated view, and never moves ("dont move head, its bad experience",
         // 2026-11-15); the weapon aims out to the letter's distance
@@ -399,7 +447,7 @@ async function main() {
         desktop.depthWanted = target ? Math.max(0.6, Math.min(2.5, target.body.mesh.position.distanceTo(eye))) : 1.5;
       }
       // the cursor, drawn as a ring (the system's is hidden over the game)
-      reticle.hidden = !desktop.active; if (desktop.active) { const at = desktop.cursor; reticle.style.transform = `translate(${(at.x * 0.5 + 0.5) * innerWidth}px,${(0.5 - at.y * 0.5) * innerHeight}px)`; reticle.className = desktop.live() ? 'swing' : desktop.grab ? 'grab' : ''; }
+      reticle.hidden = !desktop.active || desktop.touch;      // (a finger is its own pointer) if (desktop.active) { const at = desktop.cursor; reticle.style.transform = `translate(${(at.x * 0.5 + 0.5) * innerWidth}px,${(0.5 - at.y * 0.5) * innerHeight}px)`; reticle.className = desktop.live() ? 'swing' : desktop.grab ? 'grab' : ''; }
       document.body.classList.toggle('mouse-play', desktop.active);
       world.camera.getWorldPosition(eye); garden.viewPosition.copy(eye);
       const pixelRatio = world.renderer.getPixelRatio();
@@ -417,6 +465,16 @@ async function main() {
       if (now.weapon) now.weapon.update(dt,this.xrFrame,settings.motion,settings.blend); else sword.update(dt,this.xrFrame,settings.motion,settings.blend);
       blade.update(dt,world.scene);
       deskHands.update(dt,hands.checked,!now.weapon?.spec.hidesHand,fist.tilt());
+      if (desktop.active && desktop.touch) {
+        // a phone: the left hand is the GRAB button, so the thread to a held email runs from just behind it (2026-11-15: "when
+        // grab activated in mobile draw the line from button to email, to show that connection")
+        const box = grabButton.getBoundingClientRect(), view = world.renderer.domElement.getBoundingClientRect();
+        if (box.width > 0 && view.width > 0) {
+          world.camera.getWorldPosition(eye);
+          grabAt.set(((box.left + box.width / 2 - view.left) / view.width) * 2 - 1, 1 - ((box.top + box.height / 2 - view.top) / view.height) * 2, 0.5).unproject(world.camera).sub(eye).normalize();
+          desktop.handAt.copy(eye).addScaledVector(grabAt, 0.45); desktop.handAtSet = true;
+        }
+      }
       sounds.update(dt,settings.blend,settings.wind,world.camera,blade);
       swingFx.update(dt,blade,settings.motion&&letters.armed(),settings.blend,settings.wind,pixelRatio);   // a weapon that is not cutting sheds nothing
       const aim = now.weapon?.aim ?? null;
@@ -433,7 +491,8 @@ async function main() {
         }
         tool.on = pull;
       }
-      letters.update(dt,this.xrFrame,blade,eye,settings.blend,aim?tool:undefined);
+      // (a phone turned sideways: everything waits, the letter in front too, until it is upright again: index.html #turn-phone)
+      letters.update(playing && !world.renderer.xr.isPresenting && wrongWay() ? 0 : dt,this.xrFrame,blade,eye,settings.blend,aim?tool:undefined);
       howto.update(dt,eye,letters.armed()?blade:null,aim?tool:null);      // (How to Play before a real game: a swing through it skips it, only with the weapon live: 2026-11-15, "only breaks / slash apart if weapon is active")
       now.place.setGame?.(letters.progress as RoundProgress);      // (its 'menu' phase, the in-VR menu, is none of a level's business: it compares only the others)
       sounds.watchRound(letters.progress);      // a level's sounds for the end of a round (the castle's door slam and witches)
@@ -456,8 +515,9 @@ async function main() {
   function look(){world.camera.rotation.set(pitch,yaw,0,'YXZ');}
   restoreLook=look;
   desktop.attach(canvas,()=>playing&&!world.renderer.xr.isPresenting);      // (a mouse while playing: src/controls/desktop.ts)
-  { const hint=$('hint'),mouse=()=>{hint.textContent=desktop.enabled?'Hold left click and swing · Hold Space to grab, let go to save it for later · Esc: menu':'Drag to look around · X or Space: use your weapon · C: keep · round two: 1 and 2 reply, M mic · Esc: menu';};mouse();canvas.addEventListener('pointerdown',mouse); }
-  canvas.addEventListener('pointerdown',e=>{if(world.renderer.xr.isPresenting||(playing&&desktop.enabled))return;dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);$('scene').focus();});
+  { const hint=$('hint'),mouse=hintWords=()=>{hint.textContent=desktop.touch?(now.weapon?.aim?`Hold to ${cardVerb().toLowerCase()} · Hold KEEP to grab the email, let go to save it for later`:`Swipe to ${cardVerb().toLowerCase()} · Touch and hold an email to grab it, let go to save it for later`):desktop.enabled?`Hold left click to ${cardVerb().toLowerCase()} · Hold Space to grab, let go to save it for later · Esc: menu`:'Drag to look around · X or Space: use your weapon · C: keep · round two: 1 and 2 reply, M mic · Esc: menu';};mouse();canvas.addEventListener('pointerdown',mouse); }
+  canvas.addEventListener('pointerdown',e=>{if(world.renderer.xr.isPresenting||playing)return;      // (playing on a screen, the mouse or a finger is the weapon and hand: src/controls/desktop.ts)
+    dragging=true;lastX=e.clientX;lastY=e.clientY;canvas.setPointerCapture(e.pointerId);$('scene').focus();});
   canvas.addEventListener('pointermove',e=>{if(!dragging||world.renderer.xr.isPresenting)return;yaw-=(e.clientX-lastX)*.0025;pitch=Math.max(-1.2,Math.min(1.2,pitch-(e.clientY-lastY)*.0025));lastX=e.clientX;lastY=e.clientY;look();});
   canvas.addEventListener('pointerup',()=>dragging=false);canvas.addEventListener('pointercancel',()=>dragging=false);
   window.addEventListener('keydown',e=>{
@@ -495,7 +555,8 @@ async function main() {
   if (query.get('level') && first.id === (levelById(query.get('level')) ?? shownById(query.get('level')))?.id) trackPick(first, 'link');
   if (first.id !== 'kyoto') await choose(first); else home.select('kyoto');
   const supported=!!(await navigator.xr?.isSessionSupported('immersive-vr').catch(()=>false));
-  home.vr(supported);
+  // (a phone: Android Chrome says it can do VR, but a phone plays on its screen: CONTROLS-PLAN.md step 3)
+  home.vr(supported && !phone);
   // Native Quest deep links may grant the session during World.create().
   if(world.renderer.xr.isPresenting) startSession();
   else if(query.get('play')==='1') setPlaying(true);            // straight in, for checks
