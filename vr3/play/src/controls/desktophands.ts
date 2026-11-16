@@ -45,7 +45,7 @@ export function createDesktopHands(world: World) {
       const model = gltf.scene;
       // (the left: posed as How to Play's card hand is, read from the model's flat bones before anything moves them;
       // 2026-11-15, "use the same model for the hand open palm and close in the how to play card")
-      const curl = side === 'left' ? handPoser(model, side).curl : undefined;
+      const curl = side === 'left' ? handPoser(model, side).curlChained : undefined;      // (finger by finger, the bones their own length)
       const visual = new AnimatedControllerHand(model, world.scene, world.camera, {} as ConstructorParameters<typeof AnimatedControllerHand>[3]);
       const pad = { buttons: [0, 1, 2, 3].map(() => ({ value: side === 'right' ? 1 : 0 })) };
       visual.connect({ handedness: side, gamepad: pad } as unknown as XRInputSource, true);
@@ -92,8 +92,10 @@ export function createDesktopHands(world: World) {
       if (out) {
         // reaching towards the letter held up in the middle, the back of the hand up and to you
         desktop.holdPoint(cam, v2); point.copy(LEFT_REST).add(LEFT_REACH); point.x *= narrow(cam); point.applyQuaternion(turn).add(eye);
-        F.copy(v2).sub(point).normalize();
-        B.copy(up).multiplyScalar(0.7).addScaledVector(forward, -0.7).normalize();
+        // (grabRaise: how far its fingers lift from pointing at the letter towards straight up; grabBack: how far the back of
+        // the hand turns from facing up towards facing you. Seen from the back a fist is a fist; from the side its outline is a hollow C)
+        F.copy(v2).sub(point).normalize().multiplyScalar(1 - desktop.look.grabRaise).addScaledVector(up, desktop.look.grabRaise).normalize();
+        B.copy(up).multiplyScalar(1 - desktop.look.grabBack).addScaledVector(forward, -desktop.look.grabBack).normalize();
       } else {
         // at rest: reaching forward and a little up and in, the back of the hand up and to you
         F.copy(forward).multiplyScalar(0.8).addScaledVector(up, 0.4).addScaledVector(right, 0.3).normalize();

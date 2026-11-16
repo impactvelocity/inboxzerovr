@@ -24,7 +24,9 @@ const FOLLOW = 32;                 // the weapon and hand follow the cursor a br
 // so its hit line runs out through the cursor to the letter. First guesses.
 const look = {
   // the left hand grabbing (desktophands.ts): degrees it twists to the left about its reach
-  leftTwist: 30,
+  // (2026-11-15, "the hand model for closing / grabbing is a bit weird": it was twisted 30, fingers at the letter, its back half up,
+  // and showed the fist's hollow side; now nearly square to you, fingers half raised, its back to you, as the weapon's fist is seen)
+  leftTwist: 8, grabRaise: 0.5, grabBack: 0.95,
   faceEye: 1,
   /** Numbers to try on the weapon in hand just now, from the console (MouseHold); {} when not trying anything. */
   now: {} as MouseHold, gripDepth: 0.48, gripSide: new Vector3(0.2, -0.22, 0), gripTurn: new Quaternion().setFromEuler(new Euler(0.35, 0, 0)) };

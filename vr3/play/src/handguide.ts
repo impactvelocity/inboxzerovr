@@ -179,7 +179,35 @@ export function handPoser(model: THREE.Object3D, side: Side) {
     return out.compose(p.lerpVectors(joint.open.p, joint.fist.p, k), q.slerpQuaternions(joint.open.q, joint.fist.q, k), ONE).premultiply(wrist);
   };
   const curl = (amount: number) => { for (const joint of joints) jointAt(joint, amount, matrix).decompose(joint.bone.position, joint.bone.quaternion, scale); };
-  return { curl, jointAt, joints, wrist };
+  // The same two poses, but each finger curled as a chain: every joint turns about the one before it and each bone keeps its
+  // length, so the fingertips swing round in arcs. (curl() above moves every joint straight to its place, which shortens the
+  // fingers part way: fine for the cards' quick close, odd on the hand in play. 2026-11-15: "the tips of fingers are weird on motion")
+  const finger = (name: string) => name.split('-')[0];
+  const chained = joints.map((joint, i) => {
+    let parent = -1;
+    for (let j = i - 1; j >= 0; j--) if (joints[j].name !== 'wrist' && finger(joints[j].name) === finger(joint.name)) { parent = j; break; }
+    const rel = (pose: { p: THREE.Vector3; q: THREE.Quaternion }, of: { p: THREE.Vector3; q: THREE.Quaternion } | null) => {
+      if (!of) return { p: pose.p.clone(), q: pose.q.clone() };
+      const inv = of.q.clone().invert();
+      return { p: pose.p.clone().sub(of.p).applyQuaternion(inv), q: inv.clone().multiply(pose.q) };
+    };
+    const from = parent >= 0 ? joints[parent] : null;
+    return { joint, parent, open: rel(joint.open, from ? from.open : null), fist: rel(joint.fist, from ? from.fist : null) };
+  });
+  const at = chained.map(() => ({ p: new THREE.Vector3(), q: new THREE.Quaternion() })), lp = new THREE.Vector3(), lq = new THREE.Quaternion();
+  const curlChained = (amount: number) => {
+    chained.forEach((link, i) => {
+      const k = smooth(clamp01(amount * 1.24 - link.joint.order * 0.06));
+      const long = link.open.p.length() + (link.fist.p.length() - link.open.p.length()) * k;
+      lp.lerpVectors(link.open.p, link.fist.p, k); if (link.parent >= 0 && lp.lengthSq() > 1e-10) lp.setLength(long);
+      lq.slerpQuaternions(link.open.q, link.fist.q, k);
+      const me = at[i];
+      if (link.parent >= 0) { const of = at[link.parent]; me.p.copy(lp).applyQuaternion(of.q).add(of.p); me.q.copy(of.q).multiply(lq); }
+      else { me.p.copy(lp); me.q.copy(lq); }
+      matrix.compose(me.p, me.q, ONE).premultiply(wrist).decompose(link.joint.bone.position, link.joint.bone.quaternion, scale);
+    });
+  };
+  return { curl, curlChained, jointAt, joints, wrist };
 }
 
 export async function buildHand(side: Side, tint: Shared): Promise<Hand> {
