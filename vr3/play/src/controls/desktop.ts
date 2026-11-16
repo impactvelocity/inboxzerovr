@@ -45,7 +45,10 @@ export const narrow = (camera: Camera) => Math.min(1, ((camera as Camera & { asp
 export type MouseHold = { depth?: number; side?: [number, number]; roll?: number; upright?: boolean;
   /** Degrees the drawn weapon (and the fist on it) leans up at the hand, about the view's sideways line, like a hammer held
    * up rather than a point: only how it looks, its hit line still runs out to the cursor (held.ts measures from `aimed`). */
-  tilt?: number };
+  tilt?: number;
+  /** Swing the drawn weapon about the fist until its tip sits under the cursor (a finger on a phone: the axe's head at the
+   * fingertip, 2026-11-16 "make end of axe be the point"). Only how it looks, as `tilt`: the hit line is still `aimed`. */
+  tipOn?: boolean };
 /** Turn a matrix by `q` about the point `at` (world). */
 function turnAbout(matrix: Matrix4, at: Vector3, q: Quaternion) {
   m2.makeTranslation(-at.x, -at.y, -at.z).premultiply(m1.makeRotationFromQuaternion(q)).premultiply(m1.makeTranslation(at.x, at.y, at.z));
@@ -160,6 +163,16 @@ export const desktop = {
     }
     this.gripValid = true;
     this.aimed.multiplyMatrices(this.grip, toWeapon);
+    if (o.tipOn) {
+      // the tip onto the cursor's line: the point on that line as far from the fist as the tip is, the far one
+      const fist = v3.setFromMatrixPosition(this.grip), tipNow = v4.copy(tip).applyMatrix4(this.aimed);
+      const r = tipNow.distanceTo(fist), eye = camera.getWorldPosition(v1), dir = this.ray(camera, v2);
+      const along = fist.clone().sub(eye).dot(dir), off = eye.clone().addScaledVector(dir, along).distanceTo(fist);
+      const t = along + Math.sqrt(Math.max(0, r * r - off * off));
+      const goal = eye.addScaledVector(dir, t).sub(fist).normalize();
+      q1.setFromUnitVectors(tipNow.sub(fist).normalize(), goal);
+      if (Number.isFinite(q1.x + q1.y + q1.z + q1.w)) turnAbout(this.grip, fist, q1);
+    }
     if (o.tilt) {
       // lean the drawn weapon up about the fist, across the view (the hit line stays as aimed)
       camera.getWorldQuaternion(q2);
